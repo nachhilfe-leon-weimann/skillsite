@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { collectErrors, isolate, stubAvailability } from "./helpers";
-import { indexablePaths } from "../src/lib/routes";
+import { indexablePaths, SITE_URL } from "../src/lib/routes";
 
 for (const path of indexablePaths) {
   test(`${path} renders without errors`, async ({ page }) => {
@@ -66,3 +66,21 @@ test("an unknown route answers 404", async ({ page }) => {
   );
   expect(unexpectedErrors).toEqual([]);
 });
+
+for (const path of [
+  ...indexablePaths,
+  "/zahlung?re=x&betrag=abc",
+  "/gibt-es-nicht",
+]) {
+  test(`${path} declares the root canonical only if it is the home page`, async ({
+    page,
+  }) => {
+    await isolate(page);
+    await page.goto(path);
+    const canonicals = await page
+      .locator('link[rel="canonical"]')
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+    if (path === "/") expect(canonicals).toEqual([SITE_URL]);
+    else expect(canonicals).not.toContain(SITE_URL);
+  });
+}

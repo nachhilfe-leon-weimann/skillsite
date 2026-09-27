@@ -5,11 +5,12 @@ import { Eyebrow } from "@skillsite/ui/eyebrow";
 import { LinkButton } from "@skillsite/ui/button";
 import { Heading, Text } from "@skillsite/ui/typography";
 import { routes } from "@/lib/routes";
+import { pageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Seite nicht gefunden",
-  robots: { index: false, follow: false },
-};
+  unlisted: true,
+});
 
 export default function NotFound() {
   return (

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { Eyebrow } from "@skillsite/ui/eyebrow";
@@ -15,7 +17,10 @@ import { homeStats, benefits } from "@/content/home";
 import { startSteps } from "@/content/process";
 import { primaryCta, trustLine } from "@/content/site";
 import { routes } from "@/lib/routes";
+import { pageMetadata } from "@/lib/metadata";
 import { ArrowRight, Check } from "lucide-react";
+
+export const metadata: Metadata = pageMetadata({ home: true });
 
 export default function HomePage() {
   return (

@@ -13,11 +13,12 @@ import {
 } from "@/lib/payment/invoice-link";
 import { describeLink, logPayment } from "@/lib/payment/log";
 import { routes } from "@/lib/routes";
+import { pageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Rechnung bezahlen",
-  robots: { index: false, follow: false },
-};
+  unlisted: true,
+});
 
 // The answer depends entirely on the query and every call has to leave its own
 // log line, so this page is never served from a cache.
