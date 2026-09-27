@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 
 import { cn } from "@skillsite/ui/utils";
@@ -31,6 +31,11 @@ function isPlatformNavActive(pathname: string) {
   return platformNav.some((item) => isActive(pathname, item.href));
 }
 
+/** `aria-current` for a page link; a `#section` link never is the current page. */
+function currentPage(pathname: string, href: string) {
+  return !href.includes("#") && isActive(pathname, href) ? "page" : undefined;
+}
+
 export function Navbar() {
   const pathname = usePathname();
 
@@ -42,10 +47,24 @@ function NavbarContent({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false);
   const isPlatformActive = isPlatformNavActive(pathname);
 
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
   const closeMobileMenu = () => setOpen(false);
   const toggleMobileMenu = () => setOpen((value) => !value);
 
   useBodyScrollLock(open && !isDesktopNav);
+
+  // Escape closes the mobile menu and hands focus back to its button.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   // Tell the iOS toolbar tint about the menu state: it hides itself while the
   // menu is open (so Safari samples the menu, not a stale navy strip) and forces
@@ -103,6 +122,7 @@ function NavbarContent({ pathname }: { pathname: string }) {
             <span className="hidden nav-wide:inline">{primaryCta.label}</span>
           </LinkButton>
           <button
+            ref={menuButtonRef}
             type="button"
             aria-label="Menü"
             aria-expanded={open}
@@ -139,6 +159,7 @@ function DesktopNav({
           key={item.href}
           href={item.href}
           variant="ghost"
+          aria-current={currentPage(pathname, item.href)}
           className={cn(
             "px-3 nav-wide:px-3.5",
             activeText(isActive(pathname, item.href)),
@@ -148,14 +169,21 @@ function DesktopNav({
         </LinkButton>
       ))}
 
-      <PlatformDropdown active={platformActive} />
+      <PlatformDropdown pathname={pathname} active={platformActive} />
     </nav>
   );
 }
 
-function PlatformDropdown({ active }: { active: boolean }) {
+function PlatformDropdown({
+  pathname,
+  active,
+}: {
+  pathname: string;
+  active: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -179,8 +207,8 @@ function PlatformDropdown({ active }: { active: boolean }) {
     <div ref={ref} data-open={open || undefined} className="group relative">
       <Button
         type="button"
-        aria-haspopup="true"
         aria-expanded={open}
+        aria-controls={panelId}
         variant="ghost"
         onClick={() => setOpen((value) => !value)}
         className={cn("px-3 nav-wide:px-3.5", activeText(active))}
@@ -192,13 +220,17 @@ function PlatformDropdown({ active }: { active: boolean }) {
         />
       </Button>
 
-      <div className="invisible absolute right-0 top-full z-10 w-64 translate-y-2 pt-1.5 opacity-0 transition-[opacity,translate,visibility] duration-base ease-flow group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100">
+      <div
+        id={panelId}
+        className="invisible absolute right-0 top-full z-10 w-64 translate-y-2 pt-1.5 opacity-0 transition-[opacity,translate,visibility] duration-base ease-flow group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
+      >
         <div className="flex flex-col gap-0.5 rounded-2xl border border-line bg-surface p-2 shadow-card">
           {platformNav.map((item) => (
             <LinkButton
               key={`${item.href}:${item.label}`}
               href={item.href}
               variant="ghost"
+              aria-current={currentPage(pathname, item.href)}
               onClick={() => setOpen(false)}
               className="flex flex-col items-start gap-0.5 rounded-xl px-3 py-2.5"
             >
@@ -232,6 +264,7 @@ function MobileMenu({
           <Link
             key={item.href}
             href={item.href}
+            aria-current={currentPage(pathname, item.href)}
             onClick={onNavigate}
             className={cn(
               "border-b border-line py-3 text-body",
@@ -278,6 +311,7 @@ function MobileMenu({
                 <Link
                   key={`${item.href}:${item.label}`}
                   href={item.href}
+                  aria-current={currentPage(pathname, item.href)}
                   onClick={onNavigate}
                   className={cn(
                     "border-b border-line py-2.5 pl-4 text-small",

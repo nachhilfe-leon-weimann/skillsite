@@ -163,7 +163,7 @@ export default function PricingPage() {
               aria-label={`${but.officialInfo.label} auf ${but.officialInfo.source} öffnen`}
             >
               {but.officialInfo.label}
-              <ExternalLink className="size-4" aria-hidden="true" />
+              <ExternalLink className="size-4" aria-hidden />
             </LinkButton>
           </Reveal>
         </div>

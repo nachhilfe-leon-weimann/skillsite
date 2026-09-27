@@ -9,6 +9,27 @@ import nextTs from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    files: ["**/*.tsx"],
+    rules: {
+      // One spelling for hidden decoration: the shorthand `aria-hidden`.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "JSXAttribute[name.name='aria-hidden'][value.type='Literal'][value.value='true']",
+          message:
+            'Write the shorthand `aria-hidden` instead of `aria-hidden="true"`.',
+        },
+        {
+          selector:
+            "JSXAttribute[name.name='aria-hidden'] > JSXExpressionContainer > Literal[value=true]",
+          message:
+            "Write the shorthand `aria-hidden` instead of `aria-hidden={true}`.",
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

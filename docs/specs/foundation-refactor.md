@@ -1,6 +1,6 @@
 # Spec: Foundation refactor (one UI system, one type scale, module structure - before the portal)
 
-> Status: Accepted, 2026-09-25 - Phase A done.
+> Status: Accepted, 2026-09-25 - Phase B done.
 > This spec is also the decision record for the arc (no separate ADRs, decision V1): _Decisions_ and _Rules of
 > the refactor_ carry the why. It builds on the monorepo arc (P0/P1 done: `apps/marketing`, `packages/config`,
 > `packages/ui` + Storybook) and comes **before** the portal (`apps/portal`, `lernen.leonweimann.de`), which gets
