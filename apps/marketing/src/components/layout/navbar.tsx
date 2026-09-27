@@ -12,10 +12,9 @@ import { Button, LinkButton } from "@skillsite/ui/button";
 import { primaryCta, primaryNav, platformNav } from "@/content/site";
 import { useBodyScrollLock } from "@skillsite/ui/hooks/use-body-scroll-lock";
 import { useMediaQuery } from "@skillsite/ui/hooks/use-media-query";
+import { DESKTOP_NAV_QUERY } from "@/lib/breakpoints";
 import { routes } from "@/lib/routes";
 import { MENU_STATE_EVENT } from "@/components/layout/ios-toolbar-tint";
-
-const DESKTOP_NAV_QUERY = "(min-width: 1080px)";
 
 /** Whether `href` points at the section the user is currently on. */
 function isActive(pathname: string, href: string) {
@@ -77,10 +76,10 @@ function NavbarContent({ pathname }: { pathname: string }) {
       className={cn(
         "sticky top-0 z-50 border-b border-line bg-[color-mix(in_srgb,var(--bg)_84%,transparent)] backdrop-blur-lg",
         open &&
-          "max-[1079px]:fixed max-[1079px]:inset-0 max-[1079px]:flex max-[1079px]:flex-col max-[1079px]:border-b-0 max-[1079px]:bg-bg",
+          "max-nav:fixed max-nav:inset-0 max-nav:flex max-nav:flex-col max-nav:border-b-0 max-nav:bg-bg",
       )}
     >
-      <Container className="flex items-center gap-2.5 py-3 min-[1278px]:gap-4">
+      <Container className="flex items-center gap-2.5 py-3 nav-wide:gap-4">
         <Link
           href={routes.home}
           aria-label="Startseite"
@@ -92,25 +91,23 @@ function NavbarContent({ pathname }: { pathname: string }) {
 
         <DesktopNav pathname={pathname} platformActive={isPlatformActive} />
 
-        <div className="ml-auto flex items-center gap-2 min-[1080px]:ml-0 min-[1278px]:gap-2.5">
+        <div className="ml-auto flex items-center gap-2 nav:ml-0 nav-wide:gap-2.5">
           <LinkButton
             href={primaryCta.href}
             variant="primary"
             size="md"
-            className="hidden px-4 min-[1080px]:inline-flex min-[1278px]:px-5"
+            className="hidden px-4 nav:inline-flex nav-wide:px-5"
           >
             {/* Short label in the compact range, full label once there is room. */}
-            <span className="min-[1278px]:hidden">{primaryCta.shortLabel}</span>
-            <span className="hidden min-[1278px]:inline">
-              {primaryCta.label}
-            </span>
+            <span className="nav-wide:hidden">{primaryCta.shortLabel}</span>
+            <span className="hidden nav-wide:inline">{primaryCta.label}</span>
           </LinkButton>
           <button
             type="button"
             aria-label="Menü"
             aria-expanded={open}
             onClick={toggleMobileMenu}
-            className="inline-flex size-10 items-center justify-center rounded-full border border-line bg-surface text-ink min-[1080px]:hidden"
+            className="inline-flex size-10 items-center justify-center rounded-full border border-line bg-surface text-ink nav:hidden"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -136,14 +133,14 @@ function DesktopNav({
   platformActive: boolean;
 }) {
   return (
-    <nav className="hidden flex-1 items-center justify-end gap-0.5 min-[1080px]:flex min-[1278px]:gap-1">
+    <nav className="hidden flex-1 items-center justify-end gap-0.5 nav:flex nav-wide:gap-1">
       {primaryNav.map((item) => (
         <LinkButton
           key={item.href}
           href={item.href}
           variant="ghost"
           className={cn(
-            "px-3 min-[1278px]:px-3.5",
+            "px-3 nav-wide:px-3.5",
             activeText(isActive(pathname, item.href)),
           )}
         >
@@ -186,7 +183,7 @@ function PlatformDropdown({ active }: { active: boolean }) {
         aria-expanded={open}
         variant="ghost"
         onClick={() => setOpen((value) => !value)}
-        className={cn("px-3 min-[1278px]:px-3.5", activeText(active))}
+        className={cn("px-3 nav-wide:px-3.5", activeText(active))}
       >
         Online lernen
         <ChevronDown
@@ -195,7 +192,7 @@ function PlatformDropdown({ active }: { active: boolean }) {
         />
       </Button>
 
-      <div className="invisible absolute right-0 top-full z-10 w-64 translate-y-2 pt-1.5 opacity-0 transition-[opacity,transform,visibility] duration-base ease-flow group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100">
+      <div className="invisible absolute right-0 top-full z-10 w-64 translate-y-2 pt-1.5 opacity-0 transition-[opacity,translate,visibility] duration-base ease-flow group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100">
         <div className="flex flex-col gap-0.5 rounded-2xl border border-line bg-surface p-2 shadow-card">
           {platformNav.map((item) => (
             <LinkButton
@@ -229,7 +226,7 @@ function MobileMenu({
   const [platformOpen, setPlatformOpen] = useState(false);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col min-[1080px]:hidden motion-safe:animate-fade-down">
+    <div className="flex min-h-0 flex-1 flex-col nav:hidden motion-safe:animate-fade-down">
       <Container className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto py-4">
         {primaryNav.map((item) => (
           <Link
