@@ -18,7 +18,7 @@ type Phase = "static" | "typing" | "ending";
 // Syntax colours, matching the surrounding brand palette on navy.
 const KW = "text-coral-light"; // keywords
 const FN = "text-accent-blue"; // function names
-const STR = "text-[#8FD49B]"; // strings
+const STR = "text-syntax-string"; // strings
 const CM = "text-on-navy-muted"; // comments
 const IND = "  "; // one indent level
 
@@ -238,7 +238,7 @@ function renderSegs(segs: Seg[]) {
 
 const STATIC_FRAME: Frame = { before: FINAL, after: [], idle: false, t: 0 };
 const PRE_CLASS =
-  "col-start-1 row-start-1 m-0 font-mono text-[0.86rem] leading-[1.7] whitespace-pre";
+  "col-start-1 row-start-1 m-0 font-mono text-code leading-[1.7] whitespace-pre";
 
 /**
  * The signature moment: the code appears to be written live in an editor -
@@ -299,7 +299,7 @@ export function CodeTypewriter() {
             <span
               data-idle={phase === "typing" && frame.idle ? "" : undefined}
               data-done={phase === "ending" ? "" : undefined}
-              className="ts-caret ml-px inline-block h-[1.05em] w-[0.5ch] translate-y-[0.12em] rounded-[1px] bg-coral"
+              className="ts-caret ml-px inline-block h-[1.05em] w-[0.5ch] translate-y-[0.12em] rounded-caret bg-coral"
             />
           )}
           {renderSegs(frame.after)}

@@ -32,8 +32,8 @@ export const metadata = pageMetadata({
 export default function AboutPage() {
   return (
     <>
-      <Container className="py-[clamp(2.5rem,6vw,4.5rem)]">
-        <div className="grid items-center gap-[clamp(2rem,5vw,3.5rem)] lg:grid-cols-2">
+      <Container className="py-page-top">
+        <div className="grid items-center gap-split-about lg:grid-cols-2">
           <div>
             <Reveal trigger="mount" variant="rise-soft" index={0}>
               <Eyebrow>Über mich</Eyebrow>
@@ -54,7 +54,7 @@ export default function AboutPage() {
               index={2}
               className="mt-5"
             >
-              <Lead className="max-w-[30em]">{aboutIntro}</Lead>
+              <Lead className="max-w-measure-30">{aboutIntro}</Lead>
             </Reveal>
             <Reveal
               trigger="mount"
@@ -90,9 +90,9 @@ export default function AboutPage() {
       <Container className="pb-section-sm">
         <Reveal
           variant="rise-soft"
-          className="mx-auto max-w-220 rounded-3xl bg-navy p-[clamp(1.75rem,4vw,2.75rem)] shadow-card"
+          className="mx-auto max-w-220 rounded-3xl bg-navy p-panel-quote shadow-card"
         >
-          <p className="font-heading text-[clamp(1.3rem,2.6vw,1.9rem)] font-medium leading-[1.35] text-white">
+          <p className="font-heading text-quote font-medium leading-[1.35] text-white">
             „{aboutQuote}“
           </p>
         </Reveal>
@@ -110,7 +110,7 @@ export default function AboutPage() {
               index={i}
               className="rounded-2xl border border-line bg-surface p-6 shadow-card"
             >
-              <span className="font-heading text-[2rem] font-extrabold leading-none text-coral">
+              <span className="font-heading text-digit-sm font-extrabold leading-none text-coral">
                 {principle.n}
               </span>
               <Heading as="h3" size="title" className="mt-3 mb-2">
@@ -123,7 +123,7 @@ export default function AboutPage() {
       </Container>
 
       <Section surface>
-        <div className="grid items-center gap-[clamp(1.75rem,4vw,3.5rem)] lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid items-center gap-split lg:grid-cols-[1.05fr_0.95fr]">
           <div>
             <Reveal variant="rise-soft" index={0}>
               <Eyebrow>{software.eyebrow}</Eyebrow>

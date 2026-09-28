@@ -19,7 +19,7 @@ type ThemeOption = {
 const SYSTEM_THEME = "system";
 
 const segmentClass =
-  "relative z-10 inline-flex min-h-0 min-w-0 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-caption font-semibold transition-colors duration-base ease-flow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:px-4";
+  "relative z-raised inline-flex min-h-0 min-w-0 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-caption font-semibold transition-colors duration-base ease-flow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-overlay-40 sm:px-4";
 
 const inactiveSegmentClass = "text-on-navy-soft hover:text-white";
 
@@ -115,7 +115,7 @@ export function ThemeToggle() {
       role="group"
       aria-label="Farbschema wählen"
       aria-describedby={hasOverride ? resetId : undefined}
-      className="relative grid grid-cols-2 rounded-full border border-white/15 bg-white/[0.07] p-1"
+      className="relative grid grid-cols-2 rounded-full border border-overlay-15 bg-overlay-7 p-1"
     >
       <span
         aria-hidden
@@ -130,7 +130,7 @@ export function ThemeToggle() {
           "pointer-events-none absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-full",
           isReady &&
             "transition-[transform,background-color,opacity] duration-base ease-flow",
-          indicatorPosition === "dark" ? "bg-white/20" : "bg-white",
+          indicatorPosition === "dark" ? "bg-overlay-20" : "bg-white",
           indicatorTheme ? "opacity-100" : "opacity-0",
         )}
       />

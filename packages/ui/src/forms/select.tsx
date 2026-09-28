@@ -58,15 +58,14 @@ const tones: Record<
   },
   inverse: {
     trigger:
-      "border-white/12 bg-white/[0.06] text-on-navy hover:border-white/22 hover:bg-white/[0.1]",
-    chip: "bg-white/8 text-accent-blue",
+      "border-overlay-12 bg-overlay-6 text-on-navy hover:border-overlay-22 hover:bg-overlay-10",
+    chip: "bg-overlay-8 text-accent-blue",
     eyebrow: "text-accent-blue",
     value: "text-on-navy",
     chevron: "text-on-navy-soft",
-    panel:
-      "border-white/14 bg-[color-mix(in_srgb,#ffffff_7%,var(--navy))] shadow-[0_24px_50px_-18px_rgba(0,0,0,0.6)]",
-    option: "text-on-navy-soft hover:bg-white/8",
-    optionActive: "bg-white/8",
+    panel: "border-overlay-14 bg-inverse-raised shadow-popover-inverse",
+    option: "text-on-navy-soft hover:bg-overlay-8",
+    optionActive: "bg-overlay-8",
     optionSelected: "font-semibold text-on-navy",
     hint: "text-on-navy-muted",
   },
@@ -270,7 +269,7 @@ export function Select<T extends string | number>({
           }
         }}
         className={cn(
-          "absolute inset-x-0 top-full z-20 mt-2 origin-top rounded-xl border p-1.5",
+          "absolute inset-x-0 top-full z-dropdown mt-2 origin-top rounded-xl border p-1.5",
           "transition-[opacity,translate,scale] ease-flow",
           t.panel,
           open

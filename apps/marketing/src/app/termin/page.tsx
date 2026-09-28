@@ -23,7 +23,7 @@ export default function BookingPage() {
       <PageHeader
         eyebrow="Termin buchen"
         title="Buche deine nächste Nachhilfestunde."
-        titleClassName="max-w-[14em]"
+        titleClassName="max-w-measure-14"
         lead="Du bist schon dabei? Wähle deinen nächsten freien Termin direkt im Kalender. Bis 24 Stunden vorher kannst du kostenfrei verschieben oder absagen."
       />
 

@@ -7,8 +7,7 @@ const tagVariants = cva(
   {
     variants: {
       tone: {
-        accent:
-          "bg-[color-mix(in_srgb,var(--coral)_14%,transparent)] text-coral",
+        accent: "bg-accent-tint-14 text-coral",
         inverse: "bg-navy text-white",
         outline: "border border-line text-ink-soft",
       },

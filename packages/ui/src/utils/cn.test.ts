@@ -53,6 +53,27 @@ test("the page width conflicts with max-width utilities", () => {
   expect(cn("max-w-page max-w-none")).toBe("max-w-none");
 });
 
+test("fluid spacings conflict with the spacing utilities of their side", () => {
+  expect(cn("p-panel p-4")).toBe("p-4");
+  expect(cn("gap-split gap-4")).toBe("gap-4");
+  expect(cn("gap-x-panel-booker-main gap-x-2")).toBe("gap-x-2");
+  expect(cn("p-panel px-4")).toBe("p-panel px-4");
+});
+
+test("stacking tokens conflict with z utilities", () => {
+  expect(cn("z-sticky z-10")).toBe("z-10");
+  expect(cn("z-raised z-overlay")).toBe("z-overlay");
+});
+
+test("role sizes are font sizes and colour tokens are colours", () => {
+  expect(cn("text-button text-ink")).toBe("text-button text-ink");
+  expect(cn("text-digit-lg text-coral")).toBe("text-digit-lg text-coral");
+  expect(cn("text-on-accent-90 text-small")).toBe(
+    "text-on-accent-90 text-small",
+  );
+  expect(cn("bg-accent-tint-14 bg-surface")).toBe("bg-surface");
+});
+
 // Drift guard: every token and utility of the theme must be known to `cn`.
 // styles/theme.css is the entry file; its parts are read in its @import order.
 const stylesDir = new URL("../../styles/", import.meta.url);
@@ -74,23 +95,85 @@ test("theme.css imports its parts in a fixed order", () => {
   ]);
 });
 
-/** Token names of one namespace, e.g. `--text-lead` -> `lead` (skips `--text-lead--line-height`). */
-function tokens(namespace: string): string[] {
-  const pattern = new RegExp(`^\\s*--${namespace}-([a-z0-9-]+?):`, "gm");
-  return [...themeCss.matchAll(pattern)]
-    .map((match) => match[1]!)
-    .filter((name) => !name.includes("--"));
-}
+/** Every custom property declared inside an `@theme` block (brace depth aware). */
+const themeTokens = [...themeCss.matchAll(/@theme\b[^{]*\{/g)].flatMap(
+  (match) => {
+    let depth = 1;
+    let end = match.index + match[0].length;
+    while (depth > 0 && end < themeCss.length) {
+      if (themeCss[end] === "{") depth++;
+      if (themeCss[end] === "}") depth--;
+      end++;
+    }
+    const body = themeCss.slice(match.index + match[0].length, end - 1);
+    return [...body.matchAll(/^\s*(--[a-z0-9-]+):/gm)].map((m) => m[1]!);
+  },
+);
 
-/** For each namespace: a Tailwind utility that must override the token. */
+/** For each utility namespace: a Tailwind utility that must override the token. */
 const namespaceConflicts: Record<string, [prefix: string, winner: string]> = {
-  text: ["text", "text-sm"],
+  color: ["bg", "bg-white"],
+  font: ["font", "font-mono"],
+  radius: ["rounded", "rounded-none"],
   shadow: ["shadow", "shadow-none"],
+  container: ["max-w", "max-w-none"],
+  spacing: ["p", "p-4"],
+  "z-index": ["z", "z-10"],
+  text: ["text", "text-sm"],
   ease: ["ease", "ease-linear"],
   "transition-duration": ["duration", "duration-200"],
   animate: ["animate", "animate-none"],
-  container: ["max-w", "max-w-none"],
 };
+
+/** Namespaces that generate no utility: plain variables for CSS. */
+const plainNamespaces = ["reveal", "default-transition"];
+
+/**
+ * Tailwind namespaces that share a prefix with a registered one but are not
+ * registered in `cn`: a token there must not pass as, say, a `--font-*` token.
+ */
+const unregisteredNamespaces = [
+  "font-weight",
+  "text-shadow",
+  "inset-shadow",
+  "drop-shadow",
+  "tracking",
+  "leading",
+  "breakpoint",
+  "blur",
+  "perspective",
+  "aspect",
+];
+
+/** The namespace of a token: the longest matching one (`--font-weight-x` is font-weight). */
+function namespaceOf(token: string) {
+  return [
+    ...Object.keys(namespaceConflicts),
+    ...plainNamespaces,
+    ...unregisteredNamespaces,
+  ]
+    .filter((namespace) => token.startsWith(`--${namespace}-`))
+    .sort((a, b) => b.length - a.length)[0];
+}
+
+/** Token names of one namespace, e.g. `--text-lead` -> `lead` (skips `--text-lead--line-height`). */
+function tokens(namespace: string): string[] {
+  return themeTokens
+    .filter((token) => namespaceOf(token) === namespace)
+    .map((token) => token.slice(namespace.length + 3))
+    .filter((name) => !name.includes("--"));
+}
+
+test("every @theme token belongs to a registered or a plain namespace", () => {
+  const known = [...Object.keys(namespaceConflicts), ...plainNamespaces];
+  const unknown = themeTokens.filter(
+    (token) => !known.includes(namespaceOf(token) ?? ""),
+  );
+  expect(unknown).toEqual([]);
+  for (const namespace of plainNamespaces) {
+    expect(tokens(namespace).length, namespace).toBeGreaterThan(0);
+  }
+});
 
 for (const [namespace, [prefix, winner]] of Object.entries(
   namespaceConflicts,
@@ -103,6 +186,12 @@ for (const [namespace, [prefix, winner]] of Object.entries(
     }
   });
 }
+
+test("no colour token is read as a font size", () => {
+  for (const name of tokens("color")) {
+    expect(cn(`text-${name} text-small`), name).toBe(`text-${name} text-small`);
+  }
+});
 
 /** For each @utility: a class it must conflict with, or null when it has no conflicting group. */
 const utilityConflicts: Record<string, string | null> = {

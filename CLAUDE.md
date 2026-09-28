@@ -45,6 +45,9 @@ there slice by slice.
   `tone: default | muted | inverse | ...`); a link styled as a button is `<Button asChild><Link …/></Button>`.
 - `just ratchet` counts design-system bypasses (`design-ratchet.json`). A count may never rise; when your change
   lowers one, run `just ratchet-update` and commit the file. Exceptions go into its `allow` list with a reason.
+- Design values are tokens in `packages/ui/styles/tokens.css` (raw values -> semantic roles -> `@theme`). A new
+  value gets a token and its `cn` registration (`packages/ui/src/utils/cn.ts`; the drift test enforces it), never
+  an arbitrary class.
 - Motion speaks the brand tokens: `ease-flow`, `ease-soft`, `duration-quick|base|slow`, the `lift` utility, `Reveal`.
 - A refactor changes nothing a visitor sees. A bug is fixed in its own `fix:` PR that describes the visible
   change. When it is unclear whether something is a bug or a design choice, stop and ask.

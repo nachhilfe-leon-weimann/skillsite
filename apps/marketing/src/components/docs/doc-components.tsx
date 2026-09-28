@@ -18,7 +18,7 @@ type DocShellProps = {
 
 export function DocShell({ hero, sections, children }: DocShellProps) {
   return (
-    <Container className="py-[clamp(40px,6vw,72px)]">
+    <Container className="py-doc">
       <div className="mx-auto w-full max-w-5xl">
         {hero}
         <div

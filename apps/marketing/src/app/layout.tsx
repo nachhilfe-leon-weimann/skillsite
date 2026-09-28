@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
 
 import "./globals.css";
 import { cn } from "@skillsite/ui/utils/cn";
+import { brandColors } from "@skillsite/ui/tokens/colors";
 import { siteMetadata } from "@/lib/metadata";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
@@ -28,8 +29,8 @@ export const metadata: Metadata = siteMetadata;
 export const viewport: Viewport = {
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf6f0" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c1825" },
+    { media: "(prefers-color-scheme: light)", color: brandColors.bg },
+    { media: "(prefers-color-scheme: dark)", color: brandColors.bgDark },
   ],
 };
 
@@ -46,7 +47,7 @@ export default function RootLayout({
       <body className="flex min-h-dvh flex-col">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded-full focus:bg-navy focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:shadow-card"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-overlay focus:rounded-full focus:bg-navy focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:shadow-card"
         >
           Zum Inhalt springen
         </a>
