@@ -84,3 +84,18 @@ for (const path of [
     else expect(canonicals).not.toContain(SITE_URL);
   });
 }
+
+test("a route in running text navigates without a page load", async ({
+  page,
+}) => {
+  await isolate(page);
+  await page.goto("/agb");
+  // A page load drops this marker; a client-side navigation keeps the document.
+  await page.evaluate(() => Object.assign(window, { navigationMarker: true }));
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: "Preisübersicht" })
+    .click();
+  await expect(page).toHaveURL(/\/preise$/);
+  expect(await page.evaluate(() => "navigationMarker" in window)).toBe(true);
+});
