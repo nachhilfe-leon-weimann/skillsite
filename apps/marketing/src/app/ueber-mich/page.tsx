@@ -3,6 +3,7 @@ import { Container } from "@skillsite/ui/layout/container";
 import { Section } from "@skillsite/ui/layout/section";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Button } from "@skillsite/ui/primitives/button";
+import { Card } from "@skillsite/ui/primitives/card";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Lead } from "@skillsite/ui/typography/lead";
 import { Text } from "@skillsite/ui/typography/text";
@@ -92,7 +93,10 @@ export default function AboutPage() {
       <Container className="pb-section-sm">
         <Reveal
           variant="rise-soft"
-          className="mx-auto max-w-220 rounded-3xl bg-navy p-panel-quote shadow-card"
+          as={Card}
+          tone="inverse"
+          radius="3xl"
+          className="mx-auto max-w-220 p-panel-quote"
         >
           <p className="font-heading text-quote font-medium leading-[1.35] text-white">
             „{aboutQuote}“
@@ -110,7 +114,8 @@ export default function AboutPage() {
               key={principle.n}
               variant="rise-soft"
               index={i}
-              className="rounded-2xl border border-line bg-surface p-6 shadow-card"
+              as={Card}
+              className="p-6"
             >
               <span className="font-heading text-digit-sm font-extrabold leading-none text-coral">
                 {principle.n}

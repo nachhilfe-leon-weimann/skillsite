@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Container } from "@skillsite/ui/layout/container";
 import { Button } from "@skillsite/ui/primitives/button";
+import { Card } from "@skillsite/ui/primitives/card";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -28,7 +29,10 @@ export function CtaSection({
     <Container className="py-section">
       <Reveal
         variant="rise-soft"
-        className="relative overflow-hidden rounded-3xl bg-coral-gradient p-panel-cta text-center text-white shadow-glow-lg"
+        as={Card}
+        tone="accent"
+        radius="3xl"
+        className="relative overflow-hidden p-panel-cta text-center shadow-glow-lg"
       >
         <Eyebrow dot={false} tone="on-accent">
           {eyebrow}

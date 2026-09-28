@@ -5,6 +5,7 @@ import { Container } from "@skillsite/ui/layout/container";
 import { Section } from "@skillsite/ui/layout/section";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Button } from "@skillsite/ui/primitives/button";
+import { Card } from "@skillsite/ui/primitives/card";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Lead } from "@skillsite/ui/typography/lead";
 import { Text } from "@skillsite/ui/typography/text";
@@ -113,7 +114,8 @@ export default function HomePage() {
               trigger="mount"
               variant="fade"
               delay={480}
-              className="absolute -left-4 bottom-8 flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5 shadow-card"
+              as={Card}
+              className="absolute -left-4 bottom-8 flex items-center gap-3 px-4 py-3.5"
             >
               <span className="font-heading text-price-badge font-extrabold text-coral">
                 30&nbsp;€
@@ -128,7 +130,10 @@ export default function HomePage() {
               trigger="mount"
               variant="fade"
               delay={580}
-              className="absolute -right-3.5 top-6 rounded-callout flex flex-row gap-2 items-center bg-navy px-4 py-2.5 text-callout font-semibold text-white shadow-card"
+              as={Card}
+              tone="inverse"
+              radius="callout"
+              className="absolute -right-3.5 top-6 flex flex-row gap-2 items-center px-4 py-2.5 text-callout font-semibold text-white"
             >
               Ohne Mindestlaufzeit <Check className="size-4" />
             </Reveal>

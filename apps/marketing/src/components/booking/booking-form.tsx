@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Calendar } from "lucide-react";
 
 import { Button } from "@skillsite/ui/primitives/button";
+import { Card } from "@skillsite/ui/primitives/card";
 import { InlineLink } from "@skillsite/ui/typography/prose";
 import { Text } from "@skillsite/ui/typography/text";
 import { cn } from "@skillsite/ui/utils/cn";
@@ -193,7 +194,7 @@ export function BookingForm({
       ))}
 
       {isPaidBooking ? (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-bg p-4">
+        <Card surface="inset" className="flex flex-col gap-3 p-4">
           {needsEarlyPerformanceConsent ? (
             <label className="flex cursor-pointer items-start gap-3 text-note leading-relaxed text-ink">
               <input
@@ -221,7 +222,7 @@ export function BookingForm({
             </InlineLink>
             .
           </Text>
-        </div>
+        </Card>
       ) : null}
 
       <Button type="submit" disabled={!readyToSubmit} className="mt-1">

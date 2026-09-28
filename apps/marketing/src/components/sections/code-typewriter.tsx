@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useInView } from "@skillsite/ui/hooks/use-in-view";
+import { Card } from "@skillsite/ui/primitives/card";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -285,10 +286,11 @@ export function CodeTypewriter() {
   }, [inView]);
 
   return (
-    <div
+    <Card
       ref={ref}
       aria-hidden
-      className="overflow-x-auto rounded-2xl bg-navy p-6 text-on-navy shadow-card"
+      tone="inverse"
+      className="overflow-x-auto p-6 text-on-navy"
     >
       <div className="grid">
         {/* Sizer: reserves the full block height so typing never shifts layout. */}
@@ -305,6 +307,6 @@ export function CodeTypewriter() {
           {renderSegs(frame.after)}
         </pre>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -3,6 +3,7 @@ import { Container } from "@skillsite/ui/layout/container";
 import { Section } from "@skillsite/ui/layout/section";
 import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Button } from "@skillsite/ui/primitives/button";
+import { Card } from "@skillsite/ui/primitives/card";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
@@ -59,9 +60,11 @@ export default function ProcessPage() {
           </div>
 
           <Reveal variant="rise-soft">
-            <div
+            <Card
               id="discord"
-              className="rounded-3xl bg-navy p-panel text-on-navy shadow-card"
+              tone="inverse"
+              radius="3xl"
+              className="p-panel text-on-navy"
             >
               <Eyebrow dot={false} tone="inverse-accent">
                 Unser Klassenzimmer
@@ -103,7 +106,7 @@ export default function ProcessPage() {
                   So richtest du Discord ein <ArrowRight className="size-4" />
                 </Link>
               </Button>
-            </div>
+            </Card>
           </Reveal>
         </Split>
       </Section>
