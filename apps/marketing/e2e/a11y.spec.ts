@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { isolate, stubAvailability } from "./helpers";
+import { indexablePaths } from "../src/lib/routes";
 
 test.beforeEach(async ({ page }) => {
   await isolate(page);
@@ -99,3 +100,24 @@ test("the Discord buttons are named by their text only", async ({ page }) => {
     page.getByRole("link", { name: "Server beitreten", exact: true }),
   ).toHaveCount(2);
 });
+
+for (const path of indexablePaths) {
+  test(`the heading outline of ${path} never skips a level`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    const levels = await page
+      .locator("h1, h2, h3, h4, h5, h6")
+      .evaluateAll((headings) =>
+        headings.map((heading) => Number(heading.tagName.slice(1))),
+      );
+    expect(levels[0], "the first heading is the h1").toBe(1);
+    levels.forEach((level, i) => {
+      if (i > 0)
+        expect(
+          level,
+          `heading ${i + 1} of ${levels.length}`,
+        ).toBeLessThanOrEqual(levels[i - 1]! + 1);
+    });
+  });
+}
