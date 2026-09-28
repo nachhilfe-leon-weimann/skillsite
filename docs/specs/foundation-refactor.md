@@ -11,7 +11,7 @@
 
 The site works and looks right, but the code underneath is not a system the portal can build on:
 
-- **The type scale is mostly not applied.** `cn` in [`utils.ts`](../../packages/ui/src/utils/cn.ts) calls an
+- **The type scale is mostly not applied.** `cn` in [`cn.ts`](../../packages/ui/src/utils/cn.ts) calls an
   unconfigured `twMerge`. tailwind-merge takes the theme's font-size utilities (`text-eyebrow`, `text-lead`,
   `text-small`, `text-caption`, `text-body`, `text-h4`, ...) for text colours and drops them whenever a colour
   class follows. About 82 call sites render without their declared size: `Text` 51 of 53, `Lead` 5 of 5,
@@ -394,7 +394,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   `TextLink`/`ArrowLink`/`NavLink` on `next/link` with one external-link rule (`rel`, `target`). `Field` gets
   `error`, `description`, `required` slots (V4). Every current occurrence maps to a variant 1:1.
 - _Acceptance criteria:_
-  - [ ] No hand-built copy of these patterns is left outside the package (ratchet + grep list in the PR).
+  - [x] No hand-built copy of these patterns is left outside the package (ratchet + grep list in the PR).
 
 **C7 - Headless spike.** _(gate - the maintainer decides)_
 

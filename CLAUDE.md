@@ -42,7 +42,10 @@ there slice by slice.
 - Build pages from `@skillsite/ui` components and the type scale (`text-display` ... `text-caption`). No arbitrary
   values (`text-[...]`, inline `color-mix(...)`, hand-tuned `clamp()`), no hand-built copies of existing components.
 - Variants are CVA maps named by role (`variant: primary | secondary | inverse | outline | ghost`,
-  `tone: default | muted | inverse | ...`); a link styled as a button is `<Button asChild><Link …/></Button>`.
+  `tone: default | muted | inverse | ...`); a link styled as a button is
+  `<Button asChild><SmartLink href="…" /></Button>` (`next/link`'s `Link` is fine directly for a plain route).
+- Links go through `@skillsite/ui/primitives/link` (`SmartLink`, `TextLink`, `ArrowLink`, `NavLink`); never write
+  `target`/`rel` by hand.
 - `just ratchet` counts design-system bypasses (`design-ratchet.json`). A count may never rise; when your change
   lowers one, run `just ratchet-update` and commit the file. Exceptions go into its `allow` list with a reason.
 - Design values are tokens in `packages/ui/styles/tokens.css` (raw values -> semantic roles -> `@theme`). A new
@@ -85,3 +88,11 @@ there slice by slice.
   (`apps/marketing/src/components/layout/ios-toolbar-tint.tsx`); keep exactly one `<footer>` in the layout.
 - `agentRules: false` in `apps/marketing/next.config.ts` stops `next dev` from writing its own `AGENTS.md` /
   `CLAUDE.md`; this file is the only anchor.
+- A component passed to `Reveal as={…}` from a server page must be a client module (`"use client"`); a lifting
+  card stays a child of a `Reveal`, not merged onto it via `as` - the `.reveal` rules beat `lift`'s hover
+  transform when both land on the same element.
+- `@skillsite/ui/shell/fonts` must be imported before `globals.css` in `apps/marketing/src/app/layout.tsx`;
+  `apps/marketing/src/app/layout-imports.test.ts` guards this.
+- Tailwind's `@source` (`apps/marketing/src/app/globals.css`) scans `packages/ui/src` and turns identifier-like
+  strings into CSS. A variant or variable name that happens to be a utility name (e.g. `inline-doc`, `resize`)
+  emits a stray rule - rename the identifier, never allow-list the rule.
