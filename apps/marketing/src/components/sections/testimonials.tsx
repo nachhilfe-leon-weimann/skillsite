@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@skillsite/ui/utils/cn";
 import { Container } from "@skillsite/ui/layout/container";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
+import { IconButton } from "@skillsite/ui/primitives/icon-button";
 import { testimonials, testimonialsAreExamples } from "@/content/testimonials";
 
 export function Testimonials() {
@@ -32,14 +33,14 @@ export function Testimonials() {
       </div>
 
       <div className="mt-7 flex items-center justify-center gap-3.5">
-        <button
-          type="button"
+        <IconButton
+          size="lg"
+          surface="inset"
           onClick={() => setIndex(index - 1)}
           aria-label="Vorherige Stimme"
-          className="flex size-11 items-center justify-center rounded-full border border-line bg-bg text-ink transition-colors hover:border-ink"
         >
           <ArrowLeft className="size-5" aria-hidden />
-        </button>
+        </IconButton>
         <div className="flex gap-2">
           {testimonials.map((item, i) => (
             <button
@@ -55,14 +56,14 @@ export function Testimonials() {
             />
           ))}
         </div>
-        <button
-          type="button"
+        <IconButton
+          size="lg"
+          surface="inset"
           onClick={() => setIndex(index + 1)}
           aria-label="Nächste Stimme"
-          className="flex size-11 items-center justify-center rounded-full border border-line bg-bg text-ink transition-colors hover:border-ink"
         >
           <ArrowRight className="size-5" aria-hidden />
-        </button>
+        </IconButton>
       </div>
 
       {testimonialsAreExamples ? (

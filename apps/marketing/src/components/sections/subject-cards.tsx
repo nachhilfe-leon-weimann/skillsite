@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Tag } from "@skillsite/ui/primitives/tag";
 import { Card } from "@skillsite/ui/primitives/card";
+import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { subjects } from "@/content/subjects";
@@ -43,9 +44,13 @@ function SubjectCard({
     <Card asChild lift="md" className="group flex h-full flex-col p-6">
       <Link href={subject.href}>
         <div className="flex items-center justify-between">
-          <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
+          <IconBadge
+            size="13"
+            tone="subtle"
+            className="font-heading text-icon-badge font-bold"
+          >
             <Icon className="size-6" />
-          </span>
+          </IconBadge>
           {subject.tag ? <Tag>{subject.tag}</Tag> : null}
         </div>
         <Heading

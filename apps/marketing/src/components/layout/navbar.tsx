@@ -9,6 +9,7 @@ import { cn } from "@skillsite/ui/utils/cn";
 import { Container } from "@skillsite/ui/layout/container";
 import { Logo } from "@skillsite/ui/shell/logo";
 import { Button } from "@skillsite/ui/primitives/button";
+import { IconButton } from "@skillsite/ui/primitives/icon-button";
 import { brand, primaryCta, primaryNav, platformNav } from "@/content/site";
 import { useBodyScrollLock } from "@skillsite/ui/hooks/use-body-scroll-lock";
 import { useMediaQuery } from "@skillsite/ui/hooks/use-media-query";
@@ -123,16 +124,16 @@ function NavbarContent({ pathname }: { pathname: string }) {
               <span className="hidden nav-wide:inline">{primaryCta.label}</span>
             </Link>
           </Button>
-          <button
+          <IconButton
             ref={menuButtonRef}
-            type="button"
+            hover="none"
             aria-label="Menü"
             aria-expanded={open}
             onClick={toggleMobileMenu}
-            className="inline-flex size-10 items-center justify-center rounded-full border border-line bg-surface text-ink nav:hidden"
+            className="inline-flex nav:hidden"
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+          </IconButton>
         </div>
       </Container>
 
