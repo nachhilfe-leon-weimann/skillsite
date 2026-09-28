@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { Heading, Lead, Text } from "./typography";
+import { Heading } from "./heading";
+import { Lead } from "./lead";
+import { Text } from "./text";
 
 const meta = {
   title: "Primitives/Typography",

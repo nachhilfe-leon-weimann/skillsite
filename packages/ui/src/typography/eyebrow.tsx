@@ -1,4 +1,4 @@
-import { cn } from "./utils";
+import { cn } from "../utils/cn";
 
 /** Small uppercase coral label with a leading dot. */
 export function Eyebrow({

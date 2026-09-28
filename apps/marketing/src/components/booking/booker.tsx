@@ -13,10 +13,11 @@ import {
   Video,
 } from "lucide-react";
 
-import { Button, LinkButton } from "@skillsite/ui/button";
-import { Select } from "@skillsite/ui/select";
-import { Heading, Text } from "@skillsite/ui/typography";
-import { cn } from "@skillsite/ui/utils";
+import { Button, LinkButton } from "@skillsite/ui/primitives/button";
+import { Select } from "@skillsite/ui/forms/select";
+import { Heading } from "@skillsite/ui/typography/heading";
+import { Text } from "@skillsite/ui/typography/text";
+import { cn } from "@skillsite/ui/utils/cn";
 import { BookingForm } from "@/components/booking/booking-form";
 import { bookerText } from "@/content/booking";
 import { requestBooking } from "@/lib/booking/actions";

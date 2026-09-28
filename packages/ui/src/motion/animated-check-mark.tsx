@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckMark } from "./check-mark";
-import { useInView } from "./hooks/use-in-view";
+import { CheckMark } from "../primitives/check-mark";
+import { useInView } from "../hooks/use-in-view";
 
 type AnimatedCheckMarkProps = {
   className?: string;

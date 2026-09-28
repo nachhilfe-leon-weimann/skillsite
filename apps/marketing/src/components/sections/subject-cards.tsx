@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { Reveal } from "@skillsite/ui/reveal";
-import { Tag } from "@skillsite/ui/tag";
+import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Tag } from "@skillsite/ui/primitives/tag";
 import { subjects } from "@/content/subjects";
 import { ArrowRight } from "lucide-react";
 

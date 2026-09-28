@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-import { cn } from "@skillsite/ui/utils";
-import { Eyebrow } from "@skillsite/ui/eyebrow";
+import { cn } from "@skillsite/ui/utils/cn";
+import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { testimonials, testimonialsAreExamples } from "@/content/testimonials";
 
 export function Testimonials() {

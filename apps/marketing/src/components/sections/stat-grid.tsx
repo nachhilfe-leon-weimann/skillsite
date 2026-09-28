@@ -1,5 +1,5 @@
-import { cn } from "@skillsite/ui/utils";
-import { CountUp } from "@skillsite/ui/count-up";
+import { cn } from "@skillsite/ui/utils/cn";
+import { CountUp } from "@skillsite/ui/motion/count-up";
 
 type StatItem = { value: string; label: string };
 

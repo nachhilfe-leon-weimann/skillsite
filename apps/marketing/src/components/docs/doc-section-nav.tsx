@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { cn } from "@skillsite/ui/utils";
+import { cn } from "@skillsite/ui/utils/cn";
 
 export type DocNavSection = { id: string; label: string };
 

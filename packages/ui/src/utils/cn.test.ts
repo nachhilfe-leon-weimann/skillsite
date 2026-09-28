@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, test } from "vitest";
 
-import { cn } from "./utils";
+import { cn } from "./cn";
 
 test("the later of two conflicting utilities wins", () => {
   expect(cn("px-2", "px-4")).toBe("px-4");
@@ -53,11 +53,26 @@ test("the page width conflicts with max-width utilities", () => {
   expect(cn("max-w-page max-w-none")).toBe("max-w-none");
 });
 
-// Drift guard: every token and utility of theme.css must be known to `cn`.
-const themeCss = readFileSync(
-  new URL("../styles/theme.css", import.meta.url),
-  "utf8",
-);
+// Drift guard: every token and utility of the theme must be known to `cn`.
+// styles/theme.css is the entry file; its parts are read in its @import order.
+const stylesDir = new URL("../../styles/", import.meta.url);
+const themeParts = [
+  ...readFileSync(new URL("theme.css", stylesDir), "utf8").matchAll(
+    /^@import "\.\/([a-z-]+\.css)";$/gm,
+  ),
+].map((match) => match[1]!);
+const themeCss = themeParts
+  .map((part) => readFileSync(new URL(part, stylesDir), "utf8"))
+  .join("\n");
+
+test("theme.css imports its parts in a fixed order", () => {
+  expect(themeParts).toEqual([
+    "tokens.css",
+    "base.css",
+    "components.css",
+    "motion.css",
+  ]);
+});
 
 /** Token names of one namespace, e.g. `--text-lead` -> `lead` (skips `--text-lead--line-height`). */
 function tokens(namespace: string): string[] {
