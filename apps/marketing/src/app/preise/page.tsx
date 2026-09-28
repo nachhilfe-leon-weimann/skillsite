@@ -5,7 +5,7 @@ import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Card } from "@skillsite/ui/primitives/card";
 import { Button } from "@skillsite/ui/primitives/button";
-import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
+import { CheckList } from "@skillsite/ui/primitives/check-list";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
@@ -82,21 +82,12 @@ export default function PricingPage() {
             </div>
             <div className="flex flex-col justify-center gap-3.5 bg-surface p-panel-pricing">
               <Reveal
+                as={CheckList}
+                items={priceIncludes}
                 trigger="mount"
                 variant="rise-soft"
                 delay={220}
-                className="flex flex-col gap-3.5"
-              >
-                {priceIncludes.map((item, index) => (
-                  <div key={item} className="flex items-start gap-3">
-                    <AnimatedCheckMark
-                      index={index}
-                      className="mt-0.5 size-5 shrink-0 text-coral"
-                    />
-                    <Text as="span">{item}</Text>
-                  </div>
-                ))}
-              </Reveal>
+              />
             </div>
           </Card>
         </div>

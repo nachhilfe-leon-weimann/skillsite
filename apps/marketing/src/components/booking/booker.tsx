@@ -18,6 +18,7 @@ import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
 import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { IconButton } from "@skillsite/ui/primitives/icon-button";
+import { InfoRow } from "@skillsite/ui/primitives/info-row";
 import { Select } from "@skillsite/ui/forms/select";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -477,25 +478,6 @@ function AnimatedHeight({
   );
 }
 
-function InfoRow({
-  icon,
-  children,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-3 text-on-navy">
-      <IconBadge size="8" shape="lg" tone="inverse" className="shrink-0">
-        {icon}
-      </IconBadge>
-      <Text as="span" size="small" tone="inherit">
-        {children}
-      </Text>
-    </div>
-  );
-}
-
 function CenteredState({
   icon,
   title,
@@ -790,27 +772,23 @@ function ResultStep({
       >
         {summary ? (
           <Card
+            asChild
             surface="inset"
-            className="mx-auto mb-5 flex max-w-xs items-center gap-3 p-3.5 text-left"
+            className="mx-auto mb-5 max-w-xs p-3.5 text-left"
           >
-            <IconBadge
-              size="9"
-              shape="lg"
-              tone="accent-12"
-              className="shrink-0"
+            <InfoRow
+              variant="summary"
+              label="Dein Termin"
+              icon={
+                event === "kennenlernen" ? (
+                  <Phone className="size-4" aria-hidden />
+                ) : (
+                  <Video className="size-4" aria-hidden />
+                )
+              }
             >
-              {event === "kennenlernen" ? (
-                <Phone className="size-4" aria-hidden />
-              ) : (
-                <Video className="size-4" aria-hidden />
-              )}
-            </IconBadge>
-            <div className="min-w-0">
-              <Eyebrow as="p" dot={false} tone="muted">
-                Dein Termin
-              </Eyebrow>
-              <p className="font-heading font-bold text-ink">{summary}</p>
-            </div>
+              {summary}
+            </InfoRow>
           </Card>
         ) : null}
         <Text tone="muted" className="mb-6">
