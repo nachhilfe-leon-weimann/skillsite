@@ -37,13 +37,13 @@ export default function PricingPage() {
         align="center"
         eyebrow="Preise"
         title="Klare Preise ohne Überraschungen."
-        titleClassName="max-w-[12em]"
+        titleClassName="max-w-measure-12"
       />
 
       <Container className="py-section-sm">
         <div className="mx-auto max-w-230">
           <div className="grid overflow-hidden rounded-3xl border border-line shadow-card md:grid-cols-2">
-            <div className="flex flex-col justify-center bg-navy p-[clamp(2rem,4vw,2.75rem)] text-white">
+            <div className="flex flex-col justify-center bg-navy p-panel-pricing text-white">
               <Reveal trigger="mount" variant="rise-soft" delay={0}>
                 <span className="font-semibold tracking-[0.04em] text-accent-blue">
                   Festpreis für jedes angebotene Fach
@@ -55,10 +55,14 @@ export default function PricingPage() {
                 delay={160}
                 className="my-2.5 flex items-baseline gap-2"
               >
-                <span className="font-heading text-[clamp(3.6rem,8vw,5.2rem)] font-extrabold leading-none">
+                <span className="font-heading text-price font-extrabold leading-none">
                   {lessonPrice.amount}
                 </span>
-                <Text as="span" tone="inverse-muted" className="text-[1.1rem]">
+                <Text
+                  as="span"
+                  tone="inverse-muted"
+                  className="text-price-unit"
+                >
                   {lessonPrice.unit}
                 </Text>
               </Reveal>
@@ -75,7 +79,7 @@ export default function PricingPage() {
                 </Button>
               </Reveal>
             </div>
-            <div className="flex flex-col justify-center gap-3.5 bg-surface p-[clamp(2rem,4vw,2.75rem)]">
+            <div className="flex flex-col justify-center gap-3.5 bg-surface p-panel-pricing">
               <Reveal
                 trigger="mount"
                 variant="rise-soft"
@@ -140,10 +144,10 @@ export default function PricingPage() {
         <div className="mb-8 flex flex-wrap justify-between items-end">
           <Reveal variant="rise-soft">
             <Eyebrow>Bildung und Teilhabe</Eyebrow>
-            <Heading size="h3" className="mt-4 mb-2.5 max-w-[18em]">
+            <Heading size="h3" className="mt-4 mb-2.5 max-w-measure-18">
               Geförderte Nachhilfe – unkompliziert abgerechnet.
             </Heading>
-            <Text tone="muted" className="max-w-[38em]">
+            <Text tone="muted" className="max-w-measure-38">
               {but.intro}
             </Text>
           </Reveal>
@@ -180,7 +184,7 @@ export default function PricingPage() {
               index={i}
               className="rounded-2xl border border-line bg-bg p-6"
             >
-              <span className="font-heading text-[2rem] font-extrabold leading-none text-coral">
+              <span className="font-heading text-digit-sm font-extrabold leading-none text-coral">
                 {step.n}
               </span>
               <Text className="mt-3">{step.text}</Text>

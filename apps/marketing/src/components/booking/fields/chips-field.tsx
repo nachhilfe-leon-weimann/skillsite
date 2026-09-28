@@ -61,8 +61,8 @@ export function ChipsField({
                 <span
                   aria-hidden
                   className={cn(
-                    "text-[0.95em]",
-                    active ? "text-white/75" : "text-coral",
+                    "text-chip-icon",
+                    active ? "text-on-accent-75" : "text-coral",
                   )}
                 >
                   <Icon className="size-5" />

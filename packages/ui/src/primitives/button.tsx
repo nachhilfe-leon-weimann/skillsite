@@ -9,18 +9,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-coral-gradient text-white shadow-[0_14px_30px_-12px_var(--coral)] [--lift:-0.125rem]",
+          "bg-coral-gradient text-white shadow-glow-sm [--lift:-0.125rem]",
         secondary: "bg-navy text-white hover:opacity-90",
         outline:
           "border-[1.5px] border-line bg-transparent text-ink hover:border-ink",
-        inverse:
-          "bg-white text-navy shadow-[0_12px_28px_-12px_rgba(0,0,0,0.4)] [--lift:-0.125rem]",
+        inverse: "bg-white text-navy shadow-raised [--lift:-0.125rem]",
         ghost: "text-ink-soft hover:bg-surface-2 hover:text-ink",
       },
       size: {
         sm: "px-3.5 py-1.5 text-sm",
-        md: "px-5 py-2.5 text-[1rem]",
-        lg: "px-6 py-3 text-[1.05rem]",
+        md: "px-5 py-2.5 text-button",
+        lg: "px-6 py-3 text-button-lg",
       },
     },
     defaultVariants: { variant: "primary", size: "md" },

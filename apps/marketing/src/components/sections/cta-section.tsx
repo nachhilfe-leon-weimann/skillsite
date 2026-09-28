@@ -27,16 +27,18 @@ export function CtaSection({
     <Container className="py-section">
       <Reveal
         variant="rise-soft"
-        className="relative overflow-hidden rounded-3xl bg-coral-gradient p-[clamp(2.5rem,6vw,4.5rem)] text-center text-white shadow-[0_30px_60px_-30px_var(--coral)]"
+        className="relative overflow-hidden rounded-3xl bg-coral-gradient p-panel-cta text-center text-white shadow-glow-lg"
       >
-        <span className="text-eyebrow uppercase text-white/90">{eyebrow}</span>
-        <Heading size="h2" className="mx-auto mt-4 max-w-[14em]">
+        <span className="text-eyebrow uppercase text-on-accent-90">
+          {eyebrow}
+        </span>
+        <Heading size="h2" className="mx-auto mt-4 max-w-measure-14">
           {title}
         </Heading>
         <Text
           size="lead"
           tone="inherit"
-          className="mx-auto mt-4 max-w-[30em] text-white/90"
+          className="mx-auto mt-4 max-w-measure-30 text-on-accent-90"
         >
           {subtitle}
         </Text>
@@ -47,7 +49,7 @@ export function CtaSection({
             </Link>
           </Button>
         </div>
-        <Text size="small" tone="inherit" className="mt-4 text-white/85">
+        <Text size="small" tone="inherit" className="mt-4 text-on-accent-85">
           {trust}
         </Text>
       </Reveal>

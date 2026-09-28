@@ -21,11 +21,11 @@ export function StepGrid({ steps, card = false, className }: StepGridProps) {
             card && "rounded-2xl border border-line bg-surface p-6 shadow-card",
           )}
         >
-          <span className="font-heading text-[2.4rem] font-extrabold leading-none text-coral">
+          <span className="font-heading text-digit-lg font-extrabold leading-none text-coral">
             {step.n}
           </span>
           {step.title ? (
-            <h3 className="mt-3 font-heading text-[1.2rem] font-bold text-ink">
+            <h3 className="mt-3 font-heading text-step-title font-bold text-ink">
               {step.title}
             </h3>
           ) : null}

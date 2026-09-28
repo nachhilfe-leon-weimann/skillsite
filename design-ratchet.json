@@ -2,19 +2,23 @@
   "allow": {
     "hex-color": [
       {
-        "file": "apps/marketing/src/app/layout.tsx",
-        "reason": "theme-color meta tags cannot read CSS variables"
+        "file": "apps/marketing/src/app/opengraph-image.tsx",
+        "reason": "Satori cannot read CSS variables, and Next derives the og:image URL hash from this file: moving its colours changes <head> on every page"
+      },
+      {
+        "file": "packages/ui/src/tokens/colors.ts",
+        "reason": "the TS mirror of styles/tokens.css for runtimes without CSS variables (theme-color, manifest, QR code); colors.test.ts keeps it equal"
       }
     ]
   },
   "counts": {
-    "arbitrary-text": 32,
+    "arbitrary-text": 0,
     "raw-text-size": 21,
-    "color-mix": 13,
-    "arbitrary-shadow": 7,
-    "arbitrary-radius": 3,
-    "clamp-spacing": 24,
-    "hex-color": 12,
+    "color-mix": 0,
+    "arbitrary-shadow": 0,
+    "arbitrary-radius": 0,
+    "clamp-spacing": 0,
+    "hex-color": 0,
     "raw-button": 13,
     "inline-style": 16
   }

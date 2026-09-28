@@ -58,7 +58,7 @@ export default async function PaymentPage({
       <Heading as="h1" size="h1" className="mt-4">
         Dieser Zahlungslink führt nicht weiter.
       </Heading>
-      <Text size="lead" tone="muted" className="mt-4 max-w-[34em]">
+      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
         Vermutlich ist der Link aus der Rechnung unterwegs abgeschnitten worden.
         Schreib mir kurz mit deiner Rechnungsnummer – du bekommst sofort einen
         neuen Link.

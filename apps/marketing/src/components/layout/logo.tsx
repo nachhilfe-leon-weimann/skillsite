@@ -25,13 +25,13 @@ export function Logo({
         width={42}
         height={41}
         priority
-        className="rounded-xl shadow-[0_5px_14px_-5px_rgba(16,29,45,0.5)]"
+        className="rounded-xl shadow-logo"
       />
       {showText ? (
         <span className={cn("flex flex-col leading-[1.08]", textClassName)}>
           <span
             className={cn(
-              "font-heading text-[1.04rem] font-bold tracking-[-0.01em]",
+              "font-heading text-logo font-bold tracking-[-0.01em]",
               tone === "inverse" ? "text-white" : "text-ink",
             )}
           >
@@ -39,7 +39,7 @@ export function Logo({
           </span>
           <span
             className={cn(
-              "whitespace-nowrap text-[0.71rem] tracking-[0.03em]",
+              "whitespace-nowrap text-logo-tagline tracking-[0.03em]",
               tone === "inverse" ? "text-on-navy-soft" : "text-ink-soft",
             )}
           >

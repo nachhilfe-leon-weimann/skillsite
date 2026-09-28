@@ -58,13 +58,13 @@ function FooterLink({
 export function Footer() {
   return (
     <footer className="bg-navy pb-[env(safe-area-inset-bottom)] text-on-navy-soft">
-      <Container className="py-[clamp(40px,5vw,56px)]">
+      <Container className="py-footer">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div className="flex flex-col items-start gap-4">
             <Link href={routes.home} aria-label="Startseite">
               <Logo tone="inverse" />
             </Link>
-            <p className="max-w-[26em] text-small text-on-navy-muted">
+            <p className="max-w-measure-26 text-small text-on-navy-muted">
               Persönliche Online-Nachhilfe in Mathematik, Informatik und Physik
               – flexibel und auf Augenhöhe.
             </p>
@@ -95,7 +95,7 @@ export function Footer() {
           </FooterColumn>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-x-5 gap-y-4 border-t border-white/15 pt-5 text-caption text-on-navy-muted">
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-x-5 gap-y-4 border-t border-overlay-15 pt-5 text-caption text-on-navy-muted">
           <span>© {new Date().getFullYear()} Nachhilfe Leon Weimann</span>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
             <Link href={routes.impressum} className={legalLinkClass}>

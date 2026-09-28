@@ -362,7 +362,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   title, large button) and prose tokens for the legal pages (their current Tailwind-default values). Hex values in
   TS read from tokens where the runtime allows it.
 - _Acceptance criteria:_
-  - [ ] The ratchet counts for `color-mix(`, `text-[`, `shadow-[`, `rounded-[`, `-[clamp(` and hex drop to the
+  - [x] The ratchet counts for `color-mix(`, `text-[`, `shadow-[`, `rounded-[`, `-[clamp(` and hex drop to the
         allow-listed rest; computed styles unchanged.
 
 **C4 - One typography API.**

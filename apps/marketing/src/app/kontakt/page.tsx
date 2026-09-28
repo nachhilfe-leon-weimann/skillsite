@@ -62,9 +62,9 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               href={whatsapp}
               target="_blank"
               rel="noreferrer"
-              className="flex h-full flex-col justify-center overflow-hidden rounded-2xl bg-coral-gradient p-[clamp(1.75rem,3.5vw,2.5rem)] text-white shadow-[0_22px_44px_-22px_var(--coral)] lift [--lift:-0.25rem]"
+              className="flex h-full flex-col justify-center overflow-hidden rounded-2xl bg-coral-gradient p-panel-contact text-white shadow-glow-md lift [--lift:-0.25rem]"
             >
-              <span className="text-eyebrow uppercase text-white/90">
+              <span className="text-eyebrow uppercase text-on-accent-90">
                 Am liebsten per WhatsApp
               </span>
               <Heading size="h3" className="mt-2.5 mb-1.5">
@@ -73,12 +73,12 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               <Text
                 size="lead"
                 tone="inherit"
-                className="max-w-[24em] text-white/90"
+                className="max-w-measure-24 text-on-accent-90"
               >
                 Über WhatsApp erreichst du mich am schnellsten. Meistens
                 antworte ich noch am selben Tag.
               </Text>
-              <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/35 bg-white/20 px-5 py-2.5 font-semibold">
+              <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-overlay-35 bg-overlay-20 px-5 py-2.5 font-semibold">
                 Jetzt anschreiben <ArrowRight className="size-4" />
               </span>
               <div className="mt-7 hidden items-center gap-4 sm:flex">
@@ -86,7 +86,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                 <Text
                   size="small"
                   tone="inherit"
-                  className="max-w-[12em] text-white/85"
+                  className="max-w-measure-12 text-on-accent-85"
                 >
                   Oder den QR-Code mit dem Handy scannen.
                 </Text>
@@ -132,7 +132,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
       <Section id="kennenlernen" surface>
         <Reveal
           variant="rise-soft"
-          className="mx-auto mb-[clamp(1.75rem,4vw,2.5rem)] max-w-[40em] text-center"
+          className="mx-auto mb-intro-bottom max-w-measure-40 text-center"
         >
           <div className="flex justify-center">
             <Eyebrow>Erstgespräch</Eyebrow>

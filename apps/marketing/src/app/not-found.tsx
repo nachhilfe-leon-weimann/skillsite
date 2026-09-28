@@ -21,7 +21,7 @@ export default function NotFound() {
       <Heading as="h1" size="h1" className="mt-4">
         Seite nicht gefunden.
       </Heading>
-      <Text size="lead" tone="muted" className="mt-4 max-w-[34em]">
+      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
         Diese Seite gibt es nicht. Vielleicht hilft dir eine dieser Optionen
         weiter.
       </Text>

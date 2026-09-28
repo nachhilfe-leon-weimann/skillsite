@@ -53,7 +53,11 @@ export function SectionHeader({
       {lead ? (
         <Reveal variant="rise-soft" index={step++} className="mt-4">
           <Lead
-            className={cn("max-w-[34em]", centered && "mx-auto", leadClassName)}
+            className={cn(
+              "max-w-measure-34",
+              centered && "mx-auto",
+              leadClassName,
+            )}
           >
             {lead}
           </Lead>

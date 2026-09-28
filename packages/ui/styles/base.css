@@ -37,8 +37,8 @@
   }
 
   :focus-visible {
-    outline: 3px solid var(--coral);
-    outline-offset: 3px;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 
   /* Enabled buttons show the pointer; utilities (e.g. cursor-not-allowed) still win. */
