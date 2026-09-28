@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../utils/cn";
 
 /* ----------------------------------------------------------------------------
- * Body text (site)
+ * Body text
    ------------------------------------------------------------------------- */
 const textVariants = cva("", {
   variants: {
@@ -12,12 +12,14 @@ const textVariants = cva("", {
       body: "text-body",
       small: "text-small",
       caption: "text-caption",
+      /** Fine print: sources, legal notes, consent labels. */
+      note: "text-note",
     },
     tone: {
       default: "text-ink",
       muted: "text-ink-soft",
       inverse: "text-on-navy",
-      "inverse-muted": "text-on-navy-soft",
+      "inverse-soft": "text-on-navy-soft",
       inherit: "",
     },
   },

@@ -195,7 +195,7 @@ export function BookingForm({
       {isPaidBooking ? (
         <div className="flex flex-col gap-3 rounded-2xl border border-line bg-bg p-4">
           {needsEarlyPerformanceConsent ? (
-            <label className="flex cursor-pointer items-start gap-3 text-sm leading-relaxed text-ink">
+            <label className="flex cursor-pointer items-start gap-3 text-note leading-relaxed text-ink">
               <input
                 type="checkbox"
                 checked={earlyPerformanceRequested}
@@ -212,7 +212,7 @@ export function BookingForm({
               </span>
             </label>
           ) : null}
-          <Text tone="muted" className="text-sm">
+          <Text size="note" tone="muted">
             Mit Klick auf „Zahlungspflichtig buchen“ akzeptierst du die{" "}
             <InlineLink href={routes.agb}>AGB</InlineLink>. Informationen zur
             Datenverarbeitung findest du in der{" "}

@@ -32,6 +32,6 @@ test("the class order is base, variant, size, then className", () => {
     </Button>,
   );
   expect(screen.getByRole("button", { name: "Mehr" }).className).toBe(
-    "inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap no-underline cursor-pointer lift disabled:pointer-events-none disabled:opacity-60 bg-navy text-white hover:opacity-90 py-1.5 text-sm px-4",
+    "inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap no-underline cursor-pointer lift disabled:pointer-events-none disabled:opacity-60 bg-navy text-white hover:opacity-90 py-1.5 text-button-sm px-4",
   );
 });

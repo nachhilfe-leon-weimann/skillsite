@@ -312,6 +312,20 @@
   --text-prose-sm--line-height: calc(1.25 / 0.875);
   --text-prose-xs: 0.75rem;
   --text-prose-xs--line-height: calc(1 / 0.75);
+
+  /* UI role sizes that keep one of Tailwind's default sizes (size and line
+     height): tag = text-xs; button-sm, note, skip-link = text-sm;
+     accordion-icon = text-xl. */
+  --text-accordion-icon: 1.25rem;
+  --text-accordion-icon--line-height: calc(1.75 / 1.25);
+  --text-button-sm: 0.875rem;
+  --text-button-sm--line-height: calc(1.25 / 0.875);
+  --text-note: 0.875rem;
+  --text-note--line-height: calc(1.25 / 0.875);
+  --text-skip-link: 0.875rem;
+  --text-skip-link--line-height: calc(1.25 / 0.875);
+  --text-tag: 0.75rem;
+  --text-tag--line-height: calc(1 / 0.75);
 }
 
 /* ---------------------------------------------------------------------------

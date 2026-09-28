@@ -4,6 +4,7 @@ import { afterEach, expect, test } from "vitest";
 import * as eyebrow from "./eyebrow";
 import { Eyebrow } from "./eyebrow";
 import * as heading from "./heading";
+import { Heading } from "./heading";
 import * as lead from "./lead";
 import { Lead } from "./lead";
 import * as prose from "./prose";
@@ -43,7 +44,7 @@ test("Text tones on inverse surfaces are named by role", () => {
   render(
     <>
       <Text tone="inverse">Hell</Text>
-      <Text tone="inverse-muted">Gedämpft</Text>
+      <Text tone="inverse-soft">Gedämpft</Text>
     </>,
   );
   expect(screen.getByText("Hell").className).toBe("text-body text-on-navy");
@@ -66,4 +67,59 @@ test("the typography group exports one API", () => {
     "ProseP",
     "Text",
   ]);
+});
+
+test("a scale heading keeps its classes in their order", () => {
+  render(<Heading>Titel</Heading>);
+  expect(screen.getByRole("heading", { level: 2 }).className).toBe(
+    "font-heading text-balance hyphens-heading text-h2",
+  );
+});
+
+test("a card heading has a role size, the plain wrap and a tone", () => {
+  render(
+    <Heading
+      as="h3"
+      size="card-title"
+      wrap="normal"
+      tone="default"
+      className="mt-5"
+    >
+      Mathematik
+    </Heading>,
+  );
+  expect(screen.getByRole("heading", { level: 3 }).className).toBe(
+    "font-heading text-card-title font-bold text-ink mt-5",
+  );
+});
+
+test("Eyebrow has tones, an optional dot and an element", () => {
+  render(
+    <>
+      <Eyebrow>Fächer</Eyebrow>
+      <Eyebrow as="p" dot={false} tone="inverse-muted">
+        Navigation
+      </Eyebrow>
+    </>,
+  );
+  const dotted = screen.getByText("Fächer");
+  expect(dotted.className).toBe(
+    "text-eyebrow uppercase inline-flex items-center gap-2.25 text-coral",
+  );
+  expect(dotted.firstElementChild?.className).toBe(
+    "size-1.75 shrink-0 rounded-full bg-coral",
+  );
+  const plain = screen.getByText("Navigation");
+  expect(plain.tagName).toBe("P");
+  expect(plain.className).toBe("text-eyebrow uppercase text-on-navy-muted");
+  expect(plain.children).toHaveLength(0);
+});
+
+test("the note size is fine print at its own token", () => {
+  render(
+    <Text size="note" tone="muted">
+      Quelle
+    </Text>,
+  );
+  expect(screen.getByText("Quelle").className).toBe("text-note text-ink-soft");
 });
