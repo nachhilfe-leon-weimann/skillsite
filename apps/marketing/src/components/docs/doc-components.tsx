@@ -71,9 +71,11 @@ export function DocHero({
             {facts.map((fact) => {
               const FactIcon = fact.icon;
               return (
-                <div
+                <Card
                   key={fact.label}
-                  className="flex items-center gap-3 rounded-xl border border-line bg-bg p-3"
+                  surface="inset"
+                  radius="xl"
+                  className="flex items-center gap-3 p-3"
                 >
                   <span className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-2 text-ink-soft">
                     <FactIcon className="size-4" aria-hidden />
@@ -84,7 +86,7 @@ export function DocHero({
                       {fact.children}
                     </p>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
@@ -207,10 +209,10 @@ export function DocDetailList({
   items: string[];
 }) {
   return (
-    <div className="rounded-xl border border-line bg-surface-2/60 p-4">
+    <Card surface="doc" radius="xl" className="p-4">
       <p className="text-prose-sm font-medium leading-6 text-ink">{title}</p>
       <DocList items={items} className="my-3 text-prose-sm leading-6" />
-    </div>
+    </Card>
   );
 }
 
@@ -223,18 +225,20 @@ export function DocLinkList({
     <ul className="my-4 grid gap-2 sm:grid-cols-2">
       {links.map((link) => (
         <li key={link.href}>
-          <a
-            href={link.href}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-prose-sm text-ink transition-colors hover:border-coral"
+          <Card
+            asChild
+            surface="flat"
+            radius="xl"
+            className="flex items-center justify-between gap-3 px-3 py-2.5 text-prose-sm text-ink transition-colors hover:border-coral"
           >
-            <span>{link.label}</span>
-            <ExternalLink
-              className="size-3.5 shrink-0 text-ink-soft"
-              aria-hidden
-            />
-          </a>
+            <a href={link.href} target="_blank" rel="noreferrer">
+              <span>{link.label}</span>
+              <ExternalLink
+                className="size-3.5 shrink-0 text-ink-soft"
+                aria-hidden
+              />
+            </a>
+          </Card>
         </li>
       ))}
     </ul>
@@ -266,12 +270,12 @@ export function DocProviderLink({
 
 export function DocLegalBasis({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-4 flex gap-3 rounded-xl border border-line bg-surface-2/60 p-3">
+    <Card surface="doc" radius="xl" className="mt-4 flex gap-3 p-3">
       <Scale className="mt-1 size-4 shrink-0 text-ink-soft" aria-hidden />
       <p className="text-prose-sm leading-6 text-ink-soft">
         <span className="font-medium text-ink">Rechtsgrundlage: </span>
         {children}
       </p>
-    </div>
+    </Card>
   );
 }

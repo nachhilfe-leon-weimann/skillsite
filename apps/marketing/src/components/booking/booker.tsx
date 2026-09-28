@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@skillsite/ui/primitives/button";
+import { Card } from "@skillsite/ui/primitives/card";
 import { Select } from "@skillsite/ui/forms/select";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -316,9 +317,10 @@ export function Booker({
       : null;
 
   return (
-    <div
+    <Card
       ref={cardRef}
-      className="mx-auto @container overflow-hidden rounded-3xl border border-line bg-surface shadow-card"
+      radius="3xl"
+      className="mx-auto @container overflow-hidden"
     >
       <div className="grid @2xl:grid-cols-[20rem_1fr]">
         <aside className="flex flex-col bg-navy p-panel-booker text-on-navy">
@@ -367,7 +369,7 @@ export function Booker({
           </div>
 
           {summary && step !== "result" ? (
-            <div className="mt-6 rounded-2xl border border-overlay-12 bg-overlay-8 p-4">
+            <Card surface="glass" className="mt-6 p-4">
               <Eyebrow as="p" dot={false} tone="inverse-accent">
                 Dein Termin
               </Eyebrow>
@@ -379,7 +381,7 @@ export function Booker({
                   {slotPrice}
                 </p>
               ) : null}
-            </div>
+            </Card>
           ) : null}
 
           {event === "nachhilfe" ? (
@@ -439,7 +441,7 @@ export function Booker({
           ) : null}
         </AnimatedHeight>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -781,7 +783,10 @@ function ResultStep({
         title="Termin gebucht!"
       >
         {summary ? (
-          <div className="mx-auto mb-5 flex max-w-xs items-center gap-3 rounded-2xl border border-line bg-bg p-3.5 text-left">
+          <Card
+            surface="inset"
+            className="mx-auto mb-5 flex max-w-xs items-center gap-3 p-3.5 text-left"
+          >
             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-tint-12 text-coral">
               {event === "kennenlernen" ? (
                 <Phone className="size-4" aria-hidden />
@@ -795,7 +800,7 @@ function ResultStep({
               </Eyebrow>
               <p className="font-heading font-bold text-ink">{summary}</p>
             </div>
-          </div>
+          </Card>
         ) : null}
         <Text tone="muted" className="mb-6">
           {event === "kennenlernen"

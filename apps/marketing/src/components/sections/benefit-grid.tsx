@@ -1,5 +1,6 @@
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Card } from "@skillsite/ui/primitives/card";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import type { Benefit } from "@/content/home";
@@ -12,7 +13,8 @@ export function BenefitGrid({ items }: { items: Benefit[] }) {
           key={benefit.title}
           variant="rise-soft"
           index={index}
-          className="rounded-2xl border border-line bg-surface p-6 shadow-card"
+          as={Card}
+          className="p-6"
         >
           <span className="mb-4 flex size-9.5 items-center justify-center rounded-xl bg-accent-tint-14 text-coral">
             <AnimatedCheckMark index={index} />
