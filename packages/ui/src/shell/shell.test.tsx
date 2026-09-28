@@ -22,8 +22,8 @@ afterEach(() => {
 });
 
 const brand = {
-  name: "Nachhilfe Leon Weimann",
-  tagline: "Verstehen statt auswendig lernen.",
+  name: "Brand",
+  tagline: "Tagline",
   src: "/logo-icon.png",
 };
 

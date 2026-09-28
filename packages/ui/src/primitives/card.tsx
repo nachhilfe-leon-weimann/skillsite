@@ -13,10 +13,12 @@ import { cn } from "../utils/cn";
  * are `<Reveal as={Card} ...>` (one element). A lifting card never is: the
  * unlayered `.reveal` rules override `lift`, so it stays a child of a Reveal.
  * A client module (no hooks): a server page can pass only a client module to
- * the client `Reveal`, and `as={Card}` is such a pass. The price: under
- * `asChild`, a server component child (e.g. `InfoRow` in the legal pages) is
- * rendered before `Slot` sees it, so `Slot` joins the card's classes to the
- * rendered element's without `cn` - a conflicting class is not resolved there.
+ * the client `Reveal`, and `as={Card}` is such a pass. Under `asChild`,
+ * Radix `Slot` never runs `cn` on the merged classes - it only concatenates
+ * the card's classes with the rendered child's own. A child that runs `cn`
+ * on its own `className` itself (as `InfoRow` does) still resolves a
+ * conflict there; a plain element, or a component that does not merge its
+ * own `className`, does not.
    ------------------------------------------------------------------------- */
 const cardVariants = cva("", {
   variants: {

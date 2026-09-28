@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { Button } from "./button";
+import { SmartLink } from "./link";
 
 const meta = {
   title: "Primitives/Button",
@@ -67,7 +68,7 @@ export const Sizes: Story = {
 export const AsLink: Story = {
   render: (args) => (
     <Button asChild variant={args.variant}>
-      <a href="https://example.com">Externer Link</a>
+      <SmartLink href="https://example.com">Externer Link</SmartLink>
     </Button>
   ),
 };

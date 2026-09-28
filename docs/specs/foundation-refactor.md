@@ -11,7 +11,7 @@
 
 The site works and looks right, but the code underneath is not a system the portal can build on:
 
-- **The type scale is mostly not applied.** `cn` in [`utils.ts`](../../packages/ui/src/utils/cn.ts) calls an
+- **The type scale is mostly not applied.** `cn` in [`cn.ts`](../../packages/ui/src/utils/cn.ts) calls an
   unconfigured `twMerge`. tailwind-merge takes the theme's font-size utilities (`text-eyebrow`, `text-lead`,
   `text-small`, `text-caption`, `text-body`, `text-h4`, ...) for text colours and drops them whenever a colour
   class follows. About 82 call sites render without their declared size: `Text` 51 of 53, `Lead` 5 of 5,
