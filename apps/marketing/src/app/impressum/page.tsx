@@ -4,7 +4,7 @@ import {
   DocShell,
 } from "@/components/docs/doc-components";
 import { ContactAddress } from "@/components/shared/contact-address";
-import { InlineLink, P } from "@skillsite/ui/typography/prose";
+import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";
 import { legalContact } from "@/content/legal";
 import { pageMetadata } from "@/lib/metadata";
 import { FileText } from "lucide-react";
@@ -33,7 +33,7 @@ export default function ImpressumPage() {
       </DocSection>
 
       <DocSection id="kontakt" title="Kontaktdaten">
-        <P variant="doc">
+        <ProseP>
           E-Mail:{" "}
           <InlineLink variant="doc" href={`mailto:${legalContact.email}`}>
             {legalContact.email}
@@ -43,17 +43,17 @@ export default function ImpressumPage() {
           <InlineLink variant="doc" href={`tel:${legalContact.phone}`}>
             {legalContact.phone}
           </InlineLink>
-        </P>
+        </ProseP>
       </DocSection>
 
       <DocSection
         id="streitbeilegung"
         title="Verbraucherstreitbeilegung / Universalschlichtungsstelle"
       >
-        <P variant="doc">
+        <ProseP>
           Ich bin weder bereit noch verpflichtet, an Streitbeilegungsverfahren
           vor einer Verbraucherschlichtungsstelle teilzunehmen.
-        </P>
+        </ProseP>
       </DocSection>
     </DocShell>
   );
