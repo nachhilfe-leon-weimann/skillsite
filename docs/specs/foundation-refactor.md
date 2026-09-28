@@ -383,8 +383,8 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   keeps the `next/font` call and the package owns the variable contract - report, do not improvise. Storybook
   loads the brand fonts.
 - _Acceptance criteria:_
-  - [ ] `apps/marketing/src/components/layout` keeps only marketing-specific parts (navbar, footer, iOS tint).
-  - [ ] Built CSS/HTML identical apart from hashed font class names.
+  - [x] `apps/marketing/src/components/layout` keeps only marketing-specific parts (navbar, footer, iOS tint).
+  - [x] Built CSS/HTML identical apart from hashed font class names.
 
 **C6 - Primitives from the duplicates.**
 

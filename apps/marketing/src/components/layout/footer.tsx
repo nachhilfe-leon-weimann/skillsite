@@ -1,10 +1,19 @@
 import Link from "next/link";
+import {
+  SiDiscord,
+  SiGithub,
+  SiInstagram,
+  SiTiktok,
+  SiWhatsapp,
+  SiYoutube,
+} from "@icons-pack/react-simple-icons";
 
 import { Container } from "@skillsite/ui/layout/container";
-import { Logo } from "@/components/layout/logo";
-import { SocialLinks } from "@/components/layout/social-links";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { primaryNav, platformNav } from "@/content/site";
+import { Logo } from "@skillsite/ui/shell/logo";
+import { ThemeToggle } from "@skillsite/ui/shell/theme-toggle";
+import { cn } from "@skillsite/ui/utils/cn";
+import { brand, primaryNav, platformNav } from "@/content/site";
+import { socials, type SocialKey } from "@/content/socials";
 import { contactDetails } from "@/content/contact";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { routes } from "@/lib/routes";
@@ -58,6 +67,42 @@ function FooterLink({
   );
 }
 
+type IconType = typeof SiDiscord;
+
+const iconByKey: Record<SocialKey, IconType> = {
+  discord: SiDiscord,
+  whatsapp: SiWhatsapp,
+  instagram: SiInstagram,
+  youtube: SiYoutube,
+  tiktok: SiTiktok,
+  github: SiGithub,
+};
+
+export function SocialLinks({ className }: { className?: string }) {
+  return (
+    <ul
+      className={cn("flex flex-wrap items-center gap-x-5 gap-y-2", className)}
+    >
+      {socials.map((social) => {
+        const Icon = iconByKey[social.key];
+        return (
+          <li key={social.key}>
+            <a
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={social.label}
+              className="block text-on-navy-muted transition-colors hover:text-white"
+            >
+              <Icon size={20} aria-hidden />
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function Footer() {
   return (
     <footer className="bg-navy pb-[env(safe-area-inset-bottom)] text-on-navy-soft">
@@ -65,7 +110,12 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div className="flex flex-col items-start gap-4">
             <Link href={routes.home} aria-label="Startseite">
-              <Logo tone="inverse" />
+              <Logo
+                name={brand.name}
+                tagline={brand.tagline}
+                src={brand.logo}
+                tone="inverse"
+              />
             </Link>
             <p className="max-w-measure-26 text-small text-on-navy-muted">
               Persönliche Online-Nachhilfe in Mathematik, Informatik und Physik
