@@ -60,7 +60,6 @@ test("the typography group exports one API", () => {
     "Address",
     "Eyebrow",
     "Heading",
-    "InlineLink",
     "Lead",
     "ProseH2",
     "ProseH3",

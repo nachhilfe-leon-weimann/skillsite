@@ -41,25 +41,3 @@ export function ProseP({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn("text-prose-body text-ink", className)} {...props} />;
 }
-
-type InlineLinkProps = React.ComponentProps<"a"> & {
-  /** `doc` in legal text (tighter underline), `site` elsewhere. */
-  variant?: "site" | "doc";
-};
-
-export function InlineLink({
-  className,
-  variant = "site",
-  ...props
-}: InlineLinkProps) {
-  return (
-    <a
-      className={cn(
-        "font-medium text-coral underline transition-colors hover:text-coral-2",
-        variant === "doc" ? "underline-offset-[3px]" : "underline-offset-4",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
