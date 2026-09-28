@@ -16,6 +16,8 @@ import {
 
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
+import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
+import { IconButton } from "@skillsite/ui/primitives/icon-button";
 import { Select } from "@skillsite/ui/forms/select";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -484,9 +486,9 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center gap-3 text-on-navy">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-overlay-8 text-accent-blue">
+      <IconBadge size="8" shape="lg" tone="inverse" className="shrink-0">
         {icon}
-      </span>
+      </IconBadge>
       <Text as="span" size="small" tone="inherit">
         {children}
       </Text>
@@ -505,9 +507,15 @@ function CenteredState({
 }) {
   return (
     <div className="m-auto max-w-sm text-center motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
-      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-accent-tint-16">
+      <IconBadge
+        as="div"
+        size="14"
+        shape="full"
+        tone="accent-16"
+        className="mx-auto mb-4"
+      >
         {icon}
-      </div>
+      </IconBadge>
       <Heading as="h3" size="h4" className="mb-2">
         {title}
       </Heading>
@@ -602,24 +610,22 @@ function SelectStep({
               </strong>
             </div>
             <div className="flex flex-row gap-3">
-              <button
-                type="button"
+              <IconButton
+                size="sm"
                 onClick={() => onChangeMonth(-1)}
                 disabled={monthOffset === 0}
                 aria-label="Vorheriger Monat"
-                className="flex size-9 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors hover:border-ink disabled:pointer-events-none disabled:opacity-40"
               >
                 <ChevronLeft className="size-4" aria-hidden />
-              </button>
-              <button
-                type="button"
+              </IconButton>
+              <IconButton
+                size="sm"
                 onClick={() => onChangeMonth(1)}
                 disabled={monthOffset >= MAX_MONTH_OFFSET}
                 aria-label="Nächster Monat"
-                className="flex size-9 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors hover:border-ink disabled:pointer-events-none disabled:opacity-40"
               >
                 <ChevronRight className="size-4" aria-hidden />
-              </button>
+              </IconButton>
             </div>
           </div>
 
@@ -787,13 +793,18 @@ function ResultStep({
             surface="inset"
             className="mx-auto mb-5 flex max-w-xs items-center gap-3 p-3.5 text-left"
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-tint-12 text-coral">
+            <IconBadge
+              size="9"
+              shape="lg"
+              tone="accent-12"
+              className="shrink-0"
+            >
               {event === "kennenlernen" ? (
                 <Phone className="size-4" aria-hidden />
               ) : (
                 <Video className="size-4" aria-hidden />
               )}
-            </span>
+            </IconBadge>
             <div className="min-w-0">
               <Eyebrow as="p" dot={false} tone="muted">
                 Dein Termin

@@ -1,6 +1,7 @@
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Card } from "@skillsite/ui/primitives/card";
+import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import type { Benefit } from "@/content/home";
@@ -16,9 +17,9 @@ export function BenefitGrid({ items }: { items: Benefit[] }) {
           as={Card}
           className="p-6"
         >
-          <span className="mb-4 flex size-9.5 items-center justify-center rounded-xl bg-accent-tint-14 text-coral">
+          <IconBadge size="9.5" className="mb-4">
             <AnimatedCheckMark index={index} />
-          </span>
+          </IconBadge>
           <Heading
             as="h3"
             size="card-title-sm"
