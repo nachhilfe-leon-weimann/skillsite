@@ -18,6 +18,7 @@
     "./primitives/icon-badge": "./src/primitives/icon-badge.tsx",
     "./primitives/icon-button": "./src/primitives/icon-button.tsx",
     "./primitives/info-row": "./src/primitives/info-row.tsx",
+    "./primitives/link": "./src/primitives/link.tsx",
     "./primitives/pill": "./src/primitives/pill.tsx",
     "./primitives/tag": "./src/primitives/tag.tsx",
     "./typography/eyebrow": "./src/typography/eyebrow.tsx",

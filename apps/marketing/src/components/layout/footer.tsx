@@ -9,6 +9,7 @@ import {
 } from "@icons-pack/react-simple-icons";
 
 import { Container } from "@skillsite/ui/layout/container";
+import { TextLink } from "@skillsite/ui/primitives/link";
 import { Logo } from "@skillsite/ui/shell/logo";
 import { ThemeToggle } from "@skillsite/ui/shell/theme-toggle";
 import { cn } from "@skillsite/ui/utils/cn";
@@ -17,10 +18,6 @@ import { socials, type SocialKey } from "@/content/socials";
 import { contactDetails } from "@/content/contact";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { routes } from "@/lib/routes";
-
-const legalLinkClass = "text-on-navy-muted transition-colors hover:text-white";
-const footerLinkClass =
-  "w-fit text-small text-on-navy-soft transition-colors hover:text-white";
 
 function FooterColumn({
   title,
@@ -36,34 +33,6 @@ function FooterColumn({
       </Eyebrow>
       <nav className="flex flex-col gap-2.5">{children}</nav>
     </div>
-  );
-}
-
-/** Internal routes use next/link; http/mailto/tel render a plain anchor. */
-function FooterLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
-  const isExternal = /^(https?:|mailto:|tel:)/.test(href);
-  if (isExternal) {
-    const isHttp = href.startsWith("http");
-    return (
-      <a
-        href={href}
-        className={footerLinkClass}
-        {...(isHttp ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      >
-        {children}
-      </a>
-    );
-  }
-  return (
-    <Link href={href} className={footerLinkClass}>
-      {children}
-    </Link>
   );
 }
 
@@ -87,15 +56,14 @@ export function SocialLinks({ className }: { className?: string }) {
         const Icon = iconByKey[social.key];
         return (
           <li key={social.key}>
-            <a
+            <TextLink
+              variant="inverse-muted"
               href={social.href}
-              target="_blank"
-              rel="noopener noreferrer"
               aria-label={social.label}
-              className="block text-on-navy-muted transition-colors hover:text-white"
+              className="block"
             >
               <Icon size={20} aria-hidden />
-            </a>
+            </TextLink>
           </li>
         );
       })}
@@ -126,40 +94,46 @@ export function Footer() {
 
           <FooterColumn title="Navigation">
             {primaryNav.map((item) => (
-              <FooterLink key={item.href} href={item.href}>
+              <TextLink variant="inverse" key={item.href} href={item.href}>
                 {item.label}
-              </FooterLink>
+              </TextLink>
             ))}
           </FooterColumn>
 
           <FooterColumn title="Online lernen">
             {platformNav.map((item) => (
-              <FooterLink key={`${item.href}:${item.label}`} href={item.href}>
+              <TextLink
+                variant="inverse"
+                key={`${item.href}:${item.label}`}
+                href={item.href}
+              >
                 {item.label}
-              </FooterLink>
+              </TextLink>
             ))}
           </FooterColumn>
 
           <FooterColumn title="Kontakt">
-            <FooterLink href={contactDetails.whatsapp.href}>
+            <TextLink variant="inverse" href={contactDetails.whatsapp.href}>
               WhatsApp
-            </FooterLink>
-            <FooterLink href={contactDetails.eMail.href}>E-Mail</FooterLink>
+            </TextLink>
+            <TextLink variant="inverse" href={contactDetails.eMail.href}>
+              E-Mail
+            </TextLink>
           </FooterColumn>
         </div>
 
         <div className="mt-10 flex flex-wrap items-center justify-between gap-x-5 gap-y-4 border-t border-overlay-15 pt-5 text-caption text-on-navy-muted">
           <span>© {new Date().getFullYear()} Nachhilfe Leon Weimann</span>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-            <Link href={routes.impressum} className={legalLinkClass}>
+            <TextLink variant="inverse-muted" href={routes.impressum}>
               Impressum
-            </Link>
-            <Link href={routes.datenschutz} className={legalLinkClass}>
+            </TextLink>
+            <TextLink variant="inverse-muted" href={routes.datenschutz}>
               Datenschutz
-            </Link>
-            <Link href={routes.agb} className={legalLinkClass}>
+            </TextLink>
+            <TextLink variant="inverse-muted" href={routes.agb}>
               AGB
-            </Link>
+            </TextLink>
             <ThemeToggle />
           </div>
         </div>

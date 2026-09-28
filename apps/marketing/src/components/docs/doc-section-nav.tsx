@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { cn } from "@skillsite/ui/utils/cn";
+import { NavLink } from "@skillsite/ui/primitives/link";
 import { Card } from "@skillsite/ui/primitives/card";
 
 export type DocNavSection = { id: string; label: string };
@@ -38,17 +38,13 @@ export function DocSectionNav({ sections }: { sections: DocNavSection[] }) {
         <ul className="space-y-1">
           {sections.map((section) => (
             <li key={section.id}>
-              <a
+              <NavLink
+                variant="toc"
                 href={`#${section.id}`}
-                className={cn(
-                  "block rounded-lg px-2 py-1.5 transition-colors",
-                  active === section.id
-                    ? "bg-surface-2 font-medium text-ink"
-                    : "text-ink-soft hover:text-ink",
-                )}
+                active={active === section.id}
               >
                 {section.label}
-              </a>
+              </NavLink>
             </li>
           ))}
         </ul>
