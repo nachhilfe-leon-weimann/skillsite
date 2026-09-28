@@ -50,7 +50,7 @@ export default function OnlineLearningPage() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <SiDiscord className="size-4" /> Server beitreten
+          <SiDiscord className="size-4" aria-hidden /> Server beitreten
         </LinkButton>
       </PageHeader>
 
@@ -103,7 +103,7 @@ export default function OnlineLearningPage() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <SiDiscord className="size-4" /> Server beitreten
+            <SiDiscord className="size-4" aria-hidden /> Server beitreten
           </LinkButton>
         </Reveal>
         <Reveal variant="rise-soft">

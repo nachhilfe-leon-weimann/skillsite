@@ -1,6 +1,6 @@
 # Spec: Foundation refactor (one UI system, one type scale, module structure - before the portal)
 
-> Status: Accepted, 2026-09-25 - Phase A done.
+> Status: Accepted, 2026-09-25 - Phase B done.
 > This spec is also the decision record for the arc (no separate ADRs, decision V1): _Decisions_ and _Rules of
 > the refactor_ carry the why. It builds on the monorepo arc (P0/P1 done: `apps/marketing`, `packages/config`,
 > `packages/ui` + Storybook) and comes **before** the portal (`apps/portal`, `lernen.leonweimann.de`), which gets
@@ -328,7 +328,8 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 
 - _Technique:_ accessible names for the theme buttons below `lg` and the booker's duration select; `aria-current`
   on active navigation; Escape closes the mobile menu and focus returns to its button; one `aria-hidden` style;
-  icons inside named links carry no `<title>`; the navbar platform disclosure drops `aria-haspopup`.
+  icons inside named links are hidden from assistive technology (V13: `aria-hidden` only, the `<title>` and
+  its tooltip stay); the navbar platform disclosure drops `aria-haspopup`.
 - _Check:_ keyboard pass through navbar and mobile menu; nothing looks different.
 
 ### Phase C - Design system in `@skillsite/ui`
