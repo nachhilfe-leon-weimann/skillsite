@@ -4,7 +4,8 @@ import { Section } from "@skillsite/ui/layout/section";
 import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
-import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
+import { CheckList } from "@skillsite/ui/primitives/check-list";
+import { Pill } from "@skillsite/ui/primitives/pill";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -78,29 +79,14 @@ export default function ProcessPage() {
                 ist.
               </Text>
               <div className="mb-5 flex flex-wrap gap-2">
-                <span className="rounded-full border border-overlay-25 px-3.5 py-1.5 text-small font-semibold text-white">
+                <Pill tone="inverse" size="sm">
                   Discord
-                </span>
-                <span className="rounded-full border border-overlay-25 px-3.5 py-1.5 text-small font-semibold text-white">
+                </Pill>
+                <Pill tone="inverse" size="sm">
                   Microsoft Teams
-                </span>
+                </Pill>
               </div>
-              <div className="flex flex-col gap-3">
-                {discordHighlights.map((highlight, index) => (
-                  <div
-                    key={highlight}
-                    className="flex items-start gap-2.5 text-on-navy"
-                  >
-                    <AnimatedCheckMark
-                      index={index}
-                      className="mt-0.5 size-4.5 shrink-0 text-coral-light"
-                    />
-                    <Text as="span" size="small" tone="inherit">
-                      {highlight}
-                    </Text>
-                  </div>
-                ))}
-              </div>
+              <CheckList items={discordHighlights} size="sm" tone="inverse" />
               <Button asChild variant="inverse" className="mt-6">
                 <Link href={routes.onlineLearning}>
                   So richtest du Discord ein <ArrowRight className="size-4" />

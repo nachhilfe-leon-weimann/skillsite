@@ -2,7 +2,8 @@ import { ExternalLink, type LucideIcon, Scale } from "lucide-react";
 
 import { Container } from "@skillsite/ui/layout/container";
 import { Card } from "@skillsite/ui/primitives/card";
-import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
+import { InfoRow } from "@skillsite/ui/primitives/info-row";
+import { Pill } from "@skillsite/ui/primitives/pill";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { InlineLink, ProseH2, ProseH3 } from "@skillsite/ui/typography/prose";
@@ -59,10 +60,15 @@ export function DocHero({
   return (
     <Card className="p-6 sm:p-8">
       <Reveal trigger="mount" variant="rise-soft">
-        <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1 text-prose-sm text-ink-soft">
+        <Pill
+          as="div"
+          tone="muted"
+          size="doc"
+          className="inline-flex items-center gap-2"
+        >
           <Icon className="size-4" aria-hidden />
           {badge}
-        </div>
+        </Pill>
         <Heading as="h1" size="h1" className="mt-5">
           {title}
         </Heading>
@@ -73,26 +79,19 @@ export function DocHero({
               const FactIcon = fact.icon;
               return (
                 <Card
+                  asChild
                   key={fact.label}
                   surface="inset"
                   radius="xl"
-                  className="flex items-center gap-3 p-3"
+                  className="p-3"
                 >
-                  <IconBadge
-                    layout="grid"
-                    size="9"
-                    shape="md"
-                    tone="muted"
-                    className="shrink-0"
+                  <InfoRow
+                    variant="doc"
+                    icon={<FactIcon className="size-4" aria-hidden />}
+                    label={fact.label}
                   >
-                    <FactIcon className="size-4" aria-hidden />
-                  </IconBadge>
-                  <div className="min-w-0">
-                    <p className="text-prose-xs text-ink-soft">{fact.label}</p>
-                    <p className="truncate text-prose-sm font-medium text-ink">
-                      {fact.children}
-                    </p>
-                  </div>
+                    {fact.children}
+                  </InfoRow>
                 </Card>
               );
             })}
