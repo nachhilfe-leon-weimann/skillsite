@@ -5,14 +5,15 @@ import { brand } from "@/content/site";
 
 type LogoProps = {
   showText?: boolean;
-  onDark?: boolean;
+  /** `inverse` on navy surfaces (footer). */
+  tone?: "default" | "inverse";
   className?: string;
   textClassName?: string;
 };
 
 export function Logo({
   showText = true,
-  onDark = false,
+  tone = "default",
   className,
   textClassName,
 }: LogoProps) {
@@ -31,7 +32,7 @@ export function Logo({
           <span
             className={cn(
               "font-heading text-[1.04rem] font-bold tracking-[-0.01em]",
-              onDark ? "text-white" : "text-ink",
+              tone === "inverse" ? "text-white" : "text-ink",
             )}
           >
             {brand.name}
@@ -39,7 +40,7 @@ export function Logo({
           <span
             className={cn(
               "whitespace-nowrap text-[0.71rem] tracking-[0.03em]",
-              onDark ? "text-on-navy-soft" : "text-ink-soft",
+              tone === "inverse" ? "text-on-navy-soft" : "text-ink-soft",
             )}
           >
             {brand.tagline}

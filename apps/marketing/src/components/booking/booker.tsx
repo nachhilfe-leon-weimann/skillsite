@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BadgeEuro,
@@ -13,7 +14,7 @@ import {
   Video,
 } from "lucide-react";
 
-import { Button, LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { Select } from "@skillsite/ui/forms/select";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
@@ -327,7 +328,7 @@ export function Booker({
           <Heading as="h2" size="h4" className="mt-3.5 text-white">
             {title}
           </Heading>
-          <Text size="small" tone="on-navy-soft" className="mt-1 mb-5">
+          <Text size="small" tone="inverse-muted" className="mt-1 mb-5">
             {subtitle}
           </Text>
 
@@ -350,7 +351,7 @@ export function Booker({
               <Select
                 label={bookerText.durationLabel}
                 hideLabel
-                tone="on-navy"
+                tone="inverse"
                 icon={<Clock className="size-4" aria-hidden />}
                 value={duration}
                 onChange={changeDuration}
@@ -546,9 +547,9 @@ function UnavailableNotice({
       <Text tone="muted" className="mb-5">
         Schreib mir einfach direkt – wir finden zusammen einen passenden Termin.
       </Text>
-      <LinkButton href={routes.contact} variant="primary">
-        Direkt anfragen
-      </LinkButton>
+      <Button asChild variant="primary">
+        <Link href={routes.contact}>Direkt anfragen</Link>
+      </Button>
     </CenteredState>
   );
 }
@@ -828,9 +829,9 @@ function ResultStep({
         <Text tone="muted" className="mb-5">
           {message}
         </Text>
-        <LinkButton href={routes.contact} variant="primary">
-          Direkt anfragen
-        </LinkButton>
+        <Button asChild variant="primary">
+          <Link href={routes.contact}>Direkt anfragen</Link>
+        </Button>
       </CenteredState>
     );
   }

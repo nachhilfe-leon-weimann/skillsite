@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@skillsite/ui/layout/section-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
-import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -41,18 +42,16 @@ export default function OnlineLearningPage() {
         titleClassName="max-w-[15em]"
         lead="Discord ist unser Klassenzimmer – kostenlos und per App oder Browser schnell startklar. Den Zugriff auf die Unterrichtskanäle schalte ich persönlich frei. Microsoft Teams ist ebenfalls möglich."
       >
-        <LinkButton href={primaryCta.href} variant="primary" size="lg">
-          {primaryCta.label} <ArrowRight className="size-4" />
-        </LinkButton>
-        <LinkButton
-          href={discordInvite}
-          variant="outline"
-          size="lg"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <SiDiscord className="size-4" aria-hidden /> Server beitreten
-        </LinkButton>
+        <Button asChild variant="primary" size="lg">
+          <Link href={primaryCta.href}>
+            {primaryCta.label} <ArrowRight className="size-4" />
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="lg">
+          <a href={discordInvite} target="_blank" rel="noopener noreferrer">
+            <SiDiscord className="size-4" aria-hidden /> Server beitreten
+          </a>
+        </Button>
       </PageHeader>
 
       {/* Phase 1 — Einmal einrichten */}
@@ -98,14 +97,11 @@ export default function OnlineLearningPage() {
           <Text className="font-medium">
             Sobald du Discord hast, komm auf den Server – ich schalte dich frei.
           </Text>
-          <LinkButton
-            href={discordInvite}
-            variant="primary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <SiDiscord className="size-4" aria-hidden /> Server beitreten
-          </LinkButton>
+          <Button asChild variant="primary">
+            <a href={discordInvite} target="_blank" rel="noopener noreferrer">
+              <SiDiscord className="size-4" aria-hidden /> Server beitreten
+            </a>
+          </Button>
         </Reveal>
         <Reveal variant="rise-soft">
           <Text size="small" tone="muted" className="mt-3">

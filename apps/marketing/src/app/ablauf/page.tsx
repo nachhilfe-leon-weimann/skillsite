@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { PageHeader } from "@/components/layout/page-header";
 import { SectionHeader } from "@skillsite/ui/layout/section-header";
-import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -66,7 +67,7 @@ export default function ProcessPage() {
               <Heading as="h3" size="h4" className="mt-3.5 mb-2.5 text-white">
                 Unterricht über Discord oder Microsoft Teams
               </Heading>
-              <Text tone="on-navy-soft" className="mb-4">
+              <Text tone="inverse-muted" className="mb-4">
                 Live mit geteiltem Bildschirm: wie am selben Tisch, nur ohne
                 Anfahrt. Du wählst die Plattform, die für dich am einfachsten
                 ist.
@@ -95,13 +96,11 @@ export default function ProcessPage() {
                   </div>
                 ))}
               </div>
-              <LinkButton
-                href={routes.onlineLearning}
-                variant="white"
-                className="mt-6"
-              >
-                So richtest du Discord ein <ArrowRight className="size-4" />
-              </LinkButton>
+              <Button asChild variant="inverse" className="mt-6">
+                <Link href={routes.onlineLearning}>
+                  So richtest du Discord ein <ArrowRight className="size-4" />
+                </Link>
+              </Button>
             </div>
           </Reveal>
         </div>
@@ -119,9 +118,11 @@ export default function ProcessPage() {
           </Text>
         </Reveal>
         <Reveal variant="rise-soft" index={2}>
-          <LinkButton href={routes.booking} variant="primary" size="lg">
-            Verfügbare Termine ansehen <ArrowRight className="size-4" />
-          </LinkButton>
+          <Button asChild variant="primary" size="lg">
+            <Link href={routes.booking}>
+              Verfügbare Termine ansehen <ArrowRight className="size-4" />
+            </Link>
+          </Button>
         </Reveal>
       </Container>
 

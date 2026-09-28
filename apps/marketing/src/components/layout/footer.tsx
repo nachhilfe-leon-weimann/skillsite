@@ -62,7 +62,7 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div className="flex flex-col items-start gap-4">
             <Link href={routes.home} aria-label="Startseite">
-              <Logo onDark />
+              <Logo tone="inverse" />
             </Link>
             <p className="max-w-[26em] text-small text-on-navy-muted">
               Persönliche Online-Nachhilfe in Mathematik, Informatik und Physik

@@ -350,7 +350,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   `navy`->`inverse`, `outline`->`outline`; `Logo onDark` -> `tone="inverse"`; `Text`/`Heading` tones follow the
   tone vocabulary. Variant maps are carried over 1:1 (same order base -> variant -> size -> `className`).
 - _Acceptance criteria:_
-  - [ ] Every rendered class attribute is unchanged (compare built HTML before/after).
+  - [x] Every rendered class attribute is unchanged (compare built HTML before/after).
 
 **C3 - Token layer.**
 
