@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { cn } from "@skillsite/ui/utils/cn";
+import { Container } from "@skillsite/ui/layout/container";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { testimonials, testimonialsAreExamples } from "@/content/testimonials";
 
@@ -15,7 +16,7 @@ export function Testimonials() {
   if (!current) return null;
 
   return (
-    <div className="mx-auto max-w-220 px-6 py-section text-center">
+    <Container size="testimonials" className="py-section text-center">
       <Eyebrow>
         {testimonialsAreExamples ? "Beispielstimmen" : "Was andere sagen"}
       </Eyebrow>
@@ -70,6 +71,6 @@ export function Testimonials() {
           Referenzen folgen.
         </p>
       ) : null}
-    </div>
+    </Container>
   );
 }

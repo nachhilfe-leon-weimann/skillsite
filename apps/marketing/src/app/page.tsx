@@ -1,15 +1,15 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { Container } from "@/components/layout/container";
-import { Section } from "@/components/layout/section";
+import { Container } from "@skillsite/ui/layout/container";
+import { Section } from "@skillsite/ui/layout/section";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Lead } from "@skillsite/ui/typography/lead";
 import { Text } from "@skillsite/ui/typography/text";
 import { Reveal } from "@skillsite/ui/motion/reveal";
-import { SectionHeader } from "@skillsite/ui/layout/section-header";
+import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { StatGrid } from "@/components/sections/stat-grid";
 import { StepGrid } from "@/components/sections/step-grid";
 import { BenefitGrid } from "@/components/sections/benefit-grid";
@@ -148,7 +148,8 @@ export default function HomePage() {
 
       {/* Subjects teaser */}
       <Section>
-        <SectionHeader
+        <PageHeader
+          variant="section"
           eyebrow="Drei Fächer, ein Anspruch"
           title="Mathe, Informatik und Physik – verstanden, nicht auswendig gelernt."
           titleClassName="max-w-measure-16"
@@ -160,7 +161,8 @@ export default function HomePage() {
 
       {/* Process */}
       <Section surface>
-        <SectionHeader
+        <PageHeader
+          variant="section"
           eyebrow="So fängt es an"
           title="In drei Schritten zur ersten Stunde."
           className="mb-10"
@@ -170,7 +172,8 @@ export default function HomePage() {
 
       {/* Benefits */}
       <Section>
-        <SectionHeader
+        <PageHeader
+          variant="section"
           eyebrow="Fair und unkompliziert"
           title="Nachhilfe mit klaren Bedingungen."
           className="mb-10"

@@ -2,6 +2,7 @@ import {
   Accordion,
   type AccordionEntry,
 } from "@skillsite/ui/primitives/accordion";
+import { Container } from "@skillsite/ui/layout/container";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 
@@ -18,7 +19,7 @@ export function FaqSection({
 }: FaqSectionProps) {
   return (
     <section id={id}>
-      <div className="mx-auto max-w-205 px-6 py-section">
+      <Container size="faq" className="py-section">
         <Reveal variant="rise-soft" index={0}>
           <Heading size="h3" className="mb-7 text-center">
             {title}
@@ -27,7 +28,7 @@ export function FaqSection({
         <Reveal variant="rise-soft" index={1}>
           <Accordion items={items} />
         </Reveal>
-      </div>
+      </Container>
     </section>
   );
 }
