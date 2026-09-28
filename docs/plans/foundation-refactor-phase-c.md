@@ -788,15 +788,17 @@ console.log(`normalised snapshot written to ${outDir}`);
 ```
 
 **Apply a map** - `<scratch>/apply-map.mjs` (wave 2): the codemod for map-driven slices; it applies the source
-entries of a map (`[file, from, to, count, snapshots?]`; `(html)` entries only describe rendered HTML) and refuses
-to write anything when a count differs. Usage: `node "$SCRATCH/apply-map.mjs" "$SCRATCH/<map.mjs>"` from the
+entries of a map (`[file, from, to, count, snapshots?]`; `(html)` entries only describe rendered HTML) as plain
+substring replacements - the per-file counts are the guard - and refuses to write anything when a count differs. Usage: `node "$SCRATCH/apply-map.mjs" "$SCRATCH/<map.mjs>"` from the
 worktree root.
 
 ```js
 // Apply a slice's map (REPLACEMENTS of [file, from, to, count, snapshots?]) to the
 // sources. Entries whose file is "(html)" only describe rendered HTML and are
-// skipped. Refuses to write anything when an expected count differs - the code
-// moved; re-measure, do not guess.
+// skipped. It replaces substrings, not whole tokens: a bare "text-sm" would also
+// hit "text-small". The expected counts are the guard - give an entry enough
+// context to be unique, and the script refuses to write anything when a count
+// differs (the code moved; re-measure, do not guess).
 // Usage (repo root): node <scratch>/apply-map.mjs <scratch>/<map.mjs>
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -956,8 +958,9 @@ Rulings by the planner (from the spec and the code; stated in the PR bodies):
   4 `leading-[..]` and 5 `tracking-[..]`, other arbitrary lengths (`h-[1.05em]`, `mt-[0.7rem]`,
   `underline-offset-[3px]`, `border-[1.5px]`, grid templates, `[--lift:..]`, `[--reveal-travel:6px]`,
   `[animation-delay:80ms]`), opacity modifiers other than white (`bg-ink/40`, 2x `bg-surface-2/60`,
-  `text-ink-soft/50`, `bg-black/45`), the Tailwind default `shadow` on `Switch`, `max-w-205/220/230` (C5 container
-  sizes), the app stylesheet's `z-index: 5` (iOS toolbar tint), the dead `--maxw` and `--blue` (D6).
+  `text-ink-soft/50`, `bg-black/45`), the Tailwind default `shadow` on `Switch`, `max-w-205/220/230` (C5: 205 and 220
+  become `Container` sizes in Task 5a; 230 and the `max-w-220` quote card are not page containers - C6/D5), the app
+  stylesheet's `z-index: 5` (iOS toolbar tint), the dead `--maxw` and `--blue` (D6).
 
 Rulings by the planner, wave 2 (C4, C5):
 
@@ -978,8 +981,11 @@ Rulings by the planner, wave 2 (C4, C5):
   bold) and `wrap="normal"` (they never had `text-balance`/`hyphens-heading`).
 - **C5 in three PRs:** 5a layout (Container, Section, PageHeader), 5b grids (Split, CardGrid), 5c shell (theme,
   logo, fonts, Storybook fonts) - each with a check of a few lines.
-- **Container sizes use the existing classes** (`page` = `w-full max-w-page px-6`, `faq` = `max-w-205 px-6`): a new
-  utility would change the built CSS, which C5's acceptance forbids. `Section` gets `spacing: default | sm`, but the
+- **Container sizes use the existing classes** (`page` = `w-full max-w-page px-6`, `faq` = `max-w-205 px-6`,
+  `testimonials` = `max-w-220 px-6`): a new utility would change the built CSS, which C5's acceptance forbids. They
+  are the two hand-built page columns (`mx-auto max-w-<n> px-6` on a plain `div`); `/preise`'s
+  `mx-auto max-w-230` (no gutter, inside a Container) and the `/ueber-mich` quote card (`max-w-220` on a card) are
+  not page containers and stay (C6/D5). `Section` gets `spacing: default | sm`, but the
   ten `<Container className="py-section-sm">` blocks stay: they have no `<section>` element, adding one changes the
   DOM (D5).
 - **One `PageHeader`:** `variant: page | section` carries the two sets of wrapper, element, reveal trigger and
@@ -997,8 +1003,8 @@ Rulings by the planner, wave 2 (C4, C5):
 The plan takes the conservative option in each case; none blocks a task.
 
 1. **Tone for muted text on inverse surfaces.** E-08 names `tone: default | muted | inverse | accent`, but `Text`
-   has a fifth colour today, `on-navy-soft` (#b9c8db, used 4 times). The plan keeps it as `inverse-muted`
-   (value unchanged). Rename later if a different name is wanted.
+   has a fifth colour today, `on-navy-soft` (#b9c8db, used 4 times). C2 named it `inverse-muted` (value
+   unchanged); wave 2 renames it `inverse-soft` (point 7).
 2. **Select tone name.** E-08 does not list `Select`; the plan renames its `on-navy` tone to `inverse` under the
    same rule. `Text`'s `inherit` tone stays (it sets no colour).
 3. **Token names of C3** (tints by percent, `overlay-*` for white washes, `on-accent-*` for text on coral, role
@@ -1007,7 +1013,7 @@ The plan takes the conservative option in each case; none blocks a task.
    Next derives the `og:image`/`twitter:image` URL hash from the file (measured: `?a20751a4992edc7d` ->
    `?745246771e923f94`), which changes `<head>` on every page. The plan allow-lists the file instead; moving them
    later is a one-line decision.
-5. **QR code fill spelling.** `whatsapp-qr.tsx` passes `#13283F`; the token mirrors `theme.css` (`#13283f`). The
+5. **QR code fill spelling.** `whatsapp-qr.tsx` passes `#13283F`; the token mirrors `styles/tokens.css` (`#13283f`). The
    SVG `fill` attribute on `/kontakt` changes case; the colour (computed `fill`) is identical. The plan accepts it
    and lists it as the one expected non-class HTML difference of C3.
 6. **Spec wording:** C2's "Text/Heading tones follow the tone vocabulary" - `Heading` has no tone today; it gets
@@ -1020,15 +1026,18 @@ Wave 2 (each with the conservative default taken):
    if other names are wanted.
 8. **White on navy.** Headings in `text-white` on navy keep the class; whether they should be `--on-inverse`
    (`#eaf1fa`) is a phase E question (a visible change).
-9. **The booker's "Buchung" dot** gains the component's `shrink-0` (`flex-shrink` 1 -> 0, its box unchanged) - the
-   one computed difference of C4, allowed and pinned in Task 4b.
+9. **The booker's "Buchung" dot** gains the component's `shrink-0` (`flex-shrink` 1 -> 0). The eyebrow spans the
+   aside's content width (at least 222px, measured) and its content is 88px, so the dot never shrinks; its used box
+   is compared unchanged. The one computed difference of C4, allowed and pinned in Task 4b.
 10. **Other outline findings** of the audit (the Teams box on `/online-lernen` and the booker title on `/kontakt`)
     do not skip a level and are not in the spec; they stay.
-11. **Split/CardGrid and Container size names** are by value and by role (`faq`); rename if wanted.
+11. **Split/CardGrid and Container size names** are by value and by role (`faq`, `testimonials`); rename if
+    wanted.
 12. **Storybook fonts** come from Google's font CDN in the workbench (next/font's Vite plugin); the apps keep
     self-hosting them.
-13. **Left for D5:** the ten `Container className="py-section-sm"` blocks, the hand-built section intros and the
-    other grids named in Task 5b.
+13. **Left for C6/D5:** the ten `Container className="py-section-sm"` blocks, the hand-built section intros, the
+    other grids named in Task 5b, `/preise`'s inner `mx-auto max-w-230` column (no gutter, inside a Container) and
+    the `/ueber-mich` quote card (`max-w-220` on a navy card) - neither is a page container.
 
 ## Execution order
 
@@ -2258,7 +2267,8 @@ and any page's CTA section (white button), footer logo; 390 and 1280 px, light a
   - CSS variables: `--accent`, `--accent-2`, `--on-accent`, `--inverse`, `--on-inverse`, `--on-inverse-soft`,
     `--on-inverse-muted`, `--focus-ring-width`, `--focus-ring-offset`, `--focus-ring-color`
   - `brandColors` in `@skillsite/ui/tokens/colors`: `{ bg, bgDark, surface, ink, inkSoft, navy, coral }`
-  - `<scratch>/c3-map.mjs` shape `[file, from, to, count]` - wave 2 reuses the toolkit's `expect-html.mjs` and
+  - `<scratch>/c3-map.mjs` shape `[file, from, to, count]` - wave 2 reuses the toolkit's `expect-html.mjs` (whole
+    tokens, with `normalize-snapshot.mjs`) and
     `probe-classes.mjs` with its own map
   - `design-ratchet.json` counts: `arbitrary-text` 0, `color-mix` 0, `arbitrary-shadow` 0, `arbitrary-radius` 0,
     `clamp-spacing` 0, `hex-color` 0; `raw-text-size` 21, `raw-button` 13, `inline-style` 16 unchanged.
@@ -3253,14 +3263,47 @@ reports 24 differing pair/state lines (`bg-accent-tint-14` in all 5 states and `
 `:hover`, each at 2 widths x 2 schemes). The last line restores `tokens.css`.
 
 - [ ] **Step 14: Prove the result identical** (the `compare-computed` line needs a 600000 ms timeout or a
-      background run).
+      background run). This step uses wave 1's `expect-html.mjs`, saved as `<scratch>/expect-html-c3.mjs`: it
+      replaces substrings (so `bg-white/8` also maps `hover:bg-white/8`, which the C3 map relies on) and carries
+      C3's QR `fill` case. The toolkit's wave-2 version matches whole tokens and would not reproduce this result.
+
+```js
+// Build the expected "after" HTML snapshot of a class-renaming slice: the before
+// snapshot with the slice's class map applied, so the real after snapshot can be
+// diffed against it exactly. The map module exports REPLACEMENTS as
+// [file, from, to, count] entries (C3: c3-map.mjs).
+// Usage: node expect-html.mjs <map.mjs> <before-dir> <out-dir>
+// then:  diff -r -x _styles.css <out-dir> <after-dir>   (must print nothing)
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const [mapFile, beforeDir, outDir] = process.argv.slice(2);
+const { REPLACEMENTS } = await import(
+  pathToFileURL(path.resolve(mapFile)).href
+);
+// Longest first: a context entry ("mt-1 text-[0.92rem]") wins over a bare value.
+const map = [...REPLACEMENTS].sort((a, b) => b[1].length - a[1].length);
+
+mkdirSync(outDir, { recursive: true });
+for (const name of readdirSync(beforeDir)) {
+  if (name === "_styles.css") continue; // the built CSS changes by design
+  let text = readFileSync(path.join(beforeDir, name), "utf8");
+  for (const [, from, to] of map) text = text.split(from).join(to);
+  // C3's one expected change outside class attributes: the QR code's fill
+  // attribute is now spelled like the token (#13283F -> #13283f), same colour.
+  text = text.split('fill="#13283F"').join('fill="#13283f"');
+  writeFileSync(path.join(outDir, name), text);
+}
+console.log(`expected snapshot written to ${outDir}`);
+```
 
 ```bash
 source <scratch>/toolkit.sh
 cd "$WORKTREE" && just build
 serve "$WORKTREE" 3111
 node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
-node "$SCRATCH/expect-html.mjs" "$SCRATCH/c3-map.mjs" "$SCRATCH/html-before" "$SCRATCH/html-expected"
+node "$SCRATCH/expect-html-c3.mjs" "$SCRATCH/c3-map.mjs" "$SCRATCH/html-before" "$SCRATCH/html-expected"
 diff -r -x _styles.css "$SCRATCH/html-expected" "$SCRATCH/html-after" && echo AS-EXPECTED
 node "$SCRATCH/probe-classes.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 "$SCRATCH/c3-map.mjs" | tail -1
 node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
@@ -3645,9 +3688,12 @@ inverse-accent | inverse-muted | on-accent`; `dot` (default `true`) adds the lea
 **Background (measured on the tree after Task 4a).** Eight hand-built eyebrows (`text-eyebrow uppercase <colour>`):
 `kontakt/page.tsx` 3 (two through `sideLabelClass`, one on the WhatsApp card), `ablauf/page.tsx`,
 `cta-section.tsx`, `footer.tsx`, `booker.tsx` 3 - plus the label inside `Select`. One of them (booker "Buchung")
-has the dot, but without `shrink-0`; the component's dot has it, so that dot's computed `flex-shrink` goes 1 -> 0
-(its box does not move: the label is an inline-flex row sized to its content) - the one allowed difference of
-this task (`c4b-expect.json`). Three raw headings (`subject-cards.tsx`, `benefit-grid.tsx`, `step-grid.tsx`) are
+has the dot, but without `shrink-0`; the component's dot has it, so that dot's computed `flex-shrink` goes 1 -> 0 -
+the one allowed difference of this task (`c4b-expect.json`). It moves nothing: the booker `<aside>` is
+`flex flex-col`, so the eyebrow is stretched to the aside's content width - measured 222px at 320px, 292px in the
+390 run and 248px in the 1280 run (the `@2xl` 20rem column, its narrowest) - while its content (dot, gap, text) is
+88px, so the dot never has to shrink; and `compare-computed` compares the dot's used width and height, only
+`flex-shrink` is allowed through. Three raw headings (`subject-cards.tsx`, `benefit-grid.tsx`, `step-grid.tsx`) are
 `<h3 className="... font-heading text-<role> font-bold text-ink">` without `text-balance`/`hyphens-heading`, so
 they become `Heading wrap="normal"`. The seven raw sizes left: `button.tsx` `sm` (no route renders it), `tag.tsx`,
 the accordion's "+" icon, the skip link, `booking-form.tsx` 2x, `preise/page.tsx` 1x. `Text ... className="text-sm"`
@@ -4188,8 +4234,9 @@ PR body: Summary (Heading `tone`/`wrap`/role sizes, Text `note` and the `inverse
 `tone`/`dot`/`as`; 8 hand-built eyebrows + the Select label, 3 raw headings, the last 7 raw sizes onto role
 tokens; `raw-text-size` 7 -> 0; the typography group exports one API); _What changes for a visitor_: nothing -
 expected-HTML diff empty; class probe 7 pairs; `compare-computed` 72 page states; the one computed difference,
-stated plainly: the dot of the booker's "Buchung" eyebrow gains `shrink-0` from the component (`flex-shrink` 1 -> 0),
-its box is unchanged; _Deviations from the plan_; _How to check_: `/`, `/faecher`, `/ablauf`, `/preise`,
+stated plainly: the dot of the booker's "Buchung" eyebrow gains `shrink-0` from the component (`flex-shrink` 1 -> 0);
+the eyebrow is stretched to the aside's content width (at least 222px) while its content is 88px, so the dot never
+shrinks, and its used width and height are compared unchanged; _Deviations from the plan_; _How to check_: `/`, `/faecher`, `/ablauf`, `/preise`,
 `/kontakt`, `/termin` (booker aside and the form after picking a slot), the footer, the skip link (Tab on any page);
 390 and 1280 px, light and dark - every eyebrow, the card and step titles, the "Quelle" line on `/preise` and the
 consent box of the paid booking look as before.
@@ -4372,9 +4419,12 @@ tag.
 heading`.
 
 PR body: Summary (the outline skipped from `h1` to three `h3`s on `/faecher`; `SubjectCards` takes a heading level;
-the test pins the outline of every indexable route); _What changes for a visitor_: nothing visible - screen readers
-now list "Mathematik", "Informatik", "Physik" as level-2 headings on `/faecher` (were level 3); the home page keeps
-`h3`; _Deviations from the plan_; _How to check_: `/faecher` at 390 and 1280 px, light and dark - the three cards
+the test pins the outline of every indexable route); _What changes for a visitor_: nothing visible, so no before/after
+screenshots (the spec asks for them for visible fixes; here the computed styles of `/` and `/faecher` are compared
+equal). The change is in the accessibility tree: screen readers list "Mathematik", "Informatik", "Physik" as
+level-2 headings on `/faecher` (were level 3). Evidence: the heading levels of `/faecher` in document order were
+`1 3 3 3 2 3 3 3 3 2 3 3 2 3 3 2 3 3 3 3 2` and are `1 2 2 2 2 3 3 3 3 2 3 3 2 3 3 2 3 3 3 3 2`; the new e2e test
+is red before and green after; the home page keeps `h3`; _Deviations from the plan_; _How to check_: `/faecher` at 390 and 1280 px, light and dark - the three cards
 look as before; with VoiceOver's rotor (headings) the cards are level 2; `/` unchanged.
 
 ---
@@ -4389,15 +4439,17 @@ look as before; with VoiceOver's rotor (headings) the cards are level 2; `/` unc
 - Create: `packages/ui/src/layout/{container,section,page-header}.tsx`, `packages/ui/src/layout/layout.test.tsx`
 - Delete: `packages/ui/src/layout/section-header.tsx`,
   `apps/marketing/src/components/layout/{container,section,page-header}.tsx`
-- Modify: `packages/ui/package.json` (`exports`), `apps/marketing/src/components/sections/faq-section.tsx`
+- Modify: `packages/ui/package.json` (`exports`), `apps/marketing/src/components/sections/faq-section.tsx`,
+  `components/sections/testimonials.tsx`
 - Modify: 17 files under `apps/marketing/src` (imports; `SectionHeader` -> `PageHeader variant="section"`)
 
 **Interfaces:**
 
 - Consumes: Task 4b's typography.
 - Produces:
-  - `Container({ size?: "page" | "faq" })` in `@skillsite/ui/layout/container` - `page` (default):
-    `mx-auto w-full max-w-page px-6`; `faq`: `mx-auto max-w-205 px-6`.
+  - `Container({ size?: "page" | "faq" | "testimonials" })` in `@skillsite/ui/layout/container` - `page`
+    (default): `mx-auto w-full max-w-page px-6`; `faq`: `mx-auto max-w-205 px-6`; `testimonials`:
+    `mx-auto max-w-220 px-6`.
   - `Section({ surface?, bleed?, spacing?: "default" | "sm", containerClassName?, ...section props })` in
     `@skillsite/ui/layout/section`.
   - `PageHeader({ eyebrow?, title, lead?, align?, variant?: "page" | "section", size?, className?, titleClassName?,
@@ -4410,9 +4462,13 @@ live in `apps/marketing/src/components/layout`; `SectionHeader` (6 uses in `page
 is in the package. The two headers differ in wrapper (Container with `pt-page-top pb-page-header-bottom` vs `div`
 with `className`), element (`h1` vs `h2`), reveal trigger (mount vs in view), lead gap (`mt-5` vs `mt-4`) and
 centring of the title (`mx-auto` only on the page) - the `variant` carries exactly these, so both render as before
-(the spec's "spacings and stagger as props" are the two variants; no free spacing props). The FAQ column
-(`mx-auto max-w-205 px-6` inside `FaqSection`'s `<section>`) is the one hand-built container whose DOM a Container
-can take over unchanged (`size="faq"` keeps the class string, without `w-full`). The ten
+(the spec's "spacings and stagger as props" are the two variants; no free spacing props). Two hand-built
+page columns have the Container pattern - `mx-auto max-w-<n> px-6` on a plain `div`: the FAQ column (`max-w-205`,
+inside `FaqSection`'s `<section>`) and the testimonials column (`max-w-220`, `testimonials.tsx`; the component is
+not rendered today - its section on `/` is commented out). `size="faq"` and `size="testimonials"` keep their class
+strings exactly (no `w-full`), so the DOM does not change. `/preise`'s `mx-auto max-w-230` has no gutter and sits
+inside a Container, and the `/ueber-mich` quote card puts `max-w-220` on a card - neither is a page container (open
+point 13). The ten
 `<Container className="py-section-sm">` blocks are not wrapped in `<section>`; `Section spacing="sm"` exists for new
 code, but converting them would add an element (D5). A dry run of this task gave: HTML of the 14 URLs and the
 built CSS byte-identical; `compare-computed` no differences; `just check` green.
@@ -4456,12 +4512,14 @@ test("Container has the page width by default and named narrower sizes", () => {
     <>
       <Container>Seite</Container>
       <Container size="faq">FAQ</Container>
+      <Container size="testimonials">Stimmen</Container>
     </>,
   );
   expect(screen.getByText("Seite").className).toBe(
     "mx-auto w-full max-w-page px-6",
   );
   expect(screen.getByText("FAQ").className).toBe("mx-auto max-w-205 px-6");
+  expect(screen.getByText("Stimmen").className).toBe("mx-auto max-w-220 px-6");
 });
 
 test("Section wraps its content in a Container with the section rhythm", () => {
@@ -4539,6 +4597,8 @@ const containerVariants = cva("mx-auto", {
       page: "w-full max-w-page px-6",
       /** The FAQ column (820px). */
       faq: "max-w-205 px-6",
+      /** The testimonials column (880px). */
+      testimonials: "max-w-220 px-6",
     },
   },
   defaultVariants: { size: "page" },
@@ -4757,7 +4817,8 @@ Expected: PASS, 10 files / 64 tests.
 
 ```js
 // C5a codemod: the app imports Container, Section and PageHeader from the package;
-// SectionHeader becomes PageHeader variant="section"; the FAQ column is a Container.
+// SectionHeader becomes PageHeader variant="section"; the FAQ and testimonials
+// columns become Containers of their size (same classes, same DOM).
 // Usage (repo root): node <scratch>/c5a-layout.mjs
 import { globSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 
@@ -4813,10 +4874,45 @@ if (faqNext.split("Container").length !== 4) {
 }
 writeFileSync(faq, faqNext);
 
+// The testimonials column: the same pattern, one element deeper nesting.
+const quotes = "apps/marketing/src/components/sections/testimonials.tsx";
+const open = '<div className="mx-auto max-w-220 px-6 py-section text-center">';
+let quotesSource = readFileSync(quotes, "utf8");
+const start = quotesSource.indexOf(open);
+if (start < 0 || quotesSource.indexOf(open, start + 1) >= 0) {
+  console.error(`${quotes}: expected the column exactly once`);
+  process.exit(1);
+}
+// Its closing </div>: found by depth.
+const tags = /<div\b[^>]*?(\/)?>|<\/div>/g;
+tags.lastIndex = start + open.length;
+for (let depth = 1, match; (match = tags.exec(quotesSource));) {
+  if (match[0] === "</div>") depth--;
+  else if (!match[1]) depth++;
+  if (depth === 0) {
+    quotesSource =
+      quotesSource.slice(0, start) +
+      '<Container size="testimonials" className="py-section text-center">' +
+      quotesSource.slice(start + open.length, match.index) +
+      "</Container>" +
+      quotesSource.slice(match.index + "</div>".length);
+    break;
+  }
+}
+quotesSource = quotesSource.replace(
+  'import { Eyebrow } from "@skillsite/ui/typography/eyebrow";\n',
+  'import { Container } from "@skillsite/ui/layout/container";\nimport { Eyebrow } from "@skillsite/ui/typography/eyebrow";\n',
+);
+if (quotesSource.split("Container").length !== 4) {
+  console.error(`${quotes}: expected markers not found`);
+  process.exit(1);
+}
+writeFileSync(quotes, quotesSource);
+
 for (const moved of ["container", "section", "page-header"])
   rmSync(`apps/marketing/src/components/layout/${moved}.tsx`);
 console.log(
-  `${files} files rewritten, ${sectionHeaders} SectionHeader -> PageHeader variant="section", FAQ on Container size="faq"`,
+  `${files} files rewritten, ${sectionHeaders} SectionHeader -> PageHeader variant="section", FAQ and testimonials on Container`,
 );
 ```
 
@@ -4826,7 +4922,7 @@ cd "$WORKTREE" && node "$SCRATCH/c5a-layout.mjs" && pnpm format && just static-c
 grep -rn 'components/layout/\(container\|section\|page-header\)\|SectionHeader' "$WORKTREE/apps/marketing/src" "$WORKTREE/packages/ui/src"
 ```
 
-Expected: `17 files rewritten, 6 SectionHeader -> PageHeader variant="section", FAQ on Container size="faq"`;
+Expected: `17 files rewritten, 6 SectionHeader -> PageHeader variant="section", FAQ and testimonials on Container`;
 static checks green; the `grep` prints nothing.
 
 - [ ] **Step 5: Prove the result identical** (the `compare-computed` line needs a 600000 ms timeout or a
@@ -4849,9 +4945,11 @@ pseudo-states compared.` and `No differences.`
 package`.
 
 PR body: Summary (Container with named sizes, Section with a spacing variant, one PageHeader with a `page` and a
-`section` variant replacing `SectionHeader`; 17 app files, the FAQ column on `Container size="faq"`); _What
+`section` variant replacing `SectionHeader`; 17 app files, the FAQ and testimonials columns on `Container size="faq"`/`"testimonials"`); _What
 changes for a visitor_: nothing - HTML and CSS byte-identical, `compare-computed` 72 page states; _Deviations from
-the plan_; _How to check_: `/`, `/faecher`, `/ablauf`, `/online-lernen` (page and section intros, FAQ column),
+the spec_: the spec asks for one PageHeader with "spacings and stagger as props" - it has two fixed variants
+(`page`, `section`) that carry the two measured sets instead, so no free spacing values can creep in; _Deviations
+from the plan_; _How to check_: `/`, `/faecher`, `/ablauf`, `/online-lernen` (page and section intros, FAQ column),
 `/preise`; 390 and 1280 px, light and dark.
 
 ---
@@ -5162,7 +5260,8 @@ states; _Deviations from the plan_; _How to check_: `/`, `/kontakt`, `/online-le
 
 **Files:**
 
-- Create: `packages/ui/src/shell/fonts.ts`, `packages/ui/src/shell/shell.test.tsx`
+- Create: `packages/ui/src/shell/fonts.ts`, `packages/ui/src/shell/shell.test.tsx`,
+  `apps/marketing/src/app/layout-imports.test.ts` (the font import order)
 - Move: `apps/marketing/src/components/theme-provider.tsx` -> `packages/ui/src/shell/theme-provider.tsx`,
   `apps/marketing/src/components/layout/theme-toggle.tsx` -> `packages/ui/src/shell/theme-toggle.tsx`,
   `apps/marketing/src/components/layout/logo.tsx` -> `packages/ui/src/shell/logo.tsx` (brand props)
@@ -5196,7 +5295,8 @@ with brand props because the package cannot import `@/content/site`; navbar and 
 layout folder keeps only navbar, footer and the iOS tint (spec C5). A dry run of this task gave: HTML and CSS
 identical apart from the hashed font class names (13 `<html class>` lines and 2 CSS lines, nothing else);
 `compare-computed` no differences; `raw-button` 13 -> 12 (the toggle's buttons now count as package code);
-`just check` green (59 smoke tests).
+the import-order test red, green, and red again when the import is moved below `globals.css`; `just check` green
+(app 44 unit tests, 59 smoke tests).
 
 - [ ] **Step 1: Toolkit and before tree.** Write `<scratch>/toolkit.sh` and the six toolkit scripts
       (_Verification toolkit_), build the _Before tree_, then:
@@ -5266,8 +5366,35 @@ test("ThemeToggle offers the light and dark override inside the provider", () =>
 });
 ```
 
-Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/shell`.
-Expected: FAIL - `Failed to resolve import "./logo"`.
+Create `apps/marketing/src/app/layout-imports.test.ts` (it matches the app's `unit` project,
+`src/**/*.test.{ts,mts}`) - the font import order is load-bearing, so a test holds it:
+
+```ts
+import { readFileSync } from "node:fs";
+
+import { expect, test } from "vitest";
+
+const layout = readFileSync(new URL("./layout.tsx", import.meta.url), "utf8");
+
+// next/font's @font-face rules follow the import order: imported after the global
+// stylesheet they move to the end of the built CSS (the C5 font spike).
+test("the brand fonts are imported before the global stylesheet", () => {
+  const fonts = layout.indexOf('from "@skillsite/ui/shell/fonts";');
+  const globals = layout.indexOf('import "./globals.css";');
+  expect(fonts, "the fonts import").toBeGreaterThan(-1);
+  expect(globals, "the globals.css import").toBeGreaterThan(-1);
+  expect(fonts, "fonts before globals.css").toBeLessThan(globals);
+});
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/shell
+cd "$WORKTREE" && pnpm --filter @skillsite/marketing exec vitest run src/app/layout-imports.test.ts
+```
+
+Expected: both FAIL - `Failed to resolve import "./logo"`, and
+`AssertionError: the fonts import: expected -1 to be greater than -1`.
 
 - [ ] **Step 3: Move the shell parts, the dependency and the exports.**
 
@@ -5277,7 +5404,7 @@ cd "$WORKTREE" && mkdir -p packages/ui/src/shell
 git mv apps/marketing/src/components/theme-provider.tsx packages/ui/src/shell/theme-provider.tsx
 git mv apps/marketing/src/components/layout/theme-toggle.tsx packages/ui/src/shell/theme-toggle.tsx
 git mv apps/marketing/src/components/layout/logo.tsx packages/ui/src/shell/logo.tsx
-perl -pi -e 's#from "\@skillsite/ui/utils/cn"#from "../utils/cn"#; s#from "\@skillsite/ui/hooks/use-hydrated"#from "../hooks/use-hydrated"#' packages/ui/src/shell/theme-toggle.tsx
+perl -CSD -pi -e 's#from "\@skillsite/ui/utils/cn"#from "../utils/cn"#; s#from "\@skillsite/ui/hooks/use-hydrated"#from "../hooks/use-hydrated"#' packages/ui/src/shell/theme-toggle.tsx
 pnpm add --filter @skillsite/ui next-themes@^0.4.6
 pnpm remove --filter @skillsite/marketing next-themes
 pnpm install --frozen-lockfile
@@ -5459,9 +5586,18 @@ cd "$WORKTREE" && node "$SCRATCH/c5c-shell.mjs" && pnpm format
 ls "$WORKTREE/apps/marketing/src/components/layout" "$WORKTREE/apps/marketing/src/components"
 ```
 
+Then run the import-order test:
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm --filter @skillsite/marketing exec vitest run
+```
+
 Expected: `3 files rewritten, social-links.tsx folded into footer.tsx`; the layout folder lists `footer.tsx`,
-`ios-toolbar-tint.tsx`, `navbar.tsx`; `components/` has no `theme-provider.tsx`. The first import of
-`app/layout.tsx` is now the fonts module (with its comment) - keep it above `import "./globals.css"`.
+`ios-toolbar-tint.tsx`, `navbar.tsx`; `components/` has no `theme-provider.tsx`; the app's tests PASS, 10 files / 44
+tests. The first import of `app/layout.tsx` is now the fonts module (with its comment). Moving it below
+`import "./globals.css"` makes the test fail (`fonts before globals.css: expected 98 to be less than 49`) - checked
+in the dry run.
 
 - [ ] **Step 6: Storybook loads the brand fonts.** Replace `packages/ui/.storybook/preview.tsx` with (new: the
       fonts import, the comment, and the class list on `<html>`):
