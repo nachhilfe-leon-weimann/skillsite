@@ -41,7 +41,9 @@ export const PATTERNS = [
   { name: "inline-style", regex: /style=\{\{/g, files: TSX },
 ];
 
-const SKIP = /(\.stories\.tsx|\.test\.(ts|tsx|mts|mjs))$/;
+// Spike only (C7): packages/ui/src/spike/ is measured on its own; the branch is thrown away.
+const SKIP =
+  /(\.stories\.tsx|\.test\.(ts|tsx|mts|mjs))$|^packages\/ui\/src\/spike\//;
 
 export function countPatterns(files, allow) {
   const counts = Object.fromEntries(PATTERNS.map((p) => [p.name, 0]));

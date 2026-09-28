@@ -13,6 +13,8 @@ const require = createRequire(import.meta.url);
 /** The public API: every module of src/ that is neither a story nor a test. */
 const modules = globSync("src/**/*.{ts,tsx}", { cwd: packageRoot })
   .filter((file) => !/\.(stories|test)\.tsx?$/.test(file))
+  // Spike only (C7): src/spike/ is never exported; the branch is thrown away.
+  .filter((file) => !file.startsWith("src/spike/"))
   .map((file) => `./${file}`)
   .sort();
 
