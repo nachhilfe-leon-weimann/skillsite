@@ -1337,5 +1337,6 @@ _How to check:_ keyboard pass as in Step 9, light and dark, 390px and 1280px; Vo
 ## After phase B
 
 - The spec's status line reads "Phase B done" (Task 4).
-- The phase C plan (`docs/plans/foundation-refactor-phase-c.md`) starts with C1 (CVA + Slot) and must keep the
-  `cn` drift test green: every token or `@utility` phase C adds is registered in `packages/ui/src/utils.ts`.
+- The phase C plan (`docs/plans/foundation-refactor-phase-c.md`) starts with C1 (groups and explicit exports;
+  CVA + Slot is C2) and must keep the `cn` drift test green: every token or `@utility` phase C adds is registered in
+  `packages/ui/src/utils/cn.ts` (its path after C1).
