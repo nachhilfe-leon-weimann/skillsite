@@ -1,5 +1,6 @@
 import { cn } from "@skillsite/ui/utils/cn";
 import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Heading } from "@skillsite/ui/typography/heading";
 import type { Step } from "@/content/process";
 
 type StepGridProps = {
@@ -25,9 +26,15 @@ export function StepGrid({ steps, card = false, className }: StepGridProps) {
             {step.n}
           </span>
           {step.title ? (
-            <h3 className="mt-3 font-heading text-step-title font-bold text-ink">
+            <Heading
+              as="h3"
+              size="step-title"
+              wrap="normal"
+              tone="default"
+              className="mt-3"
+            >
               {step.title}
-            </h3>
+            </Heading>
           ) : null}
           <p className={cn("text-ink-soft", step.title ? "mt-2" : "mt-3")}>
             {step.text}

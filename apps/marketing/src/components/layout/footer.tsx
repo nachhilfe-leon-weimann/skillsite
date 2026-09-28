@@ -6,6 +6,7 @@ import { SocialLinks } from "@/components/layout/social-links";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { primaryNav, platformNav } from "@/content/site";
 import { contactDetails } from "@/content/contact";
+import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { routes } from "@/lib/routes";
 
 const legalLinkClass = "text-on-navy-muted transition-colors hover:text-white";
@@ -21,7 +22,9 @@ function FooterColumn({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-eyebrow uppercase text-on-navy-muted">{title}</p>
+      <Eyebrow as="p" dot={false} tone="inverse-muted">
+        {title}
+      </Eyebrow>
       <nav className="flex flex-col gap-2.5">{children}</nav>
     </div>
   );

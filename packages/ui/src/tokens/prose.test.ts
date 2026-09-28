@@ -26,7 +26,16 @@ const proseTokens: Record<string, string> = {
   "prose-xs": "xs",
 };
 
-for (const [prose, size] of Object.entries(proseTokens)) {
+/** UI role sizes that keep one of Tailwind's default sizes (C4), value for value. */
+const uiTokens: Record<string, string> = {
+  "accordion-icon": "xl",
+  "button-sm": "sm",
+  note: "sm",
+  "skip-link": "sm",
+  tag: "xs",
+};
+
+for (const [prose, size] of Object.entries({ ...proseTokens, ...uiTokens })) {
   test(`--text-${prose} is Tailwind's text-${size}`, () => {
     expect(value(themeCss, `text-${prose}`)).toBe(
       value(tailwindTheme, `text-${size}`),

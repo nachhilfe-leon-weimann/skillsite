@@ -60,6 +60,12 @@ const twMerge = extendTailwindMerge({
         "prose-body",
         "prose-sm",
         "prose-xs",
+        // UI role sizes at Tailwind's default sizes
+        "accordion-icon",
+        "button-sm",
+        "note",
+        "skip-link",
+        "tag",
       ],
       shadow: [
         "card",
