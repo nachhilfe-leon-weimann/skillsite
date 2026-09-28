@@ -6,20 +6,36 @@ import { Heading } from "@skillsite/ui/typography/heading";
 import { subjects } from "@/content/subjects";
 import { ArrowRight } from "lucide-react";
 
-/** Three subject teaser cards */
-export function SubjectCards() {
+type HeadingLevel = "h2" | "h3";
+
+/**
+ * Three subject teaser cards. `headingAs` is the level of the card titles: h3
+ * under a section heading (home), h2 where they follow the page's h1 directly
+ * (/faecher). The look does not change with the level.
+ */
+export function SubjectCards({
+  headingAs = "h3",
+}: {
+  headingAs?: HeadingLevel;
+}) {
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {subjects.map((subject, i) => (
         <Reveal key={subject.key} variant="rise-soft" index={i}>
-          <SubjectCard subject={subject} />
+          <SubjectCard subject={subject} headingAs={headingAs} />
         </Reveal>
       ))}
     </div>
   );
 }
 
-function SubjectCard({ subject }: { subject: (typeof subjects)[number] }) {
+function SubjectCard({
+  subject,
+  headingAs,
+}: {
+  subject: (typeof subjects)[number];
+  headingAs: HeadingLevel;
+}) {
   const Icon = subject.glyph;
   return (
     <Link
@@ -33,7 +49,7 @@ function SubjectCard({ subject }: { subject: (typeof subjects)[number] }) {
         {subject.tag ? <Tag>{subject.tag}</Tag> : null}
       </div>
       <Heading
-        as="h3"
+        as={headingAs}
         size="card-title"
         wrap="normal"
         tone="default"
