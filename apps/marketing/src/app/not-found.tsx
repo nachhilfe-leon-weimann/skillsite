@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { Container } from "@/components/layout/container";
+import { Container } from "@skillsite/ui/layout/container";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Heading } from "@skillsite/ui/typography/heading";
