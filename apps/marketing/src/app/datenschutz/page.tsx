@@ -12,7 +12,8 @@ import {
   DocSubSection,
 } from "@/components/docs/doc-components";
 import { ContactAddress } from "@/components/shared/contact-address";
-import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";
+import { ProseP } from "@skillsite/ui/typography/prose";
+import { TextLink } from "@skillsite/ui/primitives/link";
 import {
   analyticsDomain,
   dataRecipientCategories,
@@ -63,9 +64,9 @@ function PrivacySection({
 /** Clickable cross-reference to another section; number from the registry. */
 function SectionRef({ id }: { id: string }) {
   return (
-    <InlineLink variant="doc" href={`#${id}`}>
+    <TextLink variant="doc" href={`#${id}`}>
       Abschnitt {privacySectionNumber(id)}
-    </InlineLink>
+    </TextLink>
   );
 }
 
@@ -94,12 +95,9 @@ export default function DatenschutzPage() {
               icon: Mail,
               label: "Kontakt",
               children: (
-                <InlineLink
-                  variant="doc"
-                  href={`mailto:${privacyContact.email}`}
-                >
+                <TextLink variant="doc" href={`mailto:${privacyContact.email}`}>
                   {privacyContact.email}
-                </InlineLink>
+                </TextLink>
               ),
             },
           ]}
@@ -113,14 +111,14 @@ export default function DatenschutzPage() {
         <ContactAddress />
         <ProseP className="mt-6">
           E-Mail:{" "}
-          <InlineLink variant="doc" href={`mailto:${privacyContact.email}`}>
+          <TextLink variant="doc" href={`mailto:${privacyContact.email}`}>
             {privacyContact.email}
-          </InlineLink>
+          </TextLink>
           <br />
           Telefonnummer:{" "}
-          <InlineLink variant="doc" href={`tel:${privacyContact.phone}`}>
+          <TextLink variant="doc" href={`tel:${privacyContact.phone}`}>
             {privacyContact.phone}
-          </InlineLink>
+          </TextLink>
         </ProseP>
         <ProseP>
           Diese Datenschutzerklärung gilt für die Website {siteDomain}, für
@@ -560,12 +558,12 @@ export default function DatenschutzPage() {
             Telefon: {supervisoryAuthority.phone}
             <br />
             E-Mail:{" "}
-            <InlineLink
+            <TextLink
               variant="doc"
               href={`mailto:${supervisoryAuthority.email}`}
             >
               {supervisoryAuthority.email}
-            </InlineLink>
+            </TextLink>
           </ProseP>
           <DocProviderLink href={supervisoryAuthority.url}>
             Website der Aufsichtsbehörde
@@ -588,9 +586,9 @@ export default function DatenschutzPage() {
           Rechtsansprüchen. Das betrifft insbesondere die Server-Logfiles und
           die Webanalyse mit Umami. Direktwerbung betreibe ich nicht. Ein
           formloser Widerspruch an{" "}
-          <InlineLink variant="doc" href={`mailto:${privacyContact.email}`}>
+          <TextLink variant="doc" href={`mailto:${privacyContact.email}`}>
             {privacyContact.email}
-          </InlineLink>{" "}
+          </TextLink>{" "}
           genügt.
         </ProseP>
       </PrivacySection>

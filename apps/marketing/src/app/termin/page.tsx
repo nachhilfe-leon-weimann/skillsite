@@ -1,14 +1,12 @@
-import Link from "next/link";
-
 import { Container } from "@skillsite/ui/layout/container";
 import { PageHeader } from "@skillsite/ui/layout/page-header";
+import { ArrowLink } from "@skillsite/ui/primitives/link";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Text } from "@skillsite/ui/typography/text";
 import { Booker } from "@/components/booking/booker";
 import { CtaSection } from "@/components/sections/cta-section";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
-import { ArrowRight } from "lucide-react";
 
 export const metadata = pageMetadata({
   canonical: "/termin",
@@ -36,13 +34,9 @@ export default function BookingPage() {
         <Reveal variant="fade" as="p" className="mt-6">
           <Text as="span" tone="muted">
             Du nimmst noch keine Nachhilfe bei mir?{" "}
-            <Link
-              href={routes.firstMeeting}
-              className="font-semibold text-coral underline underline-offset-[3px]"
-            >
-              Starte mit dem kostenlosen Erstgespräch{" "}
-              <ArrowRight className="inline size-4" aria-hidden />
-            </Link>
+            <ArrowLink href={routes.firstMeeting}>
+              Starte mit dem kostenlosen Erstgespräch
+            </ArrowLink>
           </Text>
         </Reveal>
       </Container>

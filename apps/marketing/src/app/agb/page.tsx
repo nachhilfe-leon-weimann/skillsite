@@ -6,6 +6,7 @@ import {
   DocSubSection,
 } from "@/components/docs/doc-components";
 import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";
+import { TextLink } from "@skillsite/ui/primitives/link";
 import {
   agbContact,
   agbEffectiveDate,
@@ -64,9 +65,9 @@ export default function AgbPage() {
               icon: Mail,
               label: "Kontakt",
               children: (
-                <InlineLink variant="doc" href={`mailto:${agbContact.email}`}>
+                <TextLink variant="doc" href={`mailto:${agbContact.email}`}>
                   {agbContact.email}
-                </InlineLink>
+                </TextLink>
               ),
             },
           ]}
@@ -192,9 +193,9 @@ export default function AgbPage() {
             Um Ihr Widerrufsrecht auszuüben, müssen Sie den Anbieter (
             {legalContact.businessName}, {legalContact.street},{" "}
             {legalContact.city}; E-Mail:{" "}
-            <InlineLink variant="doc" href={`mailto:${agbContact.email}`}>
+            <TextLink variant="doc" href={`mailto:${agbContact.email}`}>
               {agbContact.email}
-            </InlineLink>
+            </TextLink>
             ) mittels einer eindeutigen Erklärung (z. B. per E-Mail) über Ihren
             Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können
             dafür das beigefügte Muster-Widerrufsformular verwenden, das jedoch
