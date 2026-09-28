@@ -7,6 +7,8 @@ import { Heading } from "@skillsite/ui/typography/heading";
 import { Lead } from "@skillsite/ui/typography/lead";
 import { Text } from "@skillsite/ui/typography/text";
 import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Split } from "@skillsite/ui/layout/split";
+import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { StatGrid } from "@/components/sections/stat-grid";
 import { ProfilePhoto } from "@/components/sections/profile-photo";
 import { CodeTypewriter } from "@/components/sections/code-typewriter";
@@ -33,7 +35,7 @@ export default function AboutPage() {
   return (
     <>
       <Container className="py-page-top">
-        <div className="grid items-center gap-split-about lg:grid-cols-2">
+        <Split gap="split-about">
           <div>
             <Reveal trigger="mount" variant="rise-soft" index={0}>
               <Eyebrow>Über mich</Eyebrow>
@@ -84,7 +86,7 @@ export default function AboutPage() {
               />
             </Reveal>
           </div>
-        </div>
+        </Split>
       </Container>
 
       <Container className="pb-section-sm">
@@ -102,7 +104,7 @@ export default function AboutPage() {
         <Reveal variant="rise-soft" className="mb-8">
           <Heading size="h3">Woran ich mich halte</Heading>
         </Reveal>
-        <div className="grid gap-5 sm:grid-cols-3">
+        <CardGrid>
           {principles.map((principle, i) => (
             <Reveal
               key={principle.n}
@@ -119,11 +121,11 @@ export default function AboutPage() {
               <Text tone="muted">{principle.text}</Text>
             </Reveal>
           ))}
-        </div>
+        </CardGrid>
       </Container>
 
       <Section surface>
-        <div className="grid items-center gap-split lg:grid-cols-[1.05fr_0.95fr]">
+        <Split ratio="1.05/0.95">
           <div>
             <Reveal variant="rise-soft" index={0}>
               <Eyebrow>{software.eyebrow}</Eyebrow>
@@ -138,7 +140,7 @@ export default function AboutPage() {
             </Reveal>
           </div>
           <CodeTypewriter />
-        </div>
+        </Split>
       </Section>
 
       <CtaSection />

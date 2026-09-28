@@ -9,6 +9,8 @@ import { Button } from "@skillsite/ui/primitives/button";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
+import { Split } from "@skillsite/ui/layout/split";
+import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { SubjectCards } from "@/components/sections/subject-cards";
 import { FaqSection } from "@/components/sections/faq-section";
 import { CtaSection } from "@/components/sections/cta-section";
@@ -53,7 +55,7 @@ export default function SubjectsPage() {
             id={subject.anchorId}
             surface={index % 2 === 1}
           >
-            <div className="grid items-start gap-split lg:grid-cols-[0.9fr_1.1fr]">
+            <Split align="start" ratio="0.9/1.1">
               <Reveal variant="rise-soft">
                 <div className="flex items-center gap-3.5">
                   <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
@@ -77,7 +79,7 @@ export default function SubjectsPage() {
                 </Button>
               </Reveal>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <CardGrid gap="4" columns="sm-2">
                 {subject.topics.map((topic, i) => (
                   <Reveal
                     key={topic.title}
@@ -104,8 +106,8 @@ export default function SubjectsPage() {
                     </div>
                   </Reveal>
                 ))}
-              </div>
-            </div>
+              </CardGrid>
+            </Split>
           </Section>
         );
       })}

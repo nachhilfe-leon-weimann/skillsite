@@ -1,6 +1,7 @@
 import { cn } from "@skillsite/ui/utils/cn";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
+import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import type { Step } from "@/content/process";
 
 type StepGridProps = {
@@ -12,7 +13,7 @@ type StepGridProps = {
 
 export function StepGrid({ steps, card = false, className }: StepGridProps) {
   return (
-    <div className={cn("grid gap-5 sm:grid-cols-3", className)}>
+    <CardGrid className={className}>
       {steps.map((step, i) => (
         <Reveal
           key={step.n}
@@ -41,6 +42,6 @@ export function StepGrid({ steps, card = false, className }: StepGridProps) {
           </p>
         </Reveal>
       ))}
-    </div>
+    </CardGrid>
   );
 }

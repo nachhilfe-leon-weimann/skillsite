@@ -1,11 +1,12 @@
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
+import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import type { Benefit } from "@/content/home";
 
 export function BenefitGrid({ items }: { items: Benefit[] }) {
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <CardGrid columns="sm-2-lg-3">
       {items.map((benefit, index) => (
         <Reveal
           key={benefit.title}
@@ -28,6 +29,6 @@ export function BenefitGrid({ items }: { items: Benefit[] }) {
           <p className="text-card-body text-ink-soft">{benefit.text}</p>
         </Reveal>
       ))}
-    </div>
+    </CardGrid>
   );
 }

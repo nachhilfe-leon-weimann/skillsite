@@ -8,6 +8,7 @@ import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
+import { Split } from "@skillsite/ui/layout/split";
 import { StepGrid } from "@/components/sections/step-grid";
 import { LessonTimeline } from "@/components/sections/lesson-timeline";
 import { FaqSection } from "@/components/sections/faq-section";
@@ -45,7 +46,7 @@ export default function ProcessPage() {
       </Container>
 
       <Section surface>
-        <div className="grid items-center gap-split lg:grid-cols-2">
+        <Split>
           <div>
             <PageHeader
               variant="section"
@@ -104,7 +105,7 @@ export default function ProcessPage() {
               </Button>
             </div>
           </Reveal>
-        </div>
+        </Split>
       </Section>
 
       <Container className="py-section-sm text-center">

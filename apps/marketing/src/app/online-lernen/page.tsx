@@ -8,6 +8,8 @@ import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
+import { Split } from "@skillsite/ui/layout/split";
+import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { CtaSection } from "@/components/sections/cta-section";
 import { LessonTimeline } from "@/components/sections/lesson-timeline";
 import { FaqSection } from "@/components/sections/faq-section";
@@ -67,7 +69,7 @@ export default function OnlineLearningPage() {
           </Text>
         </Reveal>
 
-        <div className="grid gap-5 sm:grid-cols-3">
+        <CardGrid>
           {discordSetup.map((step, i) => (
             <Reveal
               key={step.n}
@@ -86,7 +88,7 @@ export default function OnlineLearningPage() {
               </Text>
             </Reveal>
           ))}
-        </div>
+        </CardGrid>
 
         {/* Beitreten-Band: Server-Link genau dort, wo er gebraucht wird */}
         <Reveal
@@ -112,7 +114,7 @@ export default function OnlineLearningPage() {
 
       {/* Phase 2 — So läuft deine Stunde */}
       <Section surface>
-        <div className="grid items-start gap-split lg:grid-cols-[0.9fr_1.1fr]">
+        <Split align="start" ratio="0.9/1.1">
           <PageHeader
             variant="section"
             eyebrow="In vier Schritten"
@@ -126,7 +128,7 @@ export default function OnlineLearningPage() {
           >
             <LessonTimeline steps={lessonSteps} />
           </Reveal>
-        </div>
+        </Split>
       </Section>
 
       {/* Server-Funktionen */}
@@ -139,7 +141,7 @@ export default function OnlineLearningPage() {
           titleClassName="max-w-measure-16"
           className="mb-9"
         />
-        <div className="grid gap-5 md:grid-cols-2">
+        <CardGrid columns="md-2">
           {discordFeatures.map((feature, index) => (
             <Reveal
               key={feature.title}
@@ -160,7 +162,7 @@ export default function OnlineLearningPage() {
               </div>
             </Reveal>
           ))}
-        </div>
+        </CardGrid>
       </Container>
 
       {/* Microsoft Teams + Technik */}
