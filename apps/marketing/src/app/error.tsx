@@ -3,11 +3,8 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
-import { Container } from "@skillsite/ui/layout/container";
-import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
+import { StatusPage } from "@skillsite/ui/layout/status-page";
 import { Button } from "@skillsite/ui/primitives/button";
-import { Heading } from "@skillsite/ui/typography/heading";
-import { Text } from "@skillsite/ui/typography/text";
 import { routes } from "@/lib/routes";
 
 /**
@@ -27,23 +24,25 @@ export default function Error({
   }, [error]);
 
   return (
-    <Container className="flex min-h-[60vh] flex-col items-center justify-center py-section text-center">
-      <Eyebrow>Ein Fehler ist aufgetreten</Eyebrow>
-      <Heading as="h1" size="h1" className="mt-4">
-        Da ist etwas schiefgelaufen.
-      </Heading>
-      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
-        Bitte versuch es noch einmal. Wenn es weiterhin klemmt, schreib mir
-        einfach direkt – wir kriegen das hin.
-      </Text>
-      <div className="mt-8 flex flex-wrap justify-center gap-3.5">
-        <Button variant="primary" size="lg" onClick={reset}>
-          Nochmal versuchen
-        </Button>
-        <Button asChild variant="outline" size="lg">
-          <Link href={routes.contact}>Kontakt aufnehmen</Link>
-        </Button>
-      </div>
-    </Container>
+    <StatusPage
+      eyebrow="Ein Fehler ist aufgetreten"
+      title="Da ist etwas schiefgelaufen."
+      lead={
+        <>
+          Bitte versuch es noch einmal. Wenn es weiterhin klemmt, schreib mir
+          einfach direkt – wir kriegen das hin.
+        </>
+      }
+      actions={
+        <>
+          <Button variant="primary" size="lg" onClick={reset}>
+            Nochmal versuchen
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link href={routes.contact}>Kontakt aufnehmen</Link>
+          </Button>
+        </>
+      }
+    />
   );
 }
