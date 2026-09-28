@@ -893,6 +893,10 @@ section "hand-built links"
 grep -rnE 'InlineLink|target="_blank"|rel="|underline-offset|text-on-navy-(soft|muted) transition-colors' $A --include='*.tsx'
 section "hand-built field labels"
 grep -rn 'mb-1.5 text-small font-semibold' $A --include='*.tsx'
+section "raw anchors (outside the link rule)"
+grep -rnE '<a( |$)' $A --include='*.tsx'
+section "active-state helpers (NavLink's classes, written out)"
+grep -rn 'function activeText' $A --include='*.tsx'
 ```
 
 **Navigation check** - `<scratch>/check-navigation.mjs` (wave 3), for Tasks 6f and 6g: the server HTML cannot tell
@@ -1316,8 +1320,8 @@ Rulings by the planner, wave 3 (C6):
 - **IconButton:** the disabled look only on a button with a `disabled` prop; the menu toggle keeps `inline-flex`
   through `className`. **IconBadge:** sizes named by spacing step, `layout` flex or grid; `shrink-0`, margins and the
   type of a digit stay with the caller.
-- **Pill** is its own primitive without a `display`, not a `Tag` size: four of the five pills have no display of
-  their own.
+- **Pill** is its own primitive without a `display`, not a `Tag` size: three of the five pills have no display of
+  their own (the other two carry their own `inline-flex`).
 - **InfoRow** has the variants `inverse | summary | doc`; its surface is `Card asChild`. The navy slot summary has no
   icon and stays a `Card surface="glass"`.
 - **Groups:** `CenteredState` and `StatusPage` in `layout/`, `Collapsible` and `AnimatedHeight` in `motion/` (the
@@ -1385,9 +1389,10 @@ Wave 3 (C6):
 16. **The existing `<Reveal>` wrappers.** The two `/preise` condition cards and the `/ablauf` Discord panel keep
     `<Reveal><Card>`. `Reveal as={Card}` would remove a `div`: 8 full-page screenshots stay byte-identical, but the
     DOM changes. Default: keep; a later DOM clean-up (D5 or phase E) can switch them on that measurement.
-17. **The `/zahlung` WhatsApp button opens in the same tab**, while the footer and the `/kontakt` card open WhatsApp
-    in a new one. It is a `Button asChild` anchor without `target`, outside the link rule. Default: unchanged; a
-    `fix:` if the rule should apply there too.
+17. **Bug or design: the `/zahlung` WhatsApp button opens in the same tab**, while the footer and the `/kontakt` card
+    open WhatsApp in a new one. It is a `Button asChild` anchor without `target`, outside the link rule; the grep
+    list names it, and Tasks 6f and 6h ask the maintainer in their PR bodies. Default: unchanged; a `fix:` if the
+    rule should apply there too.
 18. **`rel` normalised in 6g** ("noreferrer" -> "noopener noreferrer" on 18 anchors; same behaviour in current
     browsers). Default: part of the fix PR (one rule); drop those three anchors from 6g if the attribute should
     stay.
@@ -1400,8 +1405,12 @@ Wave 3 (C6):
 21. **Names by value** (`IconBadge` sizes `7.5`-`14`, `Card lift="sm" | "md"`, `Pill` sizes `sm | code | doc | md`,
     `InfoRow` variants) follow open point 11; rename if wanted.
 22. **`Card` and `CheckList` are client modules**: their code ships to the browser and their elements hydrate (no
-    visible change). The alternative, a client `RevealCard` wrapper, is not the spec's `Reveal as={Card}`. Default:
-    client modules.
+    visible change). Measured (base df639f5 vs the C6 tip, loop in Task 6a): the Card module is 1,309 B raw / 543 B
+    gzip, copied into every route's page chunk; all of C6 adds +1.26 to +1.85 KB gzip first-load JS per static route
+    (`/` +1.31, `/preise` +1.85, `/datenschutz` +1.26); the RSC payload stays within ±4 %; the CSS is byte-identical;
+    hydration errors would fail the smoke suite's console-error check. Under `asChild`, `Slot` joins classes
+    without `cn` when the child is a server component (rendered before `Slot` sees it). The alternative, a client
+    `RevealCard` wrapper, is not the spec's `Reveal as={Card}`. Default: client modules.
 23. **No ratchet patterns for the C6 primitives.** The acceptance uses the ratchet's `raw-button` and
     `c6-grep.sh`; class-string patterns in the ratchet would be brittle. Default: none added.
 24. **The testimonials dots and the booker's time slots** stay raw buttons (a pagination dot, a slot); D2 (the
@@ -6121,7 +6130,9 @@ the normalised HTML snapshots (class order and font hashes aside; `_styles.css` 
 it) and runs `compare-computed` over the 72 page states. Elements no scenario renders (the testimonials, the booking
 confirmation, `error.tsx`, the open accordion and the open mobile sub-list) keep their exact class set: the task's
 component test pins the class string, and the Background names the old one. 6f and 6g also run
-`check-navigation.mjs`, which clicks each moved link in both builds; 6g expects exactly three links to change.
+`check-navigation.mjs`, which clicks each moved link in both builds; 6g expects exactly three links to change. A
+stray rule in `_styles.css` caused by an identifier (a variant name, a test variable) is fixed by renaming the
+identifier - never by allow-listing the rule.
 
 ---
 
@@ -6178,16 +6189,36 @@ the skip link. A dry run of this task gave: HTML of the 14 URLs equal after sort
 differs in 10 files), `_styles.css` byte-identical; `compare-computed` 72 page states, no differences; card tests red
 (4 of 5) then green; `just static-checks` green.
 
-- [ ] **Step 1: Toolkit and before tree.** Write `<scratch>/toolkit.sh`, `snapshot-html.mjs`,
-      `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs` and `c6-grep.sh` (_Verification
-      toolkit_), build the _Before tree_, then:
+What the client `Card` costs (measured on the dry run, base df639f5 vs the C6 tip): the Card module is 1,309 B raw /
+543 B gzip and is copied into every route's page chunk; the whole C6 stack adds +1.26 to +1.85 KB gzip of first-load
+JS per static route (`/` +1.31, `/preise` +1.85, `/datenschutz` +1.26); the RSC payload stays within ±4 % per route;
+the CSS is byte-identical; hydration errors would fail the smoke suite's console-error check. The measuring loop
+(repo root, after `just build`; gzip per file, summed; `/kontakt` is dynamic and has no static HTML):
+
+```bash
+cd apps/marketing/.next && for p in index preise datenschutz; do printf '%s ' $p; grep -o '/_next/static/[^"]*\.js' server/app/$p.html | sort -u | sed 's#^/_next/#./#' | while read f; do gzip -9c "$f" | wc -c; done | paste -sd+ - | bc; done
+```
+
+One consequence of the client module: under `asChild`, a server component child (e.g. `InfoRow` in
+`doc-components.tsx`) is rendered before `Slot` sees it, so `Slot` joins the card's classes to the rendered element's
+without `cn` - a conflicting class would not be resolved there (none conflicts today; the normalised HTML diff shows
+it). `card.tsx`'s comment says so.
+
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `docs/phase-c-plan-wave-3`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`. Then build the
+      before tree and snapshot it:
 
 ```bash
 source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
 serve "$SCRATCH/before" 3110
 node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
 node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
 ```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
 
 - [ ] **Step 2: Write the failing test.** Create `packages/ui/src/primitives/card.test.tsx`:
 
@@ -6316,7 +6347,10 @@ import { cn } from "../utils/cn";
  * are `<Reveal as={Card} ...>` (one element). A lifting card never is: the
  * unlayered `.reveal` rules override `lift`, so it stays a child of a Reveal.
  * A client module (no hooks): a server page can pass only a client module to
- * the client `Reveal`, and `as={Card}` is such a pass.
+ * the client `Reveal`, and `as={Card}` is such a pass. The price: under
+ * `asChild`, a server component child (e.g. `InfoRow` in the legal pages) is
+ * rendered before `Slot` sees it, so `Slot` joins the card's classes to the
+ * rendered element's without `cn` - a conflicting class is not resolved there.
    ------------------------------------------------------------------------- */
 const cardVariants = cva("", {
   variants: {
@@ -7085,8 +7119,8 @@ Expected: `18 files rewritten`; static checks green; the card section of the gre
 `components/layout/navbar.tsx` (the dropdown panel, C8), and the navy/coral section only the `/preise` and booker
 navy halves, the skip link (`layout.tsx`) and the footer.
 
-- [ ] **Step 5: Prove the result identical** (the `compare-computed` line needs a 600000 ms timeout or a background
-      run).
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
 
 ```bash
 source <scratch>/toolkit.sh
@@ -7099,16 +7133,20 @@ node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://lo
 stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
 ```
 
-Expected: `IDENTICAL` (the 14 URLs and `_styles.css`); `72 page states, 20374 elements, 14768 forced pseudo-states
-compared.` and `No differences.`
+Expected: `IDENTICAL` (the 14 URLs and `_styles.css`; the raw snapshots differ only in class order);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
 
 - [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): cards from the duplicates`.
 
 PR body: Summary (one `Card` with tones, surfaces, radii and a lift, `asChild` for link cards, `Reveal as={Card}`
 for animated cards; 32 hand-built surfaces in 17 files; `Card` and `Reveal`'s generic `as`, and why `card.tsx` is a
 client module); _What changes for a visitor_: nothing - HTML equal after sorting class tokens, CSS byte-identical,
-`compare-computed` 72 page states; _Grep list_: the card and navy/coral sections of `c6-grep.sh` with the reason for
-each remaining line (dropdown panel: C8; split halves, skip link, footer: not cards); _Deviations from the spec_: the
+`compare-computed` 72 page states; _Cost of the client module_: the numbers and the measuring loop above (Card
+module 1,309 B / 543 B gzip per route chunk, +1.26 to +1.85 KB gzip first-load JS per route over all of C6, RSC
+within ±4 %, CSS identical, hydration covered by the smoke suite); _Grep list_: the card and navy/coral sections of
+`c6-grep.sh` with the reason for each remaining line (dropdown panel: C8; split halves, skip link, footer: not
+cards); _Deviations from the spec_: the
 three existing `<Reveal><Card>` wrappers stay (a DOM change; screenshots identical - open point 16), and lifting
 cards stay inside a Reveal (the `.reveal` cascade); _Deviations from the plan_; _How to check_: `/` (hero callouts,
 subject cards - hover one, step and benefit cards), `/faecher`, `/online-lernen`, `/ueber-mich` (quote, principles,
@@ -7154,17 +7192,32 @@ the caller: `shrink-0` is not on every badge (the `/faecher` badge sits in a fle
 `flex-shrink`). The legal-page fact badge centres with `grid place-items-center`, a different computed style from
 the flex centring, hence `layout="grid"`. The state circle is a `div` (`as="div"`). Not rendered by any scenario:
 the testimonials buttons (`size="lg" surface="inset"`) and the booking confirmation's badge (`size="9" shape="lg"
-tone="accent-12"`); `icons.test.tsx` pins both class strings, which equal the old ones as sets. A dry run of this
+tone="accent-12"`); `icons.test.tsx` pins both class strings, which equal the old ones as sets, and checks that
+`onClick` reaches the button and `disabled` blocks it. A dry run of this
 task gave: HTML equal after sorting class tokens, `_styles.css` byte-identical; `compare-computed` 72 page states,
 no differences; `raw-button` 12 -> 6.
 
-- [ ] **Step 1: Toolkit and before tree.** As Task 6a, Step 1 (the before tree is `refactor/ui-card`); also write
-      `add-exports.mjs`.
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-card`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
 - [ ] **Step 2: Write the failing test.** Create `packages/ui/src/primitives/icons.test.tsx`:
 
 ```tsx
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, expect, test, vi } from "vitest";
 
 import { IconBadge } from "./icon-badge";
 import { IconButton } from "./icon-button";
@@ -7199,6 +7252,19 @@ test("only an IconButton with a disabled prop carries the disabled look", () => 
   );
 });
 
+test("IconButton forwards onClick, and disabled blocks it", () => {
+  const onClick = vi.fn();
+  render(
+    <>
+      <IconButton aria-label="Weiter" onClick={onClick} />
+      <IconButton aria-label="Zurück" onClick={onClick} disabled />
+    </>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+  fireEvent.click(screen.getByRole("button", { name: "Zurück" }));
+  expect(onClick).toHaveBeenCalledTimes(1);
+});
+
 test("a className display wins over the base flex (the menu toggle)", () => {
   render(<IconButton aria-label="Menü" hover="none" className="inline-flex" />);
   expect(screen.getByRole("button", { name: "Menü" }).className).toBe(
@@ -7219,6 +7285,9 @@ test("IconBadge centres its icon at a measured size, shape and tone", () => {
       <IconBadge layout="grid" size="9" shape="md" tone="muted">
         Raster
       </IconBadge>
+      <IconBadge size="9" shape="lg" tone="accent-12" className="shrink-0">
+        Termin
+      </IconBadge>
     </>,
   );
   const badge = screen.getByText("Standard");
@@ -7236,6 +7305,10 @@ test("IconBadge centres its icon at a measured size, shape and tone", () => {
   );
   expect(screen.getByText("Raster").className).toBe(
     "grid place-items-center size-9 rounded-md bg-surface-2 text-ink-soft",
+  );
+  // The booking confirmation's badge (no scenario renders it).
+  expect(screen.getByText("Termin").className).toBe(
+    "flex items-center justify-center size-9 rounded-lg bg-accent-tint-12 text-coral shrink-0",
   );
 });
 ```
@@ -7391,7 +7464,7 @@ cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" primitives/icon-badge primitiv
 cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
 ```
 
-Expected: `2 exports added`; PASS, 14 files / 78 tests.
+Expected: `2 exports added`; PASS, 14 files / 79 tests.
 
 - [ ] **Step 4: The call sites.** Save as `<scratch>/c6b-map.mjs` and apply it:
 
@@ -7761,7 +7834,24 @@ prints only the two bordered pills Task 6c converts (`online-lernen/page.tsx` "T
 `doc-components.tsx`), the icon-badge section nothing; the six raw buttons left are the testimonials dots, the
 booker's day cell and time slot, the chips and the radio rows (C8), and the mobile menu's "Online lernen" toggle.
 
-- [ ] **Step 5: Prove the result identical.** As Task 6a, Step 5. Expected: `IDENTICAL`; `No differences.`
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` (the 14 URLs and `_styles.css`; the raw snapshots differ only in class order);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
 - [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): icon buttons and icon badges from the duplicates`
       (with `design-ratchet.json`).
 
@@ -7800,9 +7890,10 @@ and info rows from the duplicates`.
   - `InfoRow({ icon, label?, variant?: "inverse" | "summary" | "doc", ...div props, children })` - its surface is the
     caller's (`Card asChild`).
 
-**Background (measured on the tree after Task 6b).** `Tag` sets `inline-flex items-center`; four of the five pills
-have no display of their own (inline `span`s in a flex row), so they cannot become a `Tag` size without changing
-`display` - hence `Pill`, which sets none (a pill with an icon adds `inline-flex` as before). Each pill keeps its
+**Background (measured on the tree after Task 6b).** `Tag` sets `inline-flex items-center`; three of the five pills
+(the two on `/ablauf`, "Technik" on `/online-lernen`) have no display of their own (inline `span`s in a flex row), so
+they cannot become a `Tag` size without changing `display` - hence `Pill`, which sets none (the other two, the
+`/kontakt` label and the legal-page badge, carry their own `inline-flex` as before). Each pill keeps its
 tone and size 1:1 (`/ablauf` 2x `inverse sm`, `/online-lernen` `accent code`, the legal-page badge `muted doc` on a
 `div`, `/kontakt` `on-accent md`). The two check lists are the measured sizes: `md` (`/preise`: gaps 3.5/3, 20px
 marks, body text) and `sm inverse` (`/ablauf`: gaps 3/2.5, 18px light-coral marks, small text inheriting
@@ -7811,16 +7902,36 @@ becomes `<Reveal as={CheckList}>` - the same single element. `InfoRow` has the t
 booker aside), `summary` (the booked slot, a `Card asChild surface="inset"` around it) and `doc` (the legal-page
 facts, `Card asChild surface="inset" radius="xl"`). Kept: the booker's navy "Dein Termin" box (no icon, stacked: a
 `Card surface="glass"` since 6a), the `Select` trigger (C8), the chips (C8), and the check-mark badges of the
-feature cards on `/` and `/online-lernen` (a badge, not a list). A dry run of this task gave: HTML equal after
-sorting class tokens, `_styles.css` byte-identical; `compare-computed` 72 page states, no differences.
+feature cards on `/` and `/online-lernen` (a badge, not a list). No scenario renders the booking confirmation:
+`labels.test.tsx` renders it composed (`Card asChild surface="inset" className="mx-auto mb-5 max-w-xs p-3.5
+text-left"` around `InfoRow variant="summary"`) and pins its sorted class set, which is the old element's
+(`rounded-2xl border border-line bg-bg mx-auto mb-5 flex max-w-xs items-center gap-3 p-3.5 text-left`). A dry run of
+this task gave: HTML equal after sorting class tokens, `_styles.css` byte-identical; `compare-computed` 72 page
+states, no differences.
 
-- [ ] **Step 1: Toolkit and before tree.** As Task 6b, Step 1 (the before tree is `refactor/ui-icon-button`).
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-icon-button`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
 - [ ] **Step 2: Write the failing test.** Create `packages/ui/src/primitives/labels.test.tsx`:
 
 ```tsx
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
+import { Card } from "./card";
 import { CheckList } from "./check-list";
 import { InfoRow } from "./info-row";
 import { Pill } from "./pill";
@@ -7891,9 +8002,15 @@ test("InfoRow puts the icon in its badge next to the value", () => {
   render(
     <>
       <InfoRow icon="☎">Telefon</InfoRow>
-      <InfoRow variant="summary" icon="◷" label="Dein Termin">
-        Montag, 10:00 Uhr
-      </InfoRow>
+      <Card
+        asChild
+        surface="inset"
+        className="mx-auto mb-5 max-w-xs p-3.5 text-left"
+      >
+        <InfoRow variant="summary" icon="◷" label="Dein Termin">
+          Montag, 10:00 Uhr
+        </InfoRow>
+      </Card>
       <InfoRow variant="doc" icon="✉" label="Kontakt" className="p-3">
         mail@example.com
       </InfoRow>
@@ -7910,6 +8027,12 @@ test("InfoRow puts the icon in its badge next to the value", () => {
   expect(screen.getByText("Dein Termin").tagName).toBe("P");
   expect(screen.getByText("Montag, 10:00 Uhr").className).toBe(
     "font-heading font-bold text-ink",
+  );
+  // The booking confirmation (no scenario renders it): card and row are one element.
+  const summary =
+    screen.getByText("Montag, 10:00 Uhr").parentElement!.parentElement!;
+  expect(summary.className.split(" ").sort().join(" ")).toBe(
+    "bg-bg border border-line flex gap-3 items-center max-w-xs mb-5 mx-auto p-3.5 rounded-2xl text-left",
   );
   expect(screen.getByText("◷").className).toBe(
     "flex items-center justify-center size-9 rounded-lg bg-accent-tint-12 text-coral shrink-0",
@@ -8141,7 +8264,7 @@ cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" primitives/check-list primitiv
 cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
 ```
 
-Expected: `3 exports added`; PASS, 15 files / 81 tests.
+Expected: `3 exports added`; PASS, 15 files / 82 tests.
 
 - [ ] **Step 4: The call sites.** Save as `<scratch>/c6c-map.mjs` and apply it:
 
@@ -8424,7 +8547,24 @@ bash "$SCRATCH/c6-grep.sh" | sed -n '/^## pills/,/^## private/p'
 Expected: `6 files rewritten`; static checks green; the pills section prints only `chips-field.tsx` (C8); the check
 marks section only `online-lernen/page.tsx` and `benefit-grid.tsx` (the feature badges).
 
-- [ ] **Step 5: Prove the result identical.** As Task 6a, Step 5. Expected: `IDENTICAL`; `No differences.`
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` (the 14 URLs and `_styles.css`; the raw snapshots differ only in class order);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
 - [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): pills, check lists and info rows from the duplicates`.
 
 PR body: Summary (`Pill` without a display of its own and why not `Tag` sizes; `CheckList` in two sizes and tones,
@@ -8462,7 +8602,22 @@ uses. The three status pages share one skeleton - a centred `Container` with `mi
 404, which the snapshot and `compare-computed` cover, and `states.test.tsx` pins the skeleton. A dry run of this task
 gave: the raw HTML snapshots byte-identical (no class moved); `compare-computed` 72 page states, no differences.
 
-- [ ] **Step 1: Toolkit and before tree.** As Task 6b, Step 1 (the before tree is `refactor/ui-labels`).
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-labels`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
 - [ ] **Step 2: Write the failing test.** Create `packages/ui/src/layout/states.test.tsx`:
 
 ```tsx
@@ -8628,7 +8783,7 @@ cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" layout/centered-state layout/s
 cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
 ```
 
-Expected: `2 exports added`; PASS, 16 files / 83 tests.
+Expected: `2 exports added`; PASS, 16 files / 84 tests.
 
 - [ ] **Step 4: The call sites.** Save as `<scratch>/c6d-map.mjs` and apply it:
 
@@ -8853,20 +9008,32 @@ grep -rnE 'function CenteredState|min-h-\[60vh\]' "$WORKTREE/apps/marketing/src"
 
 Expected: `4 files rewritten`; static checks green; the `grep` prints nothing.
 
-- [ ] **Step 5: Prove the result identical.** As Task 6a, Step 5, and before its `stop` line:
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
 
 ```bash
 source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
 diff -r "$SCRATCH/html-before" "$SCRATCH/html-after" && echo RAW-IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
 ```
 
-Expected: `IDENTICAL`, `RAW-IDENTICAL` (the raw snapshots are byte-identical: no class moved); `No differences.`
+Expected: `IDENTICAL` and `RAW-IDENTICAL` (the raw snapshots are byte-identical: no class moved);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
 
 - [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): centered states and status pages from the duplicates`.
 
 PR body: Summary (`CenteredState` from the booker into `layout/`, `StatusPage` for 404, error and `/zahlung`);
 _What changes for a visitor_: nothing - the raw HTML of the 14 URLs and the CSS byte-identical, `compare-computed` 72
-page states; _Grep list_: `function CenteredState` and `min-h-[60vh]` gone from the app; _Deviations from the plan_;
+page states; _Grep list_: `function CenteredState` and `min-h-[60vh]` gone from the app; _Phase E_: `min-h-[60vh]`
+moves into the package with `StatusPage` as an arbitrary value the ratchet does not count - a height token for
+phase E; _Deviations from the plan_;
 _How to check_: `/gibt-es-nicht`, `/zahlung?re=x&betrag=abc`, `/termin` and `/kontakt` without a Cal.com key (the
 "nicht verfügbar" state); 390 and 1280 px, light and dark.
 
@@ -8895,10 +9062,28 @@ list write the same collapsible: an outer grid animating `grid-template-rows` 0f
 the inner element as before. `AnimatedHeight` is the booker's private ResizeObserver helper, moved verbatim. The open
 states (an open FAQ item, the open sub-list) are not in a scenario; `collapsible.test.tsx` pins both states' class
 strings. One trap found in the dry run: a test variable named `resize` made Tailwind (which scans tests) emit a new
-`.resize` rule - the byte comparison of `_styles.css` caught it; the test uses `notifyResize`. A dry run of this task
-gave: the raw HTML snapshots byte-identical; `compare-computed` 72 page states, no differences.
+`.resize` rule - the byte comparison of `_styles.css` caught it; the test uses `notifyResize`. Motion: `compare-computed`
+never reaches the open states and runs with reduced motion, so the open transition is covered by
+`e2e/motion.spec.ts` "an FAQ answer slides in" (in `just check`: it opens an accordion item on `/preise` and measures
+the answer mid-slide inside the `Collapsible`); `AnimatedHeight`'s motion is covered only by its verbatim move. A dry
+run of this task gave: the raw HTML snapshots byte-identical; `compare-computed` 72 page states, no differences.
 
-- [ ] **Step 1: Toolkit and before tree.** As Task 6b, Step 1 (the before tree is `refactor/ui-states`).
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-states`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
 - [ ] **Step 2: Write the failing test.** Create `packages/ui/src/motion/collapsible.test.tsx`:
 
 ```tsx
@@ -9059,7 +9244,7 @@ cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" motion/animated-height motion/
 cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
 ```
 
-Expected: `2 exports added`; PASS, 17 files / 86 tests.
+Expected: `2 exports added`; PASS, 17 files / 87 tests.
 
 - [ ] **Step 4: The call sites.** Save as `<scratch>/c6e-map.mjs` and apply it:
 
@@ -9206,13 +9391,31 @@ grep -rnE 'grid-rows-\[|ResizeObserver' "$WORKTREE/apps/marketing/src" "$WORKTRE
 
 Expected: `3 files rewritten`; static checks green; the `grep` prints nothing.
 
-- [ ] **Step 5: Prove the result identical.** As Task 6d, Step 5. Expected: `IDENTICAL`, `RAW-IDENTICAL`;
-      `No differences.`
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+diff -r "$SCRATCH/html-before" "$SCRATCH/html-after" && echo RAW-IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` and `RAW-IDENTICAL` (the raw snapshots are byte-identical: no class moved);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
 - [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): collapsible and animated height in the package`.
 
 PR body: Summary (`Collapsible` for the accordion and the mobile menu, `AnimatedHeight` from the booker; the dismiss
 logic stays for C8); _What changes for a visitor_: nothing - raw HTML and CSS byte-identical, `compare-computed` 72
-page states, the open states pinned by the test; _Deviations from the plan_; _How to check_: open and close a FAQ
+page states, the open states pinned by the test, the open motion by `motion.spec.ts` ("an FAQ answer slides in"),
+`AnimatedHeight` moved verbatim; _Deviations from the plan_; _How to check_: open and close a FAQ
 item (`/faecher`), the mobile menu at 390 px -> "Online lernen" open and closed, `/termin` -> slot -> form -> back (the
 panel height morphs); light and dark.
 
@@ -9257,21 +9460,46 @@ link cards (a nested link is invalid). Not changed either: the desktop nav and t
 (`Button asChild variant="ghost"`; the dropdown is C8's, and a `NavLink` under `Button`'s `Slot` would put its
 active classes before the button's, so `cn` would drop them), `mailto:` anchors inside `Button`/`Card asChild` (the
 rule's own result), and the `/zahlung` WhatsApp button, which opens in the same tab (open point 17). The server HTML
-cannot tell `next/link` from `<a>`, so `check-navigation.mjs` clicks 12 links in both builds. One trap found in the
+cannot tell `next/link` from `<a>`, so `check-navigation.mjs` clicks 12 links in both builds, and `link.test.tsx`
+mocks `next/link` so that its output carries a marker (a route rendered as a plain `<a>` fails; checked by breaking
+the rule). The navbar keeps `activeText` for its buttons (the desktop nav, the C8 dropdown trigger, the mobile
+toggle): it repeats `NavLink`'s menu classes; the grep list names it. One trap found in the
 dry run: a variant named `inline-doc` is itself a Tailwind utility (`inline-size` with the `doc` spacing) and emitted
 `.inline-doc{inline-size:…}`; the variants keep `InlineLink`'s names `site` and `doc`. A dry run of this task gave:
 HTML equal after sorting class tokens, `_styles.css` byte-identical; `check-navigation` "Same navigation." (12 links);
 `compare-computed` 72 page states, no differences.
 
-- [ ] **Step 1: Toolkit and before tree.** As Task 6b, Step 1 (the before tree is `refactor/ui-collapsible`); also
-      write `check-navigation.mjs`.
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-collapsible`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`, `check-navigation.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
 - [ ] **Step 2: Write the failing test.** Create `packages/ui/src/primitives/link.test.tsx`:
 
 ```tsx
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 
 import { ArrowLink, NavLink, SmartLink, TextLink } from "./link";
+
+// next/link renders an <a> too: the mock marks it, so a route rendered as a
+// plain anchor (a full page load) fails the attribute checks below.
+vi.mock("next/link", () => ({
+  default: (props: React.ComponentProps<"a">) => (
+    <a data-next-link="" {...props} />
+  ),
+}));
 
 afterEach(cleanup);
 
@@ -9288,7 +9516,7 @@ test("the link rule: routes, web addresses and plain anchors", () => {
   const link = (name: string) => screen.getByRole("link", { name });
   const attributes = (name: string) =>
     [...link(name).attributes].map((a) => `${a.name}=${a.value}`).sort();
-  expect(attributes("Preise")).toEqual(["href=/preise"]);
+  expect(attributes("Preise")).toEqual(["data-next-link=", "href=/preise"]);
   expect(attributes("Discord")).toEqual([
     "href=https://discord.gg/x",
     "rel=noopener noreferrer",
@@ -9325,6 +9553,7 @@ test("TextLink variants keep the measured looks", () => {
 test("ArrowLink ends in a decorative arrow after a space", () => {
   render(<ArrowLink href="/kontakt#kennenlernen">Erstgespräch</ArrowLink>);
   const link = screen.getByRole("link", { name: "Erstgespräch" });
+  expect(link.hasAttribute("data-next-link")).toBe(true);
   expect(link.className).toBe(
     "font-semibold text-coral underline underline-offset-[3px]",
   );
@@ -9350,6 +9579,7 @@ test("NavLink shows the active entry per variant; aria-current is the caller's",
     </>,
   );
   const current = screen.getByRole("link", { name: "Preise" });
+  expect(current.hasAttribute("data-next-link")).toBe(true);
   expect(current.getAttribute("aria-current")).toBe("page");
   expect(current.className).toBe(
     "border-b border-line py-3 text-body font-semibold text-ink",
@@ -9509,7 +9739,7 @@ cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" primitives/link
 cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
 ```
 
-Expected: `1 exports added`; PASS, 18 files / 90 tests.
+Expected: `1 exports added`; PASS, 18 files / 91 tests.
 
 - [ ] **Step 4: The call sites.** Save as `<scratch>/c6f-map.mjs` and apply it:
 
@@ -9858,23 +10088,36 @@ Expected: `10 files rewritten`; static checks green; the links section prints on
 `booking-form.tsx` (the `InlineLink` import and 2 links), `doc-components.tsx` (the `InlineLink` import,
 `DocLinkList`'s and `DocProviderLink`'s `target`/`rel`).
 
-- [ ] **Step 5: Prove the result identical and the navigation unchanged.** As Task 6a, Step 5, and before the
-      `stop` line:
+- [ ] **Step 5: Prove the result identical and the navigation unchanged.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
 
 ```bash
 source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
 node "$SCRATCH/check-navigation.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
 ```
 
-Expected: `IDENTICAL`; 12 lines, the first nine `client` (footer, menu, arrow, `/zahlung`, table of contents), the
-last three `document` (the 6g links), then `Same navigation.`; `No differences.`
+Expected: `IDENTICAL`; 12 navigation lines, the first nine `client` (footer, menu, arrow, `/zahlung`, table
+of contents), the last three `document` (the 6g links), then `Same navigation.`;
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
 
 - [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): text, arrow and nav links on one link rule`.
 
 PR body: Summary (the link rule in `SmartLink`; `TextLink`, `ArrowLink`, `NavLink`; `FooterLink` and the footer's
 class constants removed; what is left for 6g and why); _What changes for a visitor_: nothing - HTML equal after
 sorting class tokens, CSS byte-identical, `compare-computed` 72 page states, `check-navigation` the same for 12 links;
-_Grep list_: the links section with the 6g lines; _Deviations from the plan_; _How to check_: the footer (hover the
+_Grep list_: the links section with the 6g lines, the raw anchors (two `mailto:` anchors, the skip link, the
+`/zahlung` WhatsApp button) and `activeText`; _Question for the maintainer_: the `/zahlung` WhatsApp button opens
+WhatsApp in the same tab, while the footer and the `/kontakt` card open a new one - a bug or a design choice? It stays
+as it is (open point 17); _Naming_: the `NavLink` component shares its name with the `NavLink` type in
+`content/site.ts` (no file imports both; nothing renamed); _Deviations from the plan_; _How to check_: the footer (hover the
 links on navy; social icons open a new tab), the mobile menu at 390 px (the current page's row is bold),
 `/datenschutz` (table of contents follows the scroll; e-mail and phone links), `/impressum`, `/termin` ("Starte mit
 dem kostenlosen Erstgespräch ->"), `/zahlung?re=x&betrag=abc` ("Alle Kontaktwege"), `/online-lernen` and `/preise`
@@ -9913,8 +10156,22 @@ Received: false") before and green after; the HTML equal to the before snapshot 
 byte-identical; `check-navigation` exactly the three links `document -> client`; `compare-computed` 72 page states,
 no differences.
 
-- [ ] **Step 1: Toolkit and before tree.** As Task 6f, Step 1 (the before tree is `refactor/ui-links`); also write
-      `expect-html.mjs`.
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-links`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `expect-html.mjs`, `check-navigation.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
 - [ ] **Step 2: Write the failing tests.** Append to `apps/marketing/e2e/smoke.spec.ts`:
 
 ```ts
@@ -10125,10 +10382,11 @@ cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run
 grep -rnE 'InlineLink|target="_blank"|rel="' "$WORKTREE/apps/marketing/src" "$WORKTREE/packages/ui/src" | grep -v 'manifest.ts'
 ```
 
-Expected: `5 files rewritten`; static checks green; PASS, 18 files / 89 tests; the `grep` prints only
+Expected: `5 files rewritten`; static checks green; PASS, 18 files / 90 tests; the `grep` prints only
 `packages/ui/src/primitives/link.tsx` (the rule, 2 lines).
 
 - [ ] **Step 4: Prove the change and nothing else.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
 
 ```bash
 source <scratch>/toolkit.sh
@@ -10157,7 +10415,10 @@ rule's `rel`); _What changes for a visitor_: nothing looks different; clicking "
 like every other internal link); the 18 external links on `/datenschutz` and `/kontakt` keep opening a new tab
 (`rel` "noreferrer" -> "noopener noreferrer", same behaviour); proof: the smoke test red/green, `check-navigation`
 exactly these three links, HTML equal to the expected `rel` change, CSS identical, `compare-computed` 72 page states;
-_Grep list_: no `InlineLink`, `target` or `rel` left in the app; _Deviations from the plan_; _How to check_: `/agb`
+_Grep list_: no `InlineLink`, `target` or `rel` left in the app; _Deviations from the spec_: C4's technique (spec, C4)
+still lists `InlineLink` in the Prose module - 6g removes it (`TextLink variant="doc"` replaces it); the _Target
+shape_ names `primitives/links`, the plan's module is `primitives/link.tsx` (one module, singular like its
+siblings); _Deviations from the plan_; _How to check_: `/agb`
 -> "Preisübersicht" (no reload flash; in DevTools' network panel a small RSC request instead of a document), `/termin`
 -> slot -> form (paid) -> "AGB", `/datenschutz` -> any provider link (new tab); 390 and 1280 px, light and dark.
 
@@ -10189,10 +10450,25 @@ slot looks are the planner's proposal from existing classes (description: captio
 coral; required: a coral `*` after the label, hidden from assistive technology, which reads the `required`
 attribute) - open point 20; `ml-0.5` for the marker added a new CSS rule in the dry run, so it uses the existing
 `ml-1`. A dry run of this task gave: field tests red (2 of 4) then green; the raw HTML snapshots and CSS
-byte-identical; `compare-computed` 72 page states, no differences; `just check` green (19 files / 93 package tests,
+byte-identical; `compare-computed` 72 page states, no differences; `just check` green (19 files / 94 package tests,
 60 smoke tests).
 
-- [ ] **Step 1: Toolkit and before tree.** As Task 6b, Step 1 (the before tree is `fix/text-links`).
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `fix/text-links`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `c6-grep.sh`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
 - [ ] **Step 2: Write the failing test.** Create `packages/ui/src/forms/field.test.tsx`:
 
 ```tsx
@@ -10399,7 +10675,7 @@ export function Textarea({
 ```
 
 Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run`.
-Expected: PASS, 19 files / 93 tests.
+Expected: PASS, 19 files / 94 tests.
 
 - [ ] **Step 4: Tick the C6 box.** In `docs/specs/foundation-refactor.md`, tick C6's acceptance criterion ("No
       hand-built copy of these patterns is left outside the package ..."). Then the full grep list for the PR body:
@@ -10413,17 +10689,43 @@ Expected: static checks green; the grep list prints exactly the kept lines of th
 dropdown panel (C8); navy/coral: the `/preise` and booker navy halves, the skip link, the footer; raw buttons: the
 testimonials dots, the booker's day cell and time slot, the chips and radio rows (C8), the mobile "Online lernen"
 toggle; pills: the chips (C8); check marks: the two feature badges; field labels: the chips and radio fields (C8,
-RadioGroup/chips); the icon, private-helper and link sections empty.
+RadioGroup/chips); raw anchors: the `/kontakt` e-mail card and the `/zahlung` e-mail button (`mailto:`, the rule's
+own result), the `/zahlung` WhatsApp button (same tab, open point 17) and the skip link (`#main`); active-state
+helpers: `activeText` in `navbar.tsx` (buttons, not links); the icon, private-helper and link sections empty.
 
-- [ ] **Step 5: Prove the result identical.** As Task 6d, Step 5. Expected: `IDENTICAL`, `RAW-IDENTICAL`;
-      `No differences.`
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+diff -r "$SCRATCH/html-before" "$SCRATCH/html-after" && echo RAW-IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` and `RAW-IDENTICAL` (the raw snapshots are byte-identical: no class moved);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
 - [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): field error, description and required slots` (with the
       spec).
 
 PR body: Summary (V4: `description`, `error`, `required` on `Field`, wired to `Input`/`Textarea` through a context;
 the booking keeps its pattern; the C6 box ticked); _What changes for a visitor_: nothing - raw HTML and CSS
 byte-identical, `compare-computed` 72 page states; _Grep list (C6 acceptance)_: the full `c6-grep.sh` output with a
-reason per line and the ratchet (`raw-button` 12 -> 6 over C6); _Deviations from the plan_; _How to check_: `/termin`
+reason per line and the ratchet (`raw-button` 12 -> 6 over C6), including the two lines the review added (raw
+anchors, `activeText`); _Question for the maintainer_: open point 17 (the `/zahlung` WhatsApp button, same tab); _The
+spec's counts_: the spec's summary (from the audit) names 12 icon badges, 5 info-row variants and 7 nav-link
+variants; C6 found 9 badges in the app plus the accordion's "+" and the `Select` badge (C8) - the others were in the
+consent code deleted in A2 -, 3 info-row variants plus the `Select` trigger (C8) and the navy slot summary (no
+icon, a `Card surface="glass"`), and 3 `NavLink` variants plus the desktop nav (`Button asChild`), the dropdown items
+(C8) and the two footer link styles (`TextLink inverse`, `inverse-muted`); _Deviations from the plan_; _How to
+check_: `/termin`
 -> slot -> form: fill and leave a required field empty (the booking's own pattern, unchanged); 390 and 1280 px, light
 and dark.
 
