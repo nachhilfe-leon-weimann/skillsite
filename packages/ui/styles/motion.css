@@ -1,0 +1,172 @@
+/* Motion: lift, keyframes, .check-draw and .reveal. Part of theme.css. */
+
+/* Shared hover-lift + press-settle for buttons and cards. Travel is tunable
+   per element via `--lift` (so we get one vocabulary instead of the old
+   ad-hoc -0.5/-1/-1.5). Hover is gated to real pointers so touch never gets a
+   sticky hover; :active gives every consumer a press settle that counters the
+   lift (this is the fix for buttons feeling "jumpy" on click). */
+@utility lift {
+  transition-property:
+    transform, box-shadow, border-color, background-color, color, opacity;
+  transition-duration: var(--transition-duration-quick);
+  transition-timing-function: var(--ease-flow);
+
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(var(--lift, 0px));
+    }
+  }
+  &:active {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+/* Entrance animations. */
+@keyframes fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Token-driven entrance: travel reads --reveal-travel, so any element can
+   soften/intensify the rise locally with e.g. [--reveal-travel:6px]. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--reveal-travel));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Self-drawing SVG stroke. The path must set pathLength="1" so the dash math
+   is normalised regardless of its real length. */
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Warmer entrance: rise with a touch of depth (scale). Above-the-fold reveals
+   run this as a mount keyframe; below-the-fold uses the .reveal transition. */
+@keyframes rise-soft {
+  from {
+    opacity: 0;
+    transform: translateY(var(--reveal-travel-soft))
+      scale(var(--reveal-scale-soft));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Photo depth-settle: eases down from a slight overscale so the image "lands". */
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Self-drawing checkmark. AnimatedCheckMark adds [data-shown] on the <svg> when
+   it scrolls into view; the path then strokes in, staggered by --reveal-index.
+   Reduced motion: the hook sets [data-shown] immediately and the global
+   override flattens the transition, so the check just appears. No JS: shown. */
+.check-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset var(--transition-duration-slow) var(--ease-flow);
+  transition-delay: calc(var(--reveal-index, 0) * var(--reveal-stagger));
+}
+[data-shown] > .check-draw {
+  stroke-dashoffset: 0;
+}
+/* Never leave the check hidden when it won't animate: no JS, or reduced motion
+   (where the observer may never flip [data-shown] for below-the-fold checks). */
+@media (scripting: none) {
+  .check-draw {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .check-draw {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Scroll reveals. Mirrors the .check-draw model: a hidden rest state that
+   transitions to shown once <Reveal> (useInView) sets [data-shown]. The
+   variant picks the resting transform via [data-reveal]; blur is opt-in via
+   [data-blur] (small surfaces only - never long text or the code block).
+   Stagger reads --reveal-index * --reveal-stagger, or Reveal sets an inline
+   transition-delay directly.
+--------------------------------------------------------------------------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(var(--reveal-travel));
+  transition-property: opacity, transform, filter;
+  transition-duration: var(--reveal-duration, var(--transition-duration-base));
+  transition-timing-function: var(--ease-flow);
+  transition-delay: calc(var(--reveal-index, 0) * var(--reveal-stagger));
+}
+.reveal[data-reveal="rise-soft"] {
+  --reveal-duration: var(--transition-duration-flow);
+  transform: translateY(var(--reveal-travel-soft))
+    scale(var(--reveal-scale-soft));
+}
+.reveal[data-reveal="fade"] {
+  transform: none;
+}
+.reveal[data-reveal="settle"] {
+  --reveal-duration: var(--transition-duration-settle);
+  transform: scale(var(--reveal-scale, 1.03));
+}
+.reveal[data-blur] {
+  filter: blur(var(--reveal-blur));
+}
+.reveal[data-shown] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+/* Never leave content stuck hidden when it won't animate: no JS, or reduced
+   motion (where the observer may never flip [data-shown] below the fold). */
+@media (scripting: none) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}

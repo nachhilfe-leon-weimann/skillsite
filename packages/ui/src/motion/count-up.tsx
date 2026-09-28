@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "./utils";
-import { useCountUp } from "./hooks/use-count-up";
+import { cn } from "../utils/cn";
+import { useCountUp } from "../hooks/use-count-up";
 
 type CountUpProps = {
   /** Stat string like "320+", "35+" or "3". Only the digits animate. */

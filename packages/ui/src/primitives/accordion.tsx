@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 
-import { cn } from "./utils";
+import { cn } from "../utils/cn";
 
 export type AccordionEntry = {
   question: string;

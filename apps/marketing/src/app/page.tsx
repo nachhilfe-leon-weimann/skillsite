@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
-import { Eyebrow } from "@skillsite/ui/eyebrow";
-import { LinkButton } from "@skillsite/ui/button";
-import { Heading, Lead, Text } from "@skillsite/ui/typography";
-import { Reveal } from "@skillsite/ui/reveal";
-import { SectionHeader } from "@skillsite/ui/section-header";
+import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
+import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Heading } from "@skillsite/ui/typography/heading";
+import { Lead } from "@skillsite/ui/typography/lead";
+import { Text } from "@skillsite/ui/typography/text";
+import { Reveal } from "@skillsite/ui/motion/reveal";
+import { SectionHeader } from "@skillsite/ui/layout/section-header";
 import { StatGrid } from "@/components/sections/stat-grid";
 import { StepGrid } from "@/components/sections/step-grid";
 import { BenefitGrid } from "@/components/sections/benefit-grid";

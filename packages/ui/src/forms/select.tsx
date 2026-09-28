@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 
-import { cn } from "./utils";
+import { cn } from "../utils/cn";
 
 export type SelectOption<T extends string | number> = {
   value: T;

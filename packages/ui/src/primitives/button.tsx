@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { cn } from "./utils";
+import { cn } from "../utils/cn";
 
 export type ButtonVariant = "primary" | "navy" | "outline" | "white" | "ghost";
 export type ButtonSize = "sm" | "md" | "lg";
