@@ -394,7 +394,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   `TextLink`/`ArrowLink`/`NavLink` on `next/link` with one external-link rule (`rel`, `target`). `Field` gets
   `error`, `description`, `required` slots (V4). Every current occurrence maps to a variant 1:1.
 - _Acceptance criteria:_
-  - [ ] No hand-built copy of these patterns is left outside the package (ratchet + grep list in the PR).
+  - [x] No hand-built copy of these patterns is left outside the package (ratchet + grep list in the PR).
 
 **C7 - Headless spike.** _(gate - the maintainer decides)_
 
