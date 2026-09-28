@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -7,6 +8,7 @@ import {
   Modal,
   ModalOverlay,
   Pressable,
+  Text,
 } from "react-aria-components";
 
 import { Button } from "../../primitives/button";
@@ -15,6 +17,7 @@ import { look } from "../look";
 import { motion } from "./motion";
 
 export function RacDialog() {
+  const descriptionId = useId();
   return (
     <DialogTrigger>
       {/* Pressable hands RAC's press events to the C2 Button (a host <button>). */}
@@ -23,7 +26,8 @@ export function RacDialog() {
       </Pressable>
       <ModalOverlay isDismissable className={cn(look.overlay, motion)}>
         <Modal className={cn(look.dialog, motion)}>
-          <Dialog className="outline-none">
+          {/* The description slot links itself only for role="alertdialog". */}
+          <Dialog aria-describedby={descriptionId} className="outline-none">
             {({ close }) => (
               <>
                 <Heading
@@ -32,9 +36,14 @@ export function RacDialog() {
                 >
                   Termin anfragen
                 </Heading>
-                <p className="mt-2 text-body text-ink-soft">
+                <Text
+                  id={descriptionId}
+                  slot="description"
+                  elementType="p"
+                  className="mt-2 text-body text-ink-soft"
+                >
                   Wir melden uns innerhalb eines Tages.
-                </p>
+                </Text>
                 <label className="mt-5 block text-small font-semibold text-ink">
                   Name
                   <input className={cn(look.input, "mt-1.5")} name="name" />
