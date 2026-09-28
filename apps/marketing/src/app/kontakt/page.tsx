@@ -7,6 +7,7 @@ import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
+import { Split } from "@skillsite/ui/layout/split";
 import { Booker } from "@/components/booking/booker";
 import { WhatsappQr } from "@/components/sections/whatsapp-qr";
 import { CtaSection } from "@/components/sections/cta-section";
@@ -55,7 +56,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
       />
 
       <Container className="py-section-sm">
-        <div className="grid items-stretch gap-5 lg:grid-cols-[1.25fr_1fr]">
+        <Split align="stretch" gap="5" ratio="1.25/1">
           <Reveal variant="rise-soft" index={0}>
             <a
               href={whatsapp}
@@ -123,7 +124,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               </Text>
             </Link>
           </Reveal>
-        </div>
+        </Split>
       </Container>
 
       <Section id="kennenlernen" surface>
