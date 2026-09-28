@@ -41,6 +41,8 @@ there slice by slice.
 - Visible text lives in `apps/marketing/src/content/*.ts`, not in components.
 - Build pages from `@skillsite/ui` components and the type scale (`text-display` ... `text-caption`). No arbitrary
   values (`text-[...]`, inline `color-mix(...)`, hand-tuned `clamp()`), no hand-built copies of existing components.
+- Variants are CVA maps named by role (`variant: primary | secondary | inverse | outline | ghost`,
+  `tone: default | muted | inverse | ...`); a link styled as a button is `<Button asChild><Link …/></Button>`.
 - `just ratchet` counts design-system bypasses (`design-ratchet.json`). A count may never rise; when your change
   lowers one, run `just ratchet-update` and commit the file. Exceptions go into its `allow` list with a reason.
 - Motion speaks the brand tokens: `ease-flow`, `ease-soft`, `duration-quick|base|slow`, the `lift` utility, `Reveal`.

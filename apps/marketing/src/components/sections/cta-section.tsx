@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { Container } from "@/components/layout/container";
-import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
@@ -40,9 +41,11 @@ export function CtaSection({
           {subtitle}
         </Text>
         <div className="mt-8 flex flex-wrap justify-center gap-3.5">
-          <LinkButton href={cta.href} variant="white" size="lg">
-            {cta.label} <ArrowRight className="size-4" />
-          </LinkButton>
+          <Button asChild variant="inverse" size="lg">
+            <Link href={cta.href}>
+              {cta.label} <ArrowRight className="size-4" />
+            </Link>
+          </Button>
         </div>
         <Text size="small" tone="inherit" className="mt-4 text-white/85">
           {trust}

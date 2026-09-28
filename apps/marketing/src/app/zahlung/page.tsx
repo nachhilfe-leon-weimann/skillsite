@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { Container } from "@/components/layout/container";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
-import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { contactDetails } from "@/content/contact";
@@ -64,20 +64,12 @@ export default async function PaymentPage({
         neuen Link.
       </Text>
       <div className="mt-8 flex flex-wrap justify-center gap-3.5">
-        <LinkButton
-          href={contactDetails.eMail.href}
-          variant="primary"
-          size="lg"
-        >
-          E-Mail schreiben
-        </LinkButton>
-        <LinkButton
-          href={contactDetails.whatsapp.href}
-          variant="outline"
-          size="lg"
-        >
-          Über WhatsApp melden
-        </LinkButton>
+        <Button asChild variant="primary" size="lg">
+          <a href={contactDetails.eMail.href}>E-Mail schreiben</a>
+        </Button>
+        <Button asChild variant="outline" size="lg">
+          <a href={contactDetails.whatsapp.href}>Über WhatsApp melden</a>
+        </Button>
       </div>
       <Text size="small" tone="muted" className="mt-6">
         {contactDetails.eMail.content} · {contactDetails.whatsapp.content}

@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { PageHeader } from "@/components/layout/page-header";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Card } from "@skillsite/ui/primitives/card";
-import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -57,23 +58,21 @@ export default function PricingPage() {
                 <span className="font-heading text-[clamp(3.6rem,8vw,5.2rem)] font-extrabold leading-none">
                   {lessonPrice.amount}
                 </span>
-                <Text as="span" tone="on-navy-soft" className="text-[1.1rem]">
+                <Text as="span" tone="inverse-muted" className="text-[1.1rem]">
                   {lessonPrice.unit}
                 </Text>
               </Reveal>
               <Reveal trigger="mount" variant="rise-soft" delay={360}>
-                <Text tone="on-navy-soft" className="mb-6">
+                <Text tone="inverse-muted" className="mb-6">
                   {lessonPrice.note}
                 </Text>
               </Reveal>
               <Reveal trigger="mount" variant="rise-soft" delay={480}>
-                <LinkButton
-                  href={routes.firstMeeting}
-                  variant="primary"
-                  className="w-full sm:w-fit"
-                >
-                  Kostenloses Erstgespräch <ArrowRight className="size-4" />
-                </LinkButton>
+                <Button asChild variant="primary" className="w-full sm:w-fit">
+                  <Link href={routes.firstMeeting}>
+                    Kostenloses Erstgespräch <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
               </Reveal>
             </div>
             <div className="flex flex-col justify-center gap-3.5 bg-surface p-[clamp(2rem,4vw,2.75rem)]">
@@ -156,16 +155,20 @@ export default function PricingPage() {
             <Text as="span" tone="muted" className="text-sm">
               Quelle: {but.officialInfo.source}
             </Text>
-            <LinkButton
-              href={but.officialInfo.href}
+            <Button
+              asChild
               variant="outline"
-              target="_blank"
-              rel="noopener noreferrer"
               aria-label={`${but.officialInfo.label} auf ${but.officialInfo.source} öffnen`}
             >
-              {but.officialInfo.label}
-              <ExternalLink className="size-4" aria-hidden />
-            </LinkButton>
+              <a
+                href={but.officialInfo.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {but.officialInfo.label}
+                <ExternalLink className="size-4" aria-hidden />
+              </a>
+            </Button>
           </Reveal>
         </div>
 

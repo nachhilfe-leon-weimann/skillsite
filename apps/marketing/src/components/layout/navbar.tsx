@@ -8,7 +8,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@skillsite/ui/utils/cn";
 import { Container } from "@/components/layout/container";
 import { Logo } from "@/components/layout/logo";
-import { Button, LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { primaryCta, primaryNav, platformNav } from "@/content/site";
 import { useBodyScrollLock } from "@skillsite/ui/hooks/use-body-scroll-lock";
 import { useMediaQuery } from "@skillsite/ui/hooks/use-media-query";
@@ -111,16 +111,18 @@ function NavbarContent({ pathname }: { pathname: string }) {
         <DesktopNav pathname={pathname} platformActive={isPlatformActive} />
 
         <div className="ml-auto flex items-center gap-2 nav:ml-0 nav-wide:gap-2.5">
-          <LinkButton
-            href={primaryCta.href}
+          <Button
+            asChild
             variant="primary"
             size="md"
             className="hidden px-4 nav:inline-flex nav-wide:px-5"
           >
-            {/* Short label in the compact range, full label once there is room. */}
-            <span className="nav-wide:hidden">{primaryCta.shortLabel}</span>
-            <span className="hidden nav-wide:inline">{primaryCta.label}</span>
-          </LinkButton>
+            <Link href={primaryCta.href}>
+              {/* Short label in the compact range, full label once there is room. */}
+              <span className="nav-wide:hidden">{primaryCta.shortLabel}</span>
+              <span className="hidden nav-wide:inline">{primaryCta.label}</span>
+            </Link>
+          </Button>
           <button
             ref={menuButtonRef}
             type="button"
@@ -155,9 +157,9 @@ function DesktopNav({
   return (
     <nav className="hidden flex-1 items-center justify-end gap-0.5 nav:flex nav-wide:gap-1">
       {primaryNav.map((item) => (
-        <LinkButton
+        <Button
+          asChild
           key={item.href}
-          href={item.href}
           variant="ghost"
           aria-current={currentPage(pathname, item.href)}
           className={cn(
@@ -165,8 +167,8 @@ function DesktopNav({
             activeText(isActive(pathname, item.href)),
           )}
         >
-          {item.label}
-        </LinkButton>
+          <Link href={item.href}>{item.label}</Link>
+        </Button>
       ))}
 
       <PlatformDropdown pathname={pathname} active={platformActive} />
@@ -226,19 +228,21 @@ function PlatformDropdown({
       >
         <div className="flex flex-col gap-0.5 rounded-2xl border border-line bg-surface p-2 shadow-card">
           {platformNav.map((item) => (
-            <LinkButton
+            <Button
+              asChild
               key={`${item.href}:${item.label}`}
-              href={item.href}
               variant="ghost"
               aria-current={currentPage(pathname, item.href)}
               onClick={() => setOpen(false)}
               className="flex flex-col items-start gap-0.5 rounded-xl px-3 py-2.5"
             >
-              <span className="text-body font-semibold text-ink">
-                {item.label}
-              </span>
-              <span className="text-caption text-ink-soft">{item.note}</span>
-            </LinkButton>
+              <Link href={item.href}>
+                <span className="text-body font-semibold text-ink">
+                  {item.label}
+                </span>
+                <span className="text-caption text-ink-soft">{item.note}</span>
+              </Link>
+            </Button>
           ))}
         </div>
       </div>
@@ -327,14 +331,14 @@ function MobileMenu({
       </Container>
 
       <Container className="flex flex-col gap-2 border-t border-line py-4">
-        <LinkButton
-          href={primaryCta.href}
+        <Button
+          asChild
           variant="primary"
           onClick={onNavigate}
           className="w-full"
         >
-          {primaryCta.label}
-        </LinkButton>
+          <Link href={primaryCta.href}>{primaryCta.label}</Link>
+        </Button>
       </Container>
     </div>
   );
