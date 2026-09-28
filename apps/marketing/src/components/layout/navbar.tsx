@@ -31,7 +31,7 @@ function isPlatformNavActive(pathname: string) {
   return platformNav.some((item) => isActive(pathname, item.href));
 }
 
-/** `aria-current` for a page link; a `#section` link never is the current page. */
+/** `aria-current` for a page link; a `#section` link is never the current page. */
 function currentPage(pathname: string, href: string) {
   return !href.includes("#") && isActive(pathname, href) ? "page" : undefined;
 }

@@ -41,7 +41,7 @@ export const platformNav: PlatformNavItem[] = [
 
 export const primaryCta = {
   label: "Kostenloses Erstgespräch",
-  /** Shorter label for the compact navbar range (1024-1215px). */
+  /** Shorter label for the compact navbar range (nav to nav-wide, 1080-1277px at the default font size). */
   shortLabel: "Erstgespräch",
   href: routes.firstMeeting,
 };

@@ -25,7 +25,7 @@ export default defineConfig([
           selector:
             "JSXAttribute[name.name='aria-hidden'] > JSXExpressionContainer > Literal[value=true]",
           message:
-            "Write the shorthand `aria-hidden` instead of `aria-hidden={true}`.",
+            "Write the shorthand `aria-hidden` instead of an explicit true value.",
         },
       ],
     },

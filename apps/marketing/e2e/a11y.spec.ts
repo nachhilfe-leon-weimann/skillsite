@@ -50,6 +50,9 @@ test.describe("at phone width", () => {
       .click();
     const links = page.locator("#mobile-platform-nav a");
     await expect(links.first()).toHaveAttribute("aria-current", "page");
+    await expect(page.locator('#mobile-platform-nav a[href*="#"]')).toHaveCount(
+      1,
+    );
     await expect(
       page.locator('#mobile-platform-nav a[href*="#"]'),
     ).not.toHaveAttribute("aria-current");
