@@ -3,10 +3,11 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for
 > tracking. **Each task is one slice = one branch = one PR.** Phase B is not merged yet: the slices form one
-> linear stack on top of it (see _Execution order_). **This plan is written in waves.** Wave 1 (this version)
-> fixes the skeleton of all of phase C and details C1-C3 (Tasks 1-3). Wave 2 adds the steps of C4 and C5, wave 3
-> splits C6 into PR-sized tasks and details C7 - each written against the code as it is after the slice before.
-> A task that still reads "_Detailed steps: wave 2/3_" is not ready to implement.
+> linear stack on top of it (see _Execution order_). **This plan is written in waves.** Wave 1 fixed the
+> skeleton of all of phase C and detailed C1-C3 (Tasks 1-3, implemented). Wave 2 (this version) details C4 and C5,
+> split into the PR-sized Tasks 4a-4c and 5a-5c, written against the code after C3 (943fb6e) and dry-run end to
+> end. Wave 3 splits C6 into PR-sized tasks and details C7. A task that still reads "_Detailed steps: wave 3_" is
+> not ready to implement.
 >
 > **Paths.** Commands use two placeholders the controller fills in each dispatch: `<worktree>` is the absolute path
 > of the task's worktree, `<scratch>` the absolute path of the task's scratch dir
@@ -29,6 +30,10 @@ applied; every old/new class pair computes the same style in every forced state 
 same style, also under forced `:hover`/`:focus`/`:focus-visible`/`:active` (computed-style comparison). Every token
 is defined with the exact CSS expression its arbitrary class compiled to, so no value can drift. `cn` stays the one
 class merger, and the drift test in `utils/cn.test.ts` fails for any `@theme` namespace or token it does not know.
+C4 and C5 unify and move components: their HTML is proven equal to the old one after sorting class tokens (CVA and
+moved components may order the same classes differently) and, in C5c, masking the hashed font class names - with
+the slice's map applied where a class or a tag is renamed - and computed styles are compared as in C3; the one
+deliberate DOM change (a heading level on `/faecher`) is its own `fix:` PR.
 
 **Tech Stack:** pnpm 12.4.2 + Turborepo 2.11.2, Node 26, Next.js 16.3.5 (Turbopack build, Lightning CSS minifier),
 React 19.3.0, TypeScript 7.0.2, Tailwind CSS 4.3.3, tailwind-merge 3.7.0, Vitest 5.0.2 (node + jsdom), Playwright
@@ -44,7 +49,8 @@ React 19.3.0, TypeScript 7.0.2, Tailwind CSS 4.3.3, tailwind-merge 3.7.0, Vitest
 - C1-C6 are refactors: PR titles use `refactor:`, `build:`, `chore:` or `test:`, never `fix:` or `feat:`. Nothing a
   visitor sees changes - no pixel, text, `<head>` entry or behaviour. Where a unification would move a pixel, keep
   the old value as a named variant or token; no rounding (that is phase E). If a slice cannot stay identical, stop
-  and report.
+  and report. The one exception is Task 4c, the `/faecher` heading-level fix: a `fix(a11y):` PR of its own
+  (_Decisions_), which changes three tags and nothing visible.
 - Every task proves identity with the _Verification toolkit_ below and puts the numbers in its PR body.
 - Visible text is never edited; bulk edits over German files only with UTF-8-safe tools (`perl -CSD -pi -e ...`).
 - Every new theme token or utility is registered in `cn` (`packages/ui/src/utils/cn.ts`) with a test; the drift
@@ -105,13 +111,14 @@ cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
 
 **HTML snapshot** - `<scratch>/snapshot-html.mjs`. One line per element (tag and sorted attributes) and per text
 node for 14 URLs (every route, `/zahlung` valid and invalid, a 404), hashed `/_next/static/` names masked, script
-tags left out (they follow the chunking, not the markup), plus the served stylesheets as `_styles.css`. Usage:
+tags left out (they follow the chunking, not the markup) except structured data (`application/ld+json`, kept from
+wave 2 on: it is content), plus the served stylesheets as `_styles.css`. Usage:
 `node "$SCRATCH/snapshot-html.mjs" <tree> http://localhost:<port> "$SCRATCH/html-<name>"`, then
 `diff -r "$SCRATCH/html-before" "$SCRATCH/html-after"`.
 
 ```js
 // Snapshot the server-rendered HTML of every route as one line per element/text node
-// (hashes aside), plus the stylesheets the pages load (_styles.css).
+// (hashes aside, JSON-LD kept), plus the stylesheets the pages load (_styles.css).
 // Usage: node snapshot-html.mjs <repo-root> <base-url> <out-dir>
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -141,9 +148,11 @@ const ROUTES = [
 // Hashed build artefacts: chunk and media file names (plain and URL-encoded).
 const unhash = (value) =>
   value.replace(/(_next(?:\/|%2F)static(?:\/|%2F))[^"'\s,&)]+/g, "$1*");
-// Script tags and script preloads differ with chunking, not with markup.
+// Script tags and script preloads differ with chunking, not with markup. Structured
+// data (JSON-LD) is content, not a chunk: it stays in the snapshot (from C4 on).
 const skip = (el) =>
-  el.tagName === "SCRIPT" ||
+  (el.tagName === "SCRIPT" &&
+    el.getAttribute("type") !== "application/ld+json") ||
   (el.tagName === "LINK" &&
     (el.getAttribute("as") === "script" ||
       el.getAttribute("rel") === "modulepreload"));
@@ -204,7 +213,10 @@ variables; only the properties they feed render). Usage:
 `node "$SCRATCH/compare-computed.mjs" <tree> http://localhost:3110 http://localhost:3111 [scenario-regex]`. A full
 run takes about 5 minutes: **run it with a 600000 ms timeout or in the background**. It prints
 `72 page states, 20374 elements, 14768 forced pseudo-states compared.` (on this tree) and ends with
-`No differences.` or a list of `element: property: before -> after` and exit code 1.
+`No differences.` or a list of `element: property: before -> after` and exit code 1. Two options (wave 2), both
+off by default: `HEADING_LEVELS=ignore` counts `h1`-`h6` as one tag in the element paths (for a heading-level fix,
+whose tag change the HTML diff pins); `EXPECT=<file.json>` lists allowed differences (`tool: "computed"`), each of
+which must occur at least once.
 
 ```js
 // Compare the computed styles of every element between two running builds
@@ -213,11 +225,25 @@ run takes about 5 minutes: **run it with a 600000 ms timeout or in the backgroun
 // element. Reduced motion, so reveals and counters sit at their end state.
 // Usage: node compare-computed.mjs <repo-root> <before-url> <after-url> [scenario-filter]
 // (the optional filter is a regular expression on the scenario names below).
+// Environment (both optional, for slices with a deliberate non-visual change):
+//   HEADING_LEVELS=ignore  h1-h6 count as one tag in element paths (a heading level
+//                          fix keeps every computed value; the HTML diff pins the tag)
+//   EXPECT=<file.json>     [{ "tool": "computed", "path": "<regex>", "property": "...",
+//                          "before": "...", "after": "..." }]: differences that are
+//                          allowed; each entry must match at least once, or the run
+//                          fails (entries with "tool": "probe" are for probe-classes)
 // Exit code 1 and a list of differences when anything differs.
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 
 const [root, beforeUrl, afterUrl, filter = ""] = process.argv.slice(2);
+const HEADING_LEVELS = process.env.HEADING_LEVELS === "ignore";
+const EXPECTED = (
+  process.env.EXPECT ? JSON.parse(readFileSync(process.env.EXPECT, "utf8")) : []
+)
+  .filter((entry) => entry.tool === "computed")
+  .map((entry) => ({ ...entry, path: new RegExp(entry.path), seen: 0 }));
 const { chromium } = createRequire(
   path.join(root, "apps/marketing/package.json"),
 )("@playwright/test");
@@ -323,7 +349,7 @@ const STATES = ["hover", "focus", "focus-visible", "active"];
  * standard properties they feed decide what renders), and so are elements that
  * differ with chunking rather than markup (head, scripts).
  */
-function subtreeStyles() {
+function subtreeStyles(headingLevels) {
   const skip = new Set([
     "HEAD",
     "SCRIPT",
@@ -333,6 +359,10 @@ function subtreeStyles() {
     "NOSCRIPT",
   ]);
   const out = [];
+  const tag = (el) =>
+    headingLevels && /^H[1-6]$/.test(el.tagName)
+      ? "h#"
+      : el.tagName.toLowerCase();
   const visit = (el, where) => {
     const cs = getComputedStyle(el);
     const props = [];
@@ -343,11 +373,9 @@ function subtreeStyles() {
     out.push([where, props.sort().join("; ")]);
     [...el.children]
       .filter((child) => !skip.has(child.tagName))
-      .forEach((child, i) =>
-        visit(child, `${where}>${child.tagName.toLowerCase()}:${i}`),
-      );
+      .forEach((child, i) => visit(child, `${where}>${tag(child)}:${i}`));
   };
-  visit(this, this.tagName.toLowerCase());
+  visit(this, tag(this));
   return out;
 }
 
@@ -373,7 +401,7 @@ async function open(browser, baseUrl, scenario, width, scheme) {
 
 async function measure(page) {
   const all = await page.evaluate(
-    `(${subtreeStyles.toString()}).call(document.documentElement)`,
+    `(${subtreeStyles.toString()}).call(document.documentElement, ${HEADING_LEVELS})`,
   );
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("DOM.enable");
@@ -394,6 +422,7 @@ async function measure(page) {
       const { result } = await cdp.send("Runtime.callFunctionOn", {
         objectId: object.objectId,
         functionDeclaration: subtreeStyles.toString(),
+        arguments: [{ value: HEADING_LEVELS }],
         returnByValue: true,
       });
       states.push([`interactive#${index}:${state}`, result.value]);
@@ -424,9 +453,20 @@ function diffLists(label, before, after, report) {
     if (a === b) continue;
     const pa = new Map(a.split("; ").map((p) => p.split(/: (.*)/s)));
     const pb = new Map(b.split("; ").map((p) => p.split(/: (.*)/s)));
-    const props = [...new Set([...pa.keys(), ...pb.keys()])].filter(
-      (k) => pa.get(k) !== pb.get(k),
-    );
+    const props = [...new Set([...pa.keys(), ...pb.keys()])]
+      .filter((k) => pa.get(k) !== pb.get(k))
+      .filter((k) => {
+        const allowed = EXPECTED.find(
+          (e) =>
+            e.path.test(where) &&
+            e.property === k &&
+            e.before === pa.get(k) &&
+            e.after === pb.get(k),
+        );
+        if (allowed) allowed.seen++;
+        return !allowed;
+      });
+    if (!props.length) continue;
     report.push(
       `${label} ${where}: ${props.map((k) => `${k}: ${pa.get(k)} -> ${pb.get(k)}`).join(" | ")}`,
     );
@@ -473,6 +513,16 @@ await browser.close();
 console.log(
   `\n${pages} page states, ${elements} elements, ${forced} forced pseudo-states compared.`,
 );
+for (const entry of EXPECTED) {
+  if (entry.seen)
+    console.log(
+      `expected: ${entry.property} ${entry.before} -> ${entry.after} at ${entry.path} (${entry.seen}x)`,
+    );
+  else
+    report.push(
+      `expected difference never seen: ${entry.path} ${entry.property}`,
+    );
+}
 if (report.length) {
   console.log(`${report.length} differences:\n${report.join("\n")}`);
   process.exit(1);
@@ -480,13 +530,14 @@ if (report.length) {
 console.log("No differences.");
 ```
 
-**Class probe** - `<scratch>/probe-classes.mjs`, for slices that rename classes. For every `[from, to]` pair of the
-slice's class map it renders one element with the old classes in the before build and one with the new classes in
-the after build (inside `main` of `/`), and compares their computed styles at 390 and 1280 px, light and dark,
-plain and with each of the four states forced. This covers replacements whose element no scenario renders (the
-booking confirmation, the rate-limited state, `error.tsx`). Usage:
-`node "$SCRATCH/probe-classes.mjs" <tree> http://localhost:3110 http://localhost:3111 <map.mjs>` (about a
-minute). It ends with `No differences.` or the differing pairs and exit code 1.
+**Class probe** - `<scratch>/probe-classes.mjs`, for slices that rename classes. For every `[from, to]` class-list
+pair of the slice's map (entries that are source code - imports, JSX - are skipped) it renders one element with
+the old classes in the before build and one with the new classes in the after build (inside `main` of `/`), and
+compares their computed styles at 390 and 1280 px, light and dark, plain and with each of the four states forced.
+This covers replacements whose element no scenario renders (the booking confirmation, the rate-limited state,
+`error.tsx`). Usage: `node "$SCRATCH/probe-classes.mjs" <tree> http://localhost:3110 http://localhost:3111
+<map.mjs>` (about a minute); `EXPECT=<file.json>` with `tool: "probe"` entries as above. It ends with
+`No differences.` or the differing pairs and exit code 1.
 
 ```js
 // Class probe: for every pair of a class map, render one element with the old
@@ -495,12 +546,20 @@ minute). It ends with `No differences.` or the differing pairs and exit code 1.
 // :hover, :focus, :focus-visible and :active forced. Covers every replacement,
 // including the ones whose element only renders in a state no scenario reaches.
 // Usage: node probe-classes.mjs <repo-root> <before-url> <after-url> <map.mjs>
+// EXPECT=<file.json> (optional) allows differences, as in compare-computed.mjs; here
+// an entry with "tool": "probe" matches its "path" regex against `from -> to`.
 // Exit code 1 and a list of differences when anything differs.
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const [root, beforeUrl, afterUrl, mapFile] = process.argv.slice(2);
+const EXPECTED = (
+  process.env.EXPECT ? JSON.parse(readFileSync(process.env.EXPECT, "utf8")) : []
+)
+  .filter((entry) => entry.tool === "probe")
+  .map((entry) => ({ ...entry, path: new RegExp(entry.path), seen: 0 }));
 const { REPLACEMENTS } = await import(
   pathToFileURL(path.resolve(mapFile)).href
 );
@@ -508,10 +567,13 @@ const { chromium } = createRequire(
   path.join(root, "apps/marketing/package.json"),
 )("@playwright/test");
 
-/** Distinct [from, to] pairs, in map order. */
+/** Distinct [from, to] class-list pairs; source-code entries (imports, JSX) are skipped. */
+const isClassList = (text) => /^[^<>"'{}=;\n]+$/.test(text);
 const pairs = [
   ...new Map(
-    REPLACEMENTS.map(([, from, to]) => [`${from} ${to}`, [from, to]]),
+    REPLACEMENTS.filter(
+      ([, from, to]) => isClassList(from) && isClassList(to),
+    ).map(([, from, to]) => [`${from} ${to}`, [from, to]]),
   ).values(),
 ];
 const STATES = [[], ["hover"], ["focus"], ["focus-visible"], ["active"]];
@@ -602,9 +664,20 @@ for (const width of [390, 1280]) {
         const b = new Map(
           after[i][s].split("; ").map((p) => p.split(/: (.*)/s)),
         );
-        const props = [...new Set([...a.keys(), ...b.keys()])].filter(
-          (k) => a.get(k) !== b.get(k),
-        );
+        const props = [...new Set([...a.keys(), ...b.keys()])]
+          .filter((k) => a.get(k) !== b.get(k))
+          .filter((k) => {
+            const allowed = EXPECTED.find(
+              (e) =>
+                e.path.test(`${from} -> ${to}`) &&
+                e.property === k &&
+                e.before === a.get(k) &&
+                e.after === b.get(k),
+            );
+            if (allowed) allowed.seen++;
+            return !allowed;
+          });
+        if (!props.length) return;
         report.push(
           `@${width} ${scheme} :${forced[0] ?? "none"} "${from}" -> "${to}": ` +
             props.map((k) => `${k}: ${a.get(k)} -> ${b.get(k)}`).join(" | "),
@@ -617,6 +690,16 @@ for (const width of [390, 1280]) {
   }
 }
 await browser.close();
+for (const entry of EXPECTED) {
+  if (entry.seen)
+    console.log(
+      `expected: ${entry.property} ${entry.before} -> ${entry.after} at ${entry.path} (${entry.seen}x)`,
+    );
+  else
+    report.push(
+      `expected difference never seen: ${entry.path} ${entry.property}`,
+    );
+}
 if (report.length) {
   console.log(`${report.length} differences:\n${report.join("\n")}`);
   process.exit(1);
@@ -624,19 +707,23 @@ if (report.length) {
 console.log("No differences.");
 ```
 
-**Expected HTML** - `<scratch>/expect-html.mjs`, for slices that rename classes: writes the before snapshot with
-the class map applied (longest entries first, so a context entry wins over a bare value), so the after snapshot is
-compared exactly, not filtered. Usage: `node "$SCRATCH/expect-html.mjs" <map.mjs> "$SCRATCH/html-before"
-"$SCRATCH/html-expected"`, then `diff -r -x _styles.css "$SCRATCH/html-expected" "$SCRATCH/html-after"` - it must
-print nothing (the built CSS changes by design; the computed-style tools cover it).
+**Expected HTML** - `<scratch>/expect-html.mjs`, for slices that rename classes or tags: writes the before snapshot
+with the map applied (longest entries first, so a context entry wins over a bare value; an entry matches whole
+tokens only and can be limited to named snapshot files), so the after snapshot is compared exactly, not filtered.
+Usage: `node "$SCRATCH/expect-html.mjs" <map.mjs> "$SCRATCH/html-before" "$SCRATCH/html-expected"`, then normalise
+both sides and `diff -r -x _styles.css` them - it must print nothing (the built CSS changes by design; the
+computed-style tools cover it).
 
 ```js
-// Build the expected "after" HTML snapshot of a class-renaming slice: the before
-// snapshot with the slice's class map applied, so the real after snapshot can be
-// diffed against it exactly. The map module exports REPLACEMENTS as
-// [file, from, to, count] entries (C3: c3-map.mjs).
+// Build the expected "after" HTML snapshot of a slice that renames classes or tags:
+// the before snapshot with the slice's map applied, so the real after snapshot can
+// be diffed against it exactly. The map module exports REPLACEMENTS as
+// [file, from, to, count, snapshots?] entries; `snapshots` (optional) limits an
+// entry to those snapshot files, e.g. ["faecher.txt"]. An entry only matches whole
+// tokens: `from` must start and end at a line edge, a space or a quote, so
+// "text-sm" does not touch "focus:text-sm".
 // Usage: node expect-html.mjs <map.mjs> <before-dir> <out-dir>
-// then:  diff -r -x _styles.css <out-dir> <after-dir>   (must print nothing)
+// then:  normalise both sides (normalize-snapshot.mjs) and diff -r -x _styles.css
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -647,18 +734,94 @@ const { REPLACEMENTS } = await import(
 );
 // Longest first: a context entry ("mt-1 text-[0.92rem]") wins over a bare value.
 const map = [...REPLACEMENTS].sort((a, b) => b[1].length - a[1].length);
+const escape = (text) => text.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
 
 mkdirSync(outDir, { recursive: true });
 for (const name of readdirSync(beforeDir)) {
   if (name === "_styles.css") continue; // the built CSS changes by design
   let text = readFileSync(path.join(beforeDir, name), "utf8");
-  for (const [, from, to] of map) text = text.split(from).join(to);
-  // C3's one expected change outside class attributes: the QR code's fill
-  // attribute is now spelled like the token (#13283F -> #13283f), same colour.
-  text = text.split('fill="#13283F"').join('fill="#13283f"');
+  for (const [, from, to, , snapshots] of map) {
+    if (snapshots && !snapshots.includes(name)) continue;
+    const token = new RegExp(`(^|[ "])${escape(from)}(?=[ "]|$)`, "gm");
+    text = text.replace(token, (_, edge) => edge + to);
+  }
   writeFileSync(path.join(outDir, name), text);
 }
 console.log(`expected snapshot written to ${outDir}`);
+```
+
+**Normalised snapshot** - `<scratch>/normalize-snapshot.mjs` (wave 2): sorts the tokens of every class attribute
+(CVA and moved components may emit the same classes in another order, which renders the same) and masks the hashed
+next/font class names (they change when the font calls move). Usage:
+`node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-<name>" "$SCRATCH/html-<name>-n"`.
+
+```js
+// Normalise an HTML snapshot (snapshot-html.mjs output) for slices that reorder
+// classes or move next/font calls: the tokens of every class attribute are sorted,
+// and the hashed next/font class names are masked - in the page files and in
+// _styles.css. Usage: node normalize-snapshot.mjs <in-dir> <out-dir>
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
+const [inDir, outDir] = process.argv.slice(2);
+/** `bricolage_grotesque_1b97ba4b-module__NjNj1a__variable` -> `bricolage_grotesque_#-module__#__variable` */
+const maskFonts = (text) =>
+  text.replace(
+    /(bricolage_grotesque|hanken_grotesk)_[0-9a-f]+-module__[A-Za-z0-9_-]+?__/g,
+    "$1_#-module__#__",
+  );
+const sortClasses = (text) =>
+  text.replace(
+    / class="([^"]*)"/g,
+    (_, list) => ` class="${list.split(" ").filter(Boolean).sort().join(" ")}"`,
+  );
+
+mkdirSync(outDir, { recursive: true });
+for (const name of readdirSync(inDir)) {
+  const text = maskFonts(readFileSync(path.join(inDir, name), "utf8"));
+  writeFileSync(
+    path.join(outDir, name),
+    name === "_styles.css" ? text : sortClasses(text),
+  );
+}
+console.log(`normalised snapshot written to ${outDir}`);
+```
+
+**Apply a map** - `<scratch>/apply-map.mjs` (wave 2): the codemod for map-driven slices; it applies the source
+entries of a map (`[file, from, to, count, snapshots?]`; `(html)` entries only describe rendered HTML) and refuses
+to write anything when a count differs. Usage: `node "$SCRATCH/apply-map.mjs" "$SCRATCH/<map.mjs>"` from the
+worktree root.
+
+```js
+// Apply a slice's map (REPLACEMENTS of [file, from, to, count, snapshots?]) to the
+// sources. Entries whose file is "(html)" only describe rendered HTML and are
+// skipped. Refuses to write anything when an expected count differs - the code
+// moved; re-measure, do not guess.
+// Usage (repo root): node <scratch>/apply-map.mjs <scratch>/<map.mjs>
+import { readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const { REPLACEMENTS } = await import(
+  pathToFileURL(path.resolve(process.argv[2])).href
+);
+
+const files = new Map();
+const errors = [];
+for (const [file, from, to, expected] of REPLACEMENTS) {
+  if (file === "(html)") continue;
+  const source = files.get(file) ?? readFileSync(file, "utf8");
+  const count = source.split(from).length - 1;
+  if (count !== expected)
+    errors.push(`${file}: "${from}" found ${count}x, expected ${expected}x`);
+  files.set(file, source.split(from).join(to));
+}
+if (errors.length) {
+  console.error(errors.join("\n"));
+  process.exit(1);
+}
+for (const [file, source] of files) writeFileSync(file, source);
+console.log(`${files.size} files rewritten`);
 ```
 
 Known properties of the pipeline (measured, so nobody is surprised):
@@ -669,12 +832,18 @@ Known properties of the pipeline (measured, so nobody is surprised):
   Chromium applies the override, so the computed value is the `color-mix(...)`, and its serialisation depends on
   the colour space (`in srgb` vs `in oklab`). A token therefore copies the exact expression and colour space.
 - The app's `@source "../../../../packages/ui/src"` also scans tests and stories, so a class name that only
-  appears in a test still generates a (never applied) CSS rule. It does not touch computed styles.
+  appears in a test still generates a (never applied) CSS rule. It does not touch computed styles, but it does
+  change the built CSS - a C4/C5 test uses class names that already exist.
 - Tailwind resolves the `@import`s of `theme.css` itself: `@theme`, `@utility`, `@layer base` and `@custom-variant`
   work from the imported parts, and the built CSS stays byte-identical as long as the parts keep the source order
   (measured in the C1 dry run).
 - Turborepo shares its cache between worktrees; a build of an unchanged tree is replayed from the cache. A change
   in `packages/ui` does invalidate the app build (checked with `turbo run build --dry=json`).
+- next/font: the `@font-face` rules follow the import order of the module that calls it. Imported after
+  `./globals.css`, they move from the top to the end of the CSS chunk; imported before it, the chunk keeps its order
+  (the font spike, wave 2). The hashed class names change with the calling file's path.
+- Preflight gives `h1`-`h6` the same computed styles (size and weight inherit, no margins), so a heading's level
+  can change without a visible change.
 
 ## Review Focus
 
@@ -701,14 +870,28 @@ Known properties of the pipeline (measured, so nobody is surprised):
    a positive control (a tint and a `hover:` wash nudged: both tools must flag them), the class probe over all 105
    distinct pairs in every forced state, and the computed-style comparison of 72 page states.
 
+Wave 2 (C4, C5):
+
+6. **A legal paragraph that changes size.** `ProseP` sets `font-size: 1rem` where the old doc paragraph inherited
+   it. Task 4a's computed-style comparison covers every paragraph of `/agb`, `/datenschutz` and `/impressum`.
+7. **An allowed difference that hides a real one.** Task 4b allows exactly one computed difference (a dot's
+   `flex-shrink`), pinned to one element path, one property and both values; an expectation that never matches
+   fails the run. Task 4c ignores heading levels only in the computed comparison and runs it once without the flag;
+   its HTML diff pins the three changed tags.
+8. **Font output that drifts when the calls move.** Task 5c masks only the hashed font class names and first
+   proves that every raw difference carries one; the font module is imported ahead of `globals.css` (the spike
+   showed the rules move otherwise).
+9. **A stale import after a move.** `exports.test.ts` (an export for every module, none for a deleted one), the
+   type check and a `grep` for the old paths in Tasks 5a and 5c.
+
 ## Decisions taken while planning
 
 Given by the controller for this phase (not reopened):
 
 - Phase C runs automatically through C1-C6 and the C7 spike and stops at the C7 gate: the maintainer picks Radix
   Primitives or React Aria Components. C8 and C9 get only the section _After the gate_ here.
-- Waves: this version details C1-C3; wave 2 (C4, C5) and wave 3 (C6 split into PR-sized tasks, C7) are written
-  later against the then-current code, each as a docs PR in the stack.
+- Waves: wave 1 detailed C1-C3; wave 2 details C4 and C5 (Tasks 4a-5c); wave 3 (C6 split into PR-sized tasks,
+  C7) is written later against the then-current code - each wave a docs PR in the stack.
 - Pixel-identical proof: built CSS and the text/class/attribute content of the built HTML (C1, C2); computed
   styles where classes legitimately change (C3 onwards) and where server HTML cannot see a state (C2). Exact
   scripts in the _Verification toolkit_.
@@ -724,7 +907,7 @@ Given by the controller for this phase (not reopened):
   in the spec's C8 technique and in _After the gate_. C1-C6 do not fix it.
 - Order: C1 -> C2 -> C3 -> C4 -> C5 -> C6 -> C7 as one linear stack on `fix/a11y` (#155); every slice touches
   `packages/ui`, so none runs in parallel (E-17). D1 is not part of this plan.
-- C5 font spike is an explicit decision branch (Task 5).
+- C5 font spike is an explicit decision branch; wave 2 ran it (Task 5c: yes, the package owns the fonts).
 - C2 codemod names are the spec's, verbatim; variant maps are carried over 1:1 in the order base -> variant ->
   size -> `className`.
 - Each task ticks its slice's boxes; the C7 spike ticks nothing.
@@ -776,6 +959,39 @@ Rulings by the planner (from the spec and the code; stated in the PR bodies):
   `text-ink-soft/50`, `bg-black/45`), the Tailwind default `shadow` on `Switch`, `max-w-205/220/230` (C5 container
   sizes), the app stylesheet's `z-index: 5` (iOS toolbar tint), the dead `--maxw` and `--blue` (D6).
 
+Rulings by the planner, wave 2 (C4, C5):
+
+- **C4 in three PRs:** 4a moves the legal pages onto a Prose module (one check: the three legal pages), 4b builds
+  the one typography API and migrates the hand-built eyebrows, headings and raw sizes, 4c fixes the `/faecher`
+  heading outline. The spec lists the outline under C4; because it changes screen-reader behaviour - a bug under
+  E-09 - and `CLAUDE.md` wants each bug in its own `fix:` PR, it is `fix(a11y): ...`, and 4a/4b stay refactors
+  without DOM changes.
+- **Tone vocabulary:** `Text`/`Heading` tones are `default | muted | inverse | inverse-soft | inherit`; C2's
+  `inverse-muted` (`text-on-navy-soft`) is renamed `inverse-soft`, the C3 role `--on-inverse-soft` it is. `Eyebrow`
+  tones are `accent | muted | inverse-accent | inverse-muted | on-accent` (`--on-inverse-muted` = on-navy-muted;
+  `inverse-accent` = the blue label on navy). `Heading` defaults to `inherit` (it takes the parent's colour today).
+  White headings on navy (`/ablauf`, the booker) keep `className="text-white"`: white is not `--on-inverse`.
+- **Role sizes for Tailwind defaults:** the last raw sizes become tokens with Tailwind's value and line height -
+  `button-sm`, `note` (fine print: `Text size="note"`), `skip-link`, `tag`, `accordion-icon` - named by role like
+  C3's; `raw-text-size` reaches 0 without an allow-list.
+- **Raw headings** become `Heading` with a role `size` (`card-title`, `card-title-sm`, `step-title` = token +
+  bold) and `wrap="normal"` (they never had `text-balance`/`hyphens-heading`).
+- **C5 in three PRs:** 5a layout (Container, Section, PageHeader), 5b grids (Split, CardGrid), 5c shell (theme,
+  logo, fonts, Storybook fonts) - each with a check of a few lines.
+- **Container sizes use the existing classes** (`page` = `w-full max-w-page px-6`, `faq` = `max-w-205 px-6`): a new
+  utility would change the built CSS, which C5's acceptance forbids. `Section` gets `spacing: default | sm`, but the
+  ten `<Container className="py-section-sm">` blocks stay: they have no `<section>` element, adding one changes the
+  DOM (D5).
+- **One `PageHeader`:** `variant: page | section` carries the two sets of wrapper, element, reveal trigger and
+  spacing; `SectionHeader` is removed.
+- **Split and CardGrid** variants are the measured values, named by value (`ratio="1.15/0.85"`,
+  `columns="sm-2-lg-3"`), adopted wherever the DOM stays the same (7 splits, 9 card grids).
+- **Fonts:** the spike answered yes - the package owns the `next/font` calls (`shell/fonts.ts`); the app imports the
+  module before `./globals.css`.
+- **Logo** takes `name`, `tagline`, `src`; navbar and footer pass `content/site`'s `brand`. The footer-only
+  `social-links.tsx` moves into `footer.tsx`, so `components/layout` keeps navbar, footer and the iOS tint.
+- **`next-themes`** moves from the app to the package with the provider and the toggle.
+
 ## Open points for the maintainer
 
 The plan takes the conservative option in each case; none blocks a task.
@@ -797,6 +1013,23 @@ The plan takes the conservative option in each case; none blocks a task.
 6. **Spec wording:** C2's "Text/Heading tones follow the tone vocabulary" - `Heading` has no tone today; it gets
    one in C4. C2 renames only the existing `Text` tones.
 
+Wave 2 (each with the conservative default taken):
+
+7. **Tone names.** `Text`'s `inverse-muted` becomes `inverse-soft`, and `Eyebrow` uses `inverse-accent`,
+   `inverse-muted`, `on-accent` (see the rulings). This settles point 1 in favour of the C3 role names; rename again
+   if other names are wanted.
+8. **White on navy.** Headings in `text-white` on navy keep the class; whether they should be `--on-inverse`
+   (`#eaf1fa`) is a phase E question (a visible change).
+9. **The booker's "Buchung" dot** gains the component's `shrink-0` (`flex-shrink` 1 -> 0, its box unchanged) - the
+   one computed difference of C4, allowed and pinned in Task 4b.
+10. **Other outline findings** of the audit (the Teams box on `/online-lernen` and the booker title on `/kontakt`)
+    do not skip a level and are not in the spec; they stay.
+11. **Split/CardGrid and Container size names** are by value and by role (`faq`); rename if wanted.
+12. **Storybook fonts** come from Google's font CDN in the workbench (next/font's Vite plugin); the apps keep
+    self-hosting them.
+13. **Left for D5:** the ten `Container className="py-section-sm"` blocks, the hand-built section intros and the
+    other grids named in Task 5b.
+
 ## Execution order
 
 Phase B (#152 -> #155) is open and unmerged. Phase C stacks on its tip, one branch per task, each PR based on the
@@ -808,12 +1041,16 @@ fix/a11y (#155)
     -> refactor/ui-groups            Task 1  C1
       -> refactor/ui-variants        Task 2  C2
         -> refactor/ui-tokens        Task 3  C3
-          -> docs/phase-c-plan-wave-2        docs: detail phase C slices C4 and C5
-            -> refactor/ui-typography        Task 4  C4
-              -> refactor/ui-layout-shell    Task 5  C5
-                -> docs/phase-c-plan-wave-3  docs: detail phase C slices C6 and C7
-                  -> refactor/ui-<primitive> ...  Task 6a.. C6 (one PR each)
-                    -> spike/headless-widgets     Task 7  C7 (draft, never merged; gate)
+          -> docs/phase-c-plan-wave-2          docs: detail phase C tasks C4 and C5
+            -> refactor/ui-prose               Task 4a C4  refactor(ui): move the legal pages onto a prose module
+              -> refactor/ui-typography        Task 4b C4  refactor(ui): one typography API for headings, text and eyebrows
+                -> fix/faecher-outline         Task 4c C4  fix(a11y): let the subject cards on /faecher follow the page heading
+                  -> refactor/ui-layout        Task 5a C5  refactor(ui): move container, section and page header into the package
+                    -> refactor/ui-grids       Task 5b C5  refactor(ui): add the Split and CardGrid layouts
+                      -> refactor/ui-shell     Task 5c C5  refactor(ui): move theme, logo and fonts into the package
+                        -> docs/phase-c-plan-wave-3   docs: detail phase C slices C6 and C7
+                          -> refactor/ui-<primitive> ... Task 6a.. C6 (one PR each)
+                            -> spike/headless-widgets    Task 7  C7 (draft, never merged; gate)
 ```
 
 Each PR body starts with "Stacked on #N - merge after it." and "Part of #139.". After a squash merge, rebase the
@@ -822,25 +1059,29 @@ rest of the chain with `git rebase --onto origin/main <merged-branch> <next-bran
 
 ## File map
 
-| File                                                                                         | Task | Responsibility                           |
-| -------------------------------------------------------------------------------------------- | ---- | ---------------------------------------- |
-| `docs/plans/foundation-refactor-phase-c.md`, spec C8 technique, phase-B plan "After phase B" | 0    | this plan, E-09 carry-over               |
-| `packages/ui/src/{primitives,typography,forms,overlays,layout,motion,utils}/`                | 1    | grouped modules (moved verbatim)         |
-| `packages/ui/styles/{theme,tokens,base,components,motion}.css`                               | 1    | styles split along its sections          |
-| `packages/ui/package.json` (`exports`), `packages/ui/src/exports.test.ts`                    | 1    | explicit export map and its guard        |
-| 39 files under `apps/marketing/src` (imports only)                                           | 1    | grouped import paths                     |
-| `packages/ui/src/primitives/{button,tag}.tsx`, `typography/{heading,text}.tsx` (+ tests)     | 2    | CVA variants, role names, `asChild`      |
-| `packages/ui/src/forms/select.tsx`, `apps/marketing/.../layout/logo.tsx`, `footer.tsx`       | 2    | `inverse` tone, `Logo tone`              |
-| 12 files under `apps/marketing/src` (`LinkButton` -> `Button asChild`), stories              | 2    | one button API                           |
-| `packages/ui/styles/tokens.css`, `styles/base.css` (focus ring)                              | 3    | raw, semantic and `@theme` tokens        |
-| `packages/ui/src/utils/cn.ts`, `utils/cn.test.ts`                                            | 3    | registration and drift guard             |
-| `packages/ui/src/tokens/colors.ts` (+ `colors.test.ts`), `tokens/prose.test.ts`              | 3    | TS colour mirror, prose parity           |
-| 36 files under `apps/marketing/src` and `packages/ui/src` (classes), `design-ratchet.json`   | 3    | token classes, lowered counts            |
-| `packages/ui/src/typography/*`, doc components, pages with hand-built eyebrows/headings      | 4    | one typography API (wave 2)              |
-| `packages/ui/src/{layout,shell}/*`, `apps/marketing/src/components/layout/*`, `app/layout`   | 5    | layout and shell in the package (wave 2) |
-| `packages/ui/src/{primitives,layout,motion,forms}/*`, their app call sites                   | 6    | primitives from the duplicates (wave 3)  |
-| Storybook spike stories (spike branch only)                                                  | 7    | Radix vs React Aria comparison (wave 3)  |
-| `CLAUDE.md`                                                                                  | 1-3  | layout line, variant rule, token rule    |
+| File                                                                                         | Task | Responsibility                          |
+| -------------------------------------------------------------------------------------------- | ---- | --------------------------------------- |
+| `docs/plans/foundation-refactor-phase-c.md`, spec C8 technique, phase-B plan "After phase B" | 0    | this plan, E-09 carry-over              |
+| `packages/ui/src/{primitives,typography,forms,overlays,layout,motion,utils}/`                | 1    | grouped modules (moved verbatim)        |
+| `packages/ui/styles/{theme,tokens,base,components,motion}.css`                               | 1    | styles split along its sections         |
+| `packages/ui/package.json` (`exports`), `packages/ui/src/exports.test.ts`                    | 1    | explicit export map and its guard       |
+| 39 files under `apps/marketing/src` (imports only)                                           | 1    | grouped import paths                    |
+| `packages/ui/src/primitives/{button,tag}.tsx`, `typography/{heading,text}.tsx` (+ tests)     | 2    | CVA variants, role names, `asChild`     |
+| `packages/ui/src/forms/select.tsx`, `apps/marketing/.../layout/logo.tsx`, `footer.tsx`       | 2    | `inverse` tone, `Logo tone`             |
+| 12 files under `apps/marketing/src` (`LinkButton` -> `Button asChild`), stories              | 2    | one button API                          |
+| `packages/ui/styles/tokens.css`, `styles/base.css` (focus ring)                              | 3    | raw, semantic and `@theme` tokens       |
+| `packages/ui/src/utils/cn.ts`, `utils/cn.test.ts`                                            | 3    | registration and drift guard            |
+| `packages/ui/src/tokens/colors.ts` (+ `colors.test.ts`), `tokens/prose.test.ts`              | 3    | TS colour mirror, prose parity          |
+| 36 files under `apps/marketing/src` and `packages/ui/src` (classes), `design-ratchet.json`   | 3    | token classes, lowered counts           |
+| `packages/ui/src/typography/prose.tsx` (+ test), doc components, the three legal pages       | 4a   | Prose module on the prose tokens        |
+| `packages/ui/src/typography/{heading,text,eyebrow}.tsx`, role size tokens, 12 app files      | 4b   | one typography API, hand-built copies   |
+| `apps/marketing/src/components/sections/subject-cards.tsx`, `e2e/a11y.spec.ts`               | 4c   | `/faecher` heading outline (fix)        |
+| `packages/ui/src/layout/{container,section,page-header}.tsx`, 17 app files                   | 5a   | layout parts in the package             |
+| `packages/ui/src/layout/{split,card-grid}.tsx`, 10 app files                                 | 5b   | two-column and card grids               |
+| `packages/ui/src/shell/*`, `app/layout.tsx`, navbar, footer, Storybook preview               | 5c   | theme, logo, fonts in the package       |
+| `packages/ui/src/{primitives,layout,motion,forms}/*`, their app call sites                   | 6    | primitives from the duplicates (wave 3) |
+| Storybook spike stories (spike branch only)                                                  | 7    | Radix vs React Aria comparison (wave 3) |
+| `CLAUDE.md`                                                                                  | 1-3  | layout line, variant rule, token rule   |
 
 ---
 
@@ -3051,97 +3292,2267 @@ the footer's theme toggle (Tab: white ring), the mobile menu at 390 px (glass he
 
 ---
 
-### Task 4: One typography API (spec C4)
+### Task 4a: The legal pages on a Prose module (spec C4, part 1)
 
-**Branch:** `refactor/ui-typography` from `docs/phase-c-plan-wave-2`. **PR title:** `refactor(ui): one typography API`.
+**Branch:** `refactor/ui-prose` from `docs/phase-c-plan-wave-2`. **PR title:**
+`refactor(ui): move the legal pages onto a prose module`.
 
 **Files:**
 
-- Modify: `packages/ui/src/typography/{heading,text,lead,eyebrow,prose}.tsx`, `typography.test.tsx`,
-  `typography.stories.tsx`
-- Modify: `apps/marketing/src/components/docs/doc-components.tsx`, `doc-section-nav.tsx`, `app/{agb,datenschutz,impressum}/page.tsx`
-- Modify: the hand-built eyebrows (`kontakt/page.tsx` 2x incl. `sideLabelClass`, `ablauf/page.tsx`,
-  `cta-section.tsx`, `footer.tsx`, `booker.tsx` 3x) and raw headings (`subject-cards.tsx`, `step-grid.tsx`,
-  `benefit-grid.tsx`), `faecher/page.tsx` (outline), the remaining raw sizes (`button.tsx` `sm`, `tag.tsx`,
-  `accordion.tsx`, `layout.tsx` skip link, `booking-form.tsx` 2x, `preise/page.tsx`)
+- Modify: `packages/ui/src/typography/prose.tsx`; Create: `packages/ui/src/typography/prose.test.tsx`
+- Modify: `packages/ui/src/typography/typography.test.tsx` (the one-API test)
+- Modify: `apps/marketing/src/components/docs/doc-components.tsx`, `doc-section-nav.tsx`,
+  `apps/marketing/src/app/{agb,datenschutz,impressum}/page.tsx`
+- Modify: `design-ratchet.json`
+
+**Interfaces:**
+
+- Consumes: `Heading` (`@skillsite/ui/typography/heading`), the prose tokens of Task 3 (`text-prose-h2`,
+  `text-prose-h3`, `text-prose-body`, `text-prose-sm`, `text-prose-xs`).
+- Produces: `@skillsite/ui/typography/prose` exports exactly `ProseH2`, `ProseH3`, `ProseP` (each
+  `React.HTMLAttributes` of its element) and `InlineLink({ variant?: "site" | "doc" })`. `H1`, `H2`, `H3`, `P`,
+  `Small` and `Muted` no longer exist; a legal page title is `<Heading as="h1" size="h1">`.
+- Produces: the toolkit's `apply-map.mjs`/`expect-html.mjs` map format with `(html)` and snapshot-limited entries
+  (Tasks 4b and later reuse it).
+
+**Background (measured on 943fb6e).** `prose.tsx` holds `H1`/`H2`/`H3`/`P` with a `site`/`doc` variant, `Small`,
+`Muted` and `InlineLink`. Only the `doc` variants are rendered (doc components and the three legal pages:
+`<P variant="doc">` 27x in `agb`, 48x in `datenschutz`, 2x in `impressum`); `Small` and `Muted` are imported
+nowhere; `InlineLink` is used with `site` (booking form) and `doc`. `raw-text-size` is 21, 14 of them here:
+`text-sm` 8x and `text-xs` 1x in `doc-components.tsx`, `text-sm`/`text-xs` 1x each in `doc-section-nav.tsx`, the
+`text-2xl`/`text-lg` of the doc `H2`/`H3` in `prose.tsx`, and the redundant `className="text-lg"` on `DocSubSection`'s
+`H3`. `ProseP` renders `text-prose-body` (1rem, line height 1.75rem) where the doc `P` set only `leading-7` and
+inherited its size - an explicit 1rem that the computed-style comparison of the three legal pages must (and does)
+show as unchanged. A dry run of this task gave: expected HTML (map applied, classes sorted) = after HTML; class
+probe 5 pairs, no differences; `compare-computed` 72 page states / 20,374 elements / 14,768 forced states, no
+differences; ratchet `raw-text-size` 21 -> 7.
+
+- [ ] **Step 1: Toolkit and before tree.** Write `<scratch>/toolkit.sh` and the toolkit scripts
+      (`snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `probe-classes.mjs`,
+      `expect-html.mjs`, `apply-map.mjs`; _Verification toolkit_), build the _Before tree_, then:
+
+```bash
+source <scratch>/toolkit.sh
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+```
+
+Expected: 14 route lines and `1 stylesheet(s)`. Leave 3110 running.
+
+- [ ] **Step 2: Write the failing tests.** Create `packages/ui/src/typography/prose.test.tsx`:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, test } from "vitest";
+
+import * as prose from "./prose";
+import { InlineLink, ProseH2, ProseH3, ProseP } from "./prose";
+
+afterEach(cleanup);
+
+test("the prose module exports only the legal-text API", () => {
+  expect(Object.keys(prose).sort()).toEqual([
+    "InlineLink",
+    "ProseH2",
+    "ProseH3",
+    "ProseP",
+  ]);
+});
+
+test("prose headings and paragraphs render on the prose tokens", () => {
+  render(
+    <>
+      <ProseH2>Geltungsbereich</ProseH2>
+      <ProseH3>Vertragsschluss</ProseH3>
+      <ProseP className="mt-6">Absatz</ProseP>
+    </>,
+  );
+  expect(
+    screen.getByRole("heading", { level: 2, name: "Geltungsbereich" })
+      .className,
+  ).toBe(
+    "font-heading hyphens-heading text-prose-h2 font-bold tracking-tight text-ink",
+  );
+  expect(
+    screen.getByRole("heading", { level: 3, name: "Vertragsschluss" })
+      .className,
+  ).toBe("font-heading hyphens-heading text-prose-h3 font-bold text-ink");
+  expect(screen.getByText("Absatz").className).toBe(
+    "text-prose-body text-ink mt-6",
+  );
+});
+
+test("an inline link keeps its site and doc underline offsets", () => {
+  render(
+    <>
+      <InlineLink href="/agb">AGB</InlineLink>
+      <InlineLink variant="doc" href="/datenschutz">
+        Datenschutz
+      </InlineLink>
+    </>,
+  );
+  expect(screen.getByRole("link", { name: "AGB" }).className).toContain(
+    "underline-offset-4",
+  );
+  expect(screen.getByRole("link", { name: "Datenschutz" }).className).toContain(
+    "underline-offset-[3px]",
+  );
+});
+```
+
+In `packages/ui/src/typography/typography.test.tsx`, replace the three imports
+`import { Eyebrow } from "./eyebrow";`, `import { Lead } from "./lead";`, `import { Text } from "./text";` with:
+
+```tsx
+import * as eyebrow from "./eyebrow";
+import { Eyebrow } from "./eyebrow";
+import * as heading from "./heading";
+import * as lead from "./lead";
+import { Lead } from "./lead";
+import * as prose from "./prose";
+import * as text from "./text";
+import { Text } from "./text";
+```
+
+and append:
+
+```tsx
+test("the typography group exports one API", () => {
+  expect(
+    [eyebrow, heading, lead, prose, text].flatMap(Object.keys).sort(),
+  ).toEqual([
+    "Address",
+    "Eyebrow",
+    "Heading",
+    "InlineLink",
+    "Lead",
+    "ProseH2",
+    "ProseH3",
+    "ProseP",
+    "Text",
+  ]);
+});
+```
+
+- [ ] **Step 3: Run them to see them fail.**
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/typography
+```
+
+Expected: FAIL - "the prose module exports only the legal-text API", "prose headings and paragraphs render on
+the prose tokens" and "the typography group exports one API" (`H1`, `H2`, `H3`, `Muted`, `P`, `Small` are still
+exported); "an inline link keeps its site and doc underline offsets" passes.
+
+- [ ] **Step 4: The Prose module.** Replace `packages/ui/src/typography/prose.tsx` with:
+
+```tsx
+import { cn } from "../utils/cn";
+
+/* ----------------------------------------------------------------------------
+ * Prose: long legal text (AGB, Datenschutz, Impressum) on the prose tokens -
+ * Tailwind's default sizes, named (styles/tokens.css). The page title is a
+ * regular `Heading as="h1" size="h1"`.
+   ------------------------------------------------------------------------- */
+export function ProseH2({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
+  return (
+    <h2
+      className={cn(
+        "font-heading hyphens-heading text-prose-h2 font-bold tracking-tight text-ink",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ProseH3({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
+  return (
+    <h3
+      className={cn(
+        "font-heading hyphens-heading text-prose-h3 font-bold text-ink",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ProseP({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return <p className={cn("text-prose-body text-ink", className)} {...props} />;
+}
+
+type InlineLinkProps = React.ComponentProps<"a"> & {
+  /** `doc` in legal text (tighter underline), `site` elsewhere. */
+  variant?: "site" | "doc";
+};
+
+export function InlineLink({
+  className,
+  variant = "site",
+  ...props
+}: InlineLinkProps) {
+  return (
+    <a
+      className={cn(
+        "font-medium text-coral underline transition-colors hover:text-coral-2",
+        variant === "doc" ? "underline-offset-[3px]" : "underline-offset-4",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+```
+
+Run the command of Step 3 again. Expected: PASS.
+
+- [ ] **Step 5: The legal pages onto it.** Save the map as `<scratch>/c4a-map.mjs` (`apply-map.mjs` applies its
+      source entries, `expect-html.mjs` its snapshot entries):
+
+```js
+// C4a map: the legal pages onto the Prose module and the prose tokens.
+// Each entry: [file, from, to, count in that file, snapshots?]. apply-map.mjs applies
+// the source entries; expect-html.mjs applies the entries that carry snapshot files
+// (the rendered classes), longest first.
+export const A = "apps/marketing/src/";
+const LEGAL = ["agb.txt", "datenschutz.txt", "impressum.txt"];
+const DOCS = A + "components/docs/doc-components.tsx";
+const NAV = A + "components/docs/doc-section-nav.tsx";
+
+// prettier-ignore
+export const REPLACEMENTS = [
+  // Components: the doc variants of H1/H2/H3/P become Heading and the Prose module.
+  [DOCS, 'import { H1, H2, H3, InlineLink } from "@skillsite/ui/typography/prose";', 'import { Heading } from "@skillsite/ui/typography/heading";\nimport { InlineLink, ProseH2, ProseH3 } from "@skillsite/ui/typography/prose";', 1],
+  [DOCS, '<H1 variant="doc" className="mt-5">', '<Heading as="h1" size="h1" className="mt-5">', 1],
+  [DOCS, "</H1>", "</Heading>", 1],
+  [DOCS, '<H2 variant="doc" className="max-w-3xl">', '<ProseH2 className="max-w-3xl">', 1],
+  [DOCS, "</H2>", "</ProseH2>", 1],
+  [DOCS, '<H3 variant="doc" className="text-lg">', "<ProseH3>", 1],
+  [DOCS, "</H3>", "</ProseH3>", 1],
+  ...["app/agb/page.tsx", "app/datenschutz/page.tsx", "app/impressum/page.tsx"].flatMap((page, i) => [
+    [A + page, 'import { InlineLink, P } from "@skillsite/ui/typography/prose";', 'import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";', 1],
+    [A + page, '<P variant="doc"', "<ProseP", [27, 48, 2][i]],
+    [A + page, "</P>", "</ProseP>", [27, 48, 2][i]],
+  ]),
+  // Tailwind default sizes -> prose tokens (same values).
+  [DOCS, "text-sm", "text-prose-sm", 8, LEGAL],
+  [DOCS, "text-xs", "text-prose-xs", 1, LEGAL],
+  [NAV, "text-sm", "text-prose-sm", 1, LEGAL],
+  [NAV, "text-xs", "text-prose-xs", 1, LEGAL],
+  // Rendered HTML only: the old component output and the new one.
+  ["(html)", "text-2xl", "text-prose-h2", 0, LEGAL],
+  ["(html)", "text-lg", "text-prose-h3", 0, LEGAL],
+  ["(html)", "text-ink leading-7", "text-prose-body text-ink", 0, LEGAL],
+];
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/apply-map.mjs" "$SCRATCH/c4a-map.mjs" && pnpm format
+grep -rnE '<(P|H1|H2|H3) variant' "$WORKTREE/apps/marketing/src"
+grep -rnE '\btext-(xs|sm|lg|2xl)\b' "$WORKTREE/apps/marketing/src/components/docs" "$WORKTREE/packages/ui/src/typography"
+```
+
+Expected: `5 files rewritten`; both `grep`s print nothing (`InlineLink variant="doc"` stays - it is the doc
+underline).
+
+- [ ] **Step 6: Ratchet and checks.**
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just ratchet-update && just static-checks && pnpm --filter @skillsite/ui exec vitest run
+```
+
+Expected: `lowered raw-text-size: 21 -> 7`; green; `@skillsite/ui` 9 files / 51 tests.
+
+- [ ] **Step 7: Prove the result identical** (the `compare-computed` line needs a 600000 ms timeout or a
+      background run).
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/expect-html.mjs" "$SCRATCH/c4a-map.mjs" "$SCRATCH/html-before" "$SCRATCH/html-expected"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-expected" "$SCRATCH/html-expected-n"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r -x _styles.css "$SCRATCH/html-expected-n" "$SCRATCH/html-after-n" && echo AS-EXPECTED
+node "$SCRATCH/probe-classes.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 "$SCRATCH/c4a-map.mjs" | tail -1
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `AS-EXPECTED`; the probe ends `No differences.` (5 pairs); `compare-computed` prints
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` (this includes every
+`ProseP` on `/agb`, `/datenschutz` and `/impressum`: the explicit 1rem computes to the inherited 16px). Anything
+else is a finding: stop and report.
+
+- [ ] **Step 8: Commit.** `just check`, then commit `refactor(ui): move the legal pages onto a prose module`. The
+      C4 box is ticked in Task 4b.
+
+PR body: Summary (Prose module `ProseH2`/`ProseH3`/`ProseP`/`InlineLink` on the prose tokens, site variants and
+`Small`/`Muted` removed, doc title on `Heading`, legal pages and doc components migrated, `raw-text-size`
+21 -> 7); _What changes for a visitor_: nothing - expected-HTML diff empty, class probe 5 pairs, `compare-computed`
+72 page states; _Deviations from the plan_; _How to check_: `/agb`, `/datenschutz`, `/impressum` at 390 and
+1280 px, light and dark - headings, paragraphs, the fact boxes of the hero, the "Auf dieser Seite" navigation, the
+legal-basis boxes and the doc links look as before.
+
+---
+
+### Task 4b: One typography API (spec C4, part 2)
+
+**Branch:** `refactor/ui-typography` from `refactor/ui-prose`. **PR title:**
+`refactor(ui): one typography API for headings, text and eyebrows`.
+
+**Files:**
+
+- Modify: `packages/ui/src/typography/heading.tsx`, `text.tsx`, `eyebrow.tsx`, `typography.test.tsx`
+- Modify: `packages/ui/styles/tokens.css`, `packages/ui/src/utils/cn.ts`, `packages/ui/src/tokens/prose.test.ts`
+- Modify: `packages/ui/src/primitives/{button,tag,accordion}.tsx`, `primitives/button.test.tsx`,
+  `packages/ui/src/forms/select.tsx`
+- Modify: `apps/marketing/src/app/{layout,kontakt/page,ablauf/page,preise/page}.tsx`,
+  `components/sections/{cta-section,subject-cards,benefit-grid,step-grid}.tsx`, `components/layout/footer.tsx`,
+  `components/booking/{booker,booking-form}.tsx`
 - Modify: `design-ratchet.json`, `docs/specs/foundation-refactor.md` (C4 box)
 
 **Interfaces:**
 
-- Consumes: Task 1's typography paths, Task 2's CVA pattern and tone names, Task 3's role and prose tokens and the
-  toolkit's `expect-html.mjs`/`probe-classes.mjs` (with a C4 class map).
-- Produces: `Heading({ size, as, tone })`, `Text({ size, tone, as })`, `Lead`, `Eyebrow({ tone, dot, as })`; a Prose
-  module (`ProseH2`, `ProseH3`, `ProseP`, `InlineLink`) on the `prose-*` tokens; `H1`-`H3`, `P` site variants,
-  `Small` and `Muted` removed. `raw-text-size` ratchet count 0 outside the allow-list.
+- Consumes: Task 4a's typography modules and map format.
+- Produces (Task 5 and wave 3 rely on these):
+  - `Heading({ as?, size?, tone?, wrap? })` - `size`: `display | h1 | h2 | h3 | h4 | title` (the scale) and
+    `card-title | card-title-sm | step-title` (role size + bold); `tone`: `inherit` (default) `| default | muted |
+inverse | inverse-soft`; `wrap`: `balance` (default: `text-balance hyphens-heading`) `| normal`. Class order:
+    `font-heading`, wrap, size, tone, `className` - the scale headings render exactly as before.
+  - `Text({ as?, size?, tone? })` - `size`: `lead | body | small | caption | note`; `tone`: `default | muted |
+inverse | inverse-soft | inherit`. The C2 tone `inverse-muted` (`text-on-navy-soft`) is renamed `inverse-soft`.
+  - `Eyebrow({ as?: "span" | "p", dot?: boolean, tone? })` - `tone`: `accent` (default, coral) `| muted |
+inverse-accent | inverse-muted | on-accent`; `dot` (default `true`) adds the leading dot and the inline-flex row.
+  - Role size tokens `text-accordion-icon`, `text-button-sm`, `text-note`, `text-skip-link`, `text-tag`
+    (Tailwind's `text-xl`/`text-sm`/`text-sm`/`text-sm`/`text-xs`, size and line height).
+  - `raw-text-size` 0.
 
-**Background.** Spec C4. `Small` and `Muted` are identical and unused. The eyebrow count and the raw sizes above
-are from the tree after Task 3 (`text-eyebrow` appears in 8 hand-built places; `raw-text-size` is 21). Notes for
-wave 2:
+**Background (measured on the tree after Task 4a).** Eight hand-built eyebrows (`text-eyebrow uppercase <colour>`):
+`kontakt/page.tsx` 3 (two through `sideLabelClass`, one on the WhatsApp card), `ablauf/page.tsx`,
+`cta-section.tsx`, `footer.tsx`, `booker.tsx` 3 - plus the label inside `Select`. One of them (booker "Buchung")
+has the dot, but without `shrink-0`; the component's dot has it, so that dot's computed `flex-shrink` goes 1 -> 0
+(its box does not move: the label is an inline-flex row sized to its content) - the one allowed difference of
+this task (`c4b-expect.json`). Three raw headings (`subject-cards.tsx`, `benefit-grid.tsx`, `step-grid.tsx`) are
+`<h3 className="... font-heading text-<role> font-bold text-ink">` without `text-balance`/`hyphens-heading`, so
+they become `Heading wrap="normal"`. The seven raw sizes left: `button.tsx` `sm` (no route renders it), `tag.tsx`,
+the accordion's "+" icon, the skip link, `booking-form.tsx` 2x, `preise/page.tsx` 1x. `Text ... className="text-sm"`
+renders `text-ink-soft text-sm` (cn drops `text-body`), which is `Text size="note"`. A dry run of this task gave:
+expected HTML = after HTML; class probe 7 pairs, one expected difference (20x), no other; `compare-computed` 72 page
+states, one expected difference (24x), no other; `raw-text-size` 7 -> 0; `just check` green.
 
-- The `/faecher` outline fix changes a heading element (tag name), not its look: the computed-style comparison
-  reports it as `element i is h3 vs h2`, so wave 2 adds a tag-insensitive mode or an explicit exception for that
-  one element.
-- `prose-body` sets `font-size: 1rem` explicitly where the doc `P` (`leading-7`, no size) inherits 16px today. The
-  computed value is the same only while the parent is 16px; the C4 proof must show it on every legal page (the
-  computed-style comparison covers `/agb`, `/datenschutz`, `/impressum`) and the class probe must include the pair.
-- From C4 on, the HTML snapshot keeps `script[type="application/ld+json"]` (structured data is content, not a
-  chunk): wave 2 changes `skip` in `snapshot-html.mjs` to drop only scripts without that type.
+- [ ] **Step 1: Toolkit and before tree.** Write `<scratch>/toolkit.sh` and the six toolkit scripts
+      (_Verification toolkit_), build the _Before tree_, then:
 
-_Detailed steps: wave 2, written against the code after C3._
+```bash
+source <scratch>/toolkit.sh
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+```
+
+- [ ] **Step 2: Write the failing tests.** Replace `packages/ui/src/typography/typography.test.tsx` with:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, test } from "vitest";
+
+import * as eyebrow from "./eyebrow";
+import { Eyebrow } from "./eyebrow";
+import * as heading from "./heading";
+import { Heading } from "./heading";
+import * as lead from "./lead";
+import { Lead } from "./lead";
+import * as prose from "./prose";
+import * as text from "./text";
+import { Text } from "./text";
+
+afterEach(cleanup);
+
+test("Lead keeps its size next to its muted tone", () => {
+  render(<Lead>Einleitung</Lead>);
+  expect(screen.getByText("Einleitung").className).toMatch(/\btext-lead\b/);
+});
+
+test("Text keeps small and caption sizes next to a tone", () => {
+  render(
+    <>
+      <Text size="small" tone="muted">
+        Klein
+      </Text>
+      <Text size="caption" tone="muted">
+        Fußnote
+      </Text>
+    </>,
+  );
+  expect(screen.getByText("Klein").className).toMatch(/\btext-small\b/);
+  expect(screen.getByText("Fußnote").className).toMatch(/\btext-caption\b/);
+});
+
+test("Eyebrow keeps its size next to its coral colour", () => {
+  render(<Eyebrow>Fächer</Eyebrow>);
+  const eyebrow = screen.getByText("Fächer");
+  expect(eyebrow.className).toMatch(/\btext-eyebrow\b/);
+  expect(eyebrow.className).toMatch(/\btext-coral\b/);
+});
+
+test("Text tones on inverse surfaces are named by role", () => {
+  render(
+    <>
+      <Text tone="inverse">Hell</Text>
+      <Text tone="inverse-soft">Gedämpft</Text>
+    </>,
+  );
+  expect(screen.getByText("Hell").className).toBe("text-body text-on-navy");
+  expect(screen.getByText("Gedämpft").className).toBe(
+    "text-body text-on-navy-soft",
+  );
+});
+
+test("the typography group exports one API", () => {
+  expect(
+    [eyebrow, heading, lead, prose, text].flatMap(Object.keys).sort(),
+  ).toEqual([
+    "Address",
+    "Eyebrow",
+    "Heading",
+    "InlineLink",
+    "Lead",
+    "ProseH2",
+    "ProseH3",
+    "ProseP",
+    "Text",
+  ]);
+});
+
+test("a scale heading keeps its classes in their order", () => {
+  render(<Heading>Titel</Heading>);
+  expect(screen.getByRole("heading", { level: 2 }).className).toBe(
+    "font-heading text-balance hyphens-heading text-h2",
+  );
+});
+
+test("a card heading has a role size, the plain wrap and a tone", () => {
+  render(
+    <Heading
+      as="h3"
+      size="card-title"
+      wrap="normal"
+      tone="default"
+      className="mt-5"
+    >
+      Mathematik
+    </Heading>,
+  );
+  expect(screen.getByRole("heading", { level: 3 }).className).toBe(
+    "font-heading text-card-title font-bold text-ink mt-5",
+  );
+});
+
+test("Eyebrow has tones, an optional dot and an element", () => {
+  render(
+    <>
+      <Eyebrow>Fächer</Eyebrow>
+      <Eyebrow as="p" dot={false} tone="inverse-muted">
+        Navigation
+      </Eyebrow>
+    </>,
+  );
+  const dotted = screen.getByText("Fächer");
+  expect(dotted.className).toBe(
+    "text-eyebrow uppercase inline-flex items-center gap-2.25 text-coral",
+  );
+  expect(dotted.firstElementChild?.className).toBe(
+    "size-1.75 shrink-0 rounded-full bg-coral",
+  );
+  const plain = screen.getByText("Navigation");
+  expect(plain.tagName).toBe("P");
+  expect(plain.className).toBe("text-eyebrow uppercase text-on-navy-muted");
+  expect(plain.children).toHaveLength(0);
+});
+
+test("the note size is fine print at its own token", () => {
+  render(
+    <Text size="note" tone="muted">
+      Quelle
+    </Text>,
+  );
+  expect(screen.getByText("Quelle").className).toBe("text-note text-ink-soft");
+});
+```
+
+In `packages/ui/src/tokens/prose.test.ts`, replace the line
+`for (const [prose, size] of Object.entries(proseTokens)) {` with:
+
+```ts
+/** UI role sizes that keep one of Tailwind's default sizes (C4), value for value. */
+const uiTokens: Record<string, string> = {
+  "accordion-icon": "xl",
+  "button-sm": "sm",
+  note: "sm",
+  "skip-link": "sm",
+  tag: "xs",
+};
+
+for (const [prose, size] of Object.entries({ ...proseTokens, ...uiTokens })) {
+```
+
+- [ ] **Step 3: Run them to see them fail.**
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/typography src/tokens
+```
+
+Expected: FAIL - 4 of the 12 tests in `src/typography` ("Text tones on inverse surfaces are named by role", "a
+card heading has a role size ...", "Eyebrow has tones ...", "the note size ...") and the 5 new token tests in
+`src/tokens/prose.test.ts` (`undefined`).
+
+- [ ] **Step 4: The API.** Replace `packages/ui/src/typography/heading.tsx` with:
+
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+/* ----------------------------------------------------------------------------
+ * Headings
+ *
+ * `size` maps to one class from the type scale (size + line-height + tracking +
+ * weight live in `@theme`), or to a role size outside the scale (card and step
+ * titles: size token + bold). `tone` sets the colour; the default `inherit`
+ * takes it from the parent, so the same heading works on light and navy
+ * surfaces. `wrap="normal"` drops the balanced, hyphenated wrapping.
+   ------------------------------------------------------------------------- */
+const headingVariants = cva("font-heading", {
+  variants: {
+    wrap: {
+      balance: "text-balance hyphens-heading",
+      normal: "",
+    },
+    size: {
+      display: "text-display",
+      h1: "text-h1",
+      h2: "text-h2",
+      h3: "text-h3",
+      h4: "text-h4",
+      title: "text-title",
+      "card-title": "text-card-title font-bold",
+      "card-title-sm": "text-card-title-sm font-bold",
+      "step-title": "text-step-title font-bold",
+    },
+    tone: {
+      inherit: "",
+      default: "text-ink",
+      muted: "text-ink-soft",
+      inverse: "text-on-navy",
+      "inverse-soft": "text-on-navy-soft",
+    },
+  },
+  defaultVariants: { wrap: "balance", size: "h2", tone: "inherit" },
+});
+
+export type HeadingSize = NonNullable<
+  VariantProps<typeof headingVariants>["size"]
+>;
+
+type HeadingProps = React.HTMLAttributes<HTMLHeadingElement> &
+  VariantProps<typeof headingVariants> & {
+    as?: "h1" | "h2" | "h3" | "h4" | "p" | "div" | "span";
+  };
+
+export function Heading({
+  as: Tag = "h2",
+  wrap,
+  size,
+  tone,
+  className,
+  ...props
+}: HeadingProps) {
+  return (
+    <Tag
+      className={cn(headingVariants({ wrap, size, tone }), className)}
+      {...props}
+    />
+  );
+}
+```
+
+Replace `packages/ui/src/typography/text.tsx` with:
+
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+/* ----------------------------------------------------------------------------
+ * Body text
+   ------------------------------------------------------------------------- */
+const textVariants = cva("", {
+  variants: {
+    size: {
+      lead: "text-lead",
+      body: "text-body",
+      small: "text-small",
+      caption: "text-caption",
+      /** Fine print: sources, legal notes, consent labels. */
+      note: "text-note",
+    },
+    tone: {
+      default: "text-ink",
+      muted: "text-ink-soft",
+      inverse: "text-on-navy",
+      "inverse-soft": "text-on-navy-soft",
+      inherit: "",
+    },
+  },
+  defaultVariants: { size: "body", tone: "default" },
+});
+
+export type TextSize = NonNullable<VariantProps<typeof textVariants>["size"]>;
+export type TextTone = NonNullable<VariantProps<typeof textVariants>["tone"]>;
+
+type TextProps = React.HTMLAttributes<HTMLParagraphElement> &
+  VariantProps<typeof textVariants> & {
+    as?: "p" | "span" | "div";
+  };
+
+export function Text({
+  as: Tag = "p",
+  size,
+  tone,
+  className,
+  ...props
+}: TextProps) {
+  return (
+    <Tag className={cn(textVariants({ size, tone }), className)} {...props} />
+  );
+}
+
+export function Address({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLElement>) {
+  return (
+    <address
+      className={cn("text-body not-italic text-ink", className)}
+      {...props}
+    />
+  );
+}
+```
+
+Replace `packages/ui/src/typography/eyebrow.tsx` with:
+
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+const eyebrowVariants = cva("text-eyebrow uppercase", {
+  variants: {
+    /** The leading dot; without it the label is a plain text element. */
+    dot: {
+      true: "inline-flex items-center gap-2.25",
+      false: "",
+    },
+    tone: {
+      accent: "text-coral",
+      muted: "text-ink-soft",
+      "inverse-accent": "text-accent-blue",
+      "inverse-muted": "text-on-navy-muted",
+      "on-accent": "text-on-accent-90",
+    },
+  },
+  defaultVariants: { dot: true, tone: "accent" },
+});
+
+type EyebrowProps = React.HTMLAttributes<HTMLElement> &
+  VariantProps<typeof eyebrowVariants> & {
+    as?: "span" | "p";
+  };
+
+/** Small uppercase label above a heading; coral with a leading dot by default. */
+export function Eyebrow({
+  as: Tag = "span",
+  dot = true,
+  tone,
+  className,
+  children,
+  ...props
+}: EyebrowProps) {
+  return (
+    <Tag className={cn(eyebrowVariants({ dot, tone }), className)} {...props}>
+      {dot ? (
+        <span
+          className="size-1.75 shrink-0 rounded-full bg-coral"
+          aria-hidden
+        />
+      ) : null}
+      {children}
+    </Tag>
+  );
+}
+```
+
+- [ ] **Step 5: The role size tokens.** In `packages/ui/styles/tokens.css`, after
+      `--text-prose-xs--line-height: calc(1 / 0.75);`, add:
+
+```text
+
+  /* UI role sizes that keep one of Tailwind's default sizes (size and line
+     height): tag = text-xs; button-sm, note, skip-link = text-sm;
+     accordion-icon = text-xl. */
+  --text-accordion-icon: 1.25rem;
+  --text-accordion-icon--line-height: calc(1.75 / 1.25);
+  --text-button-sm: 0.875rem;
+  --text-button-sm--line-height: calc(1.25 / 0.875);
+  --text-note: 0.875rem;
+  --text-note--line-height: calc(1.25 / 0.875);
+  --text-skip-link: 0.875rem;
+  --text-skip-link--line-height: calc(1.25 / 0.875);
+  --text-tag: 0.75rem;
+  --text-tag--line-height: calc(1 / 0.75);
+```
+
+In `packages/ui/src/utils/cn.ts`, after `"prose-xs",` in the `text` list, add:
+
+```ts
+        // UI role sizes at Tailwind's default sizes
+        "accordion-icon",
+        "button-sm",
+        "note",
+        "skip-link",
+        "tag",
+```
+
+Run the command of Step 3 again, then `pnpm --filter @skillsite/ui exec vitest run`. Expected: PASS; 9 files /
+60 tests.
+
+- [ ] **Step 6: The call sites.** Save the map as `<scratch>/c4b-map.mjs`:
+
+```js
+// C4b map: hand-built eyebrows and headings onto the typography API, the last raw
+// Tailwind sizes onto role tokens, the Text tone `inverse-muted` renamed `inverse-soft`.
+// Each entry: [file, from, to, count in that file, snapshots?]. apply-map.mjs applies
+// the source entries; expect-html.mjs applies the entries that carry snapshot files
+// (the rendered classes), longest first.
+const A = "apps/marketing/src/";
+const U = "packages/ui/src/";
+const ALL = [
+  "index.txt",
+  "faecher.txt",
+  "ablauf.txt",
+  "preise.txt",
+  "ueber-mich.txt",
+  "kontakt.txt",
+  "termin.txt",
+  "online-lernen.txt",
+  "impressum.txt",
+  "datenschutz.txt",
+  "agb.txt",
+  "zahlung_re_RE-1840_betrag_90_00_20EUR.txt",
+  "zahlung_re_x_betrag_abc.txt",
+  "gibt-es-nicht.txt",
+];
+const EYEBROW = 'import { Eyebrow } from "@skillsite/ui/typography/eyebrow";\n';
+const HEADING = 'import { Heading } from "@skillsite/ui/typography/heading";\n';
+
+// prettier-ignore
+export const REPLACEMENTS = [
+  // Raw Tailwind sizes -> UI role tokens (same values; source and rendered classes).
+  [U + "primitives/button.tsx", "py-1.5 text-sm", "py-1.5 text-button-sm", 1],
+  [U + "primitives/tag.tsx", "py-1 text-xs font-semibold", "py-1 text-tag font-semibold", 1, ALL],
+  [U + "primitives/accordion.tsx", "text-xl leading-none", "text-accordion-icon leading-none", 1, ALL],
+  [A + "app/layout.tsx", "focus:text-sm", "focus:text-skip-link", 1, ALL],
+  [A + "components/booking/booking-form.tsx", "gap-3 text-sm leading-relaxed", "gap-3 text-note leading-relaxed", 1],
+  [A + "components/booking/booking-form.tsx", '<Text tone="muted" className="text-sm">', '<Text size="note" tone="muted">', 1],
+  [A + "app/preise/page.tsx", '<Text as="span" tone="muted" className="text-sm">', '<Text as="span" size="note" tone="muted">', 1],
+  ["(html)", "text-ink-soft text-sm", "text-note text-ink-soft", 0, ["preise.txt"]],
+  // Text tone rename (same class).
+  [A + "app/preise/page.tsx", 'tone="inverse-muted"', 'tone="inverse-soft"', 2],
+  [A + "app/ablauf/page.tsx", 'tone="inverse-muted"', 'tone="inverse-soft"', 1],
+  [A + "components/booking/booker.tsx", 'tone="inverse-muted"', 'tone="inverse-soft"', 1],
+  // Hand-built eyebrows -> Eyebrow (same classes, order aside).
+  [A + "app/kontakt/page.tsx", 'const sideLabelClass = "text-eyebrow uppercase text-coral";\n', "", 1],
+  [A + "app/kontakt/page.tsx", "<span className={sideLabelClass}>E-Mail</span>", "<Eyebrow dot={false}>E-Mail</Eyebrow>", 1],
+  [A + "app/kontakt/page.tsx", "<span className={sideLabelClass}>\n                Discord und Microsoft Teams\n              </span>", "<Eyebrow dot={false}>Discord und Microsoft Teams</Eyebrow>", 1],
+  [A + "app/kontakt/page.tsx", '<span className="text-eyebrow uppercase text-on-accent-90">\n                Am liebsten per WhatsApp\n              </span>', '<Eyebrow dot={false} tone="on-accent">\n                Am liebsten per WhatsApp\n              </Eyebrow>', 1],
+  [A + "app/ablauf/page.tsx", HEADING, EYEBROW + HEADING, 1],
+  [A + "app/ablauf/page.tsx", '<span className="text-eyebrow uppercase text-accent-blue">\n                Unser Klassenzimmer\n              </span>', '<Eyebrow dot={false} tone="inverse-accent">\n                Unser Klassenzimmer\n              </Eyebrow>', 1],
+  [A + "components/sections/cta-section.tsx", HEADING, EYEBROW + HEADING, 1],
+  [A + "components/sections/cta-section.tsx", '<span className="text-eyebrow uppercase text-on-accent-90">\n          {eyebrow}\n        </span>', '<Eyebrow dot={false} tone="on-accent">\n          {eyebrow}\n        </Eyebrow>', 1],
+  [A + "components/layout/footer.tsx", 'import { contactDetails } from "@/content/contact";\n', 'import { contactDetails } from "@/content/contact";\nimport { Eyebrow } from "@skillsite/ui/typography/eyebrow";\n', 1],
+  [A + "components/layout/footer.tsx", '<p className="text-eyebrow uppercase text-on-navy-muted">{title}</p>', '<Eyebrow as="p" dot={false} tone="inverse-muted">\n        {title}\n      </Eyebrow>', 1],
+  [A + "components/booking/booker.tsx", HEADING, EYEBROW + HEADING, 1],
+  [A + "components/booking/booker.tsx", '<span className="inline-flex items-center gap-2.25 text-eyebrow uppercase text-accent-blue">\n            <span className="size-1.75 rounded-full bg-coral" aria-hidden />\n            Buchung\n          </span>', '<Eyebrow tone="inverse-accent">Buchung</Eyebrow>', 1],
+  [A + "components/booking/booker.tsx", '<p className="text-eyebrow uppercase text-accent-blue">\n                Dein Termin\n              </p>', '<Eyebrow as="p" dot={false} tone="inverse-accent">\n                Dein Termin\n              </Eyebrow>', 1],
+  [A + "components/booking/booker.tsx", '<p className="text-eyebrow uppercase text-ink-soft">\n                Dein Termin\n              </p>', '<Eyebrow as="p" dot={false} tone="muted">\n                Dein Termin\n              </Eyebrow>', 1],
+  ["(html)", "size-1.75 rounded-full bg-coral", "size-1.75 shrink-0 rounded-full bg-coral", 0, ["termin.txt", "kontakt.txt"]],
+  // Select's label is an eyebrow too.
+  [U + "forms/select.tsx", 'import { cn } from "../utils/cn";\n', 'import { Eyebrow } from "../typography/eyebrow";\nimport { cn } from "../utils/cn";\n', 1],
+  [U + "forms/select.tsx", "    eyebrow: string;\n", '    eyebrow: "muted" | "inverse-accent";\n', 1],
+  [U + "forms/select.tsx", '    eyebrow: "text-ink-soft",\n', '    eyebrow: "muted",\n', 1],
+  [U + "forms/select.tsx", '    eyebrow: "text-accent-blue",\n', '    eyebrow: "inverse-accent",\n', 1],
+  [U + "forms/select.tsx", '<span className={cn("text-eyebrow uppercase", t.eyebrow)}>\n            {hideLabel ? null : label}\n          </span>', "<Eyebrow dot={false} tone={t.eyebrow}>\n            {hideLabel ? null : label}\n          </Eyebrow>", 1],
+  // Raw headings -> Heading (role size, plain wrap, default tone).
+  [A + "components/sections/subject-cards.tsx", 'import { Tag } from "@skillsite/ui/primitives/tag";\n', 'import { Tag } from "@skillsite/ui/primitives/tag";\n' + HEADING, 1],
+  [A + "components/sections/subject-cards.tsx", '<h3 className="mt-5 font-heading text-card-title font-bold text-ink">\n        {subject.name}\n      </h3>', '<Heading\n        as="h3"\n        size="card-title"\n        wrap="normal"\n        tone="default"\n        className="mt-5"\n      >\n        {subject.name}\n      </Heading>', 1],
+  [A + "components/sections/benefit-grid.tsx", 'import { Reveal } from "@skillsite/ui/motion/reveal";\n', 'import { Reveal } from "@skillsite/ui/motion/reveal";\n' + HEADING, 1],
+  [A + "components/sections/benefit-grid.tsx", '<h3 className="mb-1.5 font-heading text-card-title-sm font-bold text-ink">\n            {benefit.title}\n          </h3>', '<Heading\n            as="h3"\n            size="card-title-sm"\n            wrap="normal"\n            tone="default"\n            className="mb-1.5"\n          >\n            {benefit.title}\n          </Heading>', 1],
+  [A + "components/sections/step-grid.tsx", 'import { Reveal } from "@skillsite/ui/motion/reveal";\n', 'import { Reveal } from "@skillsite/ui/motion/reveal";\n' + HEADING, 1],
+  [A + "components/sections/step-grid.tsx", '<h3 className="mt-3 font-heading text-step-title font-bold text-ink">\n              {step.title}\n            </h3>', '<Heading\n              as="h3"\n              size="step-title"\n              wrap="normal"\n              tone="default"\n              className="mt-3"\n            >\n              {step.title}\n            </Heading>', 1],
+];
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/apply-map.mjs" "$SCRATCH/c4b-map.mjs" && pnpm format
+perl -pi -e 's/hover:opacity-90 py-1\.5 text-sm px-4/hover:opacity-90 py-1.5 text-button-sm px-4/' "$WORKTREE/packages/ui/src/primitives/button.test.tsx"
+grep -rn "text-eyebrow" "$WORKTREE/apps/marketing/src" "$WORKTREE/packages/ui/src" | grep -v "\.test\." | grep -v "utils/cn.ts"
+grep -rn "<h[1-6] " "$WORKTREE/apps/marketing/src/components/sections"
+```
+
+Expected: `15 files rewritten`; the first `grep` prints only `typography/eyebrow.tsx` (the component itself), the
+second nothing. The `perl` line updates the class string in "the class order is base, variant, size, then
+className" (the size token changed; the order did not).
+
+- [ ] **Step 7: Ratchet and checks.**
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just ratchet-update && just static-checks && pnpm --filter @skillsite/ui exec vitest run
+```
+
+Expected: `lowered raw-text-size: 7 -> 0`; green; 9 files / 60 tests.
+
+- [ ] **Step 8: Prove the result identical** (the `compare-computed` line needs a 600000 ms timeout or a
+      background run). Save the allowed difference as `<scratch>/c4b-expect.json`:
+
+```json
+[
+  {
+    "tool": "computed",
+    "path": ">aside:0>span:0>span:0$",
+    "property": "flex-shrink",
+    "before": "1",
+    "after": "0"
+  },
+  {
+    "tool": "probe",
+    "path": "^size-1\\.75 rounded-full bg-coral -> ",
+    "property": "flex-shrink",
+    "before": "1",
+    "after": "0"
+  }
+]
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/expect-html.mjs" "$SCRATCH/c4b-map.mjs" "$SCRATCH/html-before" "$SCRATCH/html-expected"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-expected" "$SCRATCH/html-expected-n"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r -x _styles.css "$SCRATCH/html-expected-n" "$SCRATCH/html-after-n" && echo AS-EXPECTED
+EXPECT="$SCRATCH/c4b-expect.json" node "$SCRATCH/probe-classes.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 "$SCRATCH/c4b-map.mjs" | tail -2
+EXPECT="$SCRATCH/c4b-expect.json" node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -3 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `AS-EXPECTED`; the probe prints
+`expected: flex-shrink 1 -> 0 at /^size-1\.75 rounded-full bg-coral -> / (20x)` and `No differences.`;
+`compare-computed` prints `72 page states, 20374 elements, 14768 forced pseudo-states compared.`,
+`expected: flex-shrink 1 -> 0 at />aside:0>span:0>span:0$/ (24x)` and `No differences.` Anything else is a
+finding: stop and report.
+
+- [ ] **Step 9: Tick spec C4** (its box), run `just check`, commit
+      `refactor(ui): one typography API for headings, text and eyebrows`.
+
+PR body: Summary (Heading `tone`/`wrap`/role sizes, Text `note` and the `inverse-soft` rename, Eyebrow
+`tone`/`dot`/`as`; 8 hand-built eyebrows + the Select label, 3 raw headings, the last 7 raw sizes onto role
+tokens; `raw-text-size` 7 -> 0; the typography group exports one API); _What changes for a visitor_: nothing -
+expected-HTML diff empty; class probe 7 pairs; `compare-computed` 72 page states; the one computed difference,
+stated plainly: the dot of the booker's "Buchung" eyebrow gains `shrink-0` from the component (`flex-shrink` 1 -> 0),
+its box is unchanged; _Deviations from the plan_; _How to check_: `/`, `/faecher`, `/ablauf`, `/preise`,
+`/kontakt`, `/termin` (booker aside and the form after picking a slot), the footer, the skip link (Tab on any page);
+390 and 1280 px, light and dark - every eyebrow, the card and step titles, the "Quelle" line on `/preise` and the
+consent box of the paid booking look as before.
 
 ---
 
-### Task 5: Layout and shell into the package (spec C5)
+### Task 4c: The /faecher heading outline (spec C4, the semantic fix)
 
-**Branch:** `refactor/ui-layout-shell` from `refactor/ui-typography`. **PR title:**
-`refactor(ui): move layout and shell into the package`.
+**Branch:** `fix/faecher-outline` from `refactor/ui-typography`. **PR title:**
+`fix(a11y): let the subject cards on /faecher follow the page heading`.
 
 **Files:**
 
-- Create: `packages/ui/src/layout/{container,section,page-header,split,card-grid}.tsx`,
-  `packages/ui/src/shell/{theme-provider,theme-toggle,logo}.tsx`, `packages/ui/src/shell/fonts.ts` (+ exports,
-  stories)
-- Delete (moved): `apps/marketing/src/components/layout/{container,section,page-header,logo,theme-toggle}.tsx`,
-  `apps/marketing/src/components/theme-provider.tsx`; `layout/section-header.tsx` folds into `page-header`
-- Modify: `packages/ui/package.json` (`next-themes` becomes a dependency), `packages/ui/.storybook/preview.tsx`
-  (brand fonts), `apps/marketing/src/app/layout.tsx`, every importer of the moved parts
-- Modify: `docs/specs/foundation-refactor.md` (C5 boxes)
+- Modify: `apps/marketing/src/components/sections/subject-cards.tsx`, `apps/marketing/src/app/faecher/page.tsx`
+- Modify: `apps/marketing/e2e/a11y.spec.ts`
 
 **Interfaces:**
 
-- Consumes: Tasks 1-4.
-- Produces: `Container({ size })` (named widths, incl. today's `max-w-205/220/230` and `page`), `Section({ spacing })`
-  (incl. `sm`), `PageHeader` (covers `SectionHeader`; spacings and stagger as props), `Split`, `CardGrid`,
-  `ThemeProvider`, `ThemeToggle`, `Logo({ tone, name, tagline, src })`, fonts (`shell/fonts.ts`).
-  `apps/marketing/src/components/layout` keeps only the marketing parts: `navbar.tsx`, `footer.tsx`,
-  `ios-toolbar-tint.tsx` and the footer's `social-links.tsx`.
+- Consumes: `Heading` of Task 4b.
+- Produces: `SubjectCards({ headingAs?: "h2" | "h3" })`, default `h3`.
 
-**Background.** Spec C5, E-06. The package cannot import `@/content/site`, so `Logo` takes the brand as props
-(`name`, `tagline`, image `src`, today `brand.name`, `brand.tagline`, `brand.logo`) and the app passes them from
-`content/site.ts` (e.g. through a small app-side `SiteLogo` wrapper). **Font spike - a decision branch, not an
-improvisation:**
+**Background (measured on the tree after Task 4b).** The outline of every indexable route, read from the rendered
+headings: only `/faecher` skips a level - the page's `h1` is followed directly by the three `h3` subject card titles
+(`SubjectCards`, also on `/` under a section `h2`, where `h3` is right). The spec puts the fix into C4 ("visual size
+unchanged"). The level change is screen-reader behaviour, which E-09 treats as a bug, and `CLAUDE.md` wants every
+bug in its own `fix:` PR - so it is this separate, small PR, and C4's refactor PRs stay free of DOM changes.
+Preflight gives `h2` and `h3` the same computed styles, so nothing moves. A dry run gave: the new test red on
+`/faecher` only, green after; HTML diff exactly the three card titles `<h3` -> `<h2` on `/faecher`; computed styles
+equal with heading levels ignored.
 
-1. Spike first: call `next/font/google` (Bricolage Grotesque, Hanken Grotesk, the same options as
-   `apps/marketing/src/app/layout.tsx` today) from `packages/ui/src/shell/fonts.ts`, build, and compare the
-   `@font-face` rules and the `<html>` font classes against the base build.
-2. **If** they are identical apart from the hashed class names: the package owns the fonts; the app imports them.
-3. **Else** (different `@font-face` output, a build error, or `next/font` refusing to run outside the app): the app
-   keeps its `next/font` call; the package owns only the variable contract (`--font-hanken`, `--font-bricolage`
-   and a typed helper for the `<html>` class list). Report which branch applied and why in the PR - do not look
-   for a third way.
+- [ ] **Step 1: Toolkit and before tree.** Write `<scratch>/toolkit.sh` and the six toolkit scripts
+      (_Verification toolkit_), build the _Before tree_, then:
 
-Identity proof: the HTML snapshot with the font class names masked (they are hashed:
-`bricolage_grotesque_<hash>-module__<hash>__variable`), the built CSS apart from those names, and the computed-style
-comparison.
+```bash
+source <scratch>/toolkit.sh
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+```
 
-_Detailed steps: wave 2, written against the code after C4._
+- [ ] **Step 2: Write the failing test.** In `apps/marketing/e2e/a11y.spec.ts`, after
+      `import { isolate, stubAvailability } from "./helpers";` add
+      `import { indexablePaths } from "../src/lib/routes";`, and append:
+
+```ts
+for (const path of indexablePaths) {
+  test(`the heading outline of ${path} never skips a level`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    const levels = await page
+      .locator("h1, h2, h3, h4, h5, h6")
+      .evaluateAll((headings) =>
+        headings.map((heading) => Number(heading.tagName.slice(1))),
+      );
+    expect(levels[0], "the first heading is the h1").toBe(1);
+    levels.forEach((level, i) => {
+      if (i > 0)
+        expect(
+          level,
+          `heading ${i + 1} of ${levels.length}`,
+        ).toBeLessThanOrEqual(levels[i - 1]! + 1);
+    });
+  });
+}
+```
+
+- [ ] **Step 3: Run it to see it fail.**
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm format && just build
+cd "$WORKTREE/apps/marketing" && pnpm exec playwright test e2e/a11y.spec.ts -g "outline"
+```
+
+Expected: `1 failed`, `10 passed` - `/faecher` with `heading 2 of 21 ... Expected: <= 2 Received: 3`.
+
+- [ ] **Step 4: The fix.** Replace `apps/marketing/src/components/sections/subject-cards.tsx` with:
+
+```tsx
+import Link from "next/link";
+
+import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Tag } from "@skillsite/ui/primitives/tag";
+import { Heading } from "@skillsite/ui/typography/heading";
+import { subjects } from "@/content/subjects";
+import { ArrowRight } from "lucide-react";
+
+type HeadingLevel = "h2" | "h3";
+
+/**
+ * Three subject teaser cards. `headingAs` is the level of the card titles: h3
+ * under a section heading (home), h2 where they follow the page's h1 directly
+ * (/faecher). The look does not change with the level.
+ */
+export function SubjectCards({
+  headingAs = "h3",
+}: {
+  headingAs?: HeadingLevel;
+}) {
+  return (
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {subjects.map((subject, i) => (
+        <Reveal key={subject.key} variant="rise-soft" index={i}>
+          <SubjectCard subject={subject} headingAs={headingAs} />
+        </Reveal>
+      ))}
+    </div>
+  );
+}
+
+function SubjectCard({
+  subject,
+  headingAs,
+}: {
+  subject: (typeof subjects)[number];
+  headingAs: HeadingLevel;
+}) {
+  const Icon = subject.glyph;
+  return (
+    <Link
+      href={subject.href}
+      className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 shadow-card lift [--lift:-0.375rem] hover:border-coral"
+    >
+      <div className="flex items-center justify-between">
+        <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
+          <Icon className="size-6" />
+        </span>
+        {subject.tag ? <Tag>{subject.tag}</Tag> : null}
+      </div>
+      <Heading
+        as={headingAs}
+        size="card-title"
+        wrap="normal"
+        tone="default"
+        className="mt-5"
+      >
+        {subject.name}
+      </Heading>
+      <p className="mt-2 flex-1 text-ink-soft">{subject.claim}</p>
+      <span className="mt-4 text-card-link font-semibold text-ink flex flex-row items-center gap-1">
+        Mehr erfahren <ArrowRight className="size-4" />
+      </span>
+    </Link>
+  );
+}
+```
+
+In `apps/marketing/src/app/faecher/page.tsx`, `<SubjectCards />` becomes `<SubjectCards headingAs="h2" />`.
+
+- [ ] **Step 5: Run it to see it pass.**
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm format && just static-checks && just build
+cd "$WORKTREE/apps/marketing" && pnpm exec playwright test e2e/a11y.spec.ts
+```
+
+Expected: `19 passed`.
+
+- [ ] **Step 6: Prove the visible result unchanged.**
+
+```bash
+source <scratch>/toolkit.sh
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+diff -r "$SCRATCH/html-before" "$SCRATCH/html-after"
+HEADING_LEVELS=ignore node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 '^/$|^/faecher$' | tail -2
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 '^/faecher$' > "$SCRATCH/levels.txt"; echo "exit $?"; grep -m1 " vs " "$SCRATCH/levels.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: the `diff` shows exactly three changed lines, all in `faecher.txt`:
+`<h3 class="font-heading text-card-title font-bold text-ink mt-5">` -> `<h2 class="...same...">`; the first
+`compare-computed` prints `8 page states, 2568 elements, 1488 forced pseudo-states compared.` and
+`No differences.`; the second (without `HEADING_LEVELS`) prints `exit 1` and a line like
+`/faecher @390 light: element 59 is html>…>a:0>h3:1 vs html>…>a:0>h2:1` - the flag hides the tag, and only the
+tag.
+
+- [ ] **Step 7: Commit.** `just check`, commit `fix(a11y): let the subject cards on /faecher follow the page
+heading`.
+
+PR body: Summary (the outline skipped from `h1` to three `h3`s on `/faecher`; `SubjectCards` takes a heading level;
+the test pins the outline of every indexable route); _What changes for a visitor_: nothing visible - screen readers
+now list "Mathematik", "Informatik", "Physik" as level-2 headings on `/faecher` (were level 3); the home page keeps
+`h3`; _Deviations from the plan_; _How to check_: `/faecher` at 390 and 1280 px, light and dark - the three cards
+look as before; with VoiceOver's rotor (headings) the cards are level 2; `/` unchanged.
+
+---
+
+### Task 5a: Container, Section and the page header in the package (spec C5, part 1)
+
+**Branch:** `refactor/ui-layout` from `fix/faecher-outline`. **PR title:**
+`refactor(ui): move container, section and page header into the package`.
+
+**Files:**
+
+- Create: `packages/ui/src/layout/{container,section,page-header}.tsx`, `packages/ui/src/layout/layout.test.tsx`
+- Delete: `packages/ui/src/layout/section-header.tsx`,
+  `apps/marketing/src/components/layout/{container,section,page-header}.tsx`
+- Modify: `packages/ui/package.json` (`exports`), `apps/marketing/src/components/sections/faq-section.tsx`
+- Modify: 17 files under `apps/marketing/src` (imports; `SectionHeader` -> `PageHeader variant="section"`)
+
+**Interfaces:**
+
+- Consumes: Task 4b's typography.
+- Produces:
+  - `Container({ size?: "page" | "faq" })` in `@skillsite/ui/layout/container` - `page` (default):
+    `mx-auto w-full max-w-page px-6`; `faq`: `mx-auto max-w-205 px-6`.
+  - `Section({ surface?, bleed?, spacing?: "default" | "sm", containerClassName?, ...section props })` in
+    `@skillsite/ui/layout/section`.
+  - `PageHeader({ eyebrow?, title, lead?, align?, variant?: "page" | "section", size?, className?, titleClassName?,
+leadClassName?, children? })` in `@skillsite/ui/layout/page-header` - `page`: the `h1` intro in a Container,
+    revealed on mount; `section`: the former `SectionHeader` (`h2`, revealed in view). `SectionHeader` and
+    `@skillsite/ui/layout/section-header` no longer exist.
+
+**Background (measured on the tree after Task 4c).** `Container` (17 importers), `Section` (7) and `PageHeader` (6)
+live in `apps/marketing/src/components/layout`; `SectionHeader` (6 uses in `page.tsx`, `online-lernen`, `ablauf`)
+is in the package. The two headers differ in wrapper (Container with `pt-page-top pb-page-header-bottom` vs `div`
+with `className`), element (`h1` vs `h2`), reveal trigger (mount vs in view), lead gap (`mt-5` vs `mt-4`) and
+centring of the title (`mx-auto` only on the page) - the `variant` carries exactly these, so both render as before
+(the spec's "spacings and stagger as props" are the two variants; no free spacing props). The FAQ column
+(`mx-auto max-w-205 px-6` inside `FaqSection`'s `<section>`) is the one hand-built container whose DOM a Container
+can take over unchanged (`size="faq"` keeps the class string, without `w-full`). The ten
+`<Container className="py-section-sm">` blocks are not wrapped in `<section>`; `Section spacing="sm"` exists for new
+code, but converting them would add an element (D5). A dry run of this task gave: HTML of the 14 URLs and the
+built CSS byte-identical; `compare-computed` no differences; `just check` green.
+
+- [ ] **Step 1: Toolkit and before tree.** Write `<scratch>/toolkit.sh` and the six toolkit scripts
+      (_Verification toolkit_), build the _Before tree_, then:
+
+```bash
+source <scratch>/toolkit.sh
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+```
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/layout/layout.test.tsx`:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+
+import { Container } from "./container";
+import { PageHeader } from "./page-header";
+import { Section } from "./section";
+
+// Reveal's in-view path observes its element; jsdom has no IntersectionObserver.
+beforeEach(() => {
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+test("Container has the page width by default and named narrower sizes", () => {
+  render(
+    <>
+      <Container>Seite</Container>
+      <Container size="faq">FAQ</Container>
+    </>,
+  );
+  expect(screen.getByText("Seite").className).toBe(
+    "mx-auto w-full max-w-page px-6",
+  );
+  expect(screen.getByText("FAQ").className).toBe("mx-auto max-w-205 px-6");
+});
+
+test("Section wraps its content in a Container with the section rhythm", () => {
+  render(
+    <>
+      <Section id="faq" surface>
+        Inhalt
+      </Section>
+      <Section spacing="sm">Kompakt</Section>
+    </>,
+  );
+  const content = screen.getByText("Inhalt");
+  expect(content.className).toBe("mx-auto w-full max-w-page px-6 py-section");
+  expect(content.parentElement?.tagName).toBe("SECTION");
+  expect(content.parentElement?.className).toBe(
+    "border-y border-line bg-surface",
+  );
+  expect(screen.getByText("Kompakt").className).toBe(
+    "mx-auto w-full max-w-page px-6 py-section-sm",
+  );
+});
+
+test("the page variant is the route's h1 intro inside a Container", () => {
+  render(<PageHeader eyebrow="Fächer" title="Titel" lead="Einleitung" />);
+  const heading = screen.getByRole("heading", { level: 1, name: "Titel" });
+  const container = heading.parentElement!.parentElement!;
+  expect(container.className).toBe(
+    "mx-auto w-full max-w-page px-6 pt-page-top pb-page-header-bottom",
+  );
+  expect(screen.getByText("Einleitung").parentElement?.className).toContain(
+    "mt-5",
+  );
+});
+
+test("the section variant is an h2 intro, revealed in view", () => {
+  render(
+    <PageHeader
+      variant="section"
+      eyebrow="Ablauf"
+      title="So läuft es"
+      lead="Kurz erklärt"
+      size="h3"
+      className="mb-6"
+    />,
+  );
+  const heading = screen.getByRole("heading", {
+    level: 2,
+    name: "So läuft es",
+  });
+  expect(heading.className).toContain("text-h3");
+  const wrapper = heading.parentElement!.parentElement!;
+  expect(wrapper.tagName).toBe("DIV");
+  expect(wrapper.className).toBe("mb-6");
+  expect(heading.parentElement?.className).toContain("reveal");
+  expect(screen.getByText("Kurz erklärt").parentElement?.className).toContain(
+    "mt-4",
+  );
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/layout`.
+Expected: FAIL - `Failed to resolve import "./page-header"`.
+
+- [ ] **Step 3: The layout modules.** Create `packages/ui/src/layout/container.tsx`:
+
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+const containerVariants = cva("mx-auto", {
+  variants: {
+    size: {
+      /** The site width (1280px). */
+      page: "w-full max-w-page px-6",
+      /** The FAQ column (820px). */
+      faq: "max-w-205 px-6",
+    },
+  },
+  defaultVariants: { size: "page" },
+});
+
+type ContainerProps = React.ComponentProps<"div"> &
+  VariantProps<typeof containerVariants>;
+
+/** Centred page column with the side gutter. */
+export function Container({ size, className, ...props }: ContainerProps) {
+  return (
+    <div className={cn(containerVariants({ size }), className)} {...props} />
+  );
+}
+```
+
+`packages/ui/src/layout/section.tsx`:
+
+```tsx
+import { cn } from "../utils/cn";
+import { Container } from "./container";
+
+type SectionProps = React.ComponentProps<"section"> & {
+  /** Full-bleed surface background with top/bottom hairlines. */
+  surface?: boolean;
+  /** Skip the inner Container (caller controls width). */
+  bleed?: boolean;
+  /** Vertical rhythm of the inner Container: `default` = py-section, `sm` = py-section-sm. */
+  spacing?: "default" | "sm";
+  containerClassName?: string;
+};
+
+/**
+ * Page section. Wraps content in a centered Container with vertical rhythm.
+ * Use `surface` for the alternating cream/white bands from the design.
+ */
+export function Section({
+  surface,
+  bleed,
+  spacing = "default",
+  id,
+  className,
+  containerClassName,
+  children,
+  ...props
+}: SectionProps) {
+  return (
+    <section
+      id={id}
+      className={cn(surface && "border-y border-line bg-surface", className)}
+      {...props}
+    >
+      {bleed ? (
+        children
+      ) : (
+        <Container
+          className={cn(
+            spacing === "sm" ? "py-section-sm" : "py-section",
+            containerClassName,
+          )}
+        >
+          {children}
+        </Container>
+      )}
+    </section>
+  );
+}
+```
+
+`packages/ui/src/layout/page-header.tsx`:
+
+```tsx
+import { Reveal } from "../motion/reveal";
+import { Eyebrow } from "../typography/eyebrow";
+import { Heading, type HeadingSize } from "../typography/heading";
+import { Lead } from "../typography/lead";
+import { cn } from "../utils/cn";
+import { Container } from "./container";
+
+type PageHeaderProps = {
+  eyebrow?: React.ReactNode;
+  title: React.ReactNode;
+  lead?: React.ReactNode;
+  align?: "left" | "center";
+  /**
+   * `page`: the route's h1 intro, in a Container with the page-top spacing,
+   * revealed on mount (above the fold). `section`: an h2 intro inside a
+   * section, revealed when it scrolls into view, with tighter spacing.
+   */
+  variant?: "page" | "section";
+  /** Type-scale size of the title; `h1` for a page, `h2` for a section by default. */
+  size?: Extract<HeadingSize, "display" | "h1" | "h2" | "h3">;
+  /** Wrapper classes (section variant). */
+  className?: string;
+  titleClassName?: string;
+  leadClassName?: string;
+  /** Buttons / actions rendered below the lead. */
+  children?: React.ReactNode;
+};
+
+/** Eyebrow + heading (+ lead, + actions): the intro of a page or a section. */
+export function PageHeader({
+  eyebrow,
+  title,
+  lead,
+  align = "left",
+  variant = "page",
+  size = variant === "page" ? "h1" : "h2",
+  className,
+  titleClassName,
+  leadClassName,
+  children,
+}: PageHeaderProps) {
+  const page = variant === "page";
+  const centered = align === "center";
+  const trigger = page ? "mount" : "in-view";
+  // Sequential stagger index across whichever elements are present.
+  let step = 0;
+
+  const content = (
+    <>
+      {eyebrow ? (
+        <Reveal
+          trigger={trigger}
+          variant="rise-soft"
+          index={step++}
+          className={cn(centered && "flex justify-center")}
+        >
+          <Eyebrow>{eyebrow}</Eyebrow>
+        </Reveal>
+      ) : null}
+      <Reveal
+        trigger={trigger}
+        variant="rise-soft"
+        index={step++}
+        className={cn(eyebrow && "mt-4")}
+      >
+        <Heading
+          as={page ? "h1" : "h2"}
+          size={size}
+          className={cn(page && centered && "mx-auto", titleClassName)}
+        >
+          {title}
+        </Heading>
+      </Reveal>
+      {lead ? (
+        <Reveal
+          trigger={trigger}
+          variant="rise-soft"
+          index={step++}
+          className={page ? "mt-5" : "mt-4"}
+        >
+          <Lead
+            className={cn(
+              "max-w-measure-34",
+              centered && "mx-auto",
+              leadClassName,
+            )}
+          >
+            {lead}
+          </Lead>
+        </Reveal>
+      ) : null}
+      {children ? (
+        <Reveal
+          trigger={trigger}
+          variant="rise-soft"
+          index={step++}
+          className={cn(
+            "mt-7 flex flex-wrap gap-3.5",
+            centered && "justify-center",
+          )}
+        >
+          {children}
+        </Reveal>
+      ) : null}
+    </>
+  );
+
+  return page ? (
+    <Container
+      className={cn(
+        "pt-page-top pb-page-header-bottom",
+        centered && "text-center",
+      )}
+    >
+      {content}
+    </Container>
+  ) : (
+    <div className={cn(centered && "text-center", className)}>{content}</div>
+  );
+}
+```
+
+Then remove the old section header and export the new modules:
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && git rm -q packages/ui/src/layout/section-header.tsx
+cd "$WORKTREE" && node -e '
+const fs = require("fs"); const p = "packages/ui/package.json";
+const j = JSON.parse(fs.readFileSync(p, "utf8")); const e = {};
+for (const [k, v] of Object.entries(j.exports)) {
+  if (k !== "./layout/section-header") { e[k] = v; continue; }
+  e["./layout/container"] = "./src/layout/container.tsx";
+  e["./layout/page-header"] = "./src/layout/page-header.tsx";
+  e["./layout/section"] = "./src/layout/section.tsx";
+}
+j.exports = e; fs.writeFileSync(p, JSON.stringify(j, null, 2) + "\n");'
+cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
+```
+
+Expected: PASS, 10 files / 64 tests.
+
+- [ ] **Step 4: The app onto them.** Save as `<scratch>/c5a-layout.mjs` and run it:
+
+```js
+// C5a codemod: the app imports Container, Section and PageHeader from the package;
+// SectionHeader becomes PageHeader variant="section"; the FAQ column is a Container.
+// Usage (repo root): node <scratch>/c5a-layout.mjs
+import { globSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+
+const MOVED = {
+  "@/components/layout/container": "@skillsite/ui/layout/container",
+  "@/components/layout/section": "@skillsite/ui/layout/section",
+  "@/components/layout/page-header": "@skillsite/ui/layout/page-header",
+};
+const SECTION_HEADER =
+  'import { SectionHeader } from "@skillsite/ui/layout/section-header";\n';
+const PAGE_HEADER =
+  'import { PageHeader } from "@skillsite/ui/layout/page-header";\n';
+
+let files = 0;
+let sectionHeaders = 0;
+for (const file of globSync("apps/marketing/src/**/*.tsx")) {
+  const before = readFileSync(file, "utf8");
+  let after = before;
+  for (const [from, to] of Object.entries(MOVED))
+    after = after.split(`from "${from}";`).join(`from "${to}";`);
+  if (after.includes(SECTION_HEADER)) {
+    after = after.replace(
+      SECTION_HEADER,
+      after.includes(PAGE_HEADER) ? "" : PAGE_HEADER,
+    );
+    sectionHeaders += after.split("<SectionHeader").length - 1;
+    after = after.split("<SectionHeader").join('<PageHeader variant="section"');
+  }
+  if (after !== before) {
+    writeFileSync(file, after);
+    files++;
+  }
+}
+
+const faq = "apps/marketing/src/components/sections/faq-section.tsx";
+const faqSource = readFileSync(faq, "utf8");
+const faqNext = faqSource
+  .replace(
+    'import { Reveal } from "@skillsite/ui/motion/reveal";\n',
+    'import { Container } from "@skillsite/ui/layout/container";\nimport { Reveal } from "@skillsite/ui/motion/reveal";\n',
+  )
+  .replace(
+    '<div className="mx-auto max-w-205 px-6 py-section">',
+    '<Container size="faq" className="py-section">',
+  )
+  .replace(
+    "      </div>\n    </section>",
+    "      </Container>\n    </section>",
+  );
+if (faqNext.split("Container").length !== 4) {
+  console.error(`${faq}: expected markers not found`);
+  process.exit(1);
+}
+writeFileSync(faq, faqNext);
+
+for (const moved of ["container", "section", "page-header"])
+  rmSync(`apps/marketing/src/components/layout/${moved}.tsx`);
+console.log(
+  `${files} files rewritten, ${sectionHeaders} SectionHeader -> PageHeader variant="section", FAQ on Container size="faq"`,
+);
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/c5a-layout.mjs" && pnpm format && just static-checks
+grep -rn 'components/layout/\(container\|section\|page-header\)\|SectionHeader' "$WORKTREE/apps/marketing/src" "$WORKTREE/packages/ui/src"
+```
+
+Expected: `17 files rewritten, 6 SectionHeader -> PageHeader variant="section", FAQ on Container size="faq"`;
+static checks green; the `grep` prints nothing.
+
+- [ ] **Step 5: Prove the result identical** (the `compare-computed` line needs a 600000 ms timeout or a
+      background run).
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+diff -r "$SCRATCH/html-before" "$SCRATCH/html-after" && echo IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` (HTML of the 14 URLs and the built CSS); `72 page states, 20374 elements, 14768 forced
+pseudo-states compared.` and `No differences.`
+
+- [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): move container, section and page header into the
+package`.
+
+PR body: Summary (Container with named sizes, Section with a spacing variant, one PageHeader with a `page` and a
+`section` variant replacing `SectionHeader`; 17 app files, the FAQ column on `Container size="faq"`); _What
+changes for a visitor_: nothing - HTML and CSS byte-identical, `compare-computed` 72 page states; _Deviations from
+the plan_; _How to check_: `/`, `/faecher`, `/ablauf`, `/online-lernen` (page and section intros, FAQ column),
+`/preise`; 390 and 1280 px, light and dark.
+
+---
+
+### Task 5b: Split and CardGrid (spec C5, part 2)
+
+**Branch:** `refactor/ui-grids` from `refactor/ui-layout`. **PR title:**
+`refactor(ui): add the Split and CardGrid layouts`.
+
+**Files:**
+
+- Create: `packages/ui/src/layout/{split,card-grid}.tsx`, `packages/ui/src/layout/grids.test.tsx`
+- Modify: `packages/ui/package.json` (`exports`)
+- Modify: `apps/marketing/src/app/{page,kontakt/page,online-lernen/page,faecher/page,ablauf/page,ueber-mich/page,preise/page}.tsx`,
+  `components/sections/{subject-cards,benefit-grid,step-grid}.tsx`
+
+**Interfaces:**
+
+- Consumes: Task 5a's layout group.
+- Produces: `Split({ align?: "center" | "start" | "stretch", gap?: "split" | "split-hero" | "split-about" | "5",
+ratio?: "1/1" | "1.15/0.85" | "1.05/0.95" | "0.9/1.1" | "1.25/1" })` (defaults center / split / 1/1) and
+  `CardGrid({ gap?: "5" | "4", columns?: "sm-3" | "sm-2" | "sm-2-lg-3" | "md-2" })` (defaults 5 / sm-3), in
+  `@skillsite/ui/layout/split` and `@skillsite/ui/layout/card-grid`. Both render a `div` with
+  `grid` + the variants in that order + `className`.
+
+**Background (measured on the tree after Task 5a).** Seven page-level two-column grids (`page.tsx` hero,
+`kontakt`, `online-lernen`, `faecher`, `ablauf`, `ueber-mich` 2x) use 5 column ratios, 4 gaps and 3 alignments;
+nine card grids use 4 column patterns and 2 gaps (`preise` 2, `online-lernen` 2, `faecher` 1, `ueber-mich` 1,
+`subject-cards`, `benefit-grid`, `step-grid`). The variants are the measured values 1:1, named by value; every
+class already exists, so the built CSS does not change. Not converted (they are not page layouts or card grids):
+the booker's container-query grids, the footer columns, the booking form's field rows and radio group, the
+`/online-lernen` card stack (`grid gap-5`, no columns), the pricing card's inner `md:grid-cols-2`. A dry run gave:
+HTML and CSS byte-identical; `compare-computed` no differences.
+
+- [ ] **Step 1: Toolkit and before tree.** Write `<scratch>/toolkit.sh` and the six toolkit scripts
+      (_Verification toolkit_), build the _Before tree_, then:
+
+```bash
+source <scratch>/toolkit.sh
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+```
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/layout/grids.test.tsx`:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, test } from "vitest";
+
+import { CardGrid } from "./card-grid";
+import { Split } from "./split";
+
+afterEach(cleanup);
+
+test("Split is a two-column grid: align, gap, then the column ratio", () => {
+  render(
+    <>
+      <Split>Standard</Split>
+      <Split align="stretch" gap="5" ratio="1.25/1">
+        Kontakt
+      </Split>
+    </>,
+  );
+  expect(screen.getByText("Standard").className).toBe(
+    "grid items-center gap-split lg:grid-cols-2",
+  );
+  expect(screen.getByText("Kontakt").className).toBe(
+    "grid items-stretch gap-5 lg:grid-cols-[1.25fr_1fr]",
+  );
+});
+
+test("CardGrid is a card grid: gap, then the columns per breakpoint", () => {
+  render(
+    <>
+      <CardGrid>Drei</CardGrid>
+      <CardGrid gap="4" columns="sm-2">
+        Zwei
+      </CardGrid>
+      <CardGrid columns="sm-2-lg-3" className="gap-6">
+        Mehr
+      </CardGrid>
+    </>,
+  );
+  expect(screen.getByText("Drei").className).toBe("grid gap-5 sm:grid-cols-3");
+  expect(screen.getByText("Zwei").className).toBe("grid gap-4 sm:grid-cols-2");
+  expect(screen.getByText("Mehr").className).toBe(
+    "grid sm:grid-cols-2 lg:grid-cols-3 gap-6",
+  );
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/layout`.
+Expected: FAIL - `Failed to resolve import "./card-grid"`.
+
+- [ ] **Step 3: The components.** Create `packages/ui/src/layout/split.tsx`:
+
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+const splitVariants = cva("grid", {
+  variants: {
+    align: {
+      center: "items-center",
+      start: "items-start",
+      stretch: "items-stretch",
+    },
+    gap: {
+      split: "gap-split",
+      "split-hero": "gap-split-hero",
+      "split-about": "gap-split-about",
+      "5": "gap-5",
+    },
+    /** Column widths from `lg` on; one column below. */
+    ratio: {
+      "1/1": "lg:grid-cols-2",
+      "1.15/0.85": "lg:grid-cols-[1.15fr_0.85fr]",
+      "1.05/0.95": "lg:grid-cols-[1.05fr_0.95fr]",
+      "0.9/1.1": "lg:grid-cols-[0.9fr_1.1fr]",
+      "1.25/1": "lg:grid-cols-[1.25fr_1fr]",
+    },
+  },
+  defaultVariants: { align: "center", gap: "split", ratio: "1/1" },
+});
+
+type SplitProps = React.ComponentProps<"div"> &
+  VariantProps<typeof splitVariants>;
+
+/** Two-column page layout (text beside media or a panel), stacked below `lg`. */
+export function Split({ align, gap, ratio, className, ...props }: SplitProps) {
+  return (
+    <div
+      className={cn(splitVariants({ align, gap, ratio }), className)}
+      {...props}
+    />
+  );
+}
+```
+
+and `packages/ui/src/layout/card-grid.tsx`:
+
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+const cardGridVariants = cva("grid", {
+  variants: {
+    gap: {
+      "5": "gap-5",
+      "4": "gap-4",
+    },
+    /** Columns per breakpoint; one column below the first. */
+    columns: {
+      "sm-3": "sm:grid-cols-3",
+      "sm-2": "sm:grid-cols-2",
+      "sm-2-lg-3": "sm:grid-cols-2 lg:grid-cols-3",
+      "md-2": "md:grid-cols-2",
+    },
+  },
+  defaultVariants: { gap: "5", columns: "sm-3" },
+});
+
+type CardGridProps = React.ComponentProps<"div"> &
+  VariantProps<typeof cardGridVariants>;
+
+/** Grid of equal cards. */
+export function CardGrid({ gap, columns, className, ...props }: CardGridProps) {
+  return (
+    <div
+      className={cn(cardGridVariants({ gap, columns }), className)}
+      {...props}
+    />
+  );
+}
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node -e '
+const fs = require("fs"); const p = "packages/ui/package.json";
+const j = JSON.parse(fs.readFileSync(p, "utf8")); const e = {};
+for (const [k, v] of Object.entries(j.exports)) {
+  e[k] = v;
+  if (k === "./layout/container") e["./layout/card-grid"] = "./src/layout/card-grid.tsx";
+  if (k === "./layout/section") e["./layout/split"] = "./src/layout/split.tsx";
+}
+j.exports = e; fs.writeFileSync(p, JSON.stringify(j, null, 2) + "\n");'
+cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
+```
+
+Expected: PASS, 11 files / 66 tests.
+
+- [ ] **Step 4: The grids onto them.** Save as `<scratch>/c5b-grids.mjs` and run it:
+
+```js
+// C5b codemod: the page-level two-column grids become Split, the card grids CardGrid.
+// Each entry: [file, the exact opening tag, the new opening tag]. The matching
+// closing </div> is found by depth; every opening tag must occur exactly once.
+// Usage (repo root): node <scratch>/c5b-grids.mjs
+import { readFileSync, writeFileSync } from "node:fs";
+
+const A = "apps/marketing/src/";
+// prettier-ignore
+const ELEMENTS = [
+  [A + "app/page.tsx", '<div className="grid items-center gap-split-hero lg:grid-cols-[1.15fr_0.85fr]">', '<Split gap="split-hero" ratio="1.15/0.85">'],
+  [A + "app/kontakt/page.tsx", '<div className="grid items-stretch gap-5 lg:grid-cols-[1.25fr_1fr]">', '<Split align="stretch" gap="5" ratio="1.25/1">'],
+  [A + "app/online-lernen/page.tsx", '<div className="grid items-start gap-split lg:grid-cols-[0.9fr_1.1fr]">', '<Split align="start" ratio="0.9/1.1">'],
+  [A + "app/faecher/page.tsx", '<div className="grid items-start gap-split lg:grid-cols-[0.9fr_1.1fr]">', '<Split align="start" ratio="0.9/1.1">'],
+  [A + "app/ablauf/page.tsx", '<div className="grid items-center gap-split lg:grid-cols-2">', "<Split>"],
+  [A + "app/ueber-mich/page.tsx", '<div className="grid items-center gap-split-about lg:grid-cols-2">', '<Split gap="split-about">'],
+  [A + "app/ueber-mich/page.tsx", '<div className="grid items-center gap-split lg:grid-cols-[1.05fr_0.95fr]">', '<Split ratio="1.05/0.95">'],
+  [A + "app/preise/page.tsx", '<div className="grid gap-5 md:grid-cols-2">', '<CardGrid columns="md-2">'],
+  [A + "app/preise/page.tsx", '<div className="grid gap-5 sm:grid-cols-3">', "<CardGrid>"],
+  [A + "app/online-lernen/page.tsx", '<div className="grid gap-5 sm:grid-cols-3">', "<CardGrid>"],
+  [A + "app/online-lernen/page.tsx", '<div className="grid gap-5 md:grid-cols-2">', '<CardGrid columns="md-2">'],
+  [A + "app/faecher/page.tsx", '<div className="grid gap-4 sm:grid-cols-2">', '<CardGrid gap="4" columns="sm-2">'],
+  [A + "app/ueber-mich/page.tsx", '<div className="grid gap-5 sm:grid-cols-3">', "<CardGrid>"],
+  [A + "components/sections/subject-cards.tsx", '<div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">', '<CardGrid columns="sm-2-lg-3">'],
+  [A + "components/sections/benefit-grid.tsx", '<div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">', '<CardGrid columns="sm-2-lg-3">'],
+  [A + "components/sections/step-grid.tsx", '<div className={cn("grid gap-5 sm:grid-cols-3", className)}>', "<CardGrid className={className}>"],
+];
+const IMPORTS = {
+  Split: 'import { Split } from "@skillsite/ui/layout/split";\n',
+  CardGrid: 'import { CardGrid } from "@skillsite/ui/layout/card-grid";\n',
+};
+
+/** Replace one element's opening tag and its matching </div>. */
+function replaceElement(source, open, newOpen, name, file) {
+  const start = source.indexOf(open);
+  if (start < 0 || source.indexOf(open, start + 1) >= 0)
+    throw new Error(`${file}: opening tag not found exactly once: ${open}`);
+  const tags = /<div\b[^>]*?(\/)?>|<\/div>/g;
+  tags.lastIndex = start + open.length;
+  let depth = 1;
+  for (let match; (match = tags.exec(source));) {
+    if (match[0] === "</div>") depth--;
+    else if (!match[1]) depth++;
+    if (depth === 0)
+      return (
+        source.slice(0, start) +
+        newOpen +
+        source.slice(start + open.length, match.index) +
+        `</${name}>` +
+        source.slice(match.index + "</div>".length)
+      );
+  }
+  throw new Error(`${file}: no closing tag for ${open}`);
+}
+
+const files = new Map();
+for (const [file, open, newOpen] of ELEMENTS) {
+  const name = newOpen.startsWith("<Split") ? "Split" : "CardGrid";
+  let source = files.get(file) ?? readFileSync(file, "utf8");
+  source = replaceElement(source, open, newOpen, name, file);
+  if (!source.includes(IMPORTS[name])) {
+    // After the last @skillsite/ui import.
+    const imports = [
+      ...source.matchAll(/^import [^;]+ from "@skillsite\/ui\/[^"]+";\n/gm),
+    ];
+    const last = imports.at(-1);
+    const at = last.index + last[0].length;
+    source = source.slice(0, at) + IMPORTS[name] + source.slice(at);
+  }
+  files.set(file, source);
+}
+for (const [file, source] of files) writeFileSync(file, source);
+console.log(`${ELEMENTS.length} grids in ${files.size} files`);
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/c5b-grids.mjs" && pnpm format && just static-checks
+```
+
+Expected: `16 grids in 10 files`; green.
+
+- [ ] **Step 5: Prove the result identical** (the `compare-computed` line needs a 600000 ms timeout or a
+      background run).
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+diff -r "$SCRATCH/html-before" "$SCRATCH/html-after" && echo IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` (HTML of the 14 URLs and the built CSS); `72 page states, 20374 elements, 14768 forced
+pseudo-states compared.` and `No differences.`
+
+- [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): add the Split and CardGrid layouts`.
+
+PR body: Summary (Split and CardGrid with the measured variants; 7 splits and 9 card grids converted; what was
+left out and why); _What changes for a visitor_: nothing - HTML and CSS byte-identical, `compare-computed` 72 page
+states; _Deviations from the plan_; _How to check_: `/`, `/kontakt`, `/online-lernen`, `/faecher`, `/ablauf`,
+`/ueber-mich`, `/preise` at 390, 1024 and 1280 px (the split switches at `lg`), light and dark.
+
+---
+
+### Task 5c: Theme, logo and fonts in the package (spec C5, part 3)
+
+**Branch:** `refactor/ui-shell` from `refactor/ui-grids`. **PR title:**
+`refactor(ui): move theme, logo and fonts into the package`.
+
+**Files:**
+
+- Create: `packages/ui/src/shell/fonts.ts`, `packages/ui/src/shell/shell.test.tsx`
+- Move: `apps/marketing/src/components/theme-provider.tsx` -> `packages/ui/src/shell/theme-provider.tsx`,
+  `apps/marketing/src/components/layout/theme-toggle.tsx` -> `packages/ui/src/shell/theme-toggle.tsx`,
+  `apps/marketing/src/components/layout/logo.tsx` -> `packages/ui/src/shell/logo.tsx` (brand props)
+- Delete: `apps/marketing/src/components/layout/social-links.tsx` (folded into `footer.tsx`)
+- Modify: `packages/ui/package.json` (`exports`, `next-themes`), `apps/marketing/package.json`, `pnpm-lock.yaml`
+- Modify: `packages/ui/.storybook/preview.tsx` (brand fonts)
+- Modify: `apps/marketing/src/app/layout.tsx`, `components/layout/{navbar,footer}.tsx`
+- Modify: `design-ratchet.json`, `docs/specs/foundation-refactor.md` (C5 boxes)
+
+**Interfaces:**
+
+- Consumes: Tasks 5a and 5b.
+- Produces: `@skillsite/ui/shell/fonts` (`fontVariables`: the two next/font variable classes, for `<html>`),
+  `@skillsite/ui/shell/theme-provider` (`ThemeProvider`), `@skillsite/ui/shell/theme-toggle` (`ThemeToggle`),
+  `@skillsite/ui/shell/logo` (`Logo({ name, tagline, src, showText?, tone?, className?, textClassName? })`). The
+  package depends on `next-themes`; the app no longer does. `apps/marketing/src/components/layout` holds
+  `navbar.tsx`, `footer.tsx`, `ios-toolbar-tint.tsx` only.
+
+**Background - the font spike (run while planning, on 943fb6e).** The spec asks first whether `next/font` can be
+called from the workspace package with identical `@font-face` and class output. It can: with the two
+`next/font/google` calls in `packages/ui/src/shell/fonts.ts` (the package is in `transpilePackages`), the build
+emits the same `@font-face` rules and the same `.…__variable`/`.…__className` rules; the class names differ only in
+their hash (`bricolage_grotesque_1b97ba4b-module__NjNj1a__variable` -> `bricolage_grotesque_<other hash>-…`). One
+trap: imported after `./globals.css`, the font rules moved from the top to the end of the CSS chunk; imported
+before it, the chunk is byte-identical apart from the hashes. Storybook (`@storybook/nextjs-vite`) runs the same
+module and then renders Bricolage Grotesque and Hanken Grotesk (loaded from Google's font CDN in the workbench;
+before: no brand font loaded, system fallback). **Decision: the "yes" branch - the package owns the fonts.** The
+"no" branch (the app keeps `next/font`, the package owns only the variable contract) is not needed. `Logo` moves
+with brand props because the package cannot import `@/content/site`; navbar and footer pass `brand.name`,
+`brand.tagline`, `brand.logo`. `social-links.tsx` is footer-only markup; it moves into `footer.tsx`, so the
+layout folder keeps only navbar, footer and the iOS tint (spec C5). A dry run of this task gave: HTML and CSS
+identical apart from the hashed font class names (13 `<html class>` lines and 2 CSS lines, nothing else);
+`compare-computed` no differences; `raw-button` 13 -> 12 (the toggle's buttons now count as package code);
+`just check` green (59 smoke tests).
+
+- [ ] **Step 1: Toolkit and before tree.** Write `<scratch>/toolkit.sh` and the six toolkit scripts
+      (_Verification toolkit_), build the _Before tree_, then:
+
+```bash
+source <scratch>/toolkit.sh
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+```
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/shell/shell.test.tsx`:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+
+import { Logo } from "./logo";
+import { ThemeProvider } from "./theme-provider";
+import { ThemeToggle } from "./theme-toggle";
+
+// next-themes reads the system preference; jsdom has no matchMedia.
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+  }));
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+const brand = {
+  name: "Nachhilfe Leon Weimann",
+  tagline: "Verstehen statt auswendig lernen.",
+  src: "/logo-icon.png",
+};
+
+test("Logo renders the brand it is given, in its tone", () => {
+  render(<Logo {...brand} tone="inverse" />);
+  expect(screen.getByRole("img", { name: brand.name })).toBeTruthy();
+  expect(screen.getByText(brand.name).className).toContain("text-white");
+  expect(screen.getByText(brand.tagline).className).toContain(
+    "text-on-navy-soft",
+  );
+});
+
+test("Logo without text is the mark only", () => {
+  render(<Logo {...brand} showText={false} />);
+  expect(screen.queryByText(brand.tagline)).toBeNull();
+});
+
+test("ThemeToggle offers the light and dark override inside the provider", () => {
+  render(
+    <ThemeProvider>
+      <ThemeToggle />
+    </ThemeProvider>,
+  );
+  const group = screen.getByRole("group", { name: "Farbschema wählen" });
+  expect(group.querySelectorAll("button")).toHaveLength(2);
+  expect(screen.getByRole("button", { name: "Hell" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Dunkel" })).toBeTruthy();
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/shell`.
+Expected: FAIL - `Failed to resolve import "./logo"`.
+
+- [ ] **Step 3: Move the shell parts, the dependency and the exports.**
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && mkdir -p packages/ui/src/shell
+git mv apps/marketing/src/components/theme-provider.tsx packages/ui/src/shell/theme-provider.tsx
+git mv apps/marketing/src/components/layout/theme-toggle.tsx packages/ui/src/shell/theme-toggle.tsx
+git mv apps/marketing/src/components/layout/logo.tsx packages/ui/src/shell/logo.tsx
+perl -pi -e 's#from "\@skillsite/ui/utils/cn"#from "../utils/cn"#; s#from "\@skillsite/ui/hooks/use-hydrated"#from "../hooks/use-hydrated"#' packages/ui/src/shell/theme-toggle.tsx
+pnpm add --filter @skillsite/ui next-themes@^0.4.6
+pnpm remove --filter @skillsite/marketing next-themes
+pnpm install --frozen-lockfile
+node -e '
+const fs = require("fs"); const p = "packages/ui/package.json";
+const j = JSON.parse(fs.readFileSync(p, "utf8")); const e = {};
+for (const [k, v] of Object.entries(j.exports)) {
+  if (k === "./tokens/colors") {
+    e["./shell/fonts"] = "./src/shell/fonts.ts";
+    e["./shell/logo"] = "./src/shell/logo.tsx";
+    e["./shell/theme-provider"] = "./src/shell/theme-provider.tsx";
+    e["./shell/theme-toggle"] = "./src/shell/theme-toggle.tsx";
+  }
+  e[k] = v;
+}
+j.exports = e; fs.writeFileSync(p, JSON.stringify(j, null, 2) + "\n");'
+```
+
+Expected: `next-themes` moves from `apps/marketing/package.json` to the `dependencies` of `packages/ui/package.json`
+(the lockfile changes only the importer of the same `next-themes@0.4.6` entry).
+
+- [ ] **Step 4: Logo with brand props and the fonts module.** Replace `packages/ui/src/shell/logo.tsx` with:
+
+```tsx
+import Image from "next/image";
+
+import { cn } from "../utils/cn";
+
+type LogoProps = {
+  /** Brand name: the image's alt text and the first text line. */
+  name: string;
+  /** Second text line. */
+  tagline: string;
+  /** Logo image (a path under the app's `public/`). */
+  src: string;
+  showText?: boolean;
+  /** `inverse` on navy surfaces (footer). */
+  tone?: "default" | "inverse";
+  className?: string;
+  textClassName?: string;
+};
+
+/** Logo mark plus name and tagline; the app passes its brand. */
+export function Logo({
+  name,
+  tagline,
+  src,
+  showText = true,
+  tone = "default",
+  className,
+  textClassName,
+}: LogoProps) {
+  return (
+    <span className={cn("flex items-center gap-3", className)}>
+      <Image
+        src={src}
+        alt={name}
+        width={42}
+        height={41}
+        priority
+        className="rounded-xl shadow-logo"
+      />
+      {showText ? (
+        <span className={cn("flex flex-col leading-[1.08]", textClassName)}>
+          <span
+            className={cn(
+              "font-heading text-logo font-bold tracking-[-0.01em]",
+              tone === "inverse" ? "text-white" : "text-ink",
+            )}
+          >
+            {name}
+          </span>
+          <span
+            className={cn(
+              "whitespace-nowrap text-logo-tagline tracking-[0.03em]",
+              tone === "inverse" ? "text-on-navy-soft" : "text-ink-soft",
+            )}
+          >
+            {tagline}
+          </span>
+        </span>
+      ) : null}
+    </span>
+  );
+}
+```
+
+Create `packages/ui/src/shell/fonts.ts` (the same two calls as `apps/marketing/src/app/layout.tsx` today):
+
+```ts
+import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
+
+/*
+ * The brand fonts. next/font/google downloads them at build time and emits the
+ * @font-face rules. The classes set the variables the theme reads
+ * (`--font-bricolage`, `--font-hanken`; styles/tokens.css): put `fontVariables`
+ * on <html>. An app imports this module before its global stylesheet, so the
+ * @font-face rules keep their place at the top of the built CSS.
+ */
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-bricolage",
+  display: "swap",
+});
+
+const hanken = Hanken_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-hanken",
+  display: "swap",
+});
+
+/** Class names that define the font variables, for <html>. */
+export const fontVariables = `${bricolage.variable} ${hanken.variable}`;
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run`.
+Expected: PASS, 12 files / 69 tests (the fonts module has no unit test - next/font only runs in the Next and
+Storybook builds; Step 7 proves it).
+
+- [ ] **Step 5: The app onto the package shell.** Save as `<scratch>/c5c-shell.mjs` and run it:
+
+```js
+// C5c codemod: the app takes ThemeProvider, ThemeToggle, Logo and the fonts from the
+// package; the footer's social links move into footer.tsx. Every `from` must occur
+// exactly as often as its count, or nothing is written.
+// Usage (repo root, after the git mv of Step 4): node <scratch>/c5c-shell.mjs
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
+
+const A = "apps/marketing/src/";
+const LAYOUT = A + "app/layout.tsx";
+const NAVBAR = A + "components/layout/navbar.tsx";
+const FOOTER = A + "components/layout/footer.tsx";
+const SOCIAL = A + "components/layout/social-links.tsx";
+const LOGO_PROPS = "name={brand.name} tagline={brand.tagline} src={brand.logo}";
+
+const social = readFileSync(SOCIAL, "utf8");
+const socialBody = social.slice(social.indexOf("type IconType"));
+
+// prettier-ignore
+const REPLACEMENTS = [
+  [LAYOUT, 'import type { Metadata, Viewport } from "next";\nimport { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";\n\nimport "./globals.css";\nimport { cn } from "@skillsite/ui/utils/cn";\n', 'import type { Metadata, Viewport } from "next";\n\n// The fonts come first: their @font-face rules stay ahead of globals.css in the built CSS.\nimport { fontVariables } from "@skillsite/ui/shell/fonts";\n\nimport "./globals.css";\n', 1],
+  [LAYOUT, 'import { ThemeProvider } from "@/components/theme-provider";\n', 'import { ThemeProvider } from "@skillsite/ui/shell/theme-provider";\n', 1],
+  [LAYOUT, 'const bricolage = Bricolage_Grotesque({\n  subsets: ["latin"],\n  variable: "--font-bricolage",\n  display: "swap",\n});\n\nconst hanken = Hanken_Grotesk({\n  subsets: ["latin"],\n  variable: "--font-hanken",\n  display: "swap",\n});\n\n', "", 1],
+  [LAYOUT, "className={cn(bricolage.variable, hanken.variable)}", "className={fontVariables}", 1],
+  [NAVBAR, 'import { Logo } from "@/components/layout/logo";\n', 'import { Logo } from "@skillsite/ui/shell/logo";\n', 1],
+  [NAVBAR, 'import { primaryCta, primaryNav, platformNav } from "@/content/site";', 'import { brand, primaryCta, primaryNav, platformNav } from "@/content/site";', 1],
+  [NAVBAR, "<Logo />", `<Logo ${LOGO_PROPS} />`, 1],
+  [FOOTER, 'import Link from "next/link";\n', 'import Link from "next/link";\nimport {\n  SiDiscord,\n  SiGithub,\n  SiInstagram,\n  SiTiktok,\n  SiWhatsapp,\n  SiYoutube,\n} from "@icons-pack/react-simple-icons";\n', 1],
+  [FOOTER, 'import { Logo } from "@/components/layout/logo";\nimport { SocialLinks } from "@/components/layout/social-links";\nimport { ThemeToggle } from "@/components/layout/theme-toggle";\nimport { primaryNav, platformNav } from "@/content/site";\n', 'import { Logo } from "@skillsite/ui/shell/logo";\nimport { ThemeToggle } from "@skillsite/ui/shell/theme-toggle";\nimport { cn } from "@skillsite/ui/utils/cn";\nimport { brand, primaryNav, platformNav } from "@/content/site";\nimport { socials, type SocialKey } from "@/content/socials";\n', 1],
+  [FOOTER, '<Logo tone="inverse" />', `<Logo ${LOGO_PROPS} tone="inverse" />`, 1],
+  [FOOTER, "\nexport function Footer() {", `\n${socialBody.trimEnd()}\n\nexport function Footer() {`, 1],
+];
+
+const files = new Map();
+const errors = [];
+for (const [file, from, to, expected] of REPLACEMENTS) {
+  const source = files.get(file) ?? readFileSync(file, "utf8");
+  const count = source.split(from).length - 1;
+  if (count !== expected)
+    errors.push(
+      `${file}: "${from.slice(0, 60)}" found ${count}x, expected ${expected}x`,
+    );
+  files.set(file, source.split(from).join(to));
+}
+if (errors.length) {
+  console.error(errors.join("\n"));
+  process.exit(1);
+}
+for (const [file, source] of files) writeFileSync(file, source);
+rmSync(SOCIAL);
+console.log(
+  `${files.size} files rewritten, social-links.tsx folded into footer.tsx`,
+);
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/c5c-shell.mjs" && pnpm format
+ls "$WORKTREE/apps/marketing/src/components/layout" "$WORKTREE/apps/marketing/src/components"
+```
+
+Expected: `3 files rewritten, social-links.tsx folded into footer.tsx`; the layout folder lists `footer.tsx`,
+`ios-toolbar-tint.tsx`, `navbar.tsx`; `components/` has no `theme-provider.tsx`. The first import of
+`app/layout.tsx` is now the fonts module (with its comment) - keep it above `import "./globals.css"`.
+
+- [ ] **Step 6: Storybook loads the brand fonts.** Replace `packages/ui/.storybook/preview.tsx` with (new: the
+      fonts import, the comment, and the class list on `<html>`):
+
+```tsx
+import React from "react";
+
+import type { Preview } from "@storybook/nextjs-vite";
+
+import "./preview.css";
+
+import { fontVariables } from "../src/shell/fonts";
+
+/* The brand fonts: the same next/font module as the apps, so the workbench
+   renders Bricolage Grotesque and Hanken Grotesk, not the system fallback. */
+const preview: Preview = {
+  globalTypes: {
+    theme: {
+      description: "Colour scheme",
+      toolbar: {
+        title: "Theme",
+        icon: "mirror",
+        items: ["light", "dark"],
+        dynamicTitle: true,
+      },
+    },
+  },
+  initialGlobals: {
+    theme: "light",
+  },
+  decorators: [
+    (Story, context) => {
+      const theme = context.globals.theme === "dark" ? "dark" : "light";
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.classList.add(...fontVariables.split(" "));
+      return <Story />;
+    },
+  ],
+};
+
+export default preview;
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm format && just ratchet-update && just static-checks
+cd "$WORKTREE" && pnpm --filter @skillsite/ui build-storybook --output-dir "$SCRATCH/storybook"
+```
+
+Expected: `lowered raw-button: 13 -> 12`; green; Storybook builds.
+
+- [ ] **Step 7: Prove the result identical apart from the font hashes** (the `compare-computed` line needs a
+      600000 ms timeout or a background run).
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+diff -r "$SCRATCH/html-before" "$SCRATCH/html-after" | grep '^[<>]' | grep -vc 'grotesque_\|grotesk_'
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL-EXCEPT-FONT-HASHES
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `0` (every raw difference carries a hashed font class name - the `<html class>` of 13 pages and 2 CSS
+lines); `IDENTICAL-EXCEPT-FONT-HASHES` (the normaliser masks the font hashes; HTML and `_styles.css`, in their
+order); `72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` Then open the
+Storybook build (`python3 -m http.server 6107 --directory "$SCRATCH/storybook"`, story
+`primitives-typography--type-scale`) in Chromium: `document.fonts` lists `Bricolage Grotesque` and
+`Hanken Grotesk` as loaded.
+
+- [ ] **Step 8: Tick spec C5** (both boxes), run `just check`, commit
+      `refactor(ui): move theme, logo and fonts into the package`.
+
+PR body: Summary (the font spike's result and decision; `fonts`, `ThemeProvider`, `ThemeToggle`, `Logo` with brand
+props in `@skillsite/ui/shell`; `next-themes` a package dependency; social links folded into the footer; Storybook
+renders the brand fonts); _What changes for a visitor_: nothing - HTML and CSS identical apart from the hashed font
+class names, `compare-computed` 72 page states; _Deviations from the plan_; _How to check_: any two pages at 390
+and 1280 px, light and dark (headings in Bricolage, text in Hanken, as before); the footer: logo, social icons,
+theme toggle (switch light/dark/system); the navbar logo; `pnpm storybook` - the stories now use the brand fonts
+(the workbench fetches them from Google's font CDN).
 
 ---
 
 ### Task 6: Primitives from the duplicates (spec C6)
 
 **Branch / PR:** one per primitive group, `refactor/ui-<group>` / `refactor(ui): <primitive> from the duplicates`,
-stacked in this order unless wave 3 finds a dependency: 6a `Card` (tones, inset/subtle/doc/frame, `asChild`,
+stacked on `refactor/ui-shell` (via the wave-3 docs PR) in this order unless wave 3 finds a dependency: 6a `Card` (tones, inset/subtle/doc/frame, `asChild`,
 `Reveal as={Card}`), 6b `IconButton` and `IconBadge` (size/shape/tone), 6c `Pill` (or `Tag` sizes), `CheckList`,
 `InfoRow`, 6d `CenteredState` and `StatusPage` (the three status pages), 6e `Collapsible` and `AnimatedHeight`,
 6f `TextLink`/`ArrowLink`/`NavLink` on `next/link` with one external-link rule (`rel`, `target`), 6g `Field`
