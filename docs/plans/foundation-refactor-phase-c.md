@@ -3,11 +3,12 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for
 > tracking. **Each task is one slice = one branch = one PR.** Phase B is not merged yet: the slices form one
-> linear stack on top of it (see _Execution order_). **This plan is written in waves.** Wave 1 fixed the
-> skeleton of all of phase C and detailed C1-C3 (Tasks 1-3, implemented). Wave 2 (this version) details C4 and C5,
-> split into the PR-sized Tasks 4a-4c and 5a-5c, written against the code after C3 (943fb6e) and dry-run end to
-> end. Wave 3 splits C6 into PR-sized tasks and details C7. A task that still reads "_Detailed steps: wave 3_" is
-> not ready to implement.
+> linear stack on top of it (see _Execution order_); the C7 spike is the one branch beside the stack. **This plan
+> is written in waves.** Wave 1 fixed the skeleton of all of phase C and detailed C1-C3 (Tasks 1-3, implemented).
+> Wave 2 details C4 and C5, split into the PR-sized Tasks 4a-4c and 5a-5c, written against the code after C3
+> (943fb6e) and dry-run end to end. Wave 3 details C7 (Task 7, this version: its own docs PR, written against
+> 943fb6e and dry-run end to end, so the spike runs in parallel to C4-C6) and splits C6 into PR-sized tasks (a
+> later docs PR). A task that still reads "_Detailed steps: wave 3_" is not ready to implement.
 >
 > **Paths.** Commands use two placeholders the controller fills in each dispatch: `<worktree>` is the absolute path
 > of the task's worktree, `<scratch>` the absolute path of the task's scratch dir
@@ -19,7 +20,8 @@
 **Goal:** Make `@skillsite/ui` the design system of the spec's target shape - grouped modules and styles with an
 explicit export map (C1), variants on CVA with role names and `Button asChild` (C2), every design value a named
 token (C3), one typography API (C4), layout and shell in the package (C5), primitives for the hand-built duplicates
-(C6) - without changing a rendered pixel, then run the headless-widget spike that gates C8 (C7).
+(C6) - without changing a rendered pixel - and, beside that stack, run the headless-widget spike that gates C8
+(C7).
 
 **Architecture:** C1-C6 are refactors, proven identical by measurement, not by eye. C1 and C2 keep every element,
 attribute and text node of the server-rendered HTML and the built CSS byte-identical (_Verification toolkit_:
@@ -886,14 +888,28 @@ Wave 2 (C4, C5):
 9. **A stale import after a move.** `exports.test.ts` (an export for every module, none for a deleted one), the
    type check and a `grep` for the old paths in Tasks 5a and 5c.
 
+Wave 3 (C7):
+
+10. **A measurement that favours one library.** Task 7 runs one script per criterion against both libraries with
+    the same expectations; `only` steps are limited to each library's own way of opening a widget, the bundle
+    method externalises the same packages for both, and RAC's locale strings are reported both ways. The Radix
+    gaps (combobox, date picker) are filled with named third-party substitutes and scored as such, not hidden.
+11. **The spike leaking into the package.** Its two exclusions (export map, ratchet) and its devDependencies live
+    only on the never-merged `spike/headless-widgets`; Task 7's last check lists the changed files (none under
+    `apps/` or `docs/`).
+12. **A recommendation that pre-empts the gate.** The PR body gives the numbers, a recommendation "as input" with
+    the weighting under which the other library wins, and the verbatim sentence "The maintainer chooses (gate
+    C7); C8 follows the choice."; the spec's C7 box stays open.
+
 ## Decisions taken while planning
 
 Given by the controller for this phase (not reopened):
 
 - Phase C runs automatically through C1-C6 and the C7 spike and stops at the C7 gate: the maintainer picks Radix
   Primitives or React Aria Components. C8 and C9 get only the section _After the gate_ here.
-- Waves: wave 1 detailed C1-C3; wave 2 details C4 and C5 (Tasks 4a-5c); wave 3 (C6 split into PR-sized tasks,
-  C7) is written later against the then-current code - each wave a docs PR in the stack.
+- Waves: wave 1 detailed C1-C3; wave 2 details C4 and C5 (Tasks 4a-5c); wave 3 details C7 (its own docs PR,
+  written against 943fb6e) and splits C6 into PR-sized tasks (a later docs PR, against the then-current code) -
+  each wave a docs PR in the stack.
 - Pixel-identical proof: built CSS and the text/class/attribute content of the built HTML (C1, C2); computed
   styles where classes legitimately change (C3 onwards) and where server HTML cannot see a state (C2). Exact
   scripts in the _Verification toolkit_.
@@ -907,8 +923,9 @@ Given by the controller for this phase (not reopened):
 - E-09 carry-over: Escape in the desktop "Online lernen" dropdown does not return focus to its trigger
   (`apps/marketing/src/components/layout/navbar.tsx`). It belongs to C8 (one dismiss logic); this plan records it
   in the spec's C8 technique and in _After the gate_. C1-C6 do not fix it.
-- Order: C1 -> C2 -> C3 -> C4 -> C5 -> C6 -> C7 as one linear stack on `fix/a11y` (#155); every slice touches
-  `packages/ui`, so none runs in parallel (E-17). D1 is not part of this plan.
+- Order: C1 -> C2 -> C3 -> C4 -> C5 -> C6 as one linear stack on `fix/a11y` (#155); every slice touches
+  `packages/ui`, so none runs in parallel (E-17). C7 is the one exception (wave 3, below). D1 is not part of this
+  plan.
 - C5 font spike is an explicit decision branch; wave 2 ran it (Task 5c: yes, the package owns the fonts).
 - C2 codemod names are the spec's, verbatim; variant maps are carried over 1:1 in the order base -> variant ->
   size -> `className`.
@@ -998,6 +1015,47 @@ Rulings by the planner, wave 2 (C4, C5):
   `social-links.tsx` moves into `footer.tsx`, so `components/layout` keeps navbar, footer and the iOS tint.
 - **`next-themes`** moves from the app to the package with the provider and the toggle.
 
+Given by the controller, wave 3 (C7):
+
+- **C7 runs in parallel to C4-C6.** It needs only C2's `Button asChild`/CVA and C3's tokens (the brand look), not
+  C4-C6. `spike/headless-widgets` branches from `refactor/ui-tokens` (943fb6e); its PR is a **draft** against that
+  branch, says in its first line that it is never merged, and its code is thrown away after the maintainer's choice.
+  E-17 (slices touching the same package files run in sequence) is about merged slices; the spike is never merged.
+- **Spike-only folder:** everything lives in `packages/ui/src/spike/` (stories only, nothing in `apps/`), excluded
+  from the export map and from the ratchet by one documented line each, on the spike branch only.
+- **Time box** per widget pair (dialog 45 min, dropdown menu 45, radio group 30, combobox 60, date picker 90; about
+  7.5 h in all); an exceeded box is recorded as a finding ("not reached in the time box"), never polished.
+- **Measurements, exactly specified:** keyboard script (Playwright) and axe-core on the static Storybook build;
+  German date formats with `de-DE` (display, first day of week, month/day names, parsing); motion-token fit
+  including exit animation (Radix `data-state` vs RAC `data-entering`/`data-exiting`); added gzip size per widget and
+  in total via esbuild with React externalised; composition (`asChild` vs render props) against the C2 `Button`.
+  `axe-core` and `esbuild` are devDependencies of the spike branch only.
+- **The Radix gaps are handled honestly:** Radix Primitives have no combobox and no date picker; the spike builds
+  the common substitutes (Popover + `cmdk`, Popover + `react-day-picker`) and scores them as third-party.
+- **Versions pinned exactly** from `npm view <pkg> version` (Task 7, _Background_).
+- **The result** is a comparison table with measured values, a recommendation with reasons, and the statement
+  "The maintainer chooses (gate C7); C8 follows the choice." The recommendation does not pre-empt the choice; the
+  spike PR ticks no box.
+
+Rulings by the planner, wave 3 (C7):
+
+- **All libraries are devDependencies** of `@skillsite/ui` on the spike branch: nothing ships, and C8 adds the
+  chosen one as a real dependency.
+- **One shared look (`look.ts`), per-library motion (`radix/motion.ts`, `rac/motion.ts`):** styling cannot
+  explain a difference, and the motion recipes are exactly where the libraries differ.
+- **Fixes inside the time box** are limited to props or attributes the library documents for that purpose and
+  that keep the widget's behaviour (e.g. RAC `textValue`, `shouldForceLeadingZeros`; DayPicker `autoFocus`); the
+  table names them as "needs X". A default that needs a behaviour change to pass (Radix
+  `DropdownMenu modal={false}`) stays a finding.
+- **RAC is measured with and without its other locales' strings:** its optimize-locales plugin does not run under
+  Turbopack (the site's bundler), so the default number is what the site would ship today; `spike-bundle.mjs`
+  strips the other locales itself because the plugin's esbuild build fails.
+- **Hidden from assistive technology** is read from Chromium's accessibility tree: RAC hides with `inert`, Radix
+  with `aria-hidden`, and Playwright's role queries count only the latter.
+- **A 10-minute VoiceOver pass** per library complements the scripts; what is announced goes into the table.
+- **Radix's `forceMount` route** to transition-based exits is named in the comparison, not built (it moves
+  presence, focus and `aria-hidden` handling into our code).
+
 ## Open points for the maintainer
 
 The plan takes the conservative option in each case; none blocks a task.
@@ -1039,10 +1097,19 @@ Wave 2 (each with the conservative default taken):
     other grids named in Task 5b, `/preise`'s inner `mx-auto max-w-230` column (no gutter, inside a Container) and
     the `/ueber-mich` quote card (`max-w-220` on a navy card) - neither is a page container.
 
+Wave 3 (C7):
+
+14. **Spec timeline.** The spec's _Timeline_ reads `C6 -> C7 (gate)`; the plan runs C7 beside C4-C6 from C3
+    (controller decision, see _Decisions_). The docs PR that opens C8 can align the line
+    (`C3 -> C7 (gate; parallel to C4-C6) -> C8`) if the maintainer agrees.
+15. **Radix substitutes.** `cmdk` and `react-day-picker` are the common pairings with Radix; other combobox or
+    calendar libraries (e.g. Headless UI, Ariakit) are outside the spike. If the maintainer leans to Radix, C8
+    picks and pins the substitutes as its own decision.
+
 ## Execution order
 
 Phase B (#152 -> #155) is open and unmerged. Phase C stacks on its tip, one branch per task, each PR based on the
-previous branch:
+previous branch - except the C7 spike, which branches from the C3 result and runs beside C4-C6:
 
 ```
 fix/a11y (#155)
@@ -1050,21 +1117,28 @@ fix/a11y (#155)
     -> refactor/ui-groups            Task 1  C1
       -> refactor/ui-variants        Task 2  C2
         -> refactor/ui-tokens        Task 3  C3
+          -> spike/headless-widgets    Task 7  C7 (draft, never merged; gate) - in parallel to 4a-6
           -> docs/phase-c-plan-wave-2          docs: detail phase C tasks C4 and C5
+            -> docs/phase-c-plan-c7            docs: detail the C7 headless spike
             -> refactor/ui-prose               Task 4a C4  refactor(ui): move the legal pages onto a prose module
               -> refactor/ui-typography        Task 4b C4  refactor(ui): one typography API for headings, text and eyebrows
                 -> fix/faecher-outline         Task 4c C4  fix(a11y): let the subject cards on /faecher follow the page heading
                   -> refactor/ui-layout        Task 5a C5  refactor(ui): move container, section and page header into the package
                     -> refactor/ui-grids       Task 5b C5  refactor(ui): add the Split and CardGrid layouts
                       -> refactor/ui-shell     Task 5c C5  refactor(ui): move theme, logo and fonts into the package
-                        -> docs/phase-c-plan-wave-3   docs: detail phase C slices C6 and C7
+                        -> docs/phase-c-plan-wave-3   docs: detail phase C slice C6
                           -> refactor/ui-<primitive> ... Task 6a.. C6 (one PR each)
-                            -> spike/headless-widgets    Task 7  C7 (draft, never merged; gate)
 ```
 
-Each PR body starts with "Stacked on #N - merge after it." and "Part of #139.". After a squash merge, rebase the
-rest of the chain with `git rebase --onto origin/main <merged-branch> <next-branch>`, run `just check`, and
-`git push --force-with-lease`.
+C7 does not stack: it builds on C2's `Button` and C3's tokens only, touches nothing C4-C6 change on `main`, and is
+never merged. It can start as soon as `docs/phase-c-plan-c7` is approved (the plan is read from that branch). Its
+draft PR targets `refactor/ui-tokens`; when C3 is squash-merged and its branch deleted, GitHub retargets the draft to
+`main` - no rebase is needed, the spike is read, not merged. `docs/phase-c-plan-c7` and `refactor/ui-prose` both
+branch from `docs/phase-c-plan-wave-2`; whichever merges second rebases onto `main` as usual.
+
+Each PR body starts with "Stacked on #N - merge after it." and "Part of #139." (the C7 draft instead starts with
+"Draft spike - never merged.", Task 7). After a squash merge, rebase the rest of the chain with
+`git rebase --onto origin/main <merged-branch> <next-branch>`, run `just check`, and `git push --force-with-lease`.
 
 ## File map
 
@@ -1089,7 +1163,7 @@ rest of the chain with `git rebase --onto origin/main <merged-branch> <next-bran
 | `packages/ui/src/layout/{split,card-grid}.tsx`, 10 app files                                 | 5b   | two-column and card grids               |
 | `packages/ui/src/shell/*`, `app/layout.tsx`, navbar, footer, Storybook preview               | 5c   | theme, logo, fonts in the package       |
 | `packages/ui/src/{primitives,layout,motion,forms}/*`, their app call sites                   | 6    | primitives from the duplicates (wave 3) |
-| Storybook spike stories (spike branch only)                                                  | 7    | Radix vs React Aria comparison (wave 3) |
+| `packages/ui/src/spike/*`, export-map and ratchet exclusions (spike branch only)             | 7    | Radix vs React Aria comparison (draft)  |
 | `CLAUDE.md`                                                                                  | 1-3  | layout line, variant rule, token rule   |
 
 ---
@@ -5710,21 +5784,1792 @@ _Detailed steps: wave 3, written against the code after C5 (split into these PR-
 
 ### Task 7: Headless spike (spec C7, gate)
 
-**Branch:** `spike/headless-widgets` from the last C6 branch. **PR:** draft,
-`chore: headless widget spike - Radix Primitives vs React Aria Components`; never merged.
+**Branch:** `spike/headless-widgets` from `refactor/ui-tokens` (the C3 result, 943fb6e) - **not** from the C6 tip:
+it runs in parallel to Tasks 4a-6 (_Decisions_, wave 3). **PR:** a **draft** against `refactor/ui-tokens`, title
+`chore: headless widget spike - Radix Primitives vs React Aria Components`. It is **never merged**; the spike code is
+thrown away after the maintainer's choice.
 
-**Files:** spike stories in Storybook only (on the spike branch): dialog, dropdown menu, radio group, combobox and
-date picker, each built once on Radix Primitives and once on React Aria Components in the brand look; the two
-libraries are added to `packages/ui` on the spike branch only.
+**Files** (all on the spike branch only):
 
-**Interfaces:** none - the spike code is thrown away. Output: a comparison in the PR body (accessibility, German
-date formats, fit with the motion tokens, bundle size, composition `asChild` vs render props) and a
-recommendation. The spec's C7 box and the _Decisions_ row are written only after the maintainer has chosen, in the
-docs PR that opens C8.
+- Modify: `packages/ui/package.json` (10 exact-pinned devDependencies), `pnpm-lock.yaml`
+- Modify: `packages/ui/src/exports.test.ts` (one filter line: `src/spike/` is never exported)
+- Modify: `scripts/design-ratchet.mjs` (one `SKIP` alternative: `packages/ui/src/spike/` is measured on its own)
+- Create: `packages/ui/src/spike/look.ts` (the shared brand look), `radix.stories.tsx`, `rac.stories.tsx`
+- Create: `packages/ui/src/spike/radix/{motion.ts,dialog,dropdown-menu,radio-group,combobox,date-picker}.tsx`
+- Create: `packages/ui/src/spike/rac/{motion.ts,dialog,dropdown-menu,radio-group,combobox,date-picker}.tsx`
+- Scratch only (never committed): `toolkit.sh`, `spike-a11y.mjs`, `spike-dates.mjs`, `spike-motion.mjs`,
+  `spike-bundle.mjs`, `spike-ratchet.mjs` and their output
+- Not touched: anything under `apps/`, `docs/specs/` (the C7 box stays open), `design-ratchet.json`
 
-**Background.** Spec C7, E-21. Time-boxed. Phase C stops here until the maintainer picks.
+**Interfaces:**
 
-_Detailed steps: wave 3, written against the code after C6._
+- Consumes (from C2/C3, all present on `refactor/ui-tokens`): `Button` with `asChild`
+  (`../../primitives/button`), `cn` (`../../utils/cn`), the tokens `z-overlay`, `z-dropdown`, `shadow-card`,
+  `shadow-focus`, `bg-coral-gradient`, `text-card-title`, `text-body`, `text-small`, `text-caption`, `ease-flow`,
+  `duration-quick`/`duration-base`, `animate-rise`/`animate-fade`, and the Storybook workbench
+  (`pnpm --filter @skillsite/ui build-storybook`).
+- Produces: nothing any task imports. The output is the PR body: a comparison table (criteria x library, measured
+  values), a recommendation with reasons, and the statement "The maintainer chooses (gate C7); C8 follows the
+  choice." The spec's C7 box and the _Decisions_ row are written only after the maintainer has chosen, in the docs
+  PR that opens C8 (_After the gate_).
+
+**Background (measured in a dry run on 943fb6e).** Spec C7, E-21 (and E-11: `Dialog` stays - C8 rebuilds it on the
+chosen base). Radix Primitives have **no combobox and no date picker**; the spike does not invent them. The Radix
+side uses the common substitutes and scores them as such ("not in Radix Primitives; third-party"): a Radix
+`Popover` around `cmdk` for the combobox, and a Radix `Popover` around `react-day-picker` (date-fns locales) with a
+hand-built `date-fns` parser for the date picker. React Aria Components (RAC) ship all five. Versions (current
+stable on `npm view <pkg> version`, 2026-09-28, pinned exactly): `@radix-ui/react-dialog` 1.1.23,
+`@radix-ui/react-dropdown-menu` 2.1.24, `@radix-ui/react-popover` 1.1.23, `@radix-ui/react-radio-group` 1.4.7 (all
+on `@radix-ui/react-slot` 1.3.3, the version C2 already ships), `cmdk` 1.1.1, `react-day-picker` 10.0.1,
+`date-fns` 4.4.0, `react-aria-components` 1.21.1 (brings `react-aria` 3.52.1, `react-stately` 3.50.0,
+`@internationalized/date` 3.12.4), and for the measurements `axe-core` 4.13.0 and `esbuild` 0.28.2. Single Radix
+packages, not the `radix-ui` umbrella (1.6.7), to match the existing `@radix-ui/react-slot`.
+
+Exclusions, checked: `exports.test.ts` globs every non-story, non-test module of `src/`, so the 13 spike modules
+fail "every module is exported, and only modules are" until one filter line excludes `src/spike/`. The ratchet
+counts nothing in the spike code (dry run: 0 on every pattern) and skips `*.stories.tsx` already; the `SKIP`
+alternative is there so a raw value in a spike story can never block the spike - the bypasses are counted on
+their own by `spike-ratchet.mjs` and reported. Storybook needs no change (`stories: ["../src/**/*.stories.tsx"]`,
+`@source "../src"` already cover `src/spike/`); `just typecheck` and `just lint` cover the spike code
+(`packages/ui/tsconfig.json` includes `src`). `storybook-static/` is gitignored.
+
+Dry-run results (reference values - the implementer measures again; a changed PASS/FAIL or a size more than 10 %
+off is itself a finding to explain):
+
+- Keyboard (passed/total) and axe (violations closed/open): dialog Radix 7/7, 0/0 - RAC 7/7, 0/0; dropdown menu
+  Radix 12/12, 0/1 (`aria-hidden-focus`, serious: the modal menu hides the focused trigger) - RAC 12/12, 0/0; radio
+  group 7/7, 0/0 each; combobox Radix 6/7, 0/0 (`cmdk` never sets `aria-activedescendant`: a screen reader does not
+  hear the active option) - RAC 7/7, 0/0; date picker 9/9, 0/0 each.
+- German dates: both show `Mo Di Mi Do Fr Sa So` (Monday first), "Oktober 2026", day names like
+  "Donnerstag, 1. Oktober 2026". Typed `1.10.2026`: Radix keeps the raw text, RAC shows `01.10.2026`; `31.02.2026`:
+  Radix selects nothing and says nothing, RAC clamps to `28.02.2026`; `01.10.26`: **both** take year 26 (C8 needs
+  its own two-digit-year rule either way). RAC with `de-DE` alone shows `1.10.2026` (the `Intl` default); leading
+  zeros need `shouldForceLeadingZeros`.
+- Motion: every enter and exit runs on `ease-flow` with `duration-base` (enter) and `duration-quick` (exit), and
+  every exit plays (panel still mounted at +40 ms, gone at +1 s); with reduced motion nothing runs and panels unmount
+  at once. Radix waits only for CSS **animations** on `data-state="closed"`, so its exit needs a keyframe - the
+  brand has entrance keyframes only, so `fade` runs reversed via the arbitrary property `[animation-direction:reverse]`
+  (C8 on Radix would add exit keyframes as tokens). RAC waits for animations **or transitions** while
+  `data-exiting` is set, so one token transition with `data-entering:`/`data-exiting:` covers both.
+- Bundle, gzip added per widget (Radix / RAC / RAC with de-DE strings only): dialog 12.8 / 20.7 / 20.3 kB, dropdown
+  menu 27.7 / 44.2 / 41.8 kB, radio group 9.5 / 14.3 / 14.3 kB, combobox 26.9 / 55.5 / 49.6 kB, date picker 47.1 /
+  70.7 / 57.3 kB, all five 62.0 / 108.6 / 89.1 kB. RAC bundles the UI strings of 34 locales; its
+  `@react-aria/optimize-locales-plugin` 2.0.2 exists for webpack/Vite/Rollup but not Turbopack (the site's bundler),
+  and its esbuild build fails on its own virtual module - so `spike-bundle.mjs` strips the other locales itself and
+  reports RAC both ways.
+- Bypasses: ratchet patterns 0 for both; arbitrary syntax Radix 7 (value variants like `data-[state=open]`, one of
+  them carrying the reversed keyframe), RAC 1 (`transition-[opacity,translate]`, like the `transition-[...]` in
+  `forms/select.tsx` today).
+- Composition: Radix `asChild` puts the C2 `Button` in as the trigger unchanged (`<Dialog.Trigger asChild><Button>`).
+  RAC triggers need a pressable child: the C2 `Button` joins through `<Pressable>` (it spreads props onto a host
+  `<button>`), or RAC's own `Button` takes the CVA classes (`buttonVariants` is not exported today) and exposes
+  states as render props/`data-*` instead of `:hover`/`:focus-visible`. RAC collection items with render-function
+  children need `textValue`, or filtering and typeahead see empty text (the dry run's first RAC combobox found
+  nothing).
+- RAC hides the page behind a modal with `inert`, Radix with `aria-hidden`; Playwright's `getByRole` does not treat
+  `inert` as hidden, so the script reads Chromium's accessibility tree instead.
+- `just check` green on the spike branch (static checks, 104 tests, build, 48 smoke tests): no app file changes.
+
+**Time box.** Setup (Steps 1-3) 30 min; per widget pair, both libraries, from code to a clean story: dialog 45 min,
+dropdown menu 45 min, radio group 30 min, combobox 60 min, date picker 90 min; measurements (Steps 8-12) 60 min;
+comparison and PR (Steps 13-15) 60 min - about 7.5 h. The code below is complete and was dry-run, so the boxes cover
+deviations (a changed API, a check that behaves differently). **When a box is exceeded:** stop that widget where it
+is, mark its unmet checks "not reached in the time box" in the table with one sentence on why, and move on - no
+polishing, no workaround. The only fix allowed inside a box is a prop or attribute the library documents for exactly
+that purpose and that does not change the widget's behaviour (as the dry run did with RAC `textValue` and
+`shouldForceLeadingZeros`, DayPicker `autoFocus`, and a label on the Radix popover); the table names it as "needs
+X". A default that would need a behaviour change to pass (Radix `DropdownMenu modal={false}` for the
+`aria-hidden-focus` finding) stays a finding. If the whole spike passes 1.5x its box (about 11 h), stop, open the
+draft PR with what exists, and say so in its first lines.
+
+- [ ] **Step 1: Branch and toolkit.** The controller creates `<worktree>` on `spike/headless-widgets` from
+      `refactor/ui-tokens`. Write the spike toolkit (it replaces the site toolkit for this task: the spike serves
+      the static Storybook, not the site):
+
+```bash
+cat > <scratch>/toolkit.sh <<EOF
+WORKTREE=<worktree>
+SCRATCH=<scratch>
+BASE=$(git -C <worktree> rev-parse HEAD)
+EOF
+cat >> <scratch>/toolkit.sh <<'EOF'
+# serve_storybook: build the worktree's static Storybook and serve it on 6106.
+# Stops the port first, so a server from an earlier build never answers.
+serve_storybook() {
+  kill $(lsof -ti tcp:6106) 2>/dev/null; sleep 1
+  (cd "$WORKTREE" && pnpm --filter @skillsite/ui build-storybook > "$SCRATCH/storybook-build.log" 2>&1) ||
+    { tail -20 "$SCRATCH/storybook-build.log"; return 1; }
+  (python3 -m http.server 6106 -d "$WORKTREE/packages/ui/storybook-static" > "$SCRATCH/storybook-6106.log" 2>&1 &)
+  until curl -sf localhost:6106/index.json > /dev/null; do sleep 1; done
+}
+stop() { kill $(lsof -ti tcp:"$1") 2>/dev/null; }
+EOF
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" log --oneline -1
+cd "$WORKTREE" && pnpm install --frozen-lockfile && serve_storybook
+node -e 'fetch("http://localhost:6106/index.json").then((r) => r.json()).then((j) => console.log(Object.keys(j.entries).length))'
+```
+
+Expected: `943fb6e refactor(ui): name every design value as a token` (or the C3 squash commit, if C3 is merged by
+then), and the story count `6` (on 943fb6e). If `serve_storybook` does not return within a minute, read
+`$SCRATCH/storybook-build.log`.
+
+- [ ] **Step 2: Add the libraries and the measurement tools** - devDependencies of `@skillsite/ui` on this branch
+      only (nothing here ships):
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm add -D --filter @skillsite/ui \
+  @radix-ui/react-dialog@1.1.23 @radix-ui/react-dropdown-menu@2.1.24 @radix-ui/react-popover@1.1.23 \
+  @radix-ui/react-radio-group@1.4.7 cmdk@1.1.1 react-day-picker@10.0.1 date-fns@4.4.0 \
+  react-aria-components@1.21.1 axe-core@4.13.0 esbuild@0.28.2
+cd "$WORKTREE" && pnpm install --frozen-lockfile && git diff --stat
+```
+
+Expected: `packages/ui/package.json` gains exactly these 10 under `devDependencies`, each pinned without a range
+(`"cmdk": "1.1.1"`), and `pnpm-lock.yaml` about 880 added lines; `dependencies` is unchanged.
+
+- [ ] **Step 3: The shared brand look and the two motion recipes.** Create `packages/ui/src/spike/look.ts`:
+
+```ts
+/**
+ * Spike only (C7): the brand look both libraries are styled with, so the
+ * comparison measures the library, not the styling. Values are the tokens of
+ * the existing Dialog and Select. Motion is per library: `radix/motion.ts`,
+ * `rac/motion.ts`.
+ */
+export const look = {
+  overlay:
+    "fixed inset-0 z-overlay flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm",
+  dialog:
+    "relative w-full max-w-lg rounded-3xl border border-line bg-surface p-6 shadow-card outline-none sm:p-7",
+  panel:
+    "z-dropdown min-w-56 rounded-xl border border-line bg-surface p-1.5 shadow-card outline-none",
+  item: "flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-small font-medium text-ink-soft outline-none",
+  trigger:
+    "flex items-center gap-3 rounded-xl border border-line bg-bg px-3 py-2.5 text-left text-small font-semibold text-ink",
+  input:
+    "w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-small text-ink outline-none focus:shadow-focus",
+  radio:
+    "flex size-5 shrink-0 items-center justify-center rounded-full border-[1.5px] border-line",
+  radioDot: "size-2.5 rounded-full bg-coral",
+  day: "flex size-10 items-center justify-center rounded-full text-small font-medium text-ink outline-none",
+  daySelected: "bg-coral-gradient font-semibold text-white",
+  weekday: "text-caption font-semibold text-ink-soft",
+  caption: "text-body font-semibold text-ink",
+} as const;
+```
+
+Create `packages/ui/src/spike/radix/motion.ts`:
+
+```ts
+/**
+ * Spike only (C7): the brand motion as Radix listens to it. Presence keeps an
+ * element mounted only while a CSS *animation* runs on `data-state="closed"`, so
+ * exit needs a keyframe; the brand has entrance keyframes only, so `fade` runs
+ * reversed.
+ */
+export const motion =
+  "data-[state=open]:animate-rise data-[state=closed]:animate-fade data-[state=closed]:[animation-direction:reverse]";
+```
+
+Create `packages/ui/src/spike/rac/motion.ts`:
+
+```ts
+/**
+ * Spike only (C7): the brand motion as React Aria listens to it. It waits for
+ * every animation *or transition* on the element while `data-exiting` is set,
+ * so one token transition covers enter and exit.
+ */
+export const motion =
+  "transition-[opacity,translate] duration-base ease-flow data-entering:translate-y-3 data-entering:opacity-0 data-exiting:opacity-0 data-exiting:duration-quick";
+```
+
+- [ ] **Step 4: Dialog (time box 45 min).** Both open from the C2 `Button`, carry a title, a description and one
+      input, and close with Escape, the overlay or a button. Create `packages/ui/src/spike/radix/dialog.tsx`:
+
+```tsx
+"use client";
+
+import * as Dialog from "@radix-ui/react-dialog";
+
+import { Button } from "../../primitives/button";
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+export function RadixDialog() {
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger asChild>
+        <Button>Termin anfragen</Button>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay className={cn(look.overlay, motion)}>
+          <Dialog.Content className={cn(look.dialog, motion)}>
+            <Dialog.Title className="text-card-title font-bold text-ink">
+              Termin anfragen
+            </Dialog.Title>
+            <Dialog.Description className="mt-2 text-body text-ink-soft">
+              Wir melden uns innerhalb eines Tages.
+            </Dialog.Description>
+            <label className="mt-5 block text-small font-semibold text-ink">
+              Name
+              <input className={cn(look.input, "mt-1.5")} name="name" />
+            </label>
+            <div className="mt-6 flex justify-end gap-3">
+              <Dialog.Close asChild>
+                <Button variant="ghost">Abbrechen</Button>
+              </Dialog.Close>
+              <Dialog.Close asChild>
+                <Button>Senden</Button>
+              </Dialog.Close>
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/dialog.tsx`:
+
+```tsx
+"use client";
+
+import {
+  Dialog,
+  DialogTrigger,
+  Heading,
+  Modal,
+  ModalOverlay,
+  Pressable,
+} from "react-aria-components";
+
+import { Button } from "../../primitives/button";
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+export function RacDialog() {
+  return (
+    <DialogTrigger>
+      {/* Pressable hands RAC's press events to the C2 Button (a host <button>). */}
+      <Pressable>
+        <Button>Termin anfragen</Button>
+      </Pressable>
+      <ModalOverlay isDismissable className={cn(look.overlay, motion)}>
+        <Modal className={cn(look.dialog, motion)}>
+          <Dialog className="outline-none">
+            {({ close }) => (
+              <>
+                <Heading
+                  slot="title"
+                  className="text-card-title font-bold text-ink"
+                >
+                  Termin anfragen
+                </Heading>
+                <p className="mt-2 text-body text-ink-soft">
+                  Wir melden uns innerhalb eines Tages.
+                </p>
+                <label className="mt-5 block text-small font-semibold text-ink">
+                  Name
+                  <input className={cn(look.input, "mt-1.5")} name="name" />
+                </label>
+                <div className="mt-6 flex justify-end gap-3">
+                  <Button variant="ghost" onClick={close}>
+                    Abbrechen
+                  </Button>
+                  <Button onClick={close}>Senden</Button>
+                </div>
+              </>
+            )}
+          </Dialog>
+        </Modal>
+      </ModalOverlay>
+    </DialogTrigger>
+  );
+}
+```
+
+- [ ] **Step 5: Dropdown menu (45 min) and radio group (30 min).** The menu echoes the navbar's "Online lernen"
+      dropdown, the radio group the booker's subject choice. Create `packages/ui/src/spike/radix/dropdown-menu.tsx`:
+
+```tsx
+"use client";
+
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDown } from "lucide-react";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const items = ["Discord", "Microsoft Teams", "Vor Ort"];
+
+export function RadixDropdownMenu() {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger className={look.trigger}>
+        Online lernen <ChevronDown aria-hidden className="size-4" />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          sideOffset={8}
+          align="start"
+          className={cn(look.panel, motion)}
+        >
+          {items.map((item) => (
+            <DropdownMenu.Item
+              key={item}
+              className={cn(
+                look.item,
+                "data-highlighted:bg-surface-2 data-highlighted:text-ink",
+              )}
+            >
+              {item}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/dropdown-menu.tsx`:
+
+```tsx
+"use client";
+
+import { ChevronDown } from "lucide-react";
+import {
+  Button,
+  Menu,
+  MenuItem,
+  MenuTrigger,
+  Popover,
+} from "react-aria-components";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const items = ["Discord", "Microsoft Teams", "Vor Ort"];
+
+export function RacDropdownMenu() {
+  return (
+    <MenuTrigger>
+      <Button className={look.trigger}>
+        Online lernen <ChevronDown aria-hidden className="size-4" />
+      </Button>
+      <Popover
+        offset={8}
+        placement="bottom start"
+        className={cn(look.panel, motion)}
+      >
+        <Menu className="outline-none">
+          {items.map((item) => (
+            <MenuItem
+              key={item}
+              id={item}
+              className={cn(
+                look.item,
+                "data-focused:bg-surface-2 data-focused:text-ink",
+              )}
+            >
+              {item}
+            </MenuItem>
+          ))}
+        </Menu>
+      </Popover>
+    </MenuTrigger>
+  );
+}
+```
+
+Create `packages/ui/src/spike/radix/radio-group.tsx`:
+
+```tsx
+"use client";
+
+import * as RadioGroup from "@radix-ui/react-radio-group";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+
+const options = ["Mathe", "Physik", "Informatik"];
+
+export function RadixRadioGroup() {
+  return (
+    <RadioGroup.Root
+      defaultValue="Mathe"
+      aria-label="Fach"
+      className="flex flex-col gap-3"
+    >
+      {options.map((option) => (
+        <label
+          key={option}
+          className="flex cursor-pointer items-center gap-3 text-body text-ink"
+        >
+          <RadioGroup.Item
+            value={option}
+            className={cn(look.radio, "data-[state=checked]:border-coral")}
+          >
+            <RadioGroup.Indicator
+              className={cn(look.radioDot, "data-[state=checked]:animate-fade")}
+            />
+          </RadioGroup.Item>
+          {option}
+        </label>
+      ))}
+    </RadioGroup.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/radio-group.tsx`:
+
+```tsx
+"use client";
+
+import { Label, Radio, RadioGroup } from "react-aria-components";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+
+const options = ["Mathe", "Physik", "Informatik"];
+
+export function RacRadioGroup() {
+  return (
+    <RadioGroup defaultValue="Mathe" className="flex flex-col gap-3">
+      <Label className="sr-only">Fach</Label>
+      {options.map((option) => (
+        <Radio
+          key={option}
+          value={option}
+          className="group flex cursor-pointer items-center gap-3 text-body text-ink outline-none"
+        >
+          {({ isSelected }) => (
+            <>
+              <span
+                className={cn(
+                  look.radio,
+                  "group-data-focus-visible:outline-3 group-data-focus-visible:outline-offset-3 group-data-focus-visible:outline-accent",
+                  isSelected && "border-coral",
+                )}
+              >
+                {isSelected ? (
+                  <span className={cn(look.radioDot, "animate-fade")} />
+                ) : null}
+              </span>
+              {option}
+            </>
+          )}
+        </Radio>
+      ))}
+    </RadioGroup>
+  );
+}
+```
+
+- [ ] **Step 6: Combobox (60 min) and date picker (90 min).** Radix side: the substitutes named in _Background_,
+      each file says so in its header. Create `packages/ui/src/spike/radix/combobox.tsx`:
+
+```tsx
+"use client";
+
+/**
+ * Radix Primitives have no combobox. This is the common substitute: a Radix
+ * Popover around `cmdk` (a third-party command list built on Radix parts).
+ */
+import * as Popover from "@radix-ui/react-popover";
+import { Command } from "cmdk";
+import { Check, ChevronDown } from "lucide-react";
+import { useId, useState } from "react";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const subjects = ["Mathe", "Physik", "Informatik", "Chemie", "Deutsch"];
+
+export function RadixCombobox() {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState<string>();
+  const labelId = useId();
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <span id={labelId} className="block text-small font-semibold text-ink">
+        Fach
+      </span>
+      <Popover.Trigger
+        role="combobox"
+        aria-expanded={open}
+        aria-labelledby={labelId}
+        className={cn(look.trigger, "mt-1.5 w-64 justify-between")}
+      >
+        {value ?? "Fach wählen"}
+        <ChevronDown aria-hidden className="size-4" />
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          sideOffset={8}
+          align="start"
+          aria-labelledby={labelId}
+          className={cn(look.panel, "w-64", motion)}
+        >
+          <Command label="Fach">
+            <Command.Input
+              placeholder="Fach suchen"
+              className={cn(look.input, "mb-1.5")}
+            />
+            <Command.List>
+              <Command.Empty className="px-3 py-2 text-small text-ink-soft">
+                Kein Fach gefunden.
+              </Command.Empty>
+              {subjects.map((subject) => (
+                <Command.Item
+                  key={subject}
+                  value={subject}
+                  onSelect={() => {
+                    setValue(subject);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    look.item,
+                    "data-[selected=true]:bg-surface-2 data-[selected=true]:text-ink",
+                  )}
+                >
+                  {subject}
+                  {value === subject ? (
+                    <Check aria-hidden className="size-4 text-coral" />
+                  ) : null}
+                </Command.Item>
+              ))}
+            </Command.List>
+          </Command>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/combobox.tsx`:
+
+```tsx
+"use client";
+
+import { Check, ChevronDown } from "lucide-react";
+import {
+  Button,
+  ComboBox,
+  Input,
+  Label,
+  ListBox,
+  ListBoxItem,
+  Popover,
+} from "react-aria-components";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const subjects = ["Mathe", "Physik", "Informatik", "Chemie", "Deutsch"];
+
+export function RacCombobox() {
+  return (
+    <ComboBox className="w-64">
+      <Label className="text-small font-semibold text-ink">Fach</Label>
+      <div className="relative mt-1.5">
+        <Input placeholder="Fach suchen" className={cn(look.input, "pr-10")} />
+        <Button className="absolute inset-y-0 right-0 flex items-center px-3 text-ink-soft">
+          <ChevronDown aria-hidden className="size-4" />
+        </Button>
+      </div>
+      <Popover offset={8} className={cn(look.panel, "w-64", motion)}>
+        <ListBox
+          className="outline-none"
+          renderEmptyState={() => (
+            <p className="px-3 py-2 text-small text-ink-soft">
+              Kein Fach gefunden.
+            </p>
+          )}
+        >
+          {subjects.map((subject) => (
+            <ListBoxItem
+              key={subject}
+              id={subject}
+              textValue={subject}
+              className={cn(
+                look.item,
+                "data-focused:bg-surface-2 data-focused:text-ink",
+              )}
+            >
+              {({ isSelected }) => (
+                <>
+                  {subject}
+                  {isSelected ? (
+                    <Check aria-hidden className="size-4 text-coral" />
+                  ) : null}
+                </>
+              )}
+            </ListBoxItem>
+          ))}
+        </ListBox>
+      </Popover>
+    </ComboBox>
+  );
+}
+```
+
+Create `packages/ui/src/spike/radix/date-picker.tsx`:
+
+```tsx
+"use client";
+
+/**
+ * Radix Primitives have no date picker. This is the common substitute: a Radix
+ * Popover around `react-day-picker` (third-party calendar, date-fns locales).
+ * The text input and its parsing are hand-built with date-fns.
+ */
+import * as Popover from "@radix-ui/react-popover";
+import { format, isValid, parse } from "date-fns";
+import { de } from "date-fns/locale";
+import { CalendarDays } from "lucide-react";
+import { useId, useState } from "react";
+import { DayPicker } from "react-day-picker";
+import { de as dayPickerDe } from "react-day-picker/locale";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const PATTERN = "dd.MM.yyyy";
+
+export function RadixDatePicker() {
+  const [date, setDate] = useState<Date>();
+  const [text, setText] = useState("");
+  const [open, setOpen] = useState(false);
+  const inputId = useId();
+  const pick = (next: Date | undefined) => {
+    setDate(next);
+    setText(next ? format(next, PATTERN, { locale: de }) : "");
+  };
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <label
+        htmlFor={inputId}
+        className="block text-small font-semibold text-ink"
+      >
+        Datum
+      </label>
+      <div className="mt-1.5 flex w-64 items-center gap-2">
+        <input
+          id={inputId}
+          data-spike="date-value"
+          placeholder="TT.MM.JJJJ"
+          value={text}
+          onChange={(event) => {
+            setText(event.target.value);
+            const parsed = parse(event.target.value, PATTERN, new Date(), {
+              locale: de,
+            });
+            setDate(isValid(parsed) ? parsed : undefined);
+          }}
+          className={look.input}
+        />
+        <Popover.Trigger aria-label="Kalender öffnen" className={look.trigger}>
+          <CalendarDays aria-hidden className="size-4" />
+        </Popover.Trigger>
+      </div>
+      <Popover.Portal>
+        <Popover.Content
+          sideOffset={8}
+          align="start"
+          aria-label="Kalender"
+          // Let the calendar focus the selected day instead of the first button.
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          className={cn(look.panel, "p-4", motion)}
+        >
+          <DayPicker
+            mode="single"
+            autoFocus
+            locale={dayPickerDe}
+            selected={date}
+            defaultMonth={date}
+            onSelect={(next) => {
+              pick(next);
+              setOpen(false);
+            }}
+            classNames={{
+              month_caption: cn(look.caption, "mb-3"),
+              nav: "absolute right-4 top-4 flex gap-1",
+              weekday: look.weekday,
+              day: "rounded-full",
+              day_button: look.day,
+              selected: look.daySelected,
+              today: "text-coral",
+            }}
+          />
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/date-picker.tsx`:
+
+```tsx
+"use client";
+
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Button,
+  Calendar,
+  CalendarCell,
+  CalendarGrid,
+  CalendarGridBody,
+  CalendarGridHeader,
+  CalendarHeaderCell,
+  DateInput,
+  DatePicker,
+  DateSegment,
+  Dialog,
+  Group,
+  Heading,
+  I18nProvider,
+  Label,
+  Popover,
+} from "react-aria-components";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+export function RacDatePicker() {
+  return (
+    <I18nProvider locale="de-DE">
+      {/* de-DE alone shows "1.10.2026" (Intl default); DIN 5008 wants leading zeros. */}
+      <DatePicker shouldForceLeadingZeros className="w-64">
+        <Label className="text-small font-semibold text-ink">Datum</Label>
+        <Group className={cn(look.input, "mt-1.5 flex items-center")}>
+          <DateInput data-spike="date-value" className="flex flex-1">
+            {(segment) => (
+              <DateSegment
+                segment={segment}
+                className="rounded px-0.5 tabular-nums outline-none data-focused:bg-surface-2 data-placeholder:text-ink-soft"
+              />
+            )}
+          </DateInput>
+          <Button aria-label="Kalender öffnen" className="text-ink-soft">
+            <CalendarDays aria-hidden className="size-4" />
+          </Button>
+        </Group>
+        <Popover
+          offset={8}
+          placement="bottom start"
+          className={cn(look.panel, "p-4", motion)}
+        >
+          <Dialog className="outline-none">
+            <Calendar>
+              <header className="mb-3 flex items-center justify-between">
+                <Button slot="previous" className="text-ink-soft">
+                  <ChevronLeft aria-hidden className="size-4" />
+                </Button>
+                <Heading className={look.caption} />
+                <Button slot="next" className="text-ink-soft">
+                  <ChevronRight aria-hidden className="size-4" />
+                </Button>
+              </header>
+              <CalendarGrid weekdayStyle="short">
+                <CalendarGridHeader>
+                  {(day) => (
+                    <CalendarHeaderCell className={look.weekday}>
+                      {day}
+                    </CalendarHeaderCell>
+                  )}
+                </CalendarGridHeader>
+                <CalendarGridBody>
+                  {(date) => (
+                    <CalendarCell
+                      date={date}
+                      className={cn(
+                        look.day,
+                        "data-outside-month:invisible data-selected:bg-coral-gradient data-selected:font-semibold data-selected:text-white",
+                      )}
+                    />
+                  )}
+                </CalendarGridBody>
+              </CalendarGrid>
+            </Calendar>
+          </Dialog>
+        </Popover>
+      </DatePicker>
+    </I18nProvider>
+  );
+}
+```
+
+- [ ] **Step 7: Stories, the export-map exclusion, and a look at them.** Create
+      `packages/ui/src/spike/radix.stories.tsx`:
+
+```tsx
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+
+import { RadixCombobox } from "./radix/combobox";
+import { RadixDatePicker } from "./radix/date-picker";
+import { RadixDialog } from "./radix/dialog";
+import { RadixDropdownMenu } from "./radix/dropdown-menu";
+import { RadixRadioGroup } from "./radix/radio-group";
+
+/** Spike only (C7): Radix Primitives in the brand look. Thrown away after the gate. */
+const meta = { title: "Spike/Radix" } satisfies Meta;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Dialog: Story = { render: () => <RadixDialog /> };
+export const DropdownMenu: Story = { render: () => <RadixDropdownMenu /> };
+export const RadioGroup: Story = { render: () => <RadixRadioGroup /> };
+export const Combobox: Story = { render: () => <RadixCombobox /> };
+export const DatePicker: Story = { render: () => <RadixDatePicker /> };
+```
+
+Create `packages/ui/src/spike/rac.stories.tsx`:
+
+```tsx
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+
+import { RacCombobox } from "./rac/combobox";
+import { RacDatePicker } from "./rac/date-picker";
+import { RacDialog } from "./rac/dialog";
+import { RacDropdownMenu } from "./rac/dropdown-menu";
+import { RacRadioGroup } from "./rac/radio-group";
+
+/** Spike only (C7): React Aria Components in the brand look. Thrown away after the gate. */
+const meta = { title: "Spike/React Aria" } satisfies Meta;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Dialog: Story = { render: () => <RacDialog /> };
+export const DropdownMenu: Story = { render: () => <RacDropdownMenu /> };
+export const RadioGroup: Story = { render: () => <RacRadioGroup /> };
+export const Combobox: Story = { render: () => <RacCombobox /> };
+export const DatePicker: Story = { render: () => <RacDatePicker /> };
+```
+
+Run the export-map test to see the spike modules counted as public API:
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/exports.test.ts
+```
+
+Expected: FAIL in "every module is exported, and only modules are", listing the 13 modules under `./src/spike/`
+(`look.ts`, two `motion.ts`, ten widgets). In `packages/ui/src/exports.test.ts`, add the exclusion after the
+stories/tests filter:
+
+```ts
+const modules = globSync("src/**/*.{ts,tsx}", { cwd: packageRoot })
+  .filter((file) => !/\.(stories|test)\.tsx?$/.test(file))
+  // Spike only (C7): src/spike/ is never exported; the branch is thrown away.
+  .filter((file) => !file.startsWith("src/spike/"))
+  .map((file) => `./${file}`)
+  .sort();
+```
+
+In `scripts/design-ratchet.mjs`, replace the `SKIP` line with:
+
+```js
+// Spike only (C7): packages/ui/src/spike/ is measured on its own; the branch is thrown away.
+const SKIP =
+  /(\.stories\.tsx|\.test\.(ts|tsx|mts|mjs))$|^packages\/ui\/src\/spike\//;
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/exports.test.ts && just ratchet
+cd "$WORKTREE" && pnpm --filter @skillsite/ui typecheck && pnpm --filter @skillsite/ui lint
+serve_storybook && curl -s localhost:6106/index.json | grep -o 'spike-[a-z-]*--[a-z-]*' | sort -u
+```
+
+Expected: 4 tests pass, the ratchet prints nothing, typecheck and lint are silent, and ten story ids:
+`spike-radix--{combobox,date-picker,dialog,dropdown-menu,radio-group}` and the same five under
+`spike-react-aria--`. Then open `pnpm storybook` (`http://localhost:6006`), _Spike / Radix_ and _Spike / React
+Aria_: every story in light and dark (toolbar _Theme_), open, at 390 px and desktop width. Both sides must read as
+the brand (surface, line, coral selection, the existing Select panel's radius and shadow); a visible difference
+between the two sides that is not the library's doing is fixed in `look.ts`, not per side.
+
+- [ ] **Step 8: Accessibility - keyboard script and axe.** The same expectations run against both libraries; a
+      step marked `only` is one library's own way to open or enter a widget (Radix's substitute combobox opens
+      from a button, RAC's is an input). `axe-core` is injected into the page from `packages/ui/node_modules`
+      (Step 2) and runs the WCAG 2.0/2.1/2.2 A/AA and best-practice rules, minus three page-level rules a story
+      cannot satisfy. Write `<scratch>/spike-a11y.mjs`:
+
+```js
+// C7 spike: keyboard walk-through and axe-core check of every spike story in the
+// static Storybook build, per library and widget. The same expectations run
+// against both libraries; a step marked `only` is a library's own way to open
+// or enter a widget. Failures are findings, not errors: the exit code is 0.
+// Usage: node spike-a11y.mjs <repo-root> <storybook-url> <out.json>
+import { writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import path from "node:path";
+
+const [root, baseUrl, outFile] = process.argv.slice(2);
+const { chromium } = createRequire(
+  path.join(root, "apps/marketing/package.json"),
+)("@playwright/test");
+const axePath = createRequire(
+  path.join(root, "packages/ui/package.json"),
+).resolve("axe-core/axe.min.js");
+
+const LIBRARIES = [
+  { key: "radix", story: "spike-radix" },
+  { key: "rac", story: "spike-react-aria" },
+];
+
+/** Keyboard focus is on the element with this role and name (itself or as active descendant). */
+const isFocused = (role, name) => async (page) => {
+  for (const element of await page.getByRole(role, { name }).all()) {
+    const hit = await element.evaluate((node) => {
+      const active = document.activeElement;
+      return (
+        node === active ||
+        (!!node.id && active?.getAttribute("aria-activedescendant") === node.id)
+      );
+    });
+    if (hit) return true;
+  }
+  return false;
+};
+/** The focused element (not a descendant) has this role, explicit or implicit. */
+const focusRole = (role) => async (page) =>
+  page.evaluate(
+    (wanted) => document.activeElement?.getAttribute("role") === wanted,
+    role,
+  );
+const visible = (role, options) => async (page) =>
+  page.getByRole(role, options).first().isVisible();
+const gone = (role) => async (page) => {
+  await page.waitForTimeout(700); // let the exit animation finish
+  return (await page.getByRole(role).count()) === 0;
+};
+const checked = (name) => async (page) =>
+  page.getByRole("radio", { name, exact: true }).isChecked();
+/** Chromium's accessibility tree has no unignored node with this role and name. */
+const hiddenFromAt = (role, name) => async (page) => {
+  const cdp = await page.context().newCDPSession(page);
+  const { nodes } = await cdp.send("Accessibility.getFullAXTree");
+  return !nodes.some(
+    (node) =>
+      !node.ignored && node.role?.value === role && node.name?.value === name,
+  );
+};
+/** The date field's visible value: an input's value or the segments' text. */
+const dateValue = (expected) => async (page) =>
+  (
+    await page
+      .locator('[data-spike="date-value"]')
+      .evaluate((el) => el.value || el.innerText)
+  ).replace(/[\s\u2066-\u2069]+/g, "") === expected;
+const inDialog = async (page) =>
+  page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'));
+
+/** Steps per widget: keys to press or type, or an expectation with a label. */
+const WIDGETS = {
+  dialog: [
+    { press: "Tab" },
+    {
+      expect: isFocused("button", "Termin anfragen"),
+      label: "trigger reachable by Tab",
+    },
+    { press: "Enter" },
+    {
+      expect: visible("dialog", { name: "Termin anfragen" }),
+      label: "Enter opens a dialog named by its title",
+      axe: true,
+    },
+    { expect: inDialog, label: "focus moves into the dialog" },
+    { press: "Tab" },
+    { press: "Tab" },
+    { press: "Tab" },
+    { press: "Tab" },
+    { press: "Tab" },
+    { expect: inDialog, label: "Tab x5 stays inside (focus trap)" },
+    {
+      expect: hiddenFromAt("button", "Termin anfragen"),
+      label: "the page behind leaves the accessibility tree",
+    },
+    { press: "Escape" },
+    { expect: gone("dialog"), label: "Escape closes" },
+    {
+      expect: isFocused("button", "Termin anfragen"),
+      label: "focus returns to the trigger",
+    },
+  ],
+  "dropdown-menu": [
+    { press: "Tab" },
+    {
+      expect: isFocused("button", "Online lernen"),
+      label: "trigger reachable by Tab",
+    },
+    { press: "Enter" },
+    { expect: visible("menu"), label: "Enter opens a menu", axe: true },
+    {
+      expect: isFocused("menuitem", "Discord"),
+      label: "focus on the first item",
+    },
+    { press: "ArrowDown" },
+    {
+      expect: isFocused("menuitem", "Microsoft Teams"),
+      label: "ArrowDown moves to the next item",
+    },
+    { press: "End" },
+    {
+      expect: isFocused("menuitem", "Vor Ort"),
+      label: "End moves to the last item",
+    },
+    { press: "Home" },
+    {
+      expect: isFocused("menuitem", "Discord"),
+      label: "Home moves to the first item",
+    },
+    { type: "v" },
+    {
+      expect: isFocused("menuitem", "Vor Ort"),
+      label: "typeahead 'v' finds 'Vor Ort'",
+    },
+    { press: "Escape" },
+    { expect: gone("menu"), label: "Escape closes" },
+    {
+      expect: isFocused("button", "Online lernen"),
+      label: "focus returns to the trigger",
+    },
+    { press: "ArrowDown" },
+    {
+      expect: visible("menu"),
+      label: "ArrowDown on the trigger opens the menu",
+    },
+    { press: "Enter" },
+    { expect: gone("menu"), label: "Enter on an item closes the menu" },
+    {
+      expect: isFocused("button", "Online lernen"),
+      label: "focus returns to the trigger after a choice",
+    },
+  ],
+  "radio-group": [
+    { press: "Tab" },
+    {
+      expect: visible("radiogroup", { name: "Fach" }),
+      label: "a radio group named 'Fach'",
+      axe: true,
+    },
+    {
+      expect: isFocused("radio", "Mathe"),
+      label: "Tab lands on the checked radio",
+    },
+    { press: "ArrowDown" },
+    { expect: checked("Physik"), label: "ArrowDown checks the next radio" },
+    { expect: isFocused("radio", "Physik"), label: "focus follows the check" },
+    { press: "ArrowDown" },
+    { press: "ArrowDown" },
+    {
+      expect: checked("Mathe"),
+      label: "arrows wrap from the last to the first",
+    },
+    { press: "ArrowUp" },
+    { expect: checked("Informatik"), label: "ArrowUp wraps back to the last" },
+    { press: "Tab" },
+    {
+      expect: async (page) =>
+        page.evaluate(
+          () => !document.activeElement?.closest('[role="radiogroup"]'),
+        ),
+      label: "Tab leaves the group (one tab stop)",
+    },
+  ],
+  combobox: [
+    { press: "Tab" },
+    { expect: focusRole("combobox"), label: "a combobox is reachable by Tab" },
+    { press: "Enter", only: "radix" },
+    { type: "ph" },
+    { expect: visible("listbox"), label: "typing shows a listbox", axe: true },
+    {
+      expect: async (page) => (await page.getByRole("option").count()) === 1,
+      label: "the list filters to one option",
+    },
+    { press: "ArrowDown", only: "rac" },
+    {
+      expect: isFocused("option", "Physik"),
+      label: "the matching option is the active descendant",
+    },
+    { press: "Enter" },
+    { expect: gone("listbox"), label: "Enter picks it and closes" },
+    {
+      expect: async (page) =>
+        (await page
+          .getByRole("combobox")
+          .first()
+          .evaluate((el) => (el.value || el.textContent).trim())) === "Physik",
+      label: "the combobox shows 'Physik'",
+    },
+    { expect: focusRole("combobox"), label: "focus is back on the combobox" },
+  ],
+  "date-picker": [
+    { press: "Tab" },
+    { type: "01.10.2026", only: "radix" },
+    { type: "01102026", only: "rac" },
+    {
+      expect: dateValue("01.10.2026"),
+      label: "typed date is parsed and shown as 01.10.2026",
+    },
+    { press: "Tab" },
+    {
+      expect: isFocused("button", "Kalender öffnen"),
+      label: "calendar button reachable by Tab",
+    },
+    { press: "Enter" },
+    {
+      expect: visible("grid"),
+      label: "Enter opens a calendar grid",
+      axe: true,
+    },
+    {
+      expect: async (page) =>
+        (await page.getByText("Oktober 2026").count()) > 0,
+      label: "the month shows as 'Oktober 2026'",
+    },
+    {
+      expect: async (page) =>
+        /^Mo/.test(
+          (await page.locator('[role="grid"] th').first().innerText()).trim(),
+        ),
+      label: "the week starts on Monday",
+    },
+    {
+      expect: isFocused("button", /1\. Oktober 2026/),
+      label: "focus lands on the selected day",
+    },
+    { press: "ArrowRight" },
+    { press: "Enter" },
+    {
+      expect: gone("grid"),
+      label: "ArrowRight + Enter picks the next day and closes",
+    },
+    { expect: dateValue("02.10.2026"), label: "the field shows 02.10.2026" },
+    {
+      expect: isFocused("button", "Kalender öffnen"),
+      label: "focus returns to the calendar button",
+    },
+  ],
+};
+
+const AXE_OPTIONS = {
+  runOnly: {
+    type: "tag",
+    values: [
+      "wcag2a",
+      "wcag2aa",
+      "wcag21a",
+      "wcag21aa",
+      "wcag22aa",
+      "best-practice",
+    ],
+  },
+  // Page-level rules: a story is a fragment of a page, not a page.
+  rules: {
+    region: { enabled: false },
+    "landmark-one-main": { enabled: false },
+    "page-has-heading-one": { enabled: false },
+  },
+};
+async function axe(page) {
+  await page.addScriptTag({ path: axePath });
+  const { violations } = await page.evaluate(
+    (options) => window.axe.run(document, options),
+    AXE_OPTIONS,
+  );
+  return violations.map((v) => `${v.id} (${v.impact}, ${v.nodes.length})`);
+}
+
+const browser = await chromium.launch();
+const results = [];
+for (const [widget, steps] of Object.entries(WIDGETS)) {
+  for (const library of LIBRARIES) {
+    const page = await browser.newPage({
+      locale: "de-DE",
+      timezoneId: "Europe/Berlin",
+    });
+    await page.goto(
+      `${baseUrl}/iframe.html?id=${library.story}--${widget}&viewMode=story`,
+    );
+    await page
+      .locator("#storybook-root :is(button, input):visible")
+      .first()
+      .waitFor();
+    const result = {
+      library: library.key,
+      widget,
+      passed: 0,
+      total: 0,
+      failed: [],
+      axeClosed: await axe(page),
+      axeOpen: [],
+    };
+    for (const step of steps) {
+      if (step.only && step.only !== library.key) continue;
+      if (step.press || step.type) {
+        if (step.press) await page.keyboard.press(step.press);
+        else await page.keyboard.type(step.type, { delay: 30 });
+        await page.waitForTimeout(350);
+        continue;
+      }
+      result.total += 1;
+      const ok = await step.expect(page).catch(() => false);
+      if (ok) result.passed += 1;
+      else result.failed.push(step.label);
+      console.log(
+        `${library.key.padEnd(5)} ${widget.padEnd(13)} ${ok ? "PASS" : "FAIL"}  ${step.label}`,
+      );
+      if (step.axe) result.axeOpen = await axe(page);
+    }
+    console.log(
+      `${library.key.padEnd(5)} ${widget.padEnd(13)} axe closed: ${result.axeClosed.join(", ") || "0"}; open: ${result.axeOpen.join(", ") || "0"}`,
+    );
+    results.push(result);
+    await page.close();
+  }
+}
+await browser.close();
+writeFileSync(outFile, `${JSON.stringify(results, null, 2)}\n`);
+console.log("\nkeyboard passed/total, axe violations closed/open:");
+for (const r of results)
+  console.log(
+    `${r.library.padEnd(5)} ${r.widget.padEnd(13)} ${r.passed}/${r.total}  axe ${r.axeClosed.length}/${r.axeOpen.length}`,
+  );
+```
+
+```bash
+source <scratch>/toolkit.sh
+serve_storybook
+node "$SCRATCH/spike-a11y.mjs" "$WORKTREE" http://localhost:6106 "$SCRATCH/a11y.json" | tee "$SCRATCH/a11y.log"
+```
+
+Expected (dry run): the summary block
+
+```
+radix dialog        7/7  axe 0/0
+rac   dialog        7/7  axe 0/0
+radix dropdown-menu 12/12  axe 0/1
+rac   dropdown-menu 12/12  axe 0/0
+radix radio-group   7/7  axe 0/0
+rac   radio-group   7/7  axe 0/0
+radix combobox      6/7  axe 0/0
+rac   combobox      7/7  axe 0/0
+radix date-picker   9/9  axe 0/0
+rac   date-picker   9/9  axe 0/0
+```
+
+with the one keyboard FAIL `radix combobox ... the matching option is the active descendant` and the axe finding
+`aria-hidden-focus (serious, 1)` on the open Radix menu. Then check with a screen reader for 10 minutes (VoiceOver:
+Cmd+F5 in Safari on `http://localhost:6106/iframe.html?id=<story-id>&viewMode=story`): dialog title announced, menu
+items, the radio group's name and state, the active combobox option, the date picker's segments (RAC) or field
+(Radix) and the calendar grid. Record what is announced per widget; the script cannot hear.
+
+- [ ] **Step 9: German date formats.** `spike-dates.mjs` records what is shown rather than pass/fail: weekday
+      headers (text and label), month caption, a day's accessible name, and what four typed inputs become (a normal
+      date, no leading zero, a two-digit year, an impossible date). Write `<scratch>/spike-dates.mjs`:
+
+```js
+// C7 spike: German date formats of both date pickers, as the visitor meets them.
+// Records what is shown (not pass/fail): weekday headers, month caption, the
+// accessible name of a day, and what each typed input turns into.
+// Usage: node spike-dates.mjs <repo-root> <storybook-url>
+import { createRequire } from "node:module";
+import path from "node:path";
+
+const [root, baseUrl] = process.argv.slice(2);
+const { chromium } = createRequire(
+  path.join(root, "apps/marketing/package.json"),
+)("@playwright/test");
+
+const LIBRARIES = [
+  { key: "radix", story: "spike-radix--date-picker" },
+  { key: "rac", story: "spike-react-aria--date-picker" },
+];
+/** What a visitor types; RAC's segments take digits, so separators are typed too. */
+const INPUTS = ["01.10.2026", "1.10.2026", "01.10.26", "31.02.2026"];
+
+const browser = await chromium.launch();
+async function open(story) {
+  const page = await browser.newPage({
+    locale: "de-DE",
+    timezoneId: "Europe/Berlin",
+  });
+  await page.goto(`${baseUrl}/iframe.html?id=${story}&viewMode=story`);
+  await page
+    .locator("#storybook-root :is(button, input):visible")
+    .first()
+    .waitFor();
+  return page;
+}
+const fieldValue = (page) =>
+  page
+    .locator('[data-spike="date-value"]')
+    .evaluate((el) =>
+      (el.value || el.innerText).replace(/[\s\u2066-\u2069]+/g, ""),
+    );
+
+for (const library of LIBRARIES) {
+  for (const input of INPUTS) {
+    const page = await open(library.story);
+    await page.keyboard.press("Tab");
+    await page.keyboard.type(input, { delay: 30 });
+    await page.keyboard.press("Tab"); // leave the field: commit
+    await page.waitForTimeout(300);
+    const shown = await fieldValue(page);
+    await page.keyboard.press("Enter"); // open the calendar
+    await page.waitForTimeout(500);
+    const selected = await page
+      .locator('[role="gridcell"][aria-selected="true"]')
+      .first()
+      .evaluate((cell) =>
+        (cell.querySelector("[aria-label]") ?? cell).getAttribute("aria-label"),
+      )
+      .catch(() => "none");
+    console.log(
+      `${library.key.padEnd(5)} typed ${JSON.stringify(input).padEnd(13)} shown ${JSON.stringify(shown).padEnd(14)} selected ${selected}`,
+    );
+    if (input === INPUTS[0]) {
+      const weekdays = await page
+        .locator('[role="grid"] th')
+        .evaluateAll((cells) =>
+          cells.map(
+            (cell) =>
+              `${cell.innerText.trim()}(${cell.getAttribute("aria-label") ?? ""})`,
+          ),
+        );
+      // The visible month caption: RAC's Heading, DayPicker's caption label.
+      const caption = await page
+        .locator('[role="dialog"] :is(h2, .rdp-caption_label)')
+        .first()
+        .innerText();
+      const grid = await page
+        .getByRole("grid")
+        .first()
+        .getAttribute("aria-label");
+      console.log(`${library.key.padEnd(5)} weekdays ${weekdays.join(" ")}`);
+      console.log(
+        `${library.key.padEnd(5)} caption "${caption}", grid label "${grid}"`,
+      );
+    }
+    await page.close();
+  }
+}
+await browser.close();
+```
+
+```bash
+source <scratch>/toolkit.sh
+node "$SCRATCH/spike-dates.mjs" "$WORKTREE" http://localhost:6106 | tee "$SCRATCH/dates.log"
+```
+
+Expected (dry run):
+
+```
+radix typed "01.10.2026"  shown "01.10.2026"   selected Donnerstag, 1. Oktober 2026, ausgewählt
+radix weekdays Mo(Montag) Di(Dienstag) Mi(Mittwoch) Do(Donnerstag) Fr(Freitag) Sa(Samstag) So(Sonntag)
+radix caption "Oktober 2026", grid label "Oktober 2026"
+radix typed "1.10.2026"   shown "1.10.2026"    selected Donnerstag, 1. Oktober 2026, ausgewählt
+radix typed "01.10.26"    shown "01.10.26"     selected Donnerstag, 1. Oktober 26, ausgewählt
+radix typed "31.02.2026"  shown "31.02.2026"   selected none
+rac   typed "01.10.2026"  shown "01.10.2026"   selected Donnerstag, 1. Oktober 2026 ausgewählt
+rac   weekdays Mo() Di() Mi() Do() Fr() Sa() So()
+rac   caption "Oktober 2026", grid label "Oktober 2026"
+rac   typed "1.10.2026"   shown "01.10.2026"   selected Donnerstag, 1. Oktober 2026 ausgewählt
+rac   typed "01.10.26"    shown "01.10.26"     selected Donnerstag, 1. Oktober 26 ausgewählt
+rac   typed "31.02.2026"  shown "28.02.2026"   selected Samstag, 28. Februar 2026 ausgewählt
+```
+
+- [ ] **Step 10: Motion-token fit.** `spike-motion.mjs` opens each overlay widget, samples every running animation
+      and transition (the trigger's `lift` left out), closes with Escape, samples again and checks that the panel
+      stayed mounted for its exit; durations and easings print as token names. Write `<scratch>/spike-motion.mjs`:
+
+```js
+// C7 spike: do enter and exit animations run on the brand motion tokens?
+// Opens each overlay widget (click on its one trigger button), samples every
+// running animation/transition of the document, closes it with Escape and samples
+// again; then checks whether the panel stayed mounted for its exit animation.
+// Runs once with motion allowed and once with reduced motion.
+// Usage: node spike-motion.mjs <repo-root> <storybook-url>
+import { createRequire } from "node:module";
+import path from "node:path";
+
+const [root, baseUrl] = process.argv.slice(2);
+const { chromium } = createRequire(
+  path.join(root, "apps/marketing/package.json"),
+)("@playwright/test");
+
+const TOKENS = {
+  "cubic-bezier(0.22, 1, 0.36, 1)": "ease-flow",
+  "cubic-bezier(0.65, 0, 0.35, 1)": "ease-soft",
+  160: "duration-quick",
+  260: "duration-base",
+  420: "duration-slow",
+};
+const WIDGETS = ["dialog", "dropdown-menu", "combobox", "date-picker"];
+const LIBRARIES = [
+  { key: "radix", story: "spike-radix" },
+  { key: "rac", story: "spike-react-aria" },
+];
+const PANEL = '[role="dialog"], [role="menu"], [role="listbox"]';
+
+/** Every running animation but the trigger's `lift`: kind, target, duration, easing. */
+function sample() {
+  const animations = document
+    .getAnimations()
+    .filter((animation) => animation.effect.target.tagName !== "BUTTON");
+  return animations.map((animation) => {
+    const effect = animation.effect;
+    const timing = effect.getTiming();
+    const easing =
+      timing.easing !== "linear"
+        ? timing.easing
+        : (effect.getKeyframes()[0]?.easing ?? "linear");
+    const what =
+      animation.animationName ?? `transition:${animation.transitionProperty}`;
+    const target = effect.target;
+    const role = target.getAttribute("role") ?? target.tagName.toLowerCase();
+    return `${role} ${what} ${Math.round(timing.duration)}ms ${easing}`;
+  });
+}
+const named = (line) =>
+  line.replace(
+    /(\d+)ms (.*)$/,
+    (_, ms, easing) => `${TOKENS[ms] ?? `${ms}ms`} ${TOKENS[easing] ?? easing}`,
+  );
+
+const browser = await chromium.launch();
+for (const reducedMotion of ["no-preference", "reduce"]) {
+  console.log(`\n== ${reducedMotion}`);
+  for (const widget of WIDGETS) {
+    for (const library of LIBRARIES) {
+      const page = await browser.newPage({ reducedMotion });
+      await page.goto(
+        `${baseUrl}/iframe.html?id=${library.story}--${widget}&viewMode=story`,
+      );
+      const trigger = page.locator("#storybook-root button:visible").first();
+      await trigger.waitFor();
+      await trigger.click();
+      await page.waitForTimeout(20);
+      const enter = await page.evaluate(sample);
+      await page.waitForTimeout(600);
+      const panel = await page.locator(PANEL).first().elementHandle();
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(20);
+      const exit = await page.evaluate(sample);
+      const mountedAt40 = await panel.evaluate((el) => el.isConnected);
+      await page.waitForTimeout(1000);
+      const mountedAt1000 = await panel.evaluate((el) => el.isConnected);
+      const tag = `${library.key.padEnd(5)} ${widget.padEnd(13)}`;
+      console.log(`${tag} enter: ${enter.map(named).join("; ") || "none"}`);
+      console.log(`${tag} exit:  ${exit.map(named).join("; ") || "none"}`);
+      console.log(
+        `${tag} exit plays: ${mountedAt40 && !mountedAt1000 ? "yes" : "no"} (mounted at +40ms: ${mountedAt40}, at +1s: ${mountedAt1000})`,
+      );
+      await page.close();
+    }
+  }
+}
+await browser.close();
+```
+
+```bash
+source <scratch>/toolkit.sh
+node "$SCRATCH/spike-motion.mjs" "$WORKTREE" http://localhost:6106 | tee "$SCRATCH/motion.log"
+grep -c 'exit plays: yes' "$SCRATCH/motion.log"
+```
+
+Expected: `8` (four widgets x two libraries, motion allowed); every `enter:` line on `duration-base ease-flow`,
+every `exit:` line on `duration-quick ease-flow` - Radix as keyframes (`rise`, then `fade` reversed), RAC as
+`transition:opacity`/`transition:translate`; under `== reduce` every `exit plays: no (mounted at +40ms: false...)`.
+Radix's other exit route, `forceMount` with own hiding of the closed content, is not built (it moves presence,
+focus and `aria-hidden` handling into our code); name it in the comparison as the alternative to exit keyframes.
+
+- [ ] **Step 11: Bundle size.** Measured the same way for both: esbuild bundles each widget file (minified,
+      production flags), with React and everything the site already ships left out (`clsx`, `tailwind-merge`, CVA,
+      `lucide-react`, `@radix-ui/react-slot`, the package's own modules, `look.ts`), gzip level 9; "total" is one
+      entry with all five widgets of a library. Write `<scratch>/spike-bundle.mjs`:
+
+```js
+// C7 spike: the gzip size each library adds, per widget and in total, measured the
+// same way for both: esbuild bundles each widget file (minified, production React
+// build flags), with React and everything the site already ships (clsx,
+// tailwind-merge, CVA, lucide-react, @radix-ui/react-slot, the package's own
+// modules and the spike's shared look) left out, then gzip -9 the output.
+// "total" bundles all five widgets of a library in one entry (shared code once).
+// React Aria bundles the UI strings of 34 locales. Its optimize-locales plugin
+// (webpack/Vite/Rollup, not Turbopack - the site's bundler) drops all but the
+// listed ones; `germanOnly` does the same here (the plugin's esbuild build fails
+// on its own virtual module), so React Aria is measured both ways.
+// Usage: node spike-bundle.mjs <repo-root>
+import { createRequire } from "node:module";
+import path from "node:path";
+import { gzipSync } from "node:zlib";
+
+const [root] = process.argv.slice(2);
+const ui = path.join(root, "packages/ui");
+const requireUi = createRequire(path.join(ui, "package.json"));
+const { build } = requireUi("esbuild");
+
+const WIDGETS = [
+  "dialog",
+  "dropdown-menu",
+  "radio-group",
+  "combobox",
+  "date-picker",
+];
+const EXTERNAL = [
+  "react",
+  "react-dom",
+  "react/jsx-runtime",
+  "clsx",
+  "tailwind-merge",
+  "class-variance-authority",
+  "lucide-react",
+  "@radix-ui/react-slot",
+];
+/** The package's own modules and the spike's shared look: already shipped / not a library. */
+const localExternal = {
+  name: "local-external",
+  setup(b) {
+    b.onResolve({ filter: /\/(primitives|utils)\/|^\.\.\/look$/ }, (args) => ({
+      path: args.path,
+      external: true,
+    }));
+  },
+};
+
+/** Replace every locale string file but de-DE with an empty module. */
+const germanOnly = {
+  name: "german-only",
+  setup(b) {
+    b.onResolve(
+      { filter: /\/intl\/(?:[\w-]+\/)?[a-z]{2}-[A-Z]{2}\.m?js$/ },
+      (args) =>
+        args.path.includes("de-DE")
+          ? undefined
+          : { path: args.path, namespace: "empty-locale" },
+    );
+    b.onLoad({ filter: /.*/, namespace: "empty-locale" }, () => ({
+      contents: "export default {};",
+    }));
+  },
+};
+
+async function gzipped(contents, resolveDir, extraPlugins = []) {
+  const result = await build({
+    stdin: { contents, resolveDir, loader: "tsx" },
+    bundle: true,
+    write: false,
+    minify: true,
+    format: "esm",
+    platform: "browser",
+    target: "es2022",
+    jsx: "automatic",
+    define: { "process.env.NODE_ENV": '"production"' },
+    external: EXTERNAL,
+    plugins: [localExternal, ...extraPlugins],
+    logLevel: "error",
+  });
+  const code = result.outputFiles[0].contents;
+  return { min: code.length, gzip: gzipSync(code, { level: 9 }).length };
+}
+const kb = (bytes) => (bytes / 1024).toFixed(1);
+
+const rows = [];
+for (const widget of [...WIDGETS, "total"]) {
+  const row = [widget];
+  const files = widget === "total" ? WIDGETS : [widget];
+  const entry = files.map((file) => `export * from "./${file}";`).join("\n");
+  for (const [library, plugins] of [
+    ["radix", []],
+    ["rac", []],
+    ["rac", [germanOnly]],
+  ]) {
+    const { min, gzip } = await gzipped(
+      entry,
+      path.join(ui, "src/spike", library),
+      plugins,
+    );
+    row.push(`${kb(gzip)} kB (${kb(min)} kB min)`);
+  }
+  rows.push(row);
+}
+console.log(
+  "| widget | Radix gzip (min) | React Aria gzip (min) | React Aria, de-DE only |",
+);
+console.log("| --- | --- | --- | --- |");
+for (const row of rows) console.log(`| ${row.join(" | ")} |`);
+```
+
+```bash
+source <scratch>/toolkit.sh
+node "$SCRATCH/spike-bundle.mjs" "$WORKTREE" | tee "$SCRATCH/bundle.md"
+```
+
+Expected (dry run):
+
+```
+| widget | Radix gzip (min) | React Aria gzip (min) | React Aria, de-DE only |
+| --- | --- | --- | --- |
+| dialog | 12.8 kB (37.7 kB min) | 20.7 kB (62.6 kB min) | 20.3 kB (61.6 kB min) |
+| dropdown-menu | 27.7 kB (79.3 kB min) | 44.2 kB (140.1 kB min) | 41.8 kB (134.0 kB min) |
+| radio-group | 9.5 kB (27.1 kB min) | 14.3 kB (43.6 kB min) | 14.3 kB (43.6 kB min) |
+| combobox | 26.9 kB (76.9 kB min) | 55.5 kB (187.8 kB min) | 49.6 kB (159.2 kB min) |
+| date-picker | 47.1 kB (155.2 kB min) | 70.7 kB (234.7 kB min) | 57.3 kB (175.3 kB min) |
+| total | 62.0 kB (202.0 kB min) | 108.6 kB (370.6 kB min) | 89.1 kB (283.6 kB min) |
+```
+
+The Radix combobox and date picker include `cmdk` and `react-day-picker` + `date-fns` (the substitutes); say so
+under the table.
+
+- [ ] **Step 12: Design-system bypasses.** Write `<scratch>/spike-ratchet.mjs`:
+
+```js
+// C7 spike: the design-system bypasses each library's spike code needed, counted
+// with the ratchet's own patterns (the ratchet itself skips src/spike/), plus
+// arbitrary values and properties the ratchet does not count.
+// Usage: node spike-ratchet.mjs <repo-root>
+import { globSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const [root] = process.argv.slice(2);
+const { countPatterns } = await import(
+  pathToFileURL(path.join(root, "scripts/design-ratchet.mjs")).href
+);
+for (const library of ["radix", "rac"]) {
+  const files = globSync(`packages/ui/src/spike/${library}/*.{ts,tsx}`, {
+    cwd: root,
+  }).map((file) => ({
+    // Outside src/spike/, so the ratchet's skip rule does not apply.
+    path: file.replace("src/spike/", "src/"),
+    content: readFileSync(path.join(root, file), "utf8"),
+  }));
+  const counts = Object.entries(countPatterns(files, {})).filter(
+    ([, n]) => n > 0,
+  );
+  const arbitrary = files.flatMap(
+    ({ content }) => content.match(/(?<=["\s])[\w:-]*\[[^\]\s"]+\]/g) ?? [],
+  );
+  console.log(
+    `${library.padEnd(5)} ratchet: ${counts.map(([k, n]) => `${k} ${n}`).join(", ") || "0"}; arbitrary: ${arbitrary.join(" ") || "none"}`,
+  );
+}
+```
+
+```bash
+source <scratch>/toolkit.sh
+node "$SCRATCH/spike-ratchet.mjs" "$WORKTREE"
+```
+
+Expected (dry run): `radix ratchet: 0; arbitrary: data-[state=open] data-[state=closed] data-[state=closed]
+data-[selected=true] data-[selected=true] data-[state=checked] data-[state=checked]` and `rac ratchet: 0;
+arbitrary: transition-[opacity,translate]`.
+
+- [ ] **Step 13: Composition.** No script: compare how each library meets the C2 API, from the spike code. The PR
+      body carries this comparison (fill in what the spike found):
+
+```tsx
+// Radix: `asChild` hands trigger behaviour (handlers, ref, ARIA) to the C2 Button
+// through Slot - the same mechanism as `Button asChild` itself.
+<Dialog.Trigger asChild>
+  <Button variant="primary">Termin anfragen</Button>
+</Dialog.Trigger>
+<Dialog.Close asChild>
+  <Button variant="ghost">Abbrechen</Button>
+</Dialog.Close>
+
+// React Aria: triggers need a pressable child. The C2 Button joins through
+// Pressable (it spreads props onto a host <button>) ...
+<DialogTrigger>
+  <Pressable>
+    <Button variant="primary">Termin anfragen</Button>
+  </Pressable>
+  <ModalOverlay>...</ModalOverlay>
+</DialogTrigger>
+// ... closing uses the Dialog's render prop (or RAC's own Button with slot="close"):
+<Dialog>{({ close }) => <Button variant="ghost" onClick={close}>Abbrechen</Button>}</Dialog>
+// ... or RAC's Button carries the CVA classes (C8 would export buttonVariants);
+// states come as render props / data-* (data-pressed, data-focus-visible):
+<RacButton className={({ isFocusVisible }) => cn(buttonVariants({ variant: "primary" }), isFocusVisible && "...")} />
+```
+
+Also note: RAC collection items with render-function children need `textValue`; RAC links take client navigation
+through `RouterProvider`, Radix through `asChild` on `next/link`; Radix state styling uses value variants
+(`data-[state=open]:`), RAC boolean ones (`data-open:`, `data-selected:`).
+
+- [ ] **Step 14: Checks and commit.**
+
+```bash
+source <scratch>/toolkit.sh
+stop 6106
+cd "$WORKTREE" && pnpm format && just check
+cd "$WORKTREE" && git status --short
+```
+
+Expected: `just check` green (dry run: 104 tests, build, 48 smoke tests); `git status` lists only
+`packages/ui/package.json`, `packages/ui/src/exports.test.ts`, `packages/ui/src/spike/`, `pnpm-lock.yaml`,
+`scripts/design-ratchet.mjs` - no file under `apps/` or `docs/`. Commit
+`chore: headless widget spike - Radix Primitives vs React Aria Components` (plain message, no trailer).
+
+- [ ] **Step 15: Draft PR.** Push and open the PR as a **draft** against `refactor/ui-tokens`, following the run's
+      rules file (for example `gh pr create --draft --base refactor/ui-tokens --head spike/headless-widgets`). Do
+      not tick the spec's C7 box, do not edit _Decisions_, do not mark the PR ready. Report the PR to the
+      controller; phase C's automatic run stops here (gate C7).
+
+PR body (first line verbatim):
+
+- "Draft spike - never merged. The code is thrown away after the maintainer's choice (gate C7)."
+- "Based on `refactor/ui-tokens` (C3); runs in parallel to C4-C6." and "Part of #139."
+- _What was built_: the five widgets on both libraries in the brand look (`packages/ui/src/spike/`, stories under
+  _Spike_), the two named Radix substitutes, the two exclusions (export map, ratchet), the versions.
+- _Method_: one line per script (keyboard + axe on the static Storybook, German dates, motion sampling, esbuild +
+  gzip, bypass count) with the exact command, and the time spent per widget pair against its box.
+- _Comparison_ - a table, criteria x library, measured values only:
+
+  | Criterion                  | Radix Primitives                                                             | React Aria Components                       |
+  | -------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------- |
+  | Coverage (5 widgets)       | 3 native; combobox (`cmdk`) and date picker (`react-day-picker`) third-party | 5 native                                    |
+  | Keyboard (passed/total)    | per widget, from `a11y.log`                                                  | per widget                                  |
+  | axe (closed/open)          | per widget, rule ids                                                         | per widget, rule ids                        |
+  | Screen reader (VoiceOver)  | per widget, what is announced                                                | per widget                                  |
+  | German dates               | format, first day, names, the four typed inputs                              | same                                        |
+  | Motion tokens              | enter/exit route, exit keyframes needed, reduced motion                      | same                                        |
+  | Bundle, gzip (all five)    | total and per widget                                                         | total, per widget, and de-DE only           |
+  | Composition with C2 Button | `asChild`                                                                    | `Pressable` / render props                  |
+  | Design-system bypasses     | ratchet count, arbitrary syntax                                              | same                                        |
+  | Needed fixes (documented)  | e.g. `autoFocus`, popover label                                              | e.g. `textValue`, `shouldForceLeadingZeros` |
+  | Time spent vs. box         | per pair                                                                     | per pair                                    |
+
+- _Findings_: every FAIL, violation, "not reached in the time box" and surprise, one line each, with the widget.
+- _Recommendation_ - input for the choice, not the choice: which library the spike's numbers favour and why, and
+  under which weighting the other one wins (e.g. bundle size vs. native coverage and German date handling).
+- Verbatim: "The maintainer chooses (gate C7); C8 follows the choice."
+- _How to check_: `git switch spike/headless-widgets && pnpm install && pnpm storybook`, then _Spike / Radix_ and
+  _Spike / React Aria_: each story by keyboard only (Tab, Enter, arrows, Escape), in light and dark (toolbar
+  _Theme_), at phone width (toolbar _Viewport_, 390 px) and desktop width; the date pickers: type `01.10.2026`,
+  `1.10.2026` and `31.02.2026`. Nothing on the site changes: the PR touches no file under `apps/`.
+
+After the maintainer's choice (not part of this task): the docs PR that opens C8 ticks the spec's C7 box, records
+the choice in the spec's _Decisions_ and in this plan's _After the gate_, and closes this PR; its branch is deleted.
 
 ---
 
