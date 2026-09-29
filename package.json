@@ -11,6 +11,6 @@
     "storybook": "pnpm --filter @skillsite/ui storybook"
   },
   "devDependencies": {
-    "turbo": "^2.11.2"
+    "turbo": "^2.11.4"
   }
 }
