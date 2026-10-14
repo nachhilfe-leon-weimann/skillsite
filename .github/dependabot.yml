@@ -23,6 +23,14 @@ updates:
       javascript-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # ESLint 10 is blocked by the peer ranges of eslint-config-next's plugins; lift once they allow it.
+      - dependency-name: "eslint"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: "docker"
     directory: "/"
