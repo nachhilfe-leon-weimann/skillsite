@@ -57,7 +57,7 @@ export function DocHero({
     <Card className="p-6 sm:p-8">
       <Reveal trigger="mount" variant="rise-soft">
         <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-ink-soft">
-          <Icon className="size-4" aria-hidden="true" />
+          <Icon className="size-4" aria-hidden />
           {badge}
         </div>
         <H1 variant="doc" className="mt-5">
@@ -74,7 +74,7 @@ export function DocHero({
                   className="flex items-center gap-3 rounded-xl border border-line bg-bg p-3"
                 >
                   <span className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-2 text-ink-soft">
-                    <FactIcon className="size-4" aria-hidden="true" />
+                    <FactIcon className="size-4" aria-hidden />
                   </span>
                   <div className="min-w-0">
                     <p className="text-xs text-ink-soft">{fact.label}</p>
@@ -161,7 +161,7 @@ export function DocList({
         <li key={item} className="flex gap-3">
           <span
             className="mt-[0.7rem] size-1.5 shrink-0 rounded-full bg-ink/40"
-            aria-hidden="true"
+            aria-hidden
           />
           <span>{item}</span>
         </li>
@@ -234,7 +234,7 @@ export function DocLinkList({
             <span>{link.label}</span>
             <ExternalLink
               className="size-3.5 shrink-0 text-ink-soft"
-              aria-hidden="true"
+              aria-hidden
             />
           </a>
         </li>
@@ -260,7 +260,7 @@ export function DocProviderLink({
         className="inline-flex items-center gap-1"
       >
         {children}
-        <ExternalLink className="size-3.5" aria-hidden="true" />
+        <ExternalLink className="size-3.5" aria-hidden />
       </InlineLink>
     </p>
   );
@@ -269,10 +269,7 @@ export function DocProviderLink({
 export function DocLegalBasis({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-4 flex gap-3 rounded-xl border border-line bg-surface-2/60 p-3">
-      <Scale
-        className="mt-1 size-4 shrink-0 text-ink-soft"
-        aria-hidden="true"
-      />
+      <Scale className="mt-1 size-4 shrink-0 text-ink-soft" aria-hidden />
       <p className="text-sm leading-6 text-ink-soft">
         <span className="font-medium text-ink">Rechtsgrundlage: </span>
         {children}

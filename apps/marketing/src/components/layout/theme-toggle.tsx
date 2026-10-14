@@ -138,6 +138,7 @@ export function ThemeToggle() {
         <button
           key={value}
           type="button"
+          aria-label={label}
           aria-pressed={mounted ? selectedTheme === value : undefined}
           onClick={() => toggleTheme(value)}
           className={cn(
