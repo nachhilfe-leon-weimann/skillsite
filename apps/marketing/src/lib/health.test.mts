@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { test } from "vitest";
 
 // The build-time version is read once, when the module is first evaluated -
 // hence the import after the environment is set.

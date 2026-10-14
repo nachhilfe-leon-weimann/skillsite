@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test \"src/lib/**/*.test.mts\""
+    "test": "vitest run"
   },
   "dependencies": {
     "@icons-pack/react-simple-icons": "^13.15.1",
@@ -26,6 +26,8 @@
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.4",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.2"
   }
 }
