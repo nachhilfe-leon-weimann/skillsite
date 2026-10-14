@@ -295,5 +295,4 @@ export type SubmitFailureReason =
 
 /** `ok: true` means Cal.com confirmed the booking - never reported otherwise. */
 export type SubmitResult =
-  | { ok: true }
-  | { ok: false; error: string; reason: SubmitFailureReason };
+  { ok: true } | { ok: false; error: string; reason: SubmitFailureReason };

@@ -25,9 +25,7 @@ export default function HomePage() {
         <div className="grid items-center gap-[clamp(2rem,5vw,4rem)] lg:grid-cols-[1.15fr_0.85fr]">
           <div>
             <Reveal trigger="mount" variant="rise-soft" index={0}>
-              <Eyebrow>
-                Nachhilfe in Mathematik, Informatik und Physik
-              </Eyebrow>
+              <Eyebrow>Nachhilfe in Mathematik, Informatik und Physik</Eyebrow>
             </Reveal>
             <Reveal
               trigger="mount"

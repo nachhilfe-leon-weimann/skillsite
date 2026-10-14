@@ -139,9 +139,8 @@ test("reads the link the way a browser hands it over", () => {
     "?re=RE-1840&betrag=90,00+EUR",
     "?re=RE-1840&betrag=90%2C00%C2%A0EUR",
   ]) {
-    const params = new URL(
-      `https://nachhilfe.leonweimann.de/zahlung${query}`,
-    ).searchParams;
+    const params = new URL(`https://nachhilfe.leonweimann.de/zahlung${query}`)
+      .searchParams;
 
     assert.deepEqual(
       parsePaymentRequest(Object.fromEntries(params)),

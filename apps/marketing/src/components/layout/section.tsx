@@ -25,10 +25,7 @@ export function Section({
   return (
     <section
       id={id}
-      className={cn(
-        surface && "border-y border-line bg-surface",
-        className,
-      )}
+      className={cn(surface && "border-y border-line bg-surface", className)}
       {...props}
     >
       {bleed ? (

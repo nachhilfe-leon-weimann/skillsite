@@ -140,14 +140,15 @@ export default function DatenschutzPage() {
         <P variant="doc">
           Bei der Terminbuchung sind Name, E-Mail-Adresse, Wunschtermin und Fach
           beziehungsweise Fächer erforderlich. Beim kostenlosen Erstgespräch
-          benötige ich zusätzlich eine Telefonnummer, bei einer
-          Nachhilfestunde die gewünschte Unterrichtsplattform. Nur ausdrücklich
-          als freiwillig gekennzeichnete Angaben sind optional.
+          benötige ich zusätzlich eine Telefonnummer, bei einer Nachhilfestunde
+          die gewünschte Unterrichtsplattform. Nur ausdrücklich als freiwillig
+          gekennzeichnete Angaben sind optional.
         </P>
         <P variant="doc">
           Die Daten erhalte ich in der Regel direkt von Ihnen. Bei
           minderjährigen Lernenden erhalte ich die Daten üblicherweise von den
-          Erziehungsberechtigten (siehe <SectionRef id="minderjaehrige" />).
+          Erziehungsberechtigten (siehe <SectionRef id="minderjaehrige" />
+          ).
         </P>
       </PrivacySection>
 
@@ -217,9 +218,9 @@ export default function DatenschutzPage() {
       <PrivacySection id="website">
         <P variant="doc">
           Beim Besuch der Website beschränkt sich die Datenverarbeitung auf das
-          technisch Erforderliche (<SectionRef id="hosting" />), die pseudonyme
-          Webanalyse (<SectionRef id="webanalyse" />) und die folgenden
-          Vorgänge.
+          technisch Erforderliche (<SectionRef id="hosting" />
+          ), die pseudonyme Webanalyse (<SectionRef id="webanalyse" />) und die
+          folgenden Vorgänge.
         </P>
 
         <DocSubSection title="Terminbuchung über Cal.com">
@@ -281,8 +282,8 @@ export default function DatenschutzPage() {
         <DocSubSection title="Verlinkung zu externen Plattformen">
           <P variant="doc">
             Meine Website enthält Links zu externen Diensten (Discord, WhatsApp,
-            Instagram, YouTube, TikTok, GitHub). Erst beim Anklicken werden Daten
-            an den jeweiligen Anbieter übertragen. Bitte beachten Sie die
+            Instagram, YouTube, TikTok, GitHub). Erst beim Anklicken werden
+            Daten an den jeweiligen Anbieter übertragen. Bitte beachten Sie die
             Datenschutzbestimmungen dieser Plattformen:
           </P>
           <DocLinkList links={externalPlatformPrivacyLinks} />
@@ -301,10 +302,10 @@ export default function DatenschutzPage() {
         <P variant="doc">
           Die Daten werden ausschließlich pseudonymisiert und aggregiert
           gespeichert. Zur Unterscheidung von Besuchern dient eine Kennung, die
-          als Hash aus technischen Merkmalen gebildet wird und deren Bestandteile
-          monatlich wechseln – eine Wiedererkennung über Monatsgrenzen hinweg
-          oder eine Rückrechnung auf Ihre IP-Adresse ist nicht möglich. Ein
-          seitenübergreifendes Tracking findet nicht statt.
+          als Hash aus technischen Merkmalen gebildet wird und deren
+          Bestandteile monatlich wechseln – eine Wiedererkennung über
+          Monatsgrenzen hinweg oder eine Rückrechnung auf Ihre IP-Adresse ist
+          nicht möglich. Ein seitenübergreifendes Tracking findet nicht statt.
         </P>
         <P variant="doc">
           Umami setzt keine Cookies und speichert oder liest keine Informationen
@@ -313,9 +314,10 @@ export default function DatenschutzPage() {
         </P>
         <DocLegalBasis>
           Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der
-          Reichweitenmessung und Verbesserung meines Angebots). Sie können dieser
-          Verarbeitung jederzeit widersprechen (siehe{" "}
-          <SectionRef id="widerspruch" />).
+          Reichweitenmessung und Verbesserung meines Angebots). Sie können
+          dieser Verarbeitung jederzeit widersprechen (siehe{" "}
+          <SectionRef id="widerspruch" />
+          ).
         </DocLegalBasis>
       </PrivacySection>
 
@@ -331,8 +333,8 @@ export default function DatenschutzPage() {
           <DocSubSection title="Zeiterfassung und Abrechnung (Clockodo)">
             <P variant="doc">
               Für Zeiterfassung und Abrechnung nutze ich den Dienst Clockodo
-              (Clockodo GmbH, Viktoriastraße 25A, 59425 Unna). Verarbeitet werden
-              Name, Kontaktdaten und Abrechnungsinformationen.{" "}
+              (Clockodo GmbH, Viktoriastraße 25A, 59425 Unna). Verarbeitet
+              werden Name, Kontaktdaten und Abrechnungsinformationen.{" "}
               {dpaSentence("der Clockodo GmbH")}
             </P>
             <DocProviderLink href="https://www.clockodo.com/de/datenschutz/">
@@ -391,8 +393,9 @@ export default function DatenschutzPage() {
               Telefonnummern und Nachrichteninhalte verarbeitet. Soweit dabei
               eine Übermittlung in die USA stattfindet, stützt sich WhatsApp
               Ireland auf das EU-US Data Privacy Framework, unter dem die
-              empfangenden Meta-Gesellschaften zertifiziert sind. Die Nutzung ist
-              freiwillig – Sie erreichen mich ebenso per E-Mail oder Telefon.
+              empfangenden Meta-Gesellschaften zertifiziert sind. Die Nutzung
+              ist freiwillig – Sie erreichen mich ebenso per E-Mail oder
+              Telefon.
             </P>
             <DocProviderLink href="https://www.whatsapp.com/legal/privacy-policy-eea">
               Datenschutzerklärung von WhatsApp
@@ -407,8 +410,9 @@ export default function DatenschutzPage() {
             <P variant="doc">
               Ich nutze die Plattform Kleinanzeigen (Kleinanzeigen GmbH, Berlin)
               für die Kontaktaufnahme. Bei Anfragen werden dort Name,
-              Kontaktdaten und Nachrichteninhalte verarbeitet. Verantwortlich für
-              die Datenverarbeitung auf der Plattform ist die Kleinanzeigen GmbH.
+              Kontaktdaten und Nachrichteninhalte verarbeitet. Verantwortlich
+              für die Datenverarbeitung auf der Plattform ist die Kleinanzeigen
+              GmbH.
             </P>
             <DocProviderLink href="https://themen.kleinanzeigen.de/datenschutzerklaerung/">
               Datenschutzerklärung von Kleinanzeigen
@@ -437,9 +441,9 @@ export default function DatenschutzPage() {
         <DocGroup title="Zahlung">
           <DocSubSection title="Zahlung (PayPal)">
             <P variant="doc">
-              Bei Zahlung per PayPal werden Zahlungsdaten an PayPal (Europe)
-              S.à r.l. et Cie, Luxemburg, übermittelt. PayPal ist dabei
-              eigenständig datenschutzrechtlich verantwortlich.
+              Bei Zahlung per PayPal werden Zahlungsdaten an PayPal (Europe) S.à
+              r.l. et Cie, Luxemburg, übermittelt. PayPal ist dabei eigenständig
+              datenschutzrechtlich verantwortlich.
             </P>
             <DocProviderLink href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full">
               Datenschutzerklärung von PayPal
@@ -471,30 +475,30 @@ export default function DatenschutzPage() {
           <DocList items={skillForgeDataItems} />
           <P variant="doc">
             SkillForge läuft auf meinem eigenen virtuellen Server bei Hostinger
-            in Frankfurt am Main (siehe <SectionRef id="hosting" />); die Daten
-            verbleiben innerhalb der EU.
+            in Frankfurt am Main (siehe <SectionRef id="hosting" />
+            ); die Daten verbleiben innerhalb der EU.
           </P>
         </DocSubSection>
 
         <DocSubSection title="SkillBot (Discord-Bot)">
           <P variant="doc">
             SkillBot ist ein Discord-Bot, der auf meinem Discord-Server
-            Funktionen zur Organisation des Unterrichts bereitstellt. Verarbeitet
-            werden insbesondere:
+            Funktionen zur Organisation des Unterrichts bereitstellt.
+            Verarbeitet werden insbesondere:
           </P>
           <DocList items={skillBotDataItems} />
           <P variant="doc">
             SkillBot wird bei Cybrancee (How About Group Ltd, Vereinigtes
             Königreich) gehostet. Die Übermittlung in das Vereinigte Königreich
             ist durch den Angemessenheitsbeschluss der EU-Kommission abgesichert
-            (Art. 45 DSGVO); die Regelungen zur Auftragsverarbeitung nach Art. 28
-            DSGVO finden Sie unter <SectionRef id="hosting" />.
+            (Art. 45 DSGVO); die Regelungen zur Auftragsverarbeitung nach Art.
+            28 DSGVO finden Sie unter <SectionRef id="hosting" />.
           </P>
         </DocSubSection>
 
         <DocLegalBasis>
-          {lawfulBasisContract}; ergänzend Art. 6 Abs. 1 lit. f DSGVO (effiziente
-          Organisation und Sicherheit des Unterrichtsbetriebs).
+          {lawfulBasisContract}; ergänzend Art. 6 Abs. 1 lit. f DSGVO
+          (effiziente Organisation und Sicherheit des Unterrichtsbetriebs).
         </DocLegalBasis>
       </PrivacySection>
 
@@ -506,10 +510,10 @@ export default function DatenschutzPage() {
         </P>
         <P variant="doc">
           Die Verarbeitung der Daten der Lernenden erfolgt zur Durchführung des
-          mit den Erziehungsberechtigten geschlossenen Vertrags. Ich stütze keine
-          Datenverarbeitung auf die Einwilligung Minderjähriger; Angebote wie der
-          Discord-Server werden nur in Abstimmung mit den Erziehungsberechtigten
-          genutzt.
+          mit den Erziehungsberechtigten geschlossenen Vertrags. Ich stütze
+          keine Datenverarbeitung auf die Einwilligung Minderjähriger; Angebote
+          wie der Discord-Server werden nur in Abstimmung mit den
+          Erziehungsberechtigten genutzt.
         </P>
         <DocLegalBasis>
           Art. 6 Abs. 1 lit. b DSGVO (Durchführung des mit den
@@ -519,8 +523,8 @@ export default function DatenschutzPage() {
 
       <PrivacySection id="weitergabe">
         <P variant="doc">
-          Ihre Daten gebe ich nur in den in dieser Erklärung beschriebenen Fällen
-          weiter, und zwar an folgende Kategorien von Empfängern:
+          Ihre Daten gebe ich nur in den in dieser Erklärung beschriebenen
+          Fällen weiter, und zwar an folgende Kategorien von Empfängern:
         </P>
         <DocList items={dataRecipientCategories} />
         <P variant="doc">
@@ -581,9 +585,9 @@ export default function DatenschutzPage() {
           zwingende schutzwürdige Gründe für die Verarbeitung nachweisen, die
           Ihre Interessen, Rechte und Freiheiten überwiegen, oder die
           Verarbeitung dient der Geltendmachung, Ausübung oder Verteidigung von
-          Rechtsansprüchen. Das betrifft insbesondere die Server-Logfiles und die
-          Webanalyse mit Umami. Direktwerbung betreibe ich nicht. Ein formloser
-          Widerspruch an{" "}
+          Rechtsansprüchen. Das betrifft insbesondere die Server-Logfiles und
+          die Webanalyse mit Umami. Direktwerbung betreibe ich nicht. Ein
+          formloser Widerspruch an{" "}
           <InlineLink variant="doc" href={`mailto:${privacyContact.email}`}>
             {privacyContact.email}
           </InlineLink>{" "}
@@ -593,18 +597,18 @@ export default function DatenschutzPage() {
 
       <PrivacySection id="datensicherheit">
         <P variant="doc">
-          Ich nutze technische und organisatorische Sicherheitsmaßnahmen, um Ihre
-          Daten gegen Verlust, Zerstörung und unbefugten Zugriff zu schützen. Die
-          Übertragung von Daten an diese Website erfolgt ausschließlich
-          TLS-verschlüsselt (HTTPS).
+          Ich nutze technische und organisatorische Sicherheitsmaßnahmen, um
+          Ihre Daten gegen Verlust, Zerstörung und unbefugten Zugriff zu
+          schützen. Die Übertragung von Daten an diese Website erfolgt
+          ausschließlich TLS-verschlüsselt (HTTPS).
         </P>
       </PrivacySection>
 
       <PrivacySection id="aktualitaet">
         <P variant="doc">
           Diese Datenschutzerklärung ist aktuell gültig und hat den Stand{" "}
-          {effectiveDate}. Änderungen können durch Anpassungen meiner Dienste oder
-          aufgrund geänderter gesetzlicher Vorgaben notwendig werden.
+          {effectiveDate}. Änderungen können durch Anpassungen meiner Dienste
+          oder aufgrund geänderter gesetzlicher Vorgaben notwendig werden.
         </P>
       </PrivacySection>
     </DocShell>

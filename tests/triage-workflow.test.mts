@@ -39,7 +39,9 @@ test("the workflow has no steps of its own", () => {
   const keys = lines().map((line) => line.trim().replace(/^- /, ""));
 
   assert.deepEqual(
-    keys.filter((key) => ["steps:", "runs-on:", "run:"].some((k) => key.startsWith(k))),
+    keys.filter((key) =>
+      ["steps:", "runs-on:", "run:"].some((k) => key.startsWith(k)),
+    ),
     [],
   );
 });
