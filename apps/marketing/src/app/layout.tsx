@@ -9,12 +9,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { IosToolbarTint } from "@/components/layout/ios-toolbar-tint";
 import { UmamiAnalytics } from "@/components/analytics/umami";
-import { ConsentProvider } from "@/providers/consent-provider";
 import { JsonLd } from "@/components/seo/json-ld";
-// Cookie consent temporarily disabled: there is currently no storage that
-// requires consent. Banner/dialog remain for later use.
-// import { CookieConsentBanner } from "@/components/consent/cookie-consent-banner";
-// import { CookieConsentDialog } from "@/components/consent/cookie-consent-dialog";
 
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -84,16 +79,11 @@ export default function RootLayout({
           Zum Inhalt springen
         </a>
         <ThemeProvider>
-          <ConsentProvider>
-            <Navbar />
-            <main id="main" className="flex-1">
-              {children}
-            </main>
-            <Footer />
-            {/* Cookie consent temporarily disabled – see note in the imports. */}
-            {/* <CookieConsentBanner /> */}
-            {/* <CookieConsentDialog /> */}
-          </ConsentProvider>
+          <Navbar />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          <Footer />
         </ThemeProvider>
         {/* iOS 26 Safari samples this pinned strip's colour to tint the area
             around the floating bottom toolbar; only active at the footer
