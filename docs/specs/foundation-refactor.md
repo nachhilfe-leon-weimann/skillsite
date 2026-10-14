@@ -1,6 +1,6 @@
 # Spec: Foundation refactor (one UI system, one type scale, module structure - before the portal)
 
-> Status: Accepted, 2026-09-25 - no slice started.
+> Status: Accepted, 2026-09-25 - Phase A done.
 > This spec is also the decision record for the arc (no separate ADRs, decision V1): _Decisions_ and _Rules of
 > the refactor_ carry the why. It builds on the monorepo arc (P0/P1 done: `apps/marketing`, `packages/config`,
 > `packages/ui` + Storybook) and comes **before** the portal (`apps/portal`, `lernen.leonweimann.de`), which gets
@@ -97,7 +97,7 @@ Decided by the maintainer; nothing here is reopened by an implementing agent.
 | **E-05** | One-off page blocks live next to their route in `app/<route>/_components/`; `components/sections` holds blocks with two or more users.                                                                                       | 2026-09-25 |
 | **E-06** | All domain-free layout and shell parts move to `@skillsite/ui` now: container, section, page header, status page, theme provider, fonts, theme toggle, logo.                                                                 | 2026-09-25 |
 | **E-07** | `@skillsite/ui` is grouped into folders with an explicit export map (`@skillsite/ui/<group>/<name>`); stories are not exported; one package.                                                                                 | 2026-09-25 |
-| **E-08** | Variants are named by role, not colour: `variant: primary                                                                                                                                                                    | secondary  | inverse | outline | ghost`, `tone: default | muted | inverse | accent`. Renamed by codemod together with the CVA switch. | 2026-09-25 |
+| **E-08** | Variants are named by role, not colour: `variant: primary \| secondary \| inverse \| outline \| ghost`, `tone: default \| muted \| inverse \| accent`. Renamed by codemod together with the CVA switch.                      | 2026-09-25 |
 | **E-09** | Also treated as bugs: missing `cursor-pointer` on raw buttons, keyboard/screen-reader behaviour (focus trap, Escape and focus return, arrow keys, names, `aria-current`), the anchor scroll offset, the metadata deviations. | 2026-09-25 |
 | **E-10** | A design pass follows the refactor, before the portal (phase E).                                                                                                                                                             | 2026-09-25 |
 | **E-11** | `Switch` stays (gets a story); `Dialog` stays (P1 list).                                                                                                                                                                     | 2026-09-25 |
@@ -207,7 +207,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 - _Technique:_ `docs/.gitignore` ignores only the private folders (`ref/`, `security-audit-*/`, `wording/`);
   `docs/specs/foundation-refactor.md` is added.
 - _Acceptance criteria:_
-  - [ ] `git ls-files docs` lists `docs/.gitignore` and this spec, nothing from the private folders.
+  - [x] `git ls-files docs` lists `docs/.gitignore` and this spec, nothing from the private folders.
 
 **A1 - Agent anchor.**
 
@@ -260,7 +260,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   for workspaces `next build` does not type-check (`packages/ui` incl. stories); Dependabot ignores ESLint
   majors (V3) and no longer drops patch updates when a major PR is closed.
 - _Acceptance criteria:_
-  - [ ] CI runs one job `check` = format, lint, typecheck, test, build, ratchet.
+  - [x] CI runs one job `check` = format, lint, typecheck, test, build, ratchet.
   - [x] Docker image builds with the workspace's turbo version.
 
 **A6 - Playwright smoke.**
@@ -280,7 +280,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   `design-ratchet.json`; a PR may lower but never raise them; exceptions by an allow-list with a reason. Part of
   `just check`.
 - _Acceptance criteria:_
-  - [ ] Adding one `text-[13px]` makes `just check` red; removing one and updating the file keeps it green.
+  - [x] Adding one `text-[13px]` makes `just check` red; removing one and updating the file keeps it green.
 
 ### Phase B - Bug fixes _(visible; each PR shows before/after)_
 

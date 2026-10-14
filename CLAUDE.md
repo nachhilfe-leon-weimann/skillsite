@@ -23,9 +23,11 @@ apps/marketing/        the Next.js site (nachhilfe.leonweimann.de)
   src/components/      booking/, layout/, sections/, ...
   src/content/         all visible text (German)
   src/lib/             booking/, payment/, routes, metadata, health
+  e2e/                 Playwright smoke suite
 packages/ui/           @skillsite/ui - tokens (styles/theme.css), primitives, hooks, Storybook
-packages/config/       shared tsconfig and ESLint presets
-tests/                 repo-level tests (release config, workflows)
+packages/config/       shared tsconfig, ESLint and Prettier presets
+scripts/               repo scripts (e.g. the design ratchet)
+tests/                 repo-level tests (release config, workflows, Dockerfile guard)
 docs/specs/            specs: plans and decision records (versioned)
 docs/plans/            task-level implementation plans for spec phases
 ```
@@ -39,6 +41,8 @@ there slice by slice.
 - Visible text lives in `apps/marketing/src/content/*.ts`, not in components.
 - Build pages from `@skillsite/ui` components and the type scale (`text-display` ... `text-caption`). No arbitrary
   values (`text-[...]`, inline `color-mix(...)`, hand-tuned `clamp()`), no hand-built copies of existing components.
+- `just ratchet` counts design-system bypasses (`design-ratchet.json`). A count may never rise; when your change
+  lowers one, run `just ratchet-update` and commit the file. Exceptions go into its `allow` list with a reason.
 - Motion speaks the brand tokens: `ease-flow`, `ease-soft`, `duration-quick|base|slow`, the `lift` utility, `Reveal`.
 - A refactor changes nothing a visitor sees. A bug is fixed in its own `fix:` PR that describes the visible
   change. When it is unclear whether something is a bug or a design choice, stop and ask.

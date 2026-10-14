@@ -14,8 +14,15 @@ lint:
 typecheck:
     pnpm typecheck
 
+# Design ratchet: counts of design-system bypasses may only fall (design-ratchet.json).
+ratchet:
+    node scripts/design-ratchet.mjs
+
+ratchet-update:
+    node scripts/design-ratchet.mjs --update
+
 # `next build` type-checks the apps; `typecheck` covers the packages it does not (incl. stories).
-static-checks: format-check lint typecheck
+static-checks: format-check lint typecheck ratchet
 
 # Everything that must be green before a push; CI's `check` job runs the same.
 check: static-checks test build smoke
