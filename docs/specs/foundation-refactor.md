@@ -119,6 +119,10 @@ Decided by the maintainer; nothing here is reopened by an implementing agent.
 | **V7**   | Text that is still inline in routes moves to `content/*.ts` (June convention "texts live in content").                                                                                                                       | 2026-09-25 |
 | **V8**   | This spec fixes the procedure of the design pass, not its outcome.                                                                                                                                                           | 2026-09-25 |
 | **V9**   | The portal prerequisites known today are recorded here (phase F) so they are not lost.                                                                                                                                       | 2026-09-25 |
+| **V10**  | Home `<head>` (B3): only the missing `og:url` is added; the untemplated title, the short social description and the file-convention OG image stay.                                                                           | 2026-09-27 |
+| **V11**  | `/zahlung` `<head>` (B3): no canonical; the social card stays the site default, no new copy.                                                                                                                                 | 2026-09-27 |
+| **V12**  | The booker's duration select is named "Dauer" for assistive technology (B4); nothing visible changes.                                                                                                                        | 2026-09-27 |
+| **V13**  | Brand icons inside named links get `aria-hidden` only (B4); their `<title>` and its hover tooltip stay.                                                                                                                      | 2026-09-27 |
 
 Earlier decisions this spec relies on (unchanged):
 
