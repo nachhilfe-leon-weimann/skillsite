@@ -32,7 +32,7 @@ const twMerge = extendTailwindMerge({
       duration: [{ duration: ["quick", "base", "slow", "flow", "settle"] }],
       py: [{ py: ["section", "section-sm"] }],
       pt: [{ pt: ["section"] }],
-      pb: [{ pb: ["section"] }],
+      pb: [{ pb: ["section", "section-sm"] }],
       "bg-image": [{ bg: ["coral-gradient"] }],
       hyphens: [{ hyphens: ["heading"] }],
     },

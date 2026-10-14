@@ -71,7 +71,7 @@ export function Accordion({
               >
                 <div
                   className={cn(
-                    "px-6 pb-6 leading-relaxed text-ink-soft transition-[opacity,transform] duration-base ease-flow",
+                    "px-6 pb-6 leading-relaxed text-ink-soft transition-[opacity,translate] duration-base ease-flow",
                     isOpen
                       ? "translate-y-0 opacity-100"
                       : "-translate-y-1 opacity-0",

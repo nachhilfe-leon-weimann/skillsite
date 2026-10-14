@@ -4,6 +4,29 @@
 /* Generate utilities for classes used inside the shared UI package. */
 @source "../../../../packages/ui/src";
 
+/* Navbar breakpoints (1080px / 1278px at the default font size). In rem so they
+   sort among Tailwind's rem breakpoints; `nav:` / `max-nav:` never leave a gap. */
+@theme {
+  --breakpoint-nav: 67.5rem;
+  --breakpoint-nav-wide: 79.875rem;
+}
+
+/* Height of the sticky header (logo row below `nav`, button row from `nav` on):
+   anchors land below it instead of under it. */
+:root {
+  --header-height: 4.125rem;
+}
+@media (width >= 67.5rem) {
+  :root {
+    --header-height: 4.4375rem;
+  }
+}
+@layer base {
+  html {
+    scroll-padding-top: var(--header-height);
+  }
+}
+
 /* ---------------------------------------------------------------------------
    App-specific styles below: everything here belongs to components that live
    in this app (code typewriter, lesson timeline, iOS toolbar tint). Shared

@@ -268,7 +268,7 @@ export function Select<T extends string | number>({
         }}
         className={cn(
           "absolute inset-x-0 top-full z-20 mt-2 origin-top rounded-xl border p-1.5",
-          "transition-[opacity,transform] ease-flow",
+          "transition-[opacity,translate,scale] ease-flow",
           t.panel,
           open
             ? "translate-y-0 scale-100 opacity-100 duration-base"
