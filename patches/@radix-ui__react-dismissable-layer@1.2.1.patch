@@ -1,0 +1,66 @@
+diff --git a/dist/index.js b/dist/index.js
+index 402fee19053394d5a404bc818d9dff4348cc1e21..491acdf5da63df14bd67ee5af4e16905ac92bfd1 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -125,11 +125,13 @@ var DismissableLayer = /* @__PURE__ */ React.forwardRef(
+       onInteractOutside?.(event);
+       if (!event.defaultPrevented) onDismiss?.();
+     }, ownerDocument);
+-    const isHighestLayer = node ? index === layers.length - 1 : false;
+     const handleKeyDown = (0, import_react_use_callback_ref.useCallbackRef)((event) => {
+       if (event.key !== "Escape") {
+         return;
+       }
++      // Event-time guard for https://github.com/radix-ui/primitives/issues/4143.
++      const currentLayers = Array.from(context.layers);
++      if (!node || currentLayers[currentLayers.length - 1] !== node) return;
+       onEscapeKeyDown?.(event);
+       if (!event.defaultPrevented && onDismiss) {
+         event.preventDefault();
+@@ -137,12 +139,9 @@ var DismissableLayer = /* @__PURE__ */ React.forwardRef(
+       }
+     });
+     React.useEffect(() => {
+-      if (!isHighestLayer) {
+-        return;
+-      }
+       ownerDocument.addEventListener("keydown", handleKeyDown, { capture: true });
+       return () => ownerDocument.removeEventListener("keydown", handleKeyDown, { capture: true });
+-    }, [ownerDocument, isHighestLayer, handleKeyDown]);
++    }, [ownerDocument, handleKeyDown]);
+     React.useEffect(() => {
+       if (!node) return;
+       if (disableOutsidePointerEvents) {
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 8b8b80f54b3b11264b3156f13a537e3d7d534490..cc5233937f5c9ba7a8cd79d3d723ba6211bd2f3b 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -87,11 +87,13 @@ var DismissableLayer = /* @__PURE__ */ React.forwardRef(
+       onInteractOutside?.(event);
+       if (!event.defaultPrevented) onDismiss?.();
+     }, ownerDocument);
+-    const isHighestLayer = node ? index === layers.length - 1 : false;
+     const handleKeyDown = useCallbackRef((event) => {
+       if (event.key !== "Escape") {
+         return;
+       }
++      // Event-time guard for https://github.com/radix-ui/primitives/issues/4143.
++      const currentLayers = Array.from(context.layers);
++      if (!node || currentLayers[currentLayers.length - 1] !== node) return;
+       onEscapeKeyDown?.(event);
+       if (!event.defaultPrevented && onDismiss) {
+         event.preventDefault();
+@@ -99,12 +101,9 @@ var DismissableLayer = /* @__PURE__ */ React.forwardRef(
+       }
+     });
+     React.useEffect(() => {
+-      if (!isHighestLayer) {
+-        return;
+-      }
+       ownerDocument.addEventListener("keydown", handleKeyDown, { capture: true });
+       return () => ownerDocument.removeEventListener("keydown", handleKeyDown, { capture: true });
+-    }, [ownerDocument, isHighestLayer, handleKeyDown]);
++    }, [ownerDocument, handleKeyDown]);
+     React.useEffect(() => {
+       if (!node) return;
+       if (disableOutsidePointerEvents) {
