@@ -1,5 +1,5 @@
 {
   "extends": "@skillsite/config/typescript/nextjs.json",
-  "include": ["src"],
+  "include": ["src", "e2e", "playwright.config.ts"],
   "exclude": ["node_modules"]
 }

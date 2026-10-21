@@ -25,7 +25,7 @@ ratchet-update:
 static-checks: format-check lint typecheck ratchet
 
 # Everything that must be green before a push; CI's `check` job runs the same.
-check: static-checks test build smoke
+check: static-checks test build smoke widgets
 
 # --- Site ---
 
@@ -43,6 +43,10 @@ test:
 # Functional smoke test against the production build (needs `playwright install chromium` once).
 smoke:
     pnpm smoke
+
+# Browser checks against a fresh static Storybook build (shares the installed Chromium).
+widgets:
+    pnpm widgets
 
 # --- Docker ---
 
