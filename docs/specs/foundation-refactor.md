@@ -1,6 +1,6 @@
 # Spec: Foundation refactor (one UI system, one type scale, module structure - before the portal)
 
-> Status: Accepted, 2026-09-25 - Phase B done.
+> Status: Accepted, 2026-09-25 - Phase B done; C7 decided 2026-10-21, C8 planned (not implemented).
 > This spec is also the decision record for the arc (no separate ADRs, decision V1): _Decisions_ and _Rules of
 > the refactor_ carry the why. It builds on the monorepo arc (P0/P1 done: `apps/marketing`, `packages/config`,
 > `packages/ui` + Storybook) and comes **before** the portal (`apps/portal`, `lernen.leonweimann.de`), which gets
@@ -123,6 +123,7 @@ Decided by the maintainer; nothing here is reopened by an implementing agent.
 | **V11**  | `/zahlung` `<head>` (B3): no canonical; the social card stays the site default, no new copy.                                                                                                                                 | 2026-09-27 |
 | **V12**  | The booker's duration select is named "Dauer" for assistive technology (B4); nothing visible changes.                                                                                                                        | 2026-09-27 |
 | **V13**  | Brand icons inside named links get `aria-hidden` only (B4); their `<title>` and its hover tooltip stay.                                                                                                                      | 2026-09-27 |
+| **V14**  | C7 choice: Radix Primitives plus React DayPicker for C8. Keep shared UI APIs/tokens; discard the #167 spike; manual C8 acceptance remains required.                                                                          | 2026-10-21 |
 
 Earlier decisions this spec relies on (unchanged):
 
@@ -396,22 +397,41 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 - _Acceptance criteria:_
   - [x] No hand-built copy of these patterns is left outside the package (ratchet + grep list in the PR).
 
-**C7 - Headless spike.** _(gate - the maintainer decides)_
+**C7 - Headless spike.** _(decision completed 2026-10-21; V14)_
 
 - _Technique:_ time-boxed, in Storybook, brand look: Radix Primitives vs React Aria Components for dialog,
   dropdown menu, radio group, combobox and date picker. Criteria: accessibility, German date formats, fit with
   the motion tokens, bundle size, composition (`asChild` vs render props). Result: a short comparison in the PR;
   the spike code is thrown away.
 - _Acceptance criteria:_
-  - [ ] The maintainer has chosen; the choice is recorded in _Decisions_.
+  - [x] The maintainer has chosen; Radix Primitives plus React DayPicker are recorded in V14.
 
-**C8 - Accessible widgets.** _(after C7)_
+The comparison remains in [#167](https://github.com/nachhilfe-leon-weimann/skillsite/pull/167). Close that
+draft without merging once the decision documentation reaches `main`; its experiment code is discarded.
+The missing VoiceOver comparison is an evidence gap, not a failed or completed test. C8 still requires a
+manual pass on the chosen implementation.
 
-- _Technique:_ on the chosen base: `Dialog` (focus trap), `Select`, `Popover`/dropdown (one dismiss logic
-  instead of three), `RadioGroup` and chips (arrow-key model, single-choice chips not deselectable by accident),
-  `Switch`; the booker calendar grid gets grid semantics and arrow keys; Escape in the navbar "Online lernen"
-  dropdown returns focus to its trigger (today focus drops to `<body>` once the panel hides).
-- _Check:_ the booker end to end by keyboard; select, navbar dropdown; look unchanged.
+**C8 - Accessible widgets.** _(C7 decided; implementation pending)_
+
+- _Technique:_ Radix-backed shared `Dialog`, non-modal `Popover`, `Select`, `RadioGroup`/choice chips and
+  `Switch`; React DayPicker supplies the domain-free calendar grid. The full-screen mobile navigation consumes
+  Dialog. Single-choice chips retain their selection on repeated activation. Escape in the desktop "Online lernen"
+  popover returns focus to its trigger; nested overlays dismiss only their topmost layer.
+- _Plan:_ [C8 implementation plan](../plans/foundation-refactor-c8.md), based on C6 through #176. Nine small
+  implementation PRs follow the decision/docs PR; each carries its own tests and stories. Booking business logic,
+  API integration and the D1/D2 refactor remain outside this wave.
+- _Acceptance criteria (all pending; see the plan for exact per-PR checks):_
+  - [ ] C8.1: built-Storybook browser fixture runs in the existing `check` path; C9 full coverage stays open.
+  - [ ] C8.2: Dialog focus containment, dismissal, focus return, cleanup and presence/motion are verified.
+  - [ ] C8.3: non-modal desktop Popover preserves ordinary navigation links and fixes Escape/focus return.
+  - [ ] C8.4: modal mobile navigation contains all active controls; route/breakpoint/tint cleanup is verified.
+  - [ ] C8.5: Select preserves typed values/tones and has verified Radix keyboard/focus behavior.
+  - [ ] C8.6: radio rows and single/multi chips preserve payloads and implement the documented keyboard model.
+  - [ ] C8.7: Switch behavior is tested in a real browser story despite having no live app consumer.
+  - [ ] C8.8: calendar grid/keyboard behavior, availability adapter and Berlin date/time-zone boundaries pass.
+  - [ ] C8.9: integrated production/UI checks and human VoiceOver/Safari/look acceptance are recorded.
+  - [ ] C8 complete: all slices are integrated and the C8.9 completion gate is satisfied; missing manual evidence
+        leaves this box open.
 
 **C9 - Workbench coverage.**
 
@@ -492,7 +512,8 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 
 ```
 A0 -> A1 -> A3 -> { A2, A4, A5, A6, A7 } -> B1 -> { B2, B3, B4 }
-B1 -> C1 -> C2 -> C3 -> C4 -> C5 -> C6 -> C7 (gate) -> C8 -> C9
+B1 -> C1 -> C2 -> C3 -> C4 -> C5 -> C6 -> C8 -> C9
+C3 -> C7 (parallel to C4-C6; Radix chosen 2026-10-21) -> C8
 C1 -> D1 (parallel to C2-C6)          C6 -> D2        A4 -> D3 -> D4
 C9 + D1-D4 -> D5 -> D6 -> E -> F
 ```
@@ -510,7 +531,6 @@ an unmerged one.
 
 ## Open questions
 
-- **C7:** Radix Primitives or React Aria Components - after the spike.
 - **Phase E:** each consolidation - the maintainer, per pattern.
 - **Phase F:** the portal decisions listed there.
 

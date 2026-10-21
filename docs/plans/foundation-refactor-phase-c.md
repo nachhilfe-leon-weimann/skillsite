@@ -11,6 +11,10 @@
 > C5 (df639f5) and dry-run end to end; one docs PR carries both. Every task of C1-C7 is detailed; C8 and C9 follow
 > the C7 gate (_After the gate_).
 >
+> **Update, 2026-10-21:** the maintainer chose Radix Primitives plus React DayPicker (spec V14).
+> The C7 stop/selection instructions below describe the completed spike. Future implementation follows
+> [the separate C8 plan](foundation-refactor-c8.md), based on C6 through #176; C8 is not implemented yet.
+>
 > **Paths.** Commands use two placeholders the controller fills in each dispatch: `<worktree>` is the absolute path
 > of the task's worktree, `<scratch>` the absolute path of the task's scratch dir
 > (`.superpowers/sdd/<plan-workspace>/scratch/taskN/`, gitignored). The agent harness keeps no shell variables,
@@ -1153,8 +1157,9 @@ Wave 3 (C6):
 
 Given by the controller for this phase (not reopened):
 
-- Phase C runs automatically through C1-C6 and the C7 spike and stops at the C7 gate: the maintainer picks Radix
-  Primitives or React Aria Components. C8 and C9 get only the section _After the gate_ here.
+- The original waves ran through C1-C6 and the C7 spike and stopped at the maintainer gate. On 2026-10-21
+  the maintainer chose Radix Primitives plus React DayPicker (spec V14); the separate
+  [C8 plan](foundation-refactor-c8.md) now details implementation after C6. C9 remains a later coverage audit.
 - Waves: wave 1 detailed C1-C3; wave 2 details C4 and C5 (Tasks 4a-5c); wave 3 details C7 (its own docs PR,
   written against 943fb6e) and splits C6 into PR-sized tasks (a later docs PR, against the then-current code) -
   each wave a docs PR in the stack.
@@ -12517,20 +12522,25 @@ PR body (first line verbatim):
   _Theme_), at phone width (toolbar _Viewport_, 390 px) and desktop width; the date pickers: type `01.10.2026`,
   `1.10.2026` and `31.02.2026`. Nothing on the site changes: the PR touches no file under `apps/`.
 
-After the maintainer's choice (not part of this task): the docs PR that opens C8 ticks the spec's C7 box, records
-the choice in the spec's _Decisions_ and in this plan's _After the gate_, and closes this PR; its branch is deleted.
+After the maintainer's choice (not part of this task): the docs PR that opens C8 ticks the spec's C7 box and
+records the choice in the spec's _Decisions_ and in this plan's _After the gate_. Once that documentation
+reaches `main`, close the spike PR without merging; its branch may then be deleted. Preserve the PR as evidence.
 
 ---
 
 ## After the gate
 
-Written after the maintainer's C7 choice, as its own plan wave:
+**Decision recorded, 2026-10-21:** the maintainer chose **Radix Primitives**, with **React DayPicker** for the
+calendar grid (spec V14), after reviewing [#167](https://github.com/nachhilfe-leon-weimann/skillsite/pull/167).
+The C7 choice box is checked; no C8 implementation or manual acceptance is claimed. The spike's unperformed
+VoiceOver pass remains explicitly unverified. Close #167 without merging after this documentation reaches `main`;
+do not carry experiment code or its exclusions into production.
 
-- **C8 - Accessible widgets** on the chosen base: `Dialog` (focus trap), `Select`, `Popover`/dropdown with one
-  dismiss logic instead of three, `RadioGroup` and chips (arrow keys; single-choice chips cannot be deselected by
-  accident), `Switch`, and the booker calendar grid (grid semantics, arrow keys). It includes the E-09 carry-over
-  recorded in the spec: **Escape in the navbar "Online lernen" dropdown returns focus to its trigger** (today focus
-  drops to `<body>` once the panel hides; `apps/marketing/src/components/layout/navbar.tsx`). C8 changes keyboard
-  and screen-reader behaviour, so its PRs describe the change like a `fix:` (spec: "the widget fixes of C8").
-- **C9 - Workbench coverage:** a story for every exported component with its variants (`Switch` included, E-11);
-  Storybook builds in CI.
+- **C8 - Accessible widgets:** use the separate [C8 implementation plan](foundation-refactor-c8.md). It starts
+  after C6 through #176, specifies nine small implementation PRs with exact acceptance criteria, preserves the
+  shared APIs, and addresses desktop Escape/focus return, mobile focus containment, typed Select values, choice
+  keyboard behavior, Switch and the Berlin booking-calendar adapter. The final gate includes human
+  VoiceOver/Safari and look checks; automated checks alone do not complete C8.
+- **C9 - Workbench coverage:** a story for every exported component and its variants (`Switch` included, E-11).
+  C8.1 brings the static Storybook build/browser fixture into the existing CI `check` path; C9 remains open for
+  the full-library coverage audit.
