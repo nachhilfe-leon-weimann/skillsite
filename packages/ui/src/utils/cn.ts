@@ -79,7 +79,16 @@ const twMerge = extendTailwindMerge({
       ],
       radius: ["callout", "stat", "caret"],
       ease: ["flow", "soft"],
-      animate: ["rise", "fade", "fade-down", "draw", "rise-soft", "settle"],
+      animate: [
+        "rise",
+        "fade",
+        "fade-out",
+        "fall",
+        "fade-down",
+        "draw",
+        "rise-soft",
+        "settle",
+      ],
       container: [
         "page",
         "measure-12",

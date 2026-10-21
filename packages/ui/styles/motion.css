@@ -42,6 +42,27 @@
   }
 }
 
+/* Presence exits mirror the existing fade/rise entrances. */
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fall {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(var(--reveal-travel));
+  }
+}
+
 /* Token-driven entrance: travel reads --reveal-travel, so any element can
    soften/intensify the rise locally with e.g. [--reveal-travel:6px]. */
 @keyframes rise {

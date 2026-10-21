@@ -356,6 +356,9 @@
 
   --animate-rise: rise var(--transition-duration-base) var(--ease-flow) both;
   --animate-fade: fade var(--transition-duration-quick) var(--ease-flow) both;
+  --animate-fade-out: fade-out var(--transition-duration-quick) var(--ease-flow)
+    both;
+  --animate-fall: fall var(--transition-duration-base) var(--ease-flow) both;
   --animate-fade-down: fade-down var(--transition-duration-quick)
     var(--ease-flow) both;
   --animate-draw: draw var(--transition-duration-slow) var(--ease-flow) 150ms
