@@ -9,12 +9,7 @@ import type { LucideIcon } from "lucide-react";
 
 /** How a field is rendered in the booking form. */
 export type FieldKind =
-  | "text"
-  | "email"
-  | "tel"
-  | "textarea"
-  | "chips"
-  | "radio";
+  "text" | "email" | "tel" | "textarea" | "chips" | "radio";
 
 /** A choice for `chips` / `radio` fields. */
 export type FieldOption = {

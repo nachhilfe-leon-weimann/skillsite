@@ -23,7 +23,10 @@ test("any value in the honeypot is a signal", () => {
 });
 
 test("submitting faster than the threshold is a signal", () => {
-  assert.equal(detectSpamSignal({ fillDurationMs: 2_999 }, options), "too_fast");
+  assert.equal(
+    detectSpamSignal({ fillDurationMs: 2_999 }, options),
+    "too_fast",
+  );
   assert.equal(detectSpamSignal({ fillDurationMs: 0 }, options), "too_fast");
 });
 
@@ -65,6 +68,9 @@ test("a retry re-measures the duration, so a too-fast block is recoverable", () 
 });
 
 test("the fill duration is a non-negative integer", () => {
-  assert.equal(withFillDuration({ formLoadedAt: 100.4 }, 3_456.9).fillDurationMs, 3_357);
+  assert.equal(
+    withFillDuration({ formLoadedAt: 100.4 }, 3_456.9).fillDurationMs,
+    3_357,
+  );
   assert.equal(withFillDuration({ formLoadedAt: 500 }, 100).fillDurationMs, 0);
 });
