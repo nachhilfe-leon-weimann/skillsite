@@ -46,6 +46,7 @@ test("section paddings conflict with spacing utilities", () => {
   expect(cn("py-section py-section-sm")).toBe("py-section-sm");
   expect(cn("pt-section py-section")).toBe("py-section");
   expect(cn("pb-section pb-0")).toBe("pb-0");
+  expect(cn("pb-section pb-section-sm")).toBe("pb-section-sm");
 });
 
 test("the page width conflicts with max-width utilities", () => {
@@ -95,6 +96,7 @@ const utilityConflicts: Record<string, string | null> = {
   "py-section-sm": "py-4",
   "pt-section": "pt-4",
   "pb-section": "pb-4",
+  "pb-section-sm": "pb-4",
   "hyphens-heading": "hyphens-none",
   "no-scrollbar": null,
   lift: null,
