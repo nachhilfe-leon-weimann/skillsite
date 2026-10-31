@@ -78,5 +78,5 @@ export function IosToolbarTint() {
         ? "is-active"
         : undefined;
 
-  return <div id="ios-toolbar-tint" className={className} aria-hidden="true" />;
+  return <div id="ios-toolbar-tint" className={className} aria-hidden />;
 }
