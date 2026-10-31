@@ -261,7 +261,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   majors (V3) and no longer drops patch updates when a major PR is closed.
 - _Acceptance criteria:_
   - [ ] CI runs one job `check` = format, lint, typecheck, test, build, ratchet.
-  - [ ] Docker image builds with the workspace's turbo version.
+  - [x] Docker image builds with the workspace's turbo version.
 
 **A6 - Playwright smoke.**
 

@@ -11,8 +11,11 @@ format-check:
 lint:
     pnpm lint
 
-# Types are checked by `next build`, so `build` is the typecheck; there is no separate recipe.
-static-checks: format-check lint
+typecheck:
+    pnpm typecheck
+
+# `next build` type-checks the apps; `typecheck` covers the packages it does not (incl. stories).
+static-checks: format-check lint typecheck
 
 # Everything that must be green before a push; CI's `check` job runs the same.
 check: static-checks test build
