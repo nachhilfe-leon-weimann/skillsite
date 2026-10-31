@@ -250,8 +250,8 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   `apps/marketing/src/lib` and the two under `tests/`. Drop the import-free rule for tested modules; tested code
   may import `@/...` again (consolidating the duplicated constants/log helpers happens in D6).
 - _Acceptance criteria:_
-  - [ ] `pnpm test` runs all former tests green; `node --test` is gone from every script.
-  - [ ] A component test (e.g. `Button`) runs in jsdom in CI.
+  - [x] `pnpm test` runs all former tests green; `node --test` is gone from every script.
+  - [x] A component test (e.g. `Button`) runs in jsdom in CI.
 
 **A5 - CI and build hygiene.**
 

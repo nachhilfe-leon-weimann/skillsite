@@ -2,7 +2,7 @@
  * Turns the two values an invoice link carries - invoice number and amount -
  * into a PayPal checkout URL.
  *
- * Pure and import-free so the rules are unit-testable, and deliberately the
+ * Pure so the rules are unit-testable, and deliberately the
  * only place that knows the payment destination: recipient, currency and item
  * name are constants here, so a link can never send a customer to another
  * account. Input decides the amount and the reference, nothing else.
