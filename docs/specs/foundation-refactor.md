@@ -322,7 +322,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 - _Check:_ `<head>` of every route (title, description, canonical, OG, Twitter, JSON-LD) - only the listed
   deviations change.
 - _Acceptance criteria:_
-  - [ ] No route renders `<link rel="canonical" href=".../">` except `/`.
+  - [x] No route renders `<link rel="canonical" href=".../">` except `/`.
 
 **B4 - Accessibility without widget rebuilds.**
 
