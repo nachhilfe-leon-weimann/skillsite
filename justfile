@@ -18,7 +18,7 @@ typecheck:
 static-checks: format-check lint typecheck
 
 # Everything that must be green before a push; CI's `check` job runs the same.
-check: static-checks test build
+check: static-checks test build smoke
 
 # --- Site ---
 
@@ -32,6 +32,10 @@ build:
 
 test:
     pnpm test
+
+# Functional smoke test against the production build (needs `playwright install chromium` once).
+smoke:
+    pnpm smoke
 
 # --- Docker ---
 
