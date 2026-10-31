@@ -4,9 +4,6 @@ import { Container } from "@/components/layout/container";
 import { Logo } from "@/components/layout/logo";
 import { SocialLinks } from "@/components/layout/social-links";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-// Cookie settings are temporarily disabled (see layout.tsx) – the button remains
-// available for later use.
-// import { CookieSettingsButton } from "@/components/consent/cookie-settings-button";
 import { primaryNav, platformNav } from "@/content/site";
 import { contactDetails } from "@/content/contact";
 import { routes } from "@/lib/routes";
@@ -110,7 +107,6 @@ export function Footer() {
             <Link href={routes.agb} className={legalLinkClass}>
               AGB
             </Link>
-            {/* <CookieSettingsButton className={legalLinkClass} /> */}
             <ThemeToggle />
           </div>
         </div>
