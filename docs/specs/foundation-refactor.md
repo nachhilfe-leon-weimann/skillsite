@@ -372,7 +372,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   tokens. Remove `H1`-`H3`/`P` site variants, `Small`, `Muted`. Replace the hand-built eyebrows and raw headings.
   Fix heading levels semantically where the outline skips (`/faecher`) - visual size unchanged.
 - _Acceptance criteria:_
-  - [ ] `typography` exports one API; the ratchet shows no raw `text-(xs...2xl)` outside the allow-list.
+  - [x] `typography` exports one API; the ratchet shows no raw `text-(xs...2xl)` outside the allow-list.
 
 **C5 - Layout and shell into the package.** _(E-06)_
 

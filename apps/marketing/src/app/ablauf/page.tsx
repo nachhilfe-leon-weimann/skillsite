@@ -6,6 +6,7 @@ import { SectionHeader } from "@skillsite/ui/layout/section-header";
 import { Button } from "@skillsite/ui/primitives/button";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { StepGrid } from "@/components/sections/step-grid";
@@ -61,13 +62,13 @@ export default function ProcessPage() {
               id="discord"
               className="rounded-3xl bg-navy p-panel text-on-navy shadow-card"
             >
-              <span className="text-eyebrow uppercase text-accent-blue">
+              <Eyebrow dot={false} tone="inverse-accent">
                 Unser Klassenzimmer
-              </span>
+              </Eyebrow>
               <Heading as="h3" size="h4" className="mt-3.5 mb-2.5 text-white">
                 Unterricht über Discord oder Microsoft Teams
               </Heading>
-              <Text tone="inverse-muted" className="mb-4">
+              <Text tone="inverse-soft" className="mb-4">
                 Live mit geteiltem Bildschirm: wie am selben Tisch, nur ohne
                 Anfahrt. Du wählst die Plattform, die für dich am einfachsten
                 ist.

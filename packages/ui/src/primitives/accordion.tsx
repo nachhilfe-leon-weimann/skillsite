@@ -45,7 +45,7 @@ export function Accordion({
                 <span
                   aria-hidden
                   className={cn(
-                    "flex size-7.5 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xl leading-none text-coral transition-transform duration-quick ease-soft",
+                    "flex size-7.5 shrink-0 items-center justify-center rounded-full bg-surface-2 text-accordion-icon leading-none text-coral transition-transform duration-quick ease-soft",
                     isOpen && "rotate-45",
                   )}
                 >

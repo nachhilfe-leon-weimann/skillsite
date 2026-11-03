@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { primaryCta, trustLine } from "@/content/site";
@@ -29,9 +30,9 @@ export function CtaSection({
         variant="rise-soft"
         className="relative overflow-hidden rounded-3xl bg-coral-gradient p-panel-cta text-center text-white shadow-glow-lg"
       >
-        <span className="text-eyebrow uppercase text-on-accent-90">
+        <Eyebrow dot={false} tone="on-accent">
           {eyebrow}
-        </span>
+        </Eyebrow>
         <Heading size="h2" className="mx-auto mt-4 max-w-measure-14">
           {title}
         </Heading>
