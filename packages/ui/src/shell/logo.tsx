@@ -1,9 +1,14 @@
 import Image from "next/image";
 
-import { cn } from "@skillsite/ui/utils/cn";
-import { brand } from "@/content/site";
+import { cn } from "../utils/cn";
 
 type LogoProps = {
+  /** Brand name: the image's alt text and the first text line. */
+  name: string;
+  /** Second text line. */
+  tagline: string;
+  /** Logo image (a path under the app's `public/`). */
+  src: string;
   showText?: boolean;
   /** `inverse` on navy surfaces (footer). */
   tone?: "default" | "inverse";
@@ -11,7 +16,11 @@ type LogoProps = {
   textClassName?: string;
 };
 
+/** Logo mark plus name and tagline; the app passes its brand. */
 export function Logo({
+  name,
+  tagline,
+  src,
   showText = true,
   tone = "default",
   className,
@@ -20,8 +29,8 @@ export function Logo({
   return (
     <span className={cn("flex items-center gap-3", className)}>
       <Image
-        src={brand.logo}
-        alt={brand.name}
+        src={src}
+        alt={name}
         width={42}
         height={41}
         priority
@@ -35,7 +44,7 @@ export function Logo({
               tone === "inverse" ? "text-white" : "text-ink",
             )}
           >
-            {brand.name}
+            {name}
           </span>
           <span
             className={cn(
@@ -43,7 +52,7 @@ export function Logo({
               tone === "inverse" ? "text-on-navy-soft" : "text-ink-soft",
             )}
           >
-            {brand.tagline}
+            {tagline}
           </span>
         </span>
       ) : null}

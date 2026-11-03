@@ -7,9 +7,9 @@ import { ChevronDown, Menu, X } from "lucide-react";
 
 import { cn } from "@skillsite/ui/utils/cn";
 import { Container } from "@skillsite/ui/layout/container";
-import { Logo } from "@/components/layout/logo";
+import { Logo } from "@skillsite/ui/shell/logo";
 import { Button } from "@skillsite/ui/primitives/button";
-import { primaryCta, primaryNav, platformNav } from "@/content/site";
+import { brand, primaryCta, primaryNav, platformNav } from "@/content/site";
 import { useBodyScrollLock } from "@skillsite/ui/hooks/use-body-scroll-lock";
 import { useMediaQuery } from "@skillsite/ui/hooks/use-media-query";
 import { DESKTOP_NAV_QUERY } from "@/lib/breakpoints";
@@ -105,7 +105,7 @@ function NavbarContent({ pathname }: { pathname: string }) {
           onClick={closeMobileMenu}
           className="shrink-0"
         >
-          <Logo />
+          <Logo name={brand.name} tagline={brand.tagline} src={brand.logo} />
         </Link>
 
         <DesktopNav pathname={pathname} platformActive={isPlatformActive} />
