@@ -3,11 +3,13 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or
 > superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for
 > tracking. **Each task is one slice = one branch = one PR.** Phase B is not merged yet: the slices form one
-> linear stack on top of it (see _Execution order_). **This plan is written in waves.** Wave 1 fixed the
-> skeleton of all of phase C and detailed C1-C3 (Tasks 1-3, implemented). Wave 2 (this version) details C4 and C5,
-> split into the PR-sized Tasks 4a-4c and 5a-5c, written against the code after C3 (943fb6e) and dry-run end to
-> end. Wave 3 splits C6 into PR-sized tasks and details C7. A task that still reads "_Detailed steps: wave 3_" is
-> not ready to implement.
+> linear stack on top of it (see _Execution order_); the C7 spike is the one branch beside the stack. **This plan
+> is written in waves.** Wave 1 fixed the skeleton of all of phase C and detailed C1-C3 (Tasks 1-3, implemented).
+> Wave 2 details C4 and C5, split into the PR-sized Tasks 4a-4c and 5a-5c, written against the code after C3
+> (943fb6e) and dry-run end to end. Wave 3 details C7 (Task 7, written against 943fb6e and dry-run end to end, so
+> the spike runs in parallel to C4-C6) and C6, split into the PR-sized Tasks 6a-6h, written against the code after
+> C5 (df639f5) and dry-run end to end; one docs PR carries both. Every task of C1-C7 is detailed; C8 and C9 follow
+> the C7 gate (_After the gate_).
 >
 > **Paths.** Commands use two placeholders the controller fills in each dispatch: `<worktree>` is the absolute path
 > of the task's worktree, `<scratch>` the absolute path of the task's scratch dir
@@ -19,7 +21,8 @@
 **Goal:** Make `@skillsite/ui` the design system of the spec's target shape - grouped modules and styles with an
 explicit export map (C1), variants on CVA with role names and `Button asChild` (C2), every design value a named
 token (C3), one typography API (C4), layout and shell in the package (C5), primitives for the hand-built duplicates
-(C6) - without changing a rendered pixel, then run the headless-widget spike that gates C8 (C7).
+(C6) - without changing a rendered pixel - and, beside that stack, run the headless-widget spike that gates C8
+(C7).
 
 **Architecture:** C1-C6 are refactors, proven identical by measurement, not by eye. C1 and C2 keep every element,
 attribute and text node of the server-rendered HTML and the built CSS byte-identical (_Verification toolkit_:
@@ -33,7 +36,9 @@ class merger, and the drift test in `utils/cn.test.ts` fails for any `@theme` na
 C4 and C5 unify and move components: their HTML is proven equal to the old one after sorting class tokens (CVA and
 moved components may order the same classes differently) and, in C5c, masking the hashed font class names - with
 the slice's map applied where a class or a tag is renamed - and computed styles are compared as in C3; the one
-deliberate DOM change (a heading level on `/faecher`) is its own `fix:` PR.
+deliberate DOM change (a heading level on `/faecher`) is its own `fix:` PR. C6 replaces hand-built copies with
+primitives under the same proof and adds a navigation check, because the server HTML cannot tell `next/link` from
+`<a>`; its one behaviour change (three text links onto `next/link`) is its own `fix:` PR as well.
 
 **Tech Stack:** pnpm 12.4.2 + Turborepo 2.11.2, Node 26, Next.js 16.3.5 (Turbopack build, Lightning CSS minifier),
 React 19.3.0, TypeScript 7.0.2, Tailwind CSS 4.3.3, tailwind-merge 3.7.0, Vitest 5.0.2 (node + jsdom), Playwright
@@ -49,8 +54,9 @@ React 19.3.0, TypeScript 7.0.2, Tailwind CSS 4.3.3, tailwind-merge 3.7.0, Vitest
 - C1-C6 are refactors: PR titles use `refactor:`, `build:`, `chore:` or `test:`, never `fix:` or `feat:`. Nothing a
   visitor sees changes - no pixel, text, `<head>` entry or behaviour. Where a unification would move a pixel, keep
   the old value as a named variant or token; no rounding (that is phase E). If a slice cannot stay identical, stop
-  and report. The one exception is Task 4c, the `/faecher` heading-level fix: a `fix(a11y):` PR of its own
-  (_Decisions_), which changes three tags and nothing visible.
+  and report. The two exceptions have `fix:` PRs of their own (_Decisions_): Task 4c, the `/faecher` heading-level
+  fix, which changes three tags and nothing visible, and Task 6g, which moves three internal text links onto
+  `next/link` - they navigate without a page load; nothing looks different.
 - Every task proves identity with the _Verification toolkit_ below and puts the numbers in its PR body.
 - Visible text is never edited; bulk edits over German files only with UTF-8-safe tools (`perl -CSD -pi -e ...`).
 - Every new theme token or utility is registered in `cn` (`packages/ui/src/utils/cn.ts`) with a test; the drift
@@ -826,6 +832,220 @@ for (const [file, source] of files) writeFileSync(file, source);
 console.log(`${files.size} files rewritten`);
 ```
 
+**Add exports** - `<scratch>/add-exports.mjs` (wave 3): adds module exports to `packages/ui/package.json`, each in
+its group before the first entry that sorts after it, without reordering the others. Usage (repo root):
+`node "$SCRATCH/add-exports.mjs" primitives/icon-badge primitives/icon-button`.
+
+```js
+// Add module exports to packages/ui/package.json: each goes into its group,
+// before the first entry of that group that sorts after it (else at the group's
+// end); the other entries keep their order.
+// Usage (repo root): node <scratch>/add-exports.mjs <group/name> [...]
+import { readFileSync, writeFileSync } from "node:fs";
+
+const file = "packages/ui/package.json";
+const pkg = JSON.parse(readFileSync(file, "utf8"));
+let entries = Object.entries(pkg.exports);
+for (const module of process.argv.slice(2)) {
+  const key = `./${module}`;
+  const target = `./src/${module}.tsx`;
+  if (pkg.exports[key]) throw new Error(`${key} is exported already`);
+  const group = key.split("/")[1];
+  const inGroup = entries
+    .map(([k], i) => [k, i])
+    .filter(([k]) => k.split("/")[1] === group);
+  if (!inGroup.length) throw new Error(`no group ${group}`);
+  const after = inGroup.find(([k]) => k > key);
+  const at = after ? after[1] : inGroup[inGroup.length - 1][1] + 1;
+  entries = [...entries.slice(0, at), [key, target], ...entries.slice(at)];
+}
+pkg.exports = Object.fromEntries(entries);
+writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
+console.log(`${process.argv.length - 2} exports added`);
+```
+
+**C6 grep list** - `<scratch>/c6-grep.sh` (wave 3): the hand-built copies of the C6 patterns left in the app, one
+section per pattern family; each C6 task quotes its sections in the PR body, Task 6h the whole list with a reason
+per line (the C6 acceptance criterion). Usage (repo root): `bash "$SCRATCH/c6-grep.sh"`.
+
+```bash
+#!/usr/bin/env bash
+# C6 grep list: hand-built copies of the C6 patterns left in the app. Run from the repo root.
+A=apps/marketing/src
+section() { printf '\n## %s\n' "$1"; }
+section "card surfaces (radius + border/tone/shadow on one line)"
+grep -rnE 'rounded-(xl|2xl|3xl|callout)' $A --include='*.tsx' | grep -E 'border-line|border-overlay|bg-navy|bg-coral-gradient|shadow-card'
+section "navy and coral panels"
+grep -rnE 'bg-navy|bg-coral-gradient' $A --include='*.tsx'
+section "round icon buttons"
+grep -rn 'rounded-full border border-line' $A --include='*.tsx'
+section "raw buttons"
+grep -rn '<button' $A --include='*.tsx'
+section "icon badges (a size step and centring on one line)"
+grep -rnE 'size-(7\.5|8|9|9\.5|10|13|14)\b' $A --include='*.tsx' | grep -E 'items-center justify-center|place-items-center'
+section "pills (rounded-full with padding)"
+grep -rnE 'rounded-full[^"]*\bpx-[0-9]' $A --include='*.tsx' | grep -v 'focus:rounded-full'
+section "check marks outside CheckList"
+grep -rn '<AnimatedCheckMark' $A --include='*.tsx'
+section "private helpers, status pages, collapsibles"
+grep -rnE 'function (InfoRow|CenteredState|AnimatedHeight|FooterLink)\b|min-h-\[60vh\]|ResizeObserver|grid-rows-\[' $A --include='*.tsx'
+section "hand-built links"
+grep -rnE 'InlineLink|target="_blank"|rel="|underline-offset|text-on-navy-(soft|muted) transition-colors' $A --include='*.tsx'
+section "hand-built field labels"
+grep -rn 'mb-1.5 text-small font-semibold' $A --include='*.tsx'
+section "raw anchors (outside the link rule)"
+grep -rnE '<a( |$)' $A --include='*.tsx'
+section "active-state helpers (NavLink's classes, written out)"
+grep -rn 'function activeText' $A --include='*.tsx'
+```
+
+**Navigation check** - `<scratch>/check-navigation.mjs` (wave 3), for Tasks 6f and 6g: the server HTML cannot tell
+`next/link` from `<a>`, so it clicks 12 links in both builds - the footer, the mobile menu, the `/termin` arrow link,
+`/zahlung`, the legal table of contents, the AGB's "Preisübersicht" and the booking form's two links - after setting a
+marker on `window`, and reports `client` when the marker survives (client-side navigation) or `document` (a page
+load). Usage: `node "$SCRATCH/check-navigation.mjs" <tree> http://localhost:3110 http://localhost:3111` (about a
+minute). It ends with `Same navigation.` or `<n> links navigate differently.` and exit code 1. Checked: run against
+the same build twice it reports `Same navigation.`, and it tells the AGB's `InlineLink` (`document`) from the footer
+links (`client`).
+
+```js
+// How each moved link navigates: "client" (next/link keeps the document) or
+// "document" (a full page load), in two builds side by side. A marker set on
+// `window` before the click survives only a client-side navigation.
+// Usage: node check-navigation.mjs <repo-root> <before-url> <after-url>
+// Prints one line per link; exit code 1 when a link navigates differently.
+import { createRequire } from "node:module";
+import path from "node:path";
+
+const [root, beforeUrl, afterUrl] = process.argv.slice(2);
+const { chromium } = createRequire(
+  path.join(root, "apps/marketing/package.json"),
+)("@playwright/test");
+
+const footer = (name) => (page) =>
+  page.getByRole("contentinfo").getByRole("link", { name, exact: true });
+const menu = (name) => async (page) => {
+  await page.getByRole("button", { name: "Menü" }).click();
+  if (name === "Termin buchen")
+    await page
+      .getByRole("banner")
+      .getByRole("button", { name: "Online lernen" })
+      .click();
+  return page.getByRole("banner").getByRole("link", { name, exact: true });
+};
+/** The paid booking form on /termin (availability stubbed as in compare-computed). */
+const bookingForm = (name) => async (page) => {
+  await page.getByRole("button", { name: "10:00" }).first().click();
+  await page.getByRole("radio", { name: "Discord" }).click();
+  await page.getByRole("radio", { name: /Mathe/ }).click();
+  return page.getByRole("main").getByRole("link", { name, exact: true });
+};
+const main = (name) => (page) =>
+  page.getByRole("main").getByRole("link", { name, exact: true });
+
+const LINKS = [
+  ["/", 1280, "footer Fächer", footer("Fächer")],
+  ["/", 1280, "footer Termin buchen", footer("Termin buchen")],
+  ["/", 1280, "footer Impressum", footer("Impressum")],
+  ["/", 1280, "footer AGB", footer("AGB")],
+  ["/", 390, "menu Preise", menu("Preise")],
+  ["/", 390, "menu Termin buchen", menu("Termin buchen")],
+  [
+    "/termin",
+    1280,
+    "arrow Erstgespräch",
+    main("Starte mit dem kostenlosen Erstgespräch"),
+  ],
+  [
+    "/zahlung?re=x&betrag=abc",
+    1280,
+    "Alle Kontaktwege",
+    main("Alle Kontaktwege"),
+  ],
+  [
+    "/datenschutz",
+    1280,
+    "toc Verantwortlicher",
+    (page) =>
+      page
+        .getByRole("navigation", { name: "Abschnitte dieser Seite" })
+        .getByRole("link")
+        .first(),
+  ],
+  ["/agb", 1280, "agb Preisübersicht", main("Preisübersicht")],
+  ["/termin", 1280, "form AGB", bookingForm("AGB")],
+  [
+    "/termin",
+    1280,
+    "form Datenschutzerklärung",
+    bookingForm("Datenschutzerklärung"),
+  ],
+];
+
+async function stubAvailability(page) {
+  await page.route(/\/api\/booking\/availability\?/, (route) => {
+    const url = new URL(route.request().url());
+    const year = Number(url.searchParams.get("year"));
+    const month = Number(url.searchParams.get("month"));
+    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const day = (d) =>
+      `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    return route.fulfill({
+      json: {
+        status: "ok",
+        timeZone: "Europe/Berlin",
+        days: [lastDay - 1, lastDay].map((d) => ({
+          date: day(d),
+          slots: [{ time: "10:00", start: `${day(d)}T10:00:00.000+02:00` }],
+        })),
+      },
+    });
+  });
+}
+
+async function navigation(browser, baseUrl, [route, width, , locate]) {
+  const context = await browser.newContext({
+    viewport: { width, height: 900 },
+    reducedMotion: "reduce",
+  });
+  await context.route(
+    /^https?:\/\/(?!(?:127\.0\.0\.1|localhost)(?::\d+)?\/)/,
+    (r) => r.fulfill({ status: 204, body: "" }),
+  );
+  const page = await context.newPage();
+  await stubAvailability(page);
+  await page.goto(baseUrl + route, { waitUntil: "networkidle" });
+  const link = await locate(page);
+  const href = await link.getAttribute("href");
+  await page.evaluate(() => Object.assign(window, { navigationMarker: true }));
+  await link.click();
+  await page.waitForURL(
+    (url) => url.href.endsWith(href.replace(/^\//, "")) || url.hash === href,
+  );
+  await page.waitForLoadState("networkidle");
+  const kept = await page.evaluate(() => "navigationMarker" in window);
+  await context.close();
+  return `${href} ${kept ? "client" : "document"}`;
+}
+
+const browser = await chromium.launch();
+let differences = 0;
+for (const link of LINKS) {
+  const before = await navigation(browser, beforeUrl, link);
+  const after = await navigation(browser, afterUrl, link);
+  const same = before === after;
+  if (!same) differences++;
+  console.log(`${link[2]}: ${before}${same ? "" : ` -> ${after}`}`);
+}
+await browser.close();
+console.log(
+  differences
+    ? `${differences} links navigate differently.`
+    : "Same navigation.",
+);
+process.exit(differences ? 1 : 0);
+```
+
 Known properties of the pipeline (measured, so nobody is surprised):
 
 - `next build` minifies with Lightning CSS: `bg-white/8` ships as `#ffffff14` with a
@@ -846,6 +1066,17 @@ Known properties of the pipeline (measured, so nobody is surprised):
   (the font spike, wave 2). The hashed class names change with the calling file's path.
 - Preflight gives `h1`-`h6` the same computed styles (size and weight inherit, no margins), so a heading's level
   can change without a visible change.
+- A server component can hand a component to a client component (e.g. `Reveal as={Card}`) only if that component
+  is a client module; a server function fails the build ("Functions cannot be passed directly to Client Components
+  ..."). `Card` and `CheckList` are client modules for that reason (wave 3).
+- Tailwind's scan reads tests, comments and CVA variant names as well: an identifier that happens to be a utility
+  emits a CSS rule nothing applies. Measured in wave 3: a variant named `inline-doc` emitted
+  `.inline-doc{inline-size:…}` (`inline-size` with the `doc` spacing), a test variable `resize` emitted
+  `.resize{resize:both}`, an unused `ml-0.5` a margin rule. The byte comparison of `_styles.css` in the (normalised)
+  snapshot catches it.
+- Removing a `Reveal` wrapper around a `Card` (`<Reveal><Card/></Reveal>` -> `<Reveal as={Card}>`) was measured on
+  `/preise` and `/ablauf`: the full-page screenshots stay byte-identical, but the element tree loses a `div`, which
+  `compare-computed` reports as a structure difference (wave 3, open point 16).
 
 ## Review Focus
 
@@ -886,14 +1117,47 @@ Wave 2 (C4, C5):
 9. **A stale import after a move.** `exports.test.ts` (an export for every module, none for a deleted one), the
    type check and a `grep` for the old paths in Tasks 5a and 5c.
 
+Wave 3 (C7):
+
+10. **A measurement that favours one library.** Task 7 runs one script per criterion against both libraries with
+    the same expectations; `only` steps are limited to each library's own way of opening a widget, the bundle
+    method externalises the same packages for both, and RAC's locale strings are reported both ways. The Radix
+    gaps (combobox, date picker) are filled with named third-party substitutes and scored as such, not hidden.
+11. **The spike leaking into the package.** Its two exclusions (export map, ratchet) and its devDependencies live
+    only on the never-merged `spike/headless-widgets`; Task 7's last check lists the changed files (none under
+    `apps/` or `docs/`).
+12. **A recommendation that pre-empts the gate.** The PR body gives the numbers, a recommendation "as input" with
+    the weighting under which the other library wins, and the verbatim sentence "The maintainer chooses (gate
+    C7); C8 follows the choice."; the spec's C7 box stays open.
+
+Wave 3 (C6):
+
+13. **A variant that is not the old class set.** Every occurrence maps to one variant whose classes equal the old
+    ones as a set: the normalised HTML diff of the 14 URLs proves it for server-rendered elements, `compare-computed`
+    for the 72 page states (the booker's calendar and form, the mobile menu), and each primitive's test pins the class
+    strings of the elements no scenario renders (the testimonials, the booking confirmation, `error.tsx`, the open
+    accordion and sub-list). The order of classes may change, the set may not.
+14. **A class that `cn` drops.** Variants meet the caller's classes in `cn`: `IconButton`'s base `flex` gives way to
+    the menu toggle's `inline-flex` on purpose (tested); any other drop shows in the normalised diff. `NavLink` is not
+    put under `Button asChild` for this reason (its active classes would lose to the button's).
+15. **A link that navigates differently.** `check-navigation.mjs` clicks 12 moved links in both builds: 6f must
+    report "Same navigation.", 6g exactly the three `document -> client` lines; after 6g no hand-written `target` or
+    `rel` is left in the app.
+16. **A new CSS rule from a name.** The `_styles.css` byte comparison caught three in the dry run (`.inline-doc`,
+    `.resize`, `ml-0.5`); every C6 task keeps the built CSS byte-identical.
+17. **A C8 widget touched in passing.** `Dialog`, `Select`, the navbar dropdown (panel, items, dismiss logic), the
+    chips and radio rows, `Switch` and the calendar's day cells stay as they are; the grep list names each remaining
+    line with its reason.
+
 ## Decisions taken while planning
 
 Given by the controller for this phase (not reopened):
 
 - Phase C runs automatically through C1-C6 and the C7 spike and stops at the C7 gate: the maintainer picks Radix
   Primitives or React Aria Components. C8 and C9 get only the section _After the gate_ here.
-- Waves: wave 1 detailed C1-C3; wave 2 details C4 and C5 (Tasks 4a-5c); wave 3 (C6 split into PR-sized tasks,
-  C7) is written later against the then-current code - each wave a docs PR in the stack.
+- Waves: wave 1 detailed C1-C3; wave 2 details C4 and C5 (Tasks 4a-5c); wave 3 details C7 (its own docs PR,
+  written against 943fb6e) and splits C6 into PR-sized tasks (a later docs PR, against the then-current code) -
+  each wave a docs PR in the stack.
 - Pixel-identical proof: built CSS and the text/class/attribute content of the built HTML (C1, C2); computed
   styles where classes legitimately change (C3 onwards) and where server HTML cannot see a state (C2). Exact
   scripts in the _Verification toolkit_.
@@ -907,8 +1171,9 @@ Given by the controller for this phase (not reopened):
 - E-09 carry-over: Escape in the desktop "Online lernen" dropdown does not return focus to its trigger
   (`apps/marketing/src/components/layout/navbar.tsx`). It belongs to C8 (one dismiss logic); this plan records it
   in the spec's C8 technique and in _After the gate_. C1-C6 do not fix it.
-- Order: C1 -> C2 -> C3 -> C4 -> C5 -> C6 -> C7 as one linear stack on `fix/a11y` (#155); every slice touches
-  `packages/ui`, so none runs in parallel (E-17). D1 is not part of this plan.
+- Order: C1 -> C2 -> C3 -> C4 -> C5 -> C6 as one linear stack on `fix/a11y` (#155); every slice touches
+  `packages/ui`, so none runs in parallel (E-17). C7 is the one exception (wave 3, below). D1 is not part of this
+  plan.
 - C5 font spike is an explicit decision branch; wave 2 ran it (Task 5c: yes, the package owns the fonts).
 - C2 codemod names are the spec's, verbatim; variant maps are carried over 1:1 in the order base -> variant ->
   size -> `className`.
@@ -998,6 +1263,77 @@ Rulings by the planner, wave 2 (C4, C5):
   `social-links.tsx` moves into `footer.tsx`, so `components/layout` keeps navbar, footer and the iOS tint.
 - **`next-themes`** moves from the app to the package with the provider and the toggle.
 
+Given by the controller, wave 3 (C7):
+
+- **C7 runs in parallel to C4-C6.** It needs only C2's `Button asChild`/CVA and C3's tokens (the brand look), not
+  C4-C6. `spike/headless-widgets` branches from `refactor/ui-tokens` (943fb6e); its PR is a **draft** against that
+  branch, says in its first line that it is never merged, and its code is thrown away after the maintainer's choice.
+  E-17 (slices touching the same package files run in sequence) is about merged slices; the spike is never merged.
+- **Spike-only folder:** everything lives in `packages/ui/src/spike/` (stories only, nothing in `apps/`), excluded
+  from the export map and from the ratchet by one documented line each, on the spike branch only.
+- **Time box** per widget pair (dialog 45 min, dropdown menu 45, radio group 30, combobox 60, date picker 90; about
+  7.5 h in all); an exceeded box is recorded as a finding ("not reached in the time box"), never polished.
+- **Measurements, exactly specified:** keyboard script (Playwright) and axe-core on the static Storybook build;
+  German date formats with `de-DE` (display, first day of week, month/day names, parsing); motion-token fit
+  including exit animation (Radix `data-state` vs RAC `data-entering`/`data-exiting`); added gzip size per widget and
+  in total via esbuild with React externalised; composition (`asChild` vs render props) against the C2 `Button`.
+  `axe-core` and `esbuild` are devDependencies of the spike branch only.
+- **The Radix gaps are handled honestly:** Radix Primitives have no combobox and no date picker; the spike builds
+  the common substitutes (Popover + `cmdk`, Popover + `react-day-picker`) and scores them as third-party.
+- **Versions pinned exactly** from `npm view <pkg> version` (Task 7, _Background_).
+- **The result** is a comparison table with measured values, a recommendation with reasons, and the statement
+  "The maintainer chooses (gate C7); C8 follows the choice." The recommendation does not pre-empt the choice; the
+  spike PR ticks no box.
+
+Rulings by the planner, wave 3 (C7):
+
+- **All libraries are devDependencies** of `@skillsite/ui` on the spike branch: nothing ships, and C8 adds the
+  chosen one as a real dependency.
+- **One shared look (`look.ts`), per-library motion (`radix/motion.ts`, `rac/motion.ts`):** styling cannot
+  explain a difference, and the motion recipes are exactly where the libraries differ.
+- **Fixes inside the time box** are limited to props or attributes the library documents for that purpose and
+  that keep the widget's behaviour (e.g. RAC `textValue`, `shouldForceLeadingZeros`; DayPicker `autoFocus`); the
+  table names them as "needs X". A default that needs a behaviour change to pass (Radix
+  `DropdownMenu modal={false}`) stays a finding.
+- **RAC is measured with and without its other locales' strings:** its optimize-locales plugin does not run under
+  Turbopack (the site's bundler), so the default number is what the site would ship today; `spike-bundle.mjs`
+  strips the other locales itself because the plugin's esbuild build fails.
+- **Hidden from assistive technology** is read from Chromium's accessibility tree: RAC hides with `inert`, Radix
+  with `aria-hidden`, and Playwright's role queries count only the latter.
+- **A 10-minute VoiceOver pass** per library complements the scripts; what is announced goes into the table.
+- **Radix's `forceMount` route** to transition-based exits is named in the comparison, not built (it moves
+  presence, focus and `aria-hidden` handling into our code).
+
+Rulings by the planner, wave 3 (C6):
+
+- **C6 in eight PRs (6a-6h)**, one pattern family each, so each check fits in a few lines. The behaviour change -
+  three internal text links onto `next/link`, as the spec's "on `next/link`" asks - is the `fix(links):` PR 6g
+  (the refactor rules, as 4c). 6h ticks the C6 box with the full grep list; `c6-grep.sh` and the ratchet
+  (`raw-button` 12 -> 6) are the acceptance check, no new ratchet patterns (open point 23).
+- **Card:** `tone` (`default | inverse | accent`, E-08's vocabulary), `surface` for the default tone
+  (`raised | flat | inset | subtle | doc | frame | glass`), `radius`, `lift`, `asChild`. `surface`, not `variant`:
+  `Reveal` owns `variant`. Padding, the coral glow (`shadow-glow-md` vs `-lg`) and the navy text colour
+  (`text-on-navy` on two of four navy panels) stay with the caller, where they differ today.
+- **`Reveal as={Card}`:** `Reveal`'s props are generic over `as`; `Card` and `CheckList` are client modules so server
+  pages can pass them. Lifting cards stay children of a `Reveal` (`.reveal` beats `lift`); the three existing
+  `<Reveal><Card>` wrappers stay (a DOM change; open point 16).
+- **IconButton:** the disabled look only on a button with a `disabled` prop; the menu toggle keeps `inline-flex`
+  through `className`. **IconBadge:** sizes named by spacing step, `layout` flex or grid; `shrink-0`, margins and the
+  type of a digit stay with the caller.
+- **Pill** is its own primitive without a `display`, not a `Tag` size: three of the five pills have no display of
+  their own (the other two carry their own `inline-flex`).
+- **InfoRow** has the variants `inverse | summary | doc`; its surface is `Card asChild`. The navy slot summary has no
+  icon and stays a `Card surface="glass"`.
+- **Groups:** `CenteredState` and `StatusPage` in `layout/`, `Collapsible` and `AnimatedHeight` in `motion/` (the
+  spec's _Target shape_), the link primitives in `primitives/link.tsx`.
+- **The link rule** (`SmartLink`): a route through `next/link`; `http(s):` in a new tab with
+  `rel="noopener noreferrer"`; `mailto:`, `tel:` and `#` plain; callers cannot set `target` or `rel`. `TextLink`
+  keeps `InlineLink`'s variant names `site`/`doc` (`inline-doc` would be a utility). Button anchors that open another
+  site use `SmartLink` (same attributes); `mailto:` anchors inside `Button`/`Card asChild` stay plain `<a>` (the
+  rule's own result); the desktop nav and dropdown items stay `Button asChild` (C8, and `cn` order).
+- **Field slots** reach `Input`/`Textarea` through a context; the booking passes none (V4).
+- **Not C6:** the one dismiss logic, a `Popover`, and every widget C8 rebuilds (Task 6).
+
 ## Open points for the maintainer
 
 The plan takes the conservative option in each case; none blocks a task.
@@ -1039,10 +1375,51 @@ Wave 2 (each with the conservative default taken):
     other grids named in Task 5b, `/preise`'s inner `mx-auto max-w-230` column (no gutter, inside a Container) and
     the `/ueber-mich` quote card (`max-w-220` on a navy card) - neither is a page container.
 
+Wave 3 (C7):
+
+14. **Spec timeline.** The spec's _Timeline_ reads `C6 -> C7 (gate)`; the plan runs C7 beside C4-C6 from C3
+    (controller decision, see _Decisions_). The docs PR that opens C8 can align the line
+    (`C3 -> C7 (gate; parallel to C4-C6) -> C8`) if the maintainer agrees.
+15. **Radix substitutes.** `cmdk` and `react-day-picker` are the common pairings with Radix; other combobox or
+    calendar libraries (e.g. Headless UI, Ariakit) are outside the spike. If the maintainer leans to Radix, C8
+    picks and pins the substitutes as its own decision.
+
+Wave 3 (C6):
+
+16. **The existing `<Reveal>` wrappers.** The two `/preise` condition cards and the `/ablauf` Discord panel keep
+    `<Reveal><Card>`. `Reveal as={Card}` would remove a `div`: 8 full-page screenshots stay byte-identical, but the
+    DOM changes. Default: keep; a later DOM clean-up (D5 or phase E) can switch them on that measurement.
+17. **Bug or design: the `/zahlung` WhatsApp button opens in the same tab**, while the footer and the `/kontakt` card
+    open WhatsApp in a new one. It is a `Button asChild` anchor without `target`, outside the link rule; the grep
+    list names it, and Tasks 6f and 6h ask the maintainer in their PR bodies. Default: unchanged; a `fix:` if the
+    rule should apply there too.
+18. **`rel` normalised in 6g** ("noreferrer" -> "noopener noreferrer" on 18 anchors; same behaviour in current
+    browsers). Default: part of the fix PR (one rule); drop those three anchors from 6g if the attribute should
+    stay.
+19. **Arrow labels inside link cards** ("Mehr erfahren" + arrow on the subject cards and the `/kontakt` classroom
+    card) stay hand-built: they are not links (the card is), and their styles differ. Default: keep; phase E may
+    unify the arrow affordance.
+20. **The look of the new Field slots** (description: caption, muted; error: caption, semibold, coral; required: a
+    coral `*`) is the planner's proposal from existing classes; no page uses it yet (V4). Default: as proposed; the
+    portal's first form decides.
+21. **Names by value** (`IconBadge` sizes `7.5`-`14`, `Card lift="sm" | "md"`, `Pill` sizes `sm | code | doc | md`,
+    `InfoRow` variants) follow open point 11; rename if wanted.
+22. **`Card` and `CheckList` are client modules**: their code ships to the browser and their elements hydrate (no
+    visible change). Measured (base df639f5 vs the C6 tip, loop in Task 6a): the Card module is 1,309 B raw / 543 B
+    gzip, copied into every route's page chunk; all of C6 adds +1.26 to +1.85 KB gzip first-load JS per static route
+    (`/` +1.31, `/preise` +1.85, `/datenschutz` +1.26); the RSC payload stays within ±4 %; the CSS is byte-identical;
+    hydration errors would fail the smoke suite's console-error check. Under `asChild`, `Slot` joins classes
+    without `cn` when the child is a server component (rendered before `Slot` sees it). The alternative, a client
+    `RevealCard` wrapper, is not the spec's `Reveal as={Card}`. Default: client modules.
+23. **No ratchet patterns for the C6 primitives.** The acceptance uses the ratchet's `raw-button` and
+    `c6-grep.sh`; class-string patterns in the ratchet would be brittle. Default: none added.
+24. **The testimonials dots and the booker's time slots** stay raw buttons (a pagination dot, a slot); D2 (the
+    booker) and phase E may give them primitives.
+
 ## Execution order
 
 Phase B (#152 -> #155) is open and unmerged. Phase C stacks on its tip, one branch per task, each PR based on the
-previous branch:
+previous branch - except the C7 spike, which branches from the C3 result and runs beside C4-C6:
 
 ```
 fix/a11y (#155)
@@ -1050,47 +1427,72 @@ fix/a11y (#155)
     -> refactor/ui-groups            Task 1  C1
       -> refactor/ui-variants        Task 2  C2
         -> refactor/ui-tokens        Task 3  C3
+          -> spike/headless-widgets    Task 7  C7 (draft, never merged; gate) - in parallel to 4a-6
           -> docs/phase-c-plan-wave-2          docs: detail phase C tasks C4 and C5
+            -> docs/phase-c-plan-c7            docs: detail the C7 headless spike
             -> refactor/ui-prose               Task 4a C4  refactor(ui): move the legal pages onto a prose module
               -> refactor/ui-typography        Task 4b C4  refactor(ui): one typography API for headings, text and eyebrows
                 -> fix/faecher-outline         Task 4c C4  fix(a11y): let the subject cards on /faecher follow the page heading
                   -> refactor/ui-layout        Task 5a C5  refactor(ui): move container, section and page header into the package
                     -> refactor/ui-grids       Task 5b C5  refactor(ui): add the Split and CardGrid layouts
                       -> refactor/ui-shell     Task 5c C5  refactor(ui): move theme, logo and fonts into the package
-                        -> docs/phase-c-plan-wave-3   docs: detail phase C slices C6 and C7
-                          -> refactor/ui-<primitive> ... Task 6a.. C6 (one PR each)
-                            -> spike/headless-widgets    Task 7  C7 (draft, never merged; gate)
+                        -> docs/phase-c-plan-wave-3              docs: detail phase C task C6 (+ the C7 spike task)
+                          -> refactor/ui-card                    Task 6a C6  refactor(ui): cards from the duplicates
+                            -> refactor/ui-icon-button           Task 6b C6  refactor(ui): icon buttons and icon badges from the duplicates
+                              -> refactor/ui-labels              Task 6c C6  refactor(ui): pills, check lists and info rows from the duplicates
+                                -> refactor/ui-states            Task 6d C6  refactor(ui): centered states and status pages from the duplicates
+                                  -> refactor/ui-collapsible     Task 6e C6  refactor(ui): collapsible and animated height in the package
+                                    -> refactor/ui-links         Task 6f C6  refactor(ui): text, arrow and nav links on one link rule
+                                      -> fix/text-links          Task 6g C6  fix(links): navigate internal text links without a page load
+                                        -> refactor/ui-field     Task 6h C6  refactor(ui): field error, description and required slots
 ```
 
-Each PR body starts with "Stacked on #N - merge after it." and "Part of #139.". After a squash merge, rebase the
-rest of the chain with `git rebase --onto origin/main <merged-branch> <next-branch>`, run `just check`, and
-`git push --force-with-lease`.
+C7 does not stack: it builds on C2's `Button` and C3's tokens only, touches nothing C4-C6 change on `main`, and is
+never merged. It can start as soon as `docs/phase-c-plan-c7` is approved (the plan is read from that branch). Its
+draft PR targets `refactor/ui-tokens`; when C3 is squash-merged and its branch deleted, GitHub retargets the draft to
+`main` - no rebase is needed, the spike is read, not merged. `docs/phase-c-plan-c7` and `refactor/ui-prose` both
+branch from `docs/phase-c-plan-wave-2`; whichever merges second rebases onto `main` as usual.
+`docs/phase-c-plan-wave-3` also carries the C7 task's plan commit ("docs: detail the C7 headless spike",
+cherry-picked from `docs/phase-c-plan-c7`); if that PR merges first, the rebase drops the duplicate commit. The C6
+tasks start after Task 5c and stack in the order 6a-6h (6c uses 6a's `Card asChild` and 6b's `IconBadge`, 6d
+`IconBadge`, 6g 6f's link module).
+
+Each PR body starts with "Stacked on #N - merge after it." and "Part of #139." (the C7 draft instead starts with
+"Draft spike - never merged.", Task 7). After a squash merge, rebase the rest of the chain with
+`git rebase --onto origin/main <merged-branch> <next-branch>`, run `just check`, and `git push --force-with-lease`.
 
 ## File map
 
-| File                                                                                         | Task | Responsibility                          |
-| -------------------------------------------------------------------------------------------- | ---- | --------------------------------------- |
-| `docs/plans/foundation-refactor-phase-c.md`, spec C8 technique, phase-B plan "After phase B" | 0    | this plan, E-09 carry-over              |
-| `packages/ui/src/{primitives,typography,forms,overlays,layout,motion,utils}/`                | 1    | grouped modules (moved verbatim)        |
-| `packages/ui/styles/{theme,tokens,base,components,motion}.css`                               | 1    | styles split along its sections         |
-| `packages/ui/package.json` (`exports`), `packages/ui/src/exports.test.ts`                    | 1    | explicit export map and its guard       |
-| 39 files under `apps/marketing/src` (imports only)                                           | 1    | grouped import paths                    |
-| `packages/ui/src/primitives/{button,tag}.tsx`, `typography/{heading,text}.tsx` (+ tests)     | 2    | CVA variants, role names, `asChild`     |
-| `packages/ui/src/forms/select.tsx`, `apps/marketing/.../layout/logo.tsx`, `footer.tsx`       | 2    | `inverse` tone, `Logo tone`             |
-| 12 files under `apps/marketing/src` (`LinkButton` -> `Button asChild`), stories              | 2    | one button API                          |
-| `packages/ui/styles/tokens.css`, `styles/base.css` (focus ring)                              | 3    | raw, semantic and `@theme` tokens       |
-| `packages/ui/src/utils/cn.ts`, `utils/cn.test.ts`                                            | 3    | registration and drift guard            |
-| `packages/ui/src/tokens/colors.ts` (+ `colors.test.ts`), `tokens/prose.test.ts`              | 3    | TS colour mirror, prose parity          |
-| 36 files under `apps/marketing/src` and `packages/ui/src` (classes), `design-ratchet.json`   | 3    | token classes, lowered counts           |
-| `packages/ui/src/typography/prose.tsx` (+ test), doc components, the three legal pages       | 4a   | Prose module on the prose tokens        |
-| `packages/ui/src/typography/{heading,text,eyebrow}.tsx`, role size tokens, 12 app files      | 4b   | one typography API, hand-built copies   |
-| `apps/marketing/src/components/sections/subject-cards.tsx`, `e2e/a11y.spec.ts`               | 4c   | `/faecher` heading outline (fix)        |
-| `packages/ui/src/layout/{container,section,page-header}.tsx`, 17 app files                   | 5a   | layout parts in the package             |
-| `packages/ui/src/layout/{split,card-grid}.tsx`, 10 app files                                 | 5b   | two-column and card grids               |
-| `packages/ui/src/shell/*`, `app/layout.tsx`, navbar, footer, Storybook preview               | 5c   | theme, logo, fonts in the package       |
-| `packages/ui/src/{primitives,layout,motion,forms}/*`, their app call sites                   | 6    | primitives from the duplicates (wave 3) |
-| Storybook spike stories (spike branch only)                                                  | 7    | Radix vs React Aria comparison (wave 3) |
-| `CLAUDE.md`                                                                                  | 1-3  | layout line, variant rule, token rule   |
+| File                                                                                               | Task | Responsibility                               |
+| -------------------------------------------------------------------------------------------------- | ---- | -------------------------------------------- |
+| `docs/plans/foundation-refactor-phase-c.md`, spec C8 technique, phase-B plan "After phase B"       | 0    | this plan, E-09 carry-over                   |
+| `packages/ui/src/{primitives,typography,forms,overlays,layout,motion,utils}/`                      | 1    | grouped modules (moved verbatim)             |
+| `packages/ui/styles/{theme,tokens,base,components,motion}.css`                                     | 1    | styles split along its sections              |
+| `packages/ui/package.json` (`exports`), `packages/ui/src/exports.test.ts`                          | 1    | explicit export map and its guard            |
+| 39 files under `apps/marketing/src` (imports only)                                                 | 1    | grouped import paths                         |
+| `packages/ui/src/primitives/{button,tag}.tsx`, `typography/{heading,text}.tsx` (+ tests)           | 2    | CVA variants, role names, `asChild`          |
+| `packages/ui/src/forms/select.tsx`, `apps/marketing/.../layout/logo.tsx`, `footer.tsx`             | 2    | `inverse` tone, `Logo tone`                  |
+| 12 files under `apps/marketing/src` (`LinkButton` -> `Button asChild`), stories                    | 2    | one button API                               |
+| `packages/ui/styles/tokens.css`, `styles/base.css` (focus ring)                                    | 3    | raw, semantic and `@theme` tokens            |
+| `packages/ui/src/utils/cn.ts`, `utils/cn.test.ts`                                                  | 3    | registration and drift guard                 |
+| `packages/ui/src/tokens/colors.ts` (+ `colors.test.ts`), `tokens/prose.test.ts`                    | 3    | TS colour mirror, prose parity               |
+| 36 files under `apps/marketing/src` and `packages/ui/src` (classes), `design-ratchet.json`         | 3    | token classes, lowered counts                |
+| `packages/ui/src/typography/prose.tsx` (+ test), doc components, the three legal pages             | 4a   | Prose module on the prose tokens             |
+| `packages/ui/src/typography/{heading,text,eyebrow}.tsx`, role size tokens, 12 app files            | 4b   | one typography API, hand-built copies        |
+| `apps/marketing/src/components/sections/subject-cards.tsx`, `e2e/a11y.spec.ts`                     | 4c   | `/faecher` heading outline (fix)             |
+| `packages/ui/src/layout/{container,section,page-header}.tsx`, 17 app files                         | 5a   | layout parts in the package                  |
+| `packages/ui/src/layout/{split,card-grid}.tsx`, 10 app files                                       | 5b   | two-column and card grids                    |
+| `packages/ui/src/shell/*`, `app/layout.tsx`, navbar, footer, Storybook preview                     | 5c   | theme, logo, fonts in the package            |
+| `packages/ui/src/primitives/card.tsx` (+ test), `motion/reveal.tsx`, `accordion.tsx`, 17 app files | 6a   | Card surfaces and tones, generic `Reveal as` |
+| `packages/ui/src/primitives/{icon-button,icon-badge}.tsx` (+ test), 11 app files, ratchet          | 6b   | icon buttons and icon badges                 |
+| `packages/ui/src/primitives/{pill,check-list,info-row}.tsx` (+ test), 6 app files                  | 6c   | pills, check lists, info rows                |
+| `packages/ui/src/layout/{centered-state,status-page}.tsx` (+ test), booker, 3 status pages         | 6d   | centred states, status pages                 |
+| `packages/ui/src/motion/{collapsible,animated-height}.tsx` (+ test), accordion, navbar, booker     | 6e   | collapsible, height morph                    |
+| `packages/ui/src/primitives/link.tsx` (+ test), 10 app files                                       | 6f   | the link rule and link primitives            |
+| `packages/ui/src/typography/prose.tsx` (+ tests), 4 app files, `e2e/smoke.spec.ts`                 | 6g   | internal text links on `next/link` (fix)     |
+| `packages/ui/src/forms/field.tsx` (+ test), spec (C6 box)                                          | 6h   | Field slots (V4)                             |
+| `packages/ui/src/spike/*`, export-map and ratchet exclusions (spike branch only)                   | 7    | Radix vs React Aria comparison (draft)       |
+| `CLAUDE.md`                                                                                        | 1-3  | layout line, variant rule, token rule        |
 
 ---
 
@@ -5685,46 +6087,6438 @@ theme toggle (switch light/dark/system); the navbar logo; `pnpm storybook` - the
 
 ---
 
-### Task 6: Primitives from the duplicates (spec C6)
+### Task 6: Primitives from the duplicates (spec C6) - overview
 
-**Branch / PR:** one per primitive group, `refactor/ui-<group>` / `refactor(ui): <primitive> from the duplicates`,
-stacked on `refactor/ui-shell` (via the wave-3 docs PR) in this order unless wave 3 finds a dependency: 6a `Card` (tones, inset/subtle/doc/frame, `asChild`,
-`Reveal as={Card}`), 6b `IconButton` and `IconBadge` (size/shape/tone), 6c `Pill` (or `Tag` sizes), `CheckList`,
-`InfoRow`, 6d `CenteredState` and `StatusPage` (the three status pages), 6e `Collapsible` and `AnimatedHeight`,
-6f `TextLink`/`ArrowLink`/`NavLink` on `next/link` with one external-link rule (`rel`, `target`), 6g `Field`
-`error`/`description`/`required` slots (V4).
+C6 is split into eight PRs, one pattern family each, stacked in this order. The only behaviour change, internal text
+links moving to `next/link`, is its own `fix:` PR (6g), as 4c was:
 
-**Files:** `packages/ui/src/{primitives,layout,motion,forms}/*` (+ exports, stories, tests) and their call sites in
-`apps/marketing/src`; `docs/specs/foundation-refactor.md` (the C6 box, in the last C6 PR).
+| Task | Branch                    | PR title                                                             | Check (routes)                                     |
+| ---- | ------------------------- | -------------------------------------------------------------------- | -------------------------------------------------- |
+| 6a   | `refactor/ui-card`        | `refactor(ui): cards from the duplicates`                            | every card on every route, the lifting cards       |
+| 6b   | `refactor/ui-icon-button` | `refactor(ui): icon buttons and icon badges from the duplicates`     | menu toggle, booker month and back buttons, badges |
+| 6c   | `refactor/ui-labels`      | `refactor(ui): pills, check lists and info rows from the duplicates` | `/ablauf`, `/preise`, `/kontakt`, the booker aside |
+| 6d   | `refactor/ui-states`      | `refactor(ui): centered states and status pages from the duplicates` | 404, `/zahlung` invalid, the booker's states       |
+| 6e   | `refactor/ui-collapsible` | `refactor(ui): collapsible and animated height in the package`       | FAQ accordion, mobile menu, booker steps           |
+| 6f   | `refactor/ui-links`       | `refactor(ui): text, arrow and nav links on one link rule`           | footer, mobile menu, legal pages, `/termin`        |
+| 6g   | `fix/text-links`          | `fix(links): navigate internal text links without a page load`       | `/agb` -> "Preisübersicht", the booking form       |
+| 6h   | `refactor/ui-field`       | `refactor(ui): field error, description and required slots`          | nothing visible (V4); ticks the C6 box             |
 
-**Interfaces:** each variant maps one current occurrence 1:1 (no rounding); the C6 box needs the ratchet plus a
-grep list in the PR showing no hand-built copy is left.
+**Measured on the tree after Task 5c (df639f5)** with `c6-grep.sh` (_Verification toolkit_, wave 3), in
+`apps/marketing/src`:
 
-**Background.** Spec C6. Counts to re-measure after C5 (from the audit of `72197da`, drifted since): card surface
-12x hand-built, icon button 6x, icon badge 12x in 7 sizes, centered state 7x (private to the booker), status page
-3x, collapsible 2x, info row 5 variants, text links 5 styles.
+| Pattern                        | Count                                                                                                                                                                                                                                                                                                          |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Card surfaces written out      | 32: 12 raised (`bg-surface shadow-card`), 7 inset (`bg-bg`), 1 subtle, 2 doc (`bg-surface-2/60`), 1 flat, 2 frame, 1 glass, 4 navy, 2 coral; `Card` itself had 3 users                                                                                                                                         |
+| Round icon buttons             | 6 (booker month 2, booking back 1, testimonials 2, menu toggle 1); `raw-button` 12                                                                                                                                                                                                                             |
+| Icon badges                    | 9 in 7 sizes (7.5, 8, 9, 9.5, 10, 13, 14), 4 radii, 6 tones; plus the accordion's "+" (package) and the `Select` badge (C8)                                                                                                                                                                                    |
+| Pills                          | 5 (`/ablauf` 2, `/online-lernen` 1, the legal-page badge, the `/kontakt` "Jetzt anschreiben"); the chips are C8's                                                                                                                                                                                              |
+| Check lists                    | 2 (`/preise`, `/ablauf`)                                                                                                                                                                                                                                                                                       |
+| Info rows                      | the booker's private `InfoRow` (3 uses), the booked-slot summary, the legal-page facts; the `Select` trigger is C8's                                                                                                                                                                                           |
+| Centered states / status pages | the booker's private `CenteredState` (7 uses); 3 status pages (404, error, `/zahlung`)                                                                                                                                                                                                                         |
+| Collapsibles / height morph    | 2 grid-rows collapsibles (accordion in the package, mobile menu); the booker's private `AnimatedHeight`                                                                                                                                                                                                        |
+| Text, arrow and nav links      | `FooterLink` (4 uses), 3 legal links and 6 social links in the footer, 13 `InlineLink` (3 of them routes, rendered as `<a>`), 10 `DocProviderLink`, the `/termin` arrow link, the `/zahlung` link, 2 mobile-menu link rows, the legal table of contents; `rel` is `noreferrer` 3x and `noopener noreferrer` 5x |
 
-_Detailed steps: wave 3, written against the code after C5 (split into these PR-sized tasks)._
+**Not touched by C6 - C8 rebuilds them on the chosen headless base:** `Dialog`, `Select`, the navbar's "Online
+lernen" dropdown (its panel and items, and every dismiss logic: C6 adds `Collapsible` and `AnimatedHeight`, not the
+one dismiss logic), `RadioGroup`/chips (`radio-field.tsx`, `chips-field.tsx`, including their duplicated field
+labels), `Switch`, and the booker calendar (day cells). The booker's month buttons are plain icon buttons next to
+the grid and become `IconButton`; the grid itself is not touched.
+
+**The same proof in every task.** Step 1 writes `<scratch>/toolkit.sh` and the toolkit scripts the task names,
+builds the _Before tree_ from the previous task's commit and snapshots it. The last step builds the task, compares
+the normalised HTML snapshots (class order and font hashes aside; `_styles.css` included, so a new CSS rule fails
+it) and runs `compare-computed` over the 72 page states. Elements no scenario renders (the testimonials, the booking
+confirmation, `error.tsx`, the open accordion and the open mobile sub-list) keep their exact class set: the task's
+component test pins the class string, and the Background names the old one. 6f and 6g also run
+`check-navigation.mjs`, which clicks each moved link in both builds; 6g expects exactly three links to change. A
+stray rule in `_styles.css` caused by an identifier (a variant name, a test variable) is fixed by renaming the
+identifier - never by allow-listing the rule.
+
+---
+
+### Task 6a: Card from the duplicates (spec C6, part 1)
+
+**Branch:** `refactor/ui-card` from `docs/phase-c-plan-wave-3`. **PR title:** `refactor(ui): cards from the
+duplicates`.
+
+**Files:**
+
+- Modify: `packages/ui/src/primitives/card.tsx`, `packages/ui/src/motion/reveal.tsx` (generic `as`),
+  `packages/ui/src/primitives/accordion.tsx` (its item is a `Card`)
+- Create: `packages/ui/src/primitives/card.test.tsx`
+- Modify: 17 files under `apps/marketing/src`: `app/{page,kontakt/page,online-lernen/page,faecher/page,
+ueber-mich/page,preise/page,ablauf/page}.tsx`, `components/sections/{subject-cards,step-grid,benefit-grid,
+profile-photo,code-typewriter,cta-section}.tsx`, `components/booking/{booker,booking-form}.tsx`,
+  `components/docs/{doc-components,doc-section-nav}.tsx`
+
+**Interfaces:**
+
+- Consumes: Task 5c's tree; `Reveal`, `cn`, `Slot`.
+- Produces:
+  - `Card({ tone?, surface?, radius?, lift?, asChild?, ...div props })` in `@skillsite/ui/primitives/card`, a client
+    module. `tone`: `default` | `inverse` (`bg-navy shadow-card`) | `accent` (`bg-coral-gradient text-white`).
+    `surface` (default tone only): `raised` (default: `border border-line bg-surface shadow-card`) | `flat` (no
+    shadow) | `inset` (`bg-bg`, no shadow) | `subtle` (`bg-surface-2`) | `doc` (`bg-surface-2/60`) | `frame` (border
+    and shadow, no background) | `glass` (`border-overlay-12 bg-overlay-8`). `radius`: `xl` | `2xl` (default) | `3xl`
+    | `callout`. `lift`: `none` | `sm` (`lift [--lift:-0.25rem]`) | `md` (`-0.375rem`); on the default tone it adds
+    `hover:border-coral`. The default card renders exactly the old `Card` string.
+  - `Reveal<T>({ as?: T, ...T's props })`: `as` passes the component's own props through (`surface`, `tone`, ...).
+
+**Background (measured on the tree after Task 5c).** The 32 surfaces of the table above map onto `Card` 1:1, each
+to the variant whose class set equals its old one; padding and layout stay with the caller. Three findings shape
+the API:
+
+- **`Reveal as={Card}` from a server page needs a client module.** `Reveal` is a client component; a server page
+  that passes the server function `Card` as `as` fails the build ("Functions cannot be passed directly to Client
+  Components unless you explicitly expose it by marking it with "use server"", measured on `/ablauf`). A client
+  module reference can cross that boundary, so `card.tsx` starts with `"use client"` (it has no hooks; its elements
+  hydrate, its HTML is unchanged).
+- **`surface`, not `variant`.** `Reveal` owns `variant` (its motion), so a Card axis named `variant` could not be
+  passed through `Reveal as={Card}`.
+- **Lifting cards stay children of a Reveal.** The unlayered `.reveal[data-shown] { transform: none }` and
+  `.reveal`'s `transition-property` beat the `lift` utility (`styles/motion.css`), so a card with `lift` cannot be
+  the revealed element. The four link cards (`/kontakt` WhatsApp, e-mail and classroom cards, the subject cards)
+  are `<Reveal><Card asChild lift=...><a|Link>` - the same DOM as today.
+
+Kept as they are: the three existing wrappers `<Reveal><Card>` (the two `/preise` condition cards, the `/ablauf`
+Discord panel). Replacing them with `Reveal as={Card}` removes a `div`: measured in a throwaway build, 8 full-page
+screenshots (`/preise`, `/ablauf`, 390 and 1280 px, light and dark, reduced motion) are byte-identical, but the DOM
+changes and `compare-computed` cannot pin it element by element (open point 16). Also kept: the navbar dropdown panel
+(C8), the navy halves of the `/preise` card and the booker (split panels inside a card, not cards), the footer and
+the skip link. A dry run of this task gave: HTML of the 14 URLs equal after sorting class tokens (raw class order
+differs in 10 files), `_styles.css` byte-identical; `compare-computed` 72 page states, no differences; card tests red
+(4 of 5) then green; `just static-checks` green.
+
+What the client `Card` costs (measured on the dry run, base df639f5 vs the C6 tip): the Card module is 1,309 B raw /
+543 B gzip and is copied into every route's page chunk; the whole C6 stack adds +1.26 to +1.85 KB gzip of first-load
+JS per static route (`/` +1.31, `/preise` +1.85, `/datenschutz` +1.26); the RSC payload stays within ±4 % per route;
+the CSS is byte-identical; hydration errors would fail the smoke suite's console-error check. The measuring loop
+(repo root, after `just build`; gzip per file, summed; `/kontakt` is dynamic and has no static HTML):
+
+```bash
+cd apps/marketing/.next && for p in index preise datenschutz; do printf '%s ' $p; grep -o '/_next/static/[^"]*\.js' server/app/$p.html | sort -u | sed 's#^/_next/#./#' | while read f; do gzip -9c "$f" | wc -c; done | paste -sd+ - | bc; done
+```
+
+One consequence of the client module: under `asChild`, a server component child (e.g. `InfoRow` in
+`doc-components.tsx`) is rendered before `Slot` sees it, so `Slot` joins the card's classes to the rendered element's
+without `cn` - a conflicting class would not be resolved there (none conflicts today; the normalised HTML diff shows
+it). `card.tsx`'s comment says so.
+
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `docs/phase-c-plan-wave-3`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/primitives/card.test.tsx`:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+
+import { Reveal } from "../motion/reveal";
+import { Card } from "./card";
+
+// Reveal's in-view path observes its element; jsdom has no IntersectionObserver.
+beforeEach(() => {
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+test("the default card is the raised surface with its radius first", () => {
+  render(<Card className="p-6">Karte</Card>);
+  expect(screen.getByText("Karte").className).toBe(
+    "rounded-2xl border border-line bg-surface shadow-card p-6",
+  );
+});
+
+test("each surface is its own set of border, background and shadow", () => {
+  render(
+    <>
+      <Card surface="flat">flat</Card>
+      <Card surface="inset">inset</Card>
+      <Card surface="subtle">subtle</Card>
+      <Card surface="doc" radius="xl">
+        doc
+      </Card>
+      <Card surface="frame" radius="3xl">
+        frame
+      </Card>
+      <Card surface="glass">glass</Card>
+    </>,
+  );
+  const classes = (text: string) => screen.getByText(text).className;
+  expect(classes("flat")).toBe("rounded-2xl border border-line bg-surface");
+  expect(classes("inset")).toBe("rounded-2xl border border-line bg-bg");
+  expect(classes("subtle")).toBe("rounded-2xl border border-line bg-surface-2");
+  expect(classes("doc")).toBe("rounded-xl border border-line bg-surface-2/60");
+  expect(classes("frame")).toBe("rounded-3xl border border-line shadow-card");
+  expect(classes("glass")).toBe(
+    "rounded-2xl border border-overlay-12 bg-overlay-8",
+  );
+});
+
+test("tones replace the surface: inverse is navy, accent is the coral gradient", () => {
+  render(
+    <>
+      <Card tone="inverse" surface="inset" radius="callout">
+        navy
+      </Card>
+      <Card tone="accent" lift="sm" className="shadow-glow-md">
+        coral
+      </Card>
+    </>,
+  );
+  expect(screen.getByText("navy").className).toBe(
+    "bg-navy shadow-card rounded-callout",
+  );
+  expect(screen.getByText("coral").className).toBe(
+    "bg-coral-gradient text-white rounded-2xl lift [--lift:-0.25rem] shadow-glow-md",
+  );
+});
+
+test("a lifting card on the default tone also takes the coral hover border", () => {
+  render(
+    <Card asChild lift="md" className="group p-6">
+      <a href="/faecher">Fächer</a>
+    </Card>,
+  );
+  const link = screen.getByRole("link", { name: "Fächer" });
+  expect(link.getAttribute("href")).toBe("/faecher");
+  expect(link.className).toBe(
+    "rounded-2xl lift [--lift:-0.375rem] border border-line bg-surface shadow-card hover:border-coral group p-6",
+  );
+});
+
+test("Reveal as={Card} is one element with the reveal and the card classes", () => {
+  render(
+    <Reveal as={Card} surface="inset" variant="rise-soft" className="p-6">
+      Schritt
+    </Reveal>,
+  );
+  const card = screen.getByText("Schritt");
+  expect(card.tagName).toBe("DIV");
+  expect(card.parentElement?.tagName).toBe("DIV");
+  expect(card.parentElement?.className).toBe("");
+  expect(card.className).toBe(
+    "rounded-2xl border border-line bg-bg reveal p-6",
+  );
+  expect(card.dataset.reveal).toBe("rise-soft");
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/primitives/card`.
+Expected: FAIL - 4 of the 5 tests (only "the default card is the raised surface ..." passes).
+
+- [ ] **Step 3: Card and Reveal.** Replace `packages/ui/src/primitives/card.tsx` with:
+
+```tsx
+"use client";
+
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+/* ----------------------------------------------------------------------------
+ * Card: the bordered, rounded surface. Padding and layout are set by the
+ * caller. `tone` picks the colour role; on the default tone, `surface` picks
+ * one of the measured surfaces (each a fixed set of border, background and
+ * shadow). `lift` is the hover lift of a card that is a link. Animated cards
+ * are `<Reveal as={Card} ...>` (one element). A lifting card never is: the
+ * unlayered `.reveal` rules override `lift`, so it stays a child of a Reveal.
+ * A client module (no hooks): a server page can pass only a client module to
+ * the client `Reveal`, and `as={Card}` is such a pass. The price: under
+ * `asChild`, a server component child (e.g. `InfoRow` in the legal pages) is
+ * rendered before `Slot` sees it, so `Slot` joins the card's classes to the
+ * rendered element's without `cn` - a conflicting class is not resolved there.
+   ------------------------------------------------------------------------- */
+const cardVariants = cva("", {
+  variants: {
+    tone: {
+      default: "",
+      /** Navy panel. The text colour is the caller's (`text-on-navy` or a child's). */
+      inverse: "bg-navy shadow-card",
+      /** Coral gradient panel. Its glow (`shadow-glow-*`) is the caller's. */
+      accent: "bg-coral-gradient text-white",
+    },
+    radius: {
+      xl: "rounded-xl",
+      "2xl": "rounded-2xl",
+      "3xl": "rounded-3xl",
+      callout: "rounded-callout",
+    },
+    lift: {
+      none: "",
+      sm: "lift [--lift:-0.25rem]",
+      md: "lift [--lift:-0.375rem]",
+    },
+    /** Surfaces of the default tone (ignored by the other tones). */
+    surface: {
+      raised: "",
+      flat: "",
+      inset: "",
+      subtle: "",
+      doc: "",
+      frame: "",
+      glass: "",
+    },
+  },
+  compoundVariants: [
+    {
+      tone: "default",
+      surface: "raised",
+      class: "border border-line bg-surface shadow-card",
+    },
+    /** A raised card without the shadow (link lists on the legal pages). */
+    {
+      tone: "default",
+      surface: "flat",
+      class: "border border-line bg-surface",
+    },
+    /** On a `surface` band: the page background, no shadow. */
+    { tone: "default", surface: "inset", class: "border border-line bg-bg" },
+    {
+      tone: "default",
+      surface: "subtle",
+      class: "border border-line bg-surface-2",
+    },
+    /** Note boxes of the legal pages. */
+    {
+      tone: "default",
+      surface: "doc",
+      class: "border border-line bg-surface-2/60",
+    },
+    /** Border and shadow, no background (a frame around split panels or a photo). */
+    {
+      tone: "default",
+      surface: "frame",
+      class: "border border-line shadow-card",
+    },
+    /** A white wash on navy. */
+    {
+      tone: "default",
+      surface: "glass",
+      class: "border border-overlay-12 bg-overlay-8",
+    },
+    { tone: "default", lift: ["sm", "md"], class: "hover:border-coral" },
+  ],
+  defaultVariants: {
+    tone: "default",
+    radius: "2xl",
+    lift: "none",
+    surface: "raised",
+  },
+});
+
+type CardProps = React.ComponentProps<"div"> &
+  VariantProps<typeof cardVariants> & {
+    /** Render the single child (a link, a `nav`) with the card's look instead of a `div`. */
+    asChild?: boolean;
+  };
+
+export function Card({
+  tone,
+  radius,
+  lift,
+  surface,
+  asChild = false,
+  className,
+  ...props
+}: CardProps) {
+  const Component = asChild ? Slot : "div";
+  return (
+    <Component
+      className={cn(cardVariants({ tone, radius, lift, surface }), className)}
+      {...props}
+    />
+  );
+}
+```
+
+Replace `packages/ui/src/motion/reveal.tsx` with (the props become generic over `as`; the body is unchanged but for
+`const Tag: ElementType = as ?? "div"`):
+
+```tsx
+"use client";
+
+import type {
+  ComponentPropsWithoutRef,
+  CSSProperties,
+  ElementType,
+  ReactNode,
+  Ref,
+} from "react";
+
+import { cn } from "../utils/cn";
+import { useInView } from "../hooks/use-in-view";
+
+type RevealVariant = "rise" | "rise-soft" | "fade" | "settle";
+type RevealTrigger = "in-view" | "mount";
+
+const DEFAULT_STEP = 90;
+
+/**
+ * Mount-trigger runs a CSS keyframe so above-the-fold content paints without
+ * waiting for hydration - no hidden-until-JS LCP hit. In-view goes through the
+ * `.reveal` transition, gated by useInView (below-the-fold only).
+ */
+const MOUNT_ANIM: Record<RevealVariant, string> = {
+  rise: "motion-safe:animate-rise",
+  "rise-soft": "motion-safe:animate-rise-soft",
+  fade: "motion-safe:animate-fade",
+  settle: "motion-safe:animate-settle",
+};
+
+type RevealOwnProps = {
+  variant?: RevealVariant;
+  /** mount = keyframe on paint (above-the-fold / LCP); in-view = IO transition. */
+  trigger?: RevealTrigger;
+  /** Stagger position; delay resolves to index * step (ms). */
+  index?: number;
+  step?: number;
+  /** Explicit delay in ms; wins over index. */
+  delay?: number;
+  /** Blur-to-sharp accent. In-view reveals only, small surfaces - never long
+   *  text or the code block (per-frame text repaint). Ignored for mount. */
+  blur?: boolean;
+  threshold?: number;
+  rootMargin?: string;
+  className?: string;
+  children?: ReactNode;
+  style?: CSSProperties;
+};
+
+/**
+ * `as` renders another element or component (e.g. `Card`) as the revealed
+ * element; its own props (e.g. `surface`) pass through. From a server
+ * component, a component passed as `as` must be a client module.
+ */
+type RevealProps<T extends ElementType> = RevealOwnProps & {
+  as?: T;
+} & Omit<ComponentPropsWithoutRef<T>, keyof RevealOwnProps | "as">;
+
+/**
+ * Choreographed entrance wrapper. Renders server children inside a client
+ * island, so the surrounding section stays a server component.
+ */
+export function Reveal<T extends ElementType = "div">({
+  as,
+  variant = "rise",
+  trigger = "in-view",
+  index,
+  step = DEFAULT_STEP,
+  delay,
+  blur,
+  threshold,
+  rootMargin,
+  className,
+  children,
+  style,
+  ...rest
+}: RevealProps<T>) {
+  const Tag: ElementType = as ?? "div";
+  // Called unconditionally (rules of hooks); the ref is only attached on the
+  // in-view path, so the mount path never spins up an observer.
+  const { ref, inView } = useInView<HTMLElement>({ threshold, rootMargin });
+  const delayMs = delay ?? (index != null ? index * step : undefined);
+
+  if (trigger === "mount") {
+    return (
+      <Tag
+        className={cn(MOUNT_ANIM[variant], className)}
+        style={
+          delayMs != null
+            ? ({ ...style, animationDelay: `${delayMs}ms` } as CSSProperties)
+            : style
+        }
+        {...rest}
+      >
+        {children}
+      </Tag>
+    );
+  }
+
+  return (
+    <Tag
+      ref={ref as Ref<HTMLElement>}
+      className={cn("reveal", className)}
+      data-reveal={variant}
+      data-shown={inView || undefined}
+      data-blur={blur || undefined}
+      style={
+        delayMs != null
+          ? ({ ...style, transitionDelay: `${delayMs}ms` } as CSSProperties)
+          : style
+      }
+      {...rest}
+    >
+      {children}
+    </Tag>
+  );
+}
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run`. Expected: PASS,
+13 files / 74 tests.
+
+- [ ] **Step 4: The call sites.** Save as `<scratch>/c6a-map.mjs` and apply it:
+
+```js
+// C6a: the hand-built card surfaces become Card (surface, tone, radius, lift;
+// asChild for link cards; Reveal as={Card} where the Reveal is the card).
+// [file, from, to, count]; apply with apply-map.mjs, then `pnpm format`.
+const A = "apps/marketing/src";
+const CARD = 'import { Card } from "@skillsite/ui/primitives/card";\n';
+const importAfter = (file, line) => [file, line, line + CARD, 1];
+
+export const REPLACEMENTS = [
+  // Home: the two floating callouts on the hero photo.
+  importAfter(
+    `${A}/app/page.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+  ),
+  [
+    `${A}/app/page.tsx`,
+    'className="absolute -left-4 bottom-8 flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5 shadow-card"',
+    'as={Card} className="absolute -left-4 bottom-8 flex items-center gap-3 px-4 py-3.5"',
+    1,
+  ],
+  [
+    `${A}/app/page.tsx`,
+    'className="absolute -right-3.5 top-6 rounded-callout flex flex-row gap-2 items-center bg-navy px-4 py-2.5 text-callout font-semibold text-white shadow-card"',
+    'as={Card} tone="inverse" radius="callout" className="absolute -right-3.5 top-6 flex flex-row gap-2 items-center px-4 py-2.5 text-callout font-semibold text-white"',
+    1,
+  ],
+
+  // /kontakt: the WhatsApp card and the two side cards are link cards that lift.
+  importAfter(
+    `${A}/app/kontakt/page.tsx`,
+    'import { Reveal } from "@skillsite/ui/motion/reveal";\n',
+  ),
+  [
+    `${A}/app/kontakt/page.tsx`,
+    '"flex flex-1 flex-col justify-center rounded-2xl border border-line bg-surface p-6 shadow-card lift [--lift:-0.25rem] hover:border-coral"',
+    '"flex flex-1 flex-col justify-center p-6"',
+    1,
+  ],
+  [
+    `${A}/app/kontakt/page.tsx`,
+    `            <a
+              href={whatsapp}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-full flex-col justify-center overflow-hidden rounded-2xl bg-coral-gradient p-panel-contact text-white shadow-glow-md lift [--lift:-0.25rem]"
+            >`,
+    `            <Card asChild tone="accent" lift="sm" className="flex h-full flex-col justify-center overflow-hidden p-panel-contact shadow-glow-md">
+            <a href={whatsapp} target="_blank" rel="noreferrer">`,
+    1,
+  ],
+  [
+    `${A}/app/kontakt/page.tsx`,
+    `            </a>
+          </Reveal>`,
+    `            </a>
+            </Card>
+          </Reveal>`,
+    1,
+  ],
+  [
+    `${A}/app/kontakt/page.tsx`,
+    "<a href={`mailto:${email}`} className={sideCardClass}>",
+    '<Card asChild lift="sm" className={sideCardClass}><a href={`mailto:${email}`}>',
+    1,
+  ],
+  [
+    `${A}/app/kontakt/page.tsx`,
+    `            </a>
+            <Link href={routes.onlineLearning} className={sideCardClass}>`,
+    `            </a></Card>
+            <Card asChild lift="sm" className={sideCardClass}><Link href={routes.onlineLearning}>`,
+    1,
+  ],
+  [
+    `${A}/app/kontakt/page.tsx`,
+    `            </Link>
+          </Reveal>`,
+    `            </Link></Card>
+          </Reveal>`,
+    1,
+  ],
+
+  // /online-lernen: six surfaces, each the Reveal itself.
+  importAfter(
+    `${A}/app/online-lernen/page.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+  ),
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    'className="rounded-2xl border border-line bg-surface p-6 shadow-card"',
+    'as={Card} className="p-6"',
+    1,
+  ],
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    'className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-surface-2 px-6 py-5"',
+    'as={Card} surface="subtle" className="mt-6 flex flex-wrap items-center justify-between gap-4 px-6 py-5"',
+    1,
+  ],
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    'className="rounded-2xl border border-line bg-bg p-panel-timeline"',
+    'as={Card} surface="inset" className="p-panel-timeline"',
+    1,
+  ],
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    'className="flex items-start gap-4 rounded-2xl border border-line bg-surface p-6 shadow-card"',
+    'as={Card} className="flex items-start gap-4 p-6"',
+    1,
+  ],
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    'className="rounded-2xl border border-line bg-bg p-7"',
+    'as={Card} surface="inset" className="p-7"',
+    1,
+  ],
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    'className="flex flex-wrap items-center gap-3.5 rounded-2xl border border-line bg-bg px-6 py-6"',
+    'as={Card} surface="inset" className="flex flex-wrap items-center gap-3.5 px-6 py-6"',
+    1,
+  ],
+
+  // /faecher: the topic cards.
+  importAfter(
+    `${A}/app/faecher/page.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+  ),
+  [
+    `${A}/app/faecher/page.tsx`,
+    'className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card"',
+    'as={Card} className="overflow-hidden"',
+    1,
+  ],
+
+  // /ueber-mich: the quote panel (navy) and the principles.
+  importAfter(
+    `${A}/app/ueber-mich/page.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+  ),
+  [
+    `${A}/app/ueber-mich/page.tsx`,
+    'className="mx-auto max-w-220 rounded-3xl bg-navy p-panel-quote shadow-card"',
+    'as={Card} tone="inverse" radius="3xl" className="mx-auto max-w-220 p-panel-quote"',
+    1,
+  ],
+  [
+    `${A}/app/ueber-mich/page.tsx`,
+    'className="rounded-2xl border border-line bg-surface p-6 shadow-card"',
+    'as={Card} className="p-6"',
+    1,
+  ],
+
+  // /preise: the price frame and the BuT steps (Card is imported already).
+  [
+    `${A}/app/preise/page.tsx`,
+    '<div className="grid overflow-hidden rounded-3xl border border-line shadow-card md:grid-cols-2">',
+    '<Card surface="frame" radius="3xl" className="grid overflow-hidden md:grid-cols-2">',
+    1,
+  ],
+  [
+    `${A}/app/preise/page.tsx`,
+    `            </div>
+          </div>
+        </div>
+      </Container>`,
+    `            </div>
+          </Card>
+        </div>
+      </Container>`,
+    1,
+  ],
+  [
+    `${A}/app/preise/page.tsx`,
+    'className="rounded-2xl border border-line bg-bg p-6"',
+    'as={Card} surface="inset" className="p-6"',
+    1,
+  ],
+
+  // /ablauf: the Discord panel keeps its Reveal wrapper (see Task 6a, Background).
+  importAfter(
+    `${A}/app/ablauf/page.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+  ),
+  [
+    `${A}/app/ablauf/page.tsx`,
+    `            <div
+              id="discord"
+              className="rounded-3xl bg-navy p-panel text-on-navy shadow-card"
+            >`,
+    '            <Card id="discord" tone="inverse" radius="3xl" className="p-panel text-on-navy">',
+    1,
+  ],
+  [
+    `${A}/app/ablauf/page.tsx`,
+    `              </Button>
+            </div>
+          </Reveal>`,
+    `              </Button>
+            </Card>
+          </Reveal>`,
+    1,
+  ],
+
+  // Sections.
+  importAfter(
+    `${A}/components/sections/subject-cards.tsx`,
+    'import { Tag } from "@skillsite/ui/primitives/tag";\n',
+  ),
+  [
+    `${A}/components/sections/subject-cards.tsx`,
+    `    <Link
+      href={subject.href}
+      className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 shadow-card lift [--lift:-0.375rem] hover:border-coral"
+    >`,
+    `    <Card asChild lift="md" className="group flex h-full flex-col p-6">
+    <Link href={subject.href}>`,
+    1,
+  ],
+  [
+    `${A}/components/sections/subject-cards.tsx`,
+    `    </Link>
+  );`,
+    `    </Link>
+    </Card>
+  );`,
+    1,
+  ],
+  importAfter(
+    `${A}/components/sections/step-grid.tsx`,
+    'import { Reveal } from "@skillsite/ui/motion/reveal";\n',
+  ),
+  [
+    `${A}/components/sections/step-grid.tsx`,
+    `          className={cn(
+            card && "rounded-2xl border border-line bg-surface p-6 shadow-card",
+          )}`,
+    '          as={card ? Card : "div"}\n          className={cn(card && "p-6")}',
+    1,
+  ],
+  importAfter(
+    `${A}/components/sections/benefit-grid.tsx`,
+    'import { Reveal } from "@skillsite/ui/motion/reveal";\n',
+  ),
+  [
+    `${A}/components/sections/benefit-grid.tsx`,
+    'className="rounded-2xl border border-line bg-surface p-6 shadow-card"',
+    'as={Card} className="p-6"',
+    1,
+  ],
+  importAfter(
+    `${A}/components/sections/profile-photo.tsx`,
+    'import { cn } from "@skillsite/ui/utils/cn";\n',
+  ),
+  [
+    `${A}/components/sections/profile-photo.tsx`,
+    `    <div
+      style={{ aspectRatio: aspect }}
+      className={cn(
+        "relative overflow-hidden rounded-3xl border border-line shadow-card",
+        className,
+      )}
+    >`,
+    `    <Card
+      surface="frame"
+      radius="3xl"
+      style={{ aspectRatio: aspect }}
+      className={cn("relative overflow-hidden", className)}
+    >`,
+    1,
+  ],
+  [
+    `${A}/components/sections/profile-photo.tsx`,
+    "    </div>\n  );\n}",
+    "    </Card>\n  );\n}",
+    1,
+  ],
+  importAfter(
+    `${A}/components/sections/code-typewriter.tsx`,
+    'import { useInView } from "@skillsite/ui/hooks/use-in-view";\n',
+  ),
+  [
+    `${A}/components/sections/code-typewriter.tsx`,
+    `    <div
+      ref={ref}
+      aria-hidden
+      className="overflow-x-auto rounded-2xl bg-navy p-6 text-on-navy shadow-card"
+    >`,
+    `    <Card
+      ref={ref}
+      aria-hidden
+      tone="inverse"
+      className="overflow-x-auto p-6 text-on-navy"
+    >`,
+    1,
+  ],
+  [
+    `${A}/components/sections/code-typewriter.tsx`,
+    "      </div>\n    </div>\n  );\n}",
+    "      </div>\n    </Card>\n  );\n}",
+    1,
+  ],
+  importAfter(
+    `${A}/components/sections/cta-section.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+  ),
+  [
+    `${A}/components/sections/cta-section.tsx`,
+    'className="relative overflow-hidden rounded-3xl bg-coral-gradient p-panel-cta text-center text-white shadow-glow-lg"',
+    'as={Card} tone="accent" radius="3xl" className="relative overflow-hidden p-panel-cta text-center shadow-glow-lg"',
+    1,
+  ],
+
+  // Booking: the booker shell, the navy slot summary, the confirmation, the consent box.
+  importAfter(
+    `${A}/components/booking/booker.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+  ),
+  [
+    `${A}/components/booking/booker.tsx`,
+    `    <div
+      ref={cardRef}
+      className="mx-auto @container overflow-hidden rounded-3xl border border-line bg-surface shadow-card"
+    >`,
+    `    <Card
+      ref={cardRef}
+      radius="3xl"
+      className="mx-auto @container overflow-hidden"
+    >`,
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `        </AnimatedHeight>
+      </div>
+    </div>`,
+    `        </AnimatedHeight>
+      </div>
+    </Card>`,
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    '<div className="mt-6 rounded-2xl border border-overlay-12 bg-overlay-8 p-4">',
+    '<Card surface="glass" className="mt-6 p-4">',
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `              ) : null}
+            </div>
+          ) : null}`,
+    `              ) : null}
+            </Card>
+          ) : null}`,
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    '<div className="mx-auto mb-5 flex max-w-xs items-center gap-3 rounded-2xl border border-line bg-bg p-3.5 text-left">',
+    '<Card surface="inset" className="mx-auto mb-5 flex max-w-xs items-center gap-3 p-3.5 text-left">',
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `              <p className="font-heading font-bold text-ink">{summary}</p>
+            </div>
+          </div>`,
+    `              <p className="font-heading font-bold text-ink">{summary}</p>
+            </div>
+          </Card>`,
+    1,
+  ],
+  importAfter(
+    `${A}/components/booking/booking-form.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+  ),
+  [
+    `${A}/components/booking/booking-form.tsx`,
+    '<div className="flex flex-col gap-3 rounded-2xl border border-line bg-bg p-4">',
+    '<Card surface="inset" className="flex flex-col gap-3 p-4">',
+    1,
+  ],
+  [
+    `${A}/components/booking/booking-form.tsx`,
+    `          </Text>
+        </div>
+      ) : null}`,
+    `          </Text>
+        </Card>
+      ) : null}`,
+    1,
+  ],
+
+  // Legal pages: the hero facts, the note boxes, the link list, the section nav.
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `                <div
+                  key={fact.label}
+                  className="flex items-center gap-3 rounded-xl border border-line bg-bg p-3"
+                >`,
+    `                <Card
+                  key={fact.label}
+                  surface="inset"
+                  radius="xl"
+                  className="flex items-center gap-3 p-3"
+                >`,
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `                  </div>
+                </div>
+              );`,
+    `                  </div>
+                </Card>
+              );`,
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    '<div className="rounded-xl border border-line bg-surface-2/60 p-4">',
+    '<Card surface="doc" radius="xl" className="p-4">',
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `      <DocList items={items} className="my-3 text-prose-sm leading-6" />
+    </div>`,
+    `      <DocList items={items} className="my-3 text-prose-sm leading-6" />
+    </Card>`,
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `          <a
+            href={link.href}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-prose-sm text-ink transition-colors hover:border-coral"
+          >`,
+    `          <Card
+            asChild
+            surface="flat"
+            radius="xl"
+            className="flex items-center justify-between gap-3 px-3 py-2.5 text-prose-sm text-ink transition-colors hover:border-coral"
+          >
+          <a href={link.href} target="_blank" rel="noreferrer">`,
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `          </a>
+        </li>`,
+    `          </a>
+          </Card>
+        </li>`,
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    '<div className="mt-4 flex gap-3 rounded-xl border border-line bg-surface-2/60 p-3">',
+    '<Card surface="doc" radius="xl" className="mt-4 flex gap-3 p-3">',
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    "      </p>\n    </div>\n  );\n}",
+    "      </p>\n    </Card>\n  );\n}",
+    1,
+  ],
+  importAfter(
+    `${A}/components/docs/doc-section-nav.tsx`,
+    'import { cn } from "@skillsite/ui/utils/cn";\n',
+  ),
+  [
+    `${A}/components/docs/doc-section-nav.tsx`,
+    `    <nav
+      aria-label="Abschnitte dieser Seite"
+      className="rounded-2xl border border-line bg-surface p-4 text-prose-sm shadow-card"
+    >`,
+    `    <Card asChild className="p-4 text-prose-sm">
+    <nav aria-label="Abschnitte dieser Seite">`,
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-section-nav.tsx`,
+    "    </nav>\n",
+    "    </nav>\n    </Card>\n",
+    1,
+  ],
+
+  // The package: the accordion item is a Card too.
+  [
+    "packages/ui/src/primitives/accordion.tsx",
+    'import { cn } from "../utils/cn";\n',
+    'import { cn } from "../utils/cn";\nimport { Card } from "./card";\n',
+    1,
+  ],
+  [
+    "packages/ui/src/primitives/accordion.tsx",
+    `          <div
+            key={item.question}
+            className="overflow-hidden rounded-xl border border-line bg-surface shadow-card"
+          >`,
+    `          <Card
+            key={item.question}
+            radius="xl"
+            className="overflow-hidden"
+          >`,
+    1,
+  ],
+  [
+    "packages/ui/src/primitives/accordion.tsx",
+    `            </div>
+          </div>
+        );`,
+    `            </div>
+          </Card>
+        );`,
+    1,
+  ],
+];
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/apply-map.mjs" "$SCRATCH/c6a-map.mjs" && pnpm format && just static-checks
+bash "$SCRATCH/c6-grep.sh" | sed -n '/^## card/,/^## round/p'
+```
+
+Expected: `18 files rewritten`; static checks green; the card section of the grep list prints only
+`components/layout/navbar.tsx` (the dropdown panel, C8), and the navy/coral section only the `/preise` and booker
+navy halves, the skip link (`layout.tsx`) and the footer.
+
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` (the 14 URLs and `_styles.css`; the raw snapshots differ only in class order);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
+- [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): cards from the duplicates`.
+
+PR body: Summary (one `Card` with tones, surfaces, radii and a lift, `asChild` for link cards, `Reveal as={Card}`
+for animated cards; 32 hand-built surfaces in 17 files; `Card` and `Reveal`'s generic `as`, and why `card.tsx` is a
+client module); _What changes for a visitor_: nothing - HTML equal after sorting class tokens, CSS byte-identical,
+`compare-computed` 72 page states; _Cost of the client module_: the numbers and the measuring loop above (Card
+module 1,309 B / 543 B gzip per route chunk, +1.26 to +1.85 KB gzip first-load JS per route over all of C6, RSC
+within ±4 %, CSS identical, hydration covered by the smoke suite); _Grep list_: the card and navy/coral sections of
+`c6-grep.sh` with the reason for each remaining line (dropdown panel: C8; split halves, skip link, footer: not
+cards); _Deviations from the spec_: the
+three existing `<Reveal><Card>` wrappers stay (a DOM change; screenshots identical - open point 16), and lifting
+cards stay inside a Reveal (the `.reveal` cascade); _Deviations from the plan_; _How to check_: `/` (hero callouts,
+subject cards - hover one, step and benefit cards), `/faecher`, `/online-lernen`, `/ueber-mich` (quote, principles,
+code panel), `/preise`, `/ablauf` (Discord panel), `/kontakt` (hover the three cards, the booker frame), `/termin`
+(booker; pick a slot to see the navy "Dein Termin" box), `/datenschutz` (hero facts, note boxes, the link list, the
+table of contents); 390 and 1280 px, light and dark.
+
+---
+
+### Task 6b: IconButton and IconBadge (spec C6, part 2)
+
+**Branch:** `refactor/ui-icon-button` from `refactor/ui-card`. **PR title:** `refactor(ui): icon buttons and icon
+badges from the duplicates`.
+
+**Files:**
+
+- Create: `packages/ui/src/primitives/{icon-button,icon-badge}.tsx`, `packages/ui/src/primitives/icons.test.tsx`
+- Modify: `packages/ui/package.json` (`exports`), `packages/ui/src/primitives/accordion.tsx` (its "+")
+- Modify: `apps/marketing/src/components/booking/{booker,booking-form}.tsx`, `components/layout/navbar.tsx`,
+  `components/sections/{testimonials,subject-cards,benefit-grid,lesson-timeline}.tsx`,
+  `components/docs/doc-components.tsx`, `app/{online-lernen,faecher}/page.tsx`
+- Modify: `design-ratchet.json` (`raw-button` 12 -> 6)
+
+**Interfaces:**
+
+- Consumes: Task 6a.
+- Produces:
+  - `IconButton({ size?: "sm" | "md" | "lg", surface?: "default" | "inset", hover?: "border" | "none",
+"aria-label": string, ...button props })` - `size-9`/`size-10`/`size-11`, `bg-surface`/`bg-bg`, `type="button"` by
+    default. It carries `disabled:pointer-events-none disabled:opacity-40` only when it has a `disabled` prop.
+  - `IconBadge({ as?: "span" | "div", layout?: "flex" | "grid", size?: "7.5" | "8" | "9" | "9.5" | "10" | "13" |
+"14", shape?: "md" | "lg" | "xl" | "full", tone?: "accent" | "accent-12" | "accent-16" | "subtle" | "muted" |
+"inverse" })` - defaults `flex`, `10`, `xl`, `accent`.
+
+**Background (measured on the tree after Task 6a).** The six round buttons share
+`items-center justify-center rounded-full border border-line text-ink`; they differ in size (9/10/11), background
+(`bg-surface`/`bg-bg`), hover (`transition-colors hover:border-ink`, none on the menu toggle) and the disabled look
+(only the month buttons, which can be disabled). A `disabled` prop decides that last one, so every button keeps its
+exact class set. The menu toggle is `inline-flex` where the others are `flex`: it passes `className="inline-flex
+nav:hidden"`, and `cn` drops the base `flex` - the same class set as before. The badges take `shrink-0`, margins and
+the type of a digit (`font-heading text-icon-badge font-bold`, `text-small font-bold`, `text-accordion-icon`) from
+the caller: `shrink-0` is not on every badge (the `/faecher` badge sits in a flex row, where adding it would change
+`flex-shrink`). The legal-page fact badge centres with `grid place-items-center`, a different computed style from
+the flex centring, hence `layout="grid"`. The state circle is a `div` (`as="div"`). Not rendered by any scenario:
+the testimonials buttons (`size="lg" surface="inset"`) and the booking confirmation's badge (`size="9" shape="lg"
+tone="accent-12"`); `icons.test.tsx` pins both class strings, which equal the old ones as sets, and checks that
+`onClick` reaches the button and `disabled` blocks it. A dry run of this
+task gave: HTML equal after sorting class tokens, `_styles.css` byte-identical; `compare-computed` 72 page states,
+no differences; `raw-button` 12 -> 6.
+
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-card`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/primitives/icons.test.tsx`:
+
+```tsx
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, expect, test, vi } from "vitest";
+
+import { IconBadge } from "./icon-badge";
+import { IconButton } from "./icon-button";
+
+afterEach(cleanup);
+
+test("IconButton is a round bordered button with a size, a surface and hover feedback", () => {
+  render(
+    <>
+      <IconButton aria-label="Zurück" size="sm" className="shrink-0" />
+      <IconButton aria-label="Weiter" size="lg" surface="inset" />
+    </>,
+  );
+  const back = screen.getByRole("button", { name: "Zurück" });
+  expect(back.getAttribute("type")).toBe("button");
+  expect(back.className).toBe(
+    "flex items-center justify-center rounded-full border border-line text-ink size-9 bg-surface transition-colors hover:border-ink shrink-0",
+  );
+  expect(screen.getByRole("button", { name: "Weiter" }).className).toBe(
+    "flex items-center justify-center rounded-full border border-line text-ink size-11 bg-bg transition-colors hover:border-ink",
+  );
+});
+
+test("only an IconButton with a disabled prop carries the disabled look", () => {
+  render(
+    <IconButton aria-label="Vorheriger Monat" size="sm" disabled={false} />,
+  );
+  expect(
+    screen.getByRole("button", { name: "Vorheriger Monat" }).className,
+  ).toBe(
+    "flex items-center justify-center rounded-full border border-line text-ink size-9 bg-surface transition-colors hover:border-ink disabled:pointer-events-none disabled:opacity-40",
+  );
+});
+
+test("IconButton forwards onClick, and disabled blocks it", () => {
+  const onClick = vi.fn();
+  render(
+    <>
+      <IconButton aria-label="Weiter" onClick={onClick} />
+      <IconButton aria-label="Zurück" onClick={onClick} disabled />
+    </>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Weiter" }));
+  fireEvent.click(screen.getByRole("button", { name: "Zurück" }));
+  expect(onClick).toHaveBeenCalledTimes(1);
+});
+
+test("a className display wins over the base flex (the menu toggle)", () => {
+  render(<IconButton aria-label="Menü" hover="none" className="inline-flex" />);
+  expect(screen.getByRole("button", { name: "Menü" }).className).toBe(
+    "items-center justify-center rounded-full border border-line text-ink size-10 bg-surface inline-flex",
+  );
+});
+
+test("IconBadge centres its icon at a measured size, shape and tone", () => {
+  render(
+    <>
+      <IconBadge>Standard</IconBadge>
+      <IconBadge as="div" size="14" shape="full" tone="accent-16">
+        Zustand
+      </IconBadge>
+      <IconBadge size="8" shape="lg" tone="inverse" className="shrink-0">
+        Navy
+      </IconBadge>
+      <IconBadge layout="grid" size="9" shape="md" tone="muted">
+        Raster
+      </IconBadge>
+      <IconBadge size="9" shape="lg" tone="accent-12" className="shrink-0">
+        Termin
+      </IconBadge>
+    </>,
+  );
+  const badge = screen.getByText("Standard");
+  expect(badge.tagName).toBe("SPAN");
+  expect(badge.className).toBe(
+    "flex items-center justify-center size-10 rounded-xl bg-accent-tint-14 text-coral",
+  );
+  const state = screen.getByText("Zustand");
+  expect(state.tagName).toBe("DIV");
+  expect(state.className).toBe(
+    "flex items-center justify-center size-14 rounded-full bg-accent-tint-16",
+  );
+  expect(screen.getByText("Navy").className).toBe(
+    "flex items-center justify-center size-8 rounded-lg bg-overlay-8 text-accent-blue shrink-0",
+  );
+  expect(screen.getByText("Raster").className).toBe(
+    "grid place-items-center size-9 rounded-md bg-surface-2 text-ink-soft",
+  );
+  // The booking confirmation's badge (no scenario renders it).
+  expect(screen.getByText("Termin").className).toBe(
+    "flex items-center justify-center size-9 rounded-lg bg-accent-tint-12 text-coral shrink-0",
+  );
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/primitives/icons`.
+Expected: FAIL - `Failed to resolve import "./icon-badge"`.
+
+- [ ] **Step 3: The primitives.** Create `packages/ui/src/primitives/icon-button.tsx`:
+
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+/* ----------------------------------------------------------------------------
+ * IconButton: a round, bordered button that holds one icon (month and back
+ * navigation, the menu toggle). The icon is the child and sets its own size.
+ * A button with a `disabled` prop gets the disabled look; the others carry no
+ * `disabled:` classes.
+   ------------------------------------------------------------------------- */
+const iconButtonVariants = cva(
+  "flex items-center justify-center rounded-full border border-line text-ink",
+  {
+    variants: {
+      size: {
+        sm: "size-9",
+        md: "size-10",
+        lg: "size-11",
+      },
+      surface: {
+        default: "bg-surface",
+        inset: "bg-bg",
+      },
+      /** `border`: the border darkens on hover; `none`: no hover feedback (the menu toggle). */
+      hover: {
+        border: "transition-colors hover:border-ink",
+        none: "",
+      },
+    },
+    defaultVariants: { size: "md", surface: "default", hover: "border" },
+  },
+);
+
+type IconButtonProps = Omit<React.ComponentProps<"button">, "aria-label"> &
+  VariantProps<typeof iconButtonVariants> & {
+    /** The button has no text: its accessible name is required. */
+    "aria-label": string;
+  };
+
+export function IconButton({
+  size,
+  surface,
+  hover,
+  type = "button",
+  className,
+  ...props
+}: IconButtonProps) {
+  return (
+    <button
+      type={type}
+      className={cn(
+        iconButtonVariants({ size, surface, hover }),
+        props.disabled !== undefined &&
+          "disabled:pointer-events-none disabled:opacity-40",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+```
+
+`packages/ui/src/primitives/icon-badge.tsx`:
+
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+/* ----------------------------------------------------------------------------
+ * IconBadge: an icon (or a digit) centred in a tinted square or circle. Sizes
+ * are the measured ones, named by their spacing step; `shrink-0` and the type of
+ * a digit are the caller's (not every badge sits in a flex row).
+   ------------------------------------------------------------------------- */
+const iconBadgeVariants = cva("", {
+  variants: {
+    /** How the icon is centred: a flex row, or a grid cell (the legal-page facts). */
+    layout: {
+      flex: "flex items-center justify-center",
+      grid: "grid place-items-center",
+    },
+    size: {
+      "7.5": "size-7.5",
+      "8": "size-8",
+      "9": "size-9",
+      "9.5": "size-9.5",
+      "10": "size-10",
+      "13": "size-13",
+      "14": "size-14",
+    },
+    shape: {
+      md: "rounded-md",
+      lg: "rounded-lg",
+      xl: "rounded-xl",
+      full: "rounded-full",
+    },
+    tone: {
+      /** Coral on the 14 % tint. */
+      accent: "bg-accent-tint-14 text-coral",
+      "accent-12": "bg-accent-tint-12 text-coral",
+      /** The 16 % tint without a text colour: the state icons bring their own. */
+      "accent-16": "bg-accent-tint-16",
+      /** Coral on the second surface. */
+      subtle: "bg-surface-2 text-coral",
+      /** Muted ink on the second surface. */
+      muted: "bg-surface-2 text-ink-soft",
+      /** The light-blue icon on a white wash (navy panels). */
+      inverse: "bg-overlay-8 text-accent-blue",
+    },
+  },
+  defaultVariants: { layout: "flex", size: "10", shape: "xl", tone: "accent" },
+});
+
+type IconBadgeProps = React.HTMLAttributes<HTMLElement> &
+  VariantProps<typeof iconBadgeVariants> & {
+    as?: "span" | "div";
+  };
+
+export function IconBadge({
+  as: Tag = "span",
+  layout,
+  size,
+  shape,
+  tone,
+  className,
+  ...props
+}: IconBadgeProps) {
+  return (
+    <Tag
+      className={cn(
+        iconBadgeVariants({ layout, size, shape, tone }),
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" primitives/icon-badge primitives/icon-button
+cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
+```
+
+Expected: `2 exports added`; PASS, 14 files / 79 tests.
+
+- [ ] **Step 4: The call sites.** Save as `<scratch>/c6b-map.mjs` and apply it:
+
+```js
+// C6b: the hand-built round icon buttons become IconButton, the icon badges
+// IconBadge. [file, from, to, count]; apply with apply-map.mjs, then `pnpm format`.
+const A = "apps/marketing/src";
+const BUTTON =
+  'import { IconButton } from "@skillsite/ui/primitives/icon-button";\n';
+const BADGE =
+  'import { IconBadge } from "@skillsite/ui/primitives/icon-badge";\n';
+const importAfter = (file, line, add) => [file, line, line + add, 1];
+
+export const REPLACEMENTS = [
+  // Booker: month navigation, the aside rows, the state circle, the confirmation.
+  importAfter(
+    `${A}/components/booking/booker.tsx`,
+    'import { Card } from "@skillsite/ui/primitives/card";\n',
+    BADGE + BUTTON,
+  ),
+  [
+    `${A}/components/booking/booker.tsx`,
+    `              <button
+                type="button"
+                onClick={() => onChangeMonth(-1)}
+                disabled={monthOffset === 0}
+                aria-label="Vorheriger Monat"
+                className="flex size-9 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors hover:border-ink disabled:pointer-events-none disabled:opacity-40"
+              >
+                <ChevronLeft className="size-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeMonth(1)}
+                disabled={monthOffset >= MAX_MONTH_OFFSET}
+                aria-label="Nächster Monat"
+                className="flex size-9 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors hover:border-ink disabled:pointer-events-none disabled:opacity-40"
+              >
+                <ChevronRight className="size-4" aria-hidden />
+              </button>`,
+    `              <IconButton
+                size="sm"
+                onClick={() => onChangeMonth(-1)}
+                disabled={monthOffset === 0}
+                aria-label="Vorheriger Monat"
+              >
+                <ChevronLeft className="size-4" aria-hidden />
+              </IconButton>
+              <IconButton
+                size="sm"
+                onClick={() => onChangeMonth(1)}
+                disabled={monthOffset >= MAX_MONTH_OFFSET}
+                aria-label="Nächster Monat"
+              >
+                <ChevronRight className="size-4" aria-hidden />
+              </IconButton>`,
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-overlay-8 text-accent-blue">
+        {icon}
+      </span>`,
+    `      <IconBadge size="8" shape="lg" tone="inverse" className="shrink-0">
+        {icon}
+      </IconBadge>`,
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-accent-tint-16">
+        {icon}
+      </div>`,
+    `      <IconBadge
+        as="div"
+        size="14"
+        shape="full"
+        tone="accent-16"
+        className="mx-auto mb-4"
+      >
+        {icon}
+      </IconBadge>`,
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-tint-12 text-coral">`,
+    `            <IconBadge
+              size="9"
+              shape="lg"
+              tone="accent-12"
+              className="shrink-0"
+            >`,
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `              )}
+            </span>
+            <div className="min-w-0">`,
+    `              )}
+            </IconBadge>
+            <div className="min-w-0">`,
+    1,
+  ],
+
+  // Booking form: the back button.
+  importAfter(
+    `${A}/components/booking/booking-form.tsx`,
+    'import { Card } from "@skillsite/ui/primitives/card";\n',
+    BUTTON,
+  ),
+  [
+    `${A}/components/booking/booking-form.tsx`,
+    `        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Zurück zur Terminwahl"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors hover:border-ink"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+        </button>`,
+    `        <IconButton
+          size="sm"
+          onClick={onBack}
+          aria-label="Zurück zur Terminwahl"
+          className="shrink-0"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+        </IconButton>`,
+    1,
+  ],
+
+  // Navbar: the menu toggle (no hover feedback, inline-flex).
+  importAfter(
+    `${A}/components/layout/navbar.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+    BUTTON,
+  ),
+  [
+    `${A}/components/layout/navbar.tsx`,
+    `          <button
+            ref={menuButtonRef}
+            type="button"
+            aria-label="Menü"
+            aria-expanded={open}
+            onClick={toggleMobileMenu}
+            className="inline-flex size-10 items-center justify-center rounded-full border border-line bg-surface text-ink nav:hidden"
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>`,
+    `          <IconButton
+            ref={menuButtonRef}
+            hover="none"
+            aria-label="Menü"
+            aria-expanded={open}
+            onClick={toggleMobileMenu}
+            className="inline-flex nav:hidden"
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </IconButton>`,
+    1,
+  ],
+
+  // Testimonials (not rendered today): the previous/next buttons.
+  importAfter(
+    `${A}/components/sections/testimonials.tsx`,
+    'import { Eyebrow } from "@skillsite/ui/typography/eyebrow";\n',
+    BUTTON,
+  ),
+  [
+    `${A}/components/sections/testimonials.tsx`,
+    `        <button
+          type="button"
+          onClick={() => setIndex(index - 1)}
+          aria-label="Vorherige Stimme"
+          className="flex size-11 items-center justify-center rounded-full border border-line bg-bg text-ink transition-colors hover:border-ink"
+        >
+          <ArrowLeft className="size-5" aria-hidden />
+        </button>`,
+    `        <IconButton
+          size="lg"
+          surface="inset"
+          onClick={() => setIndex(index - 1)}
+          aria-label="Vorherige Stimme"
+        >
+          <ArrowLeft className="size-5" aria-hidden />
+        </IconButton>`,
+    1,
+  ],
+  [
+    `${A}/components/sections/testimonials.tsx`,
+    `        <button
+          type="button"
+          onClick={() => setIndex(index + 1)}
+          aria-label="Nächste Stimme"
+          className="flex size-11 items-center justify-center rounded-full border border-line bg-bg text-ink transition-colors hover:border-ink"
+        >
+          <ArrowRight className="size-5" aria-hidden />
+        </button>`,
+    `        <IconButton
+          size="lg"
+          surface="inset"
+          onClick={() => setIndex(index + 1)}
+          aria-label="Nächste Stimme"
+        >
+          <ArrowRight className="size-5" aria-hidden />
+        </IconButton>`,
+    1,
+  ],
+
+  // Icon badges on the pages.
+  importAfter(
+    `${A}/app/online-lernen/page.tsx`,
+    'import { Card } from "@skillsite/ui/primitives/card";\n',
+    BADGE,
+  ),
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    `              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-tint-14 text-coral">
+                <AnimatedCheckMark index={index} className="size-5" />
+              </span>`,
+    `              <IconBadge className="shrink-0">
+                <AnimatedCheckMark index={index} className="size-5" />
+              </IconBadge>`,
+    1,
+  ],
+  importAfter(
+    `${A}/app/faecher/page.tsx`,
+    'import { Card } from "@skillsite/ui/primitives/card";\n',
+    BADGE,
+  ),
+  [
+    `${A}/app/faecher/page.tsx`,
+    `                  <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
+                    <Icon className="size-6" />
+                  </span>`,
+    `                  <IconBadge
+                    size="13"
+                    tone="subtle"
+                    className="font-heading text-icon-badge font-bold"
+                  >
+                    <Icon className="size-6" />
+                  </IconBadge>`,
+    1,
+  ],
+  importAfter(
+    `${A}/components/sections/subject-cards.tsx`,
+    'import { Card } from "@skillsite/ui/primitives/card";\n',
+    BADGE,
+  ),
+  [
+    `${A}/components/sections/subject-cards.tsx`,
+    `          <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
+            <Icon className="size-6" />
+          </span>`,
+    `          <IconBadge
+            size="13"
+            tone="subtle"
+            className="font-heading text-icon-badge font-bold"
+          >
+            <Icon className="size-6" />
+          </IconBadge>`,
+    1,
+  ],
+  importAfter(
+    `${A}/components/sections/benefit-grid.tsx`,
+    'import { Card } from "@skillsite/ui/primitives/card";\n',
+    BADGE,
+  ),
+  [
+    `${A}/components/sections/benefit-grid.tsx`,
+    `          <span className="mb-4 flex size-9.5 items-center justify-center rounded-xl bg-accent-tint-14 text-coral">
+            <AnimatedCheckMark index={index} />
+          </span>`,
+    `          <IconBadge size="9.5" className="mb-4">
+            <AnimatedCheckMark index={index} />
+          </IconBadge>`,
+    1,
+  ],
+  importAfter(
+    `${A}/components/sections/lesson-timeline.tsx`,
+    'import { Text } from "@skillsite/ui/typography/text";\n',
+    BADGE,
+  ),
+  [
+    `${A}/components/sections/lesson-timeline.tsx`,
+    `              <span className="tl-node flex size-7.5 shrink-0 items-center justify-center rounded-full bg-accent-tint-14 text-small font-bold text-coral">
+                {step.n}
+              </span>`,
+    `              <IconBadge
+                size="7.5"
+                shape="full"
+                className="tl-node shrink-0 text-small font-bold"
+              >
+                {step.n}
+              </IconBadge>`,
+    1,
+  ],
+
+  // Legal pages: the hero facts' badge (grid-centred).
+  importAfter(
+    `${A}/components/docs/doc-components.tsx`,
+    'import { Card } from "@skillsite/ui/primitives/card";\n',
+    BADGE,
+  ),
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `                  <span className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-2 text-ink-soft">
+                    <FactIcon className="size-4" aria-hidden />
+                  </span>`,
+    `                  <IconBadge
+                    layout="grid"
+                    size="9"
+                    shape="md"
+                    tone="muted"
+                    className="shrink-0"
+                  >
+                    <FactIcon className="size-4" aria-hidden />
+                  </IconBadge>`,
+    1,
+  ],
+
+  // The package: the accordion's "+".
+  [
+    "packages/ui/src/primitives/accordion.tsx",
+    'import { Card } from "./card";\n',
+    'import { Card } from "./card";\nimport { IconBadge } from "./icon-badge";\n',
+    1,
+  ],
+  [
+    "packages/ui/src/primitives/accordion.tsx",
+    `                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-7.5 shrink-0 items-center justify-center rounded-full bg-surface-2 text-accordion-icon leading-none text-coral transition-transform duration-quick ease-soft",
+                    isOpen && "rotate-45",
+                  )}
+                >
+                  +
+                </span>`,
+    `                <IconBadge
+                  aria-hidden
+                  size="7.5"
+                  shape="full"
+                  tone="subtle"
+                  className={cn(
+                    "shrink-0 text-accordion-icon leading-none transition-transform duration-quick ease-soft",
+                    isOpen && "rotate-45",
+                  )}
+                >
+                  +
+                </IconBadge>`,
+    1,
+  ],
+];
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/apply-map.mjs" "$SCRATCH/c6b-map.mjs" && pnpm format && just ratchet-update && just static-checks
+bash "$SCRATCH/c6-grep.sh" | sed -n '/^## round/,/^## pills/p'
+```
+
+Expected: `11 files rewritten`; `lowered raw-button: 12 -> 6`; static checks green; the round-icon-button section
+prints only the two bordered pills Task 6c converts (`online-lernen/page.tsx` "Technik", the legal-page badge in
+`doc-components.tsx`), the icon-badge section nothing; the six raw buttons left are the testimonials dots, the
+booker's day cell and time slot, the chips and the radio rows (C8), and the mobile menu's "Online lernen" toggle.
+
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` (the 14 URLs and `_styles.css`; the raw snapshots differ only in class order);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
+- [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): icon buttons and icon badges from the duplicates`
+      (with `design-ratchet.json`).
+
+PR body: Summary (`IconButton` with sizes, surfaces, hover and a prop-driven disabled look; `IconBadge` with the
+seven measured sizes, four radii, six tones and a grid layout; 6 buttons and 10 badges, the accordion's "+"
+included); _What changes for a visitor_: nothing - HTML equal after sorting class tokens, CSS byte-identical,
+`compare-computed` 72 page states, the unrendered testimonials buttons and confirmation badge pinned by the test;
+_Grep list_: the icon sections of `c6-grep.sh` (empty) and the six raw buttons with their reasons; `raw-button` 12 ->
+6; _Deviations from the plan_; _How to check_: `/` at 390 px (menu toggle), `/termin` -> month arrows (the left one
+disabled in the current month) -> slot -> the back arrow, the booker aside's icons, `/faecher` and `/` (subject
+badges), `/online-lernen` (feature checks, the lesson timeline digits), any FAQ "+", `/datenschutz` hero facts; 390
+and 1280 px, light and dark.
+
+---
+
+### Task 6c: Pill, CheckList and InfoRow (spec C6, part 3)
+
+**Branch:** `refactor/ui-labels` from `refactor/ui-icon-button`. **PR title:** `refactor(ui): pills, check lists
+and info rows from the duplicates`.
+
+**Files:**
+
+- Create: `packages/ui/src/primitives/{pill,check-list,info-row}.tsx`, `packages/ui/src/primitives/labels.test.tsx`
+- Modify: `packages/ui/package.json` (`exports`)
+- Modify: `apps/marketing/src/app/{ablauf,preise,online-lernen,kontakt}/page.tsx`,
+  `components/docs/doc-components.tsx`, `components/booking/booker.tsx`
+
+**Interfaces:**
+
+- Consumes: Tasks 6a (`Card asChild`) and 6b (`IconBadge`).
+- Produces:
+  - `Pill({ as?: "span" | "div", tone?: "inverse" | "accent" | "muted" | "on-accent", size?: "sm" | "code" | "doc" |
+"md" })` - `rounded-full` + the tone's border/background/text + the size's padding and type; no `display`.
+  - `CheckList({ items: string[], size?: "md" | "sm", tone?: "default" | "inverse", ...div props })` - a client module
+    (a server page passes it to `Reveal as={CheckList}`).
+  - `InfoRow({ icon, label?, variant?: "inverse" | "summary" | "doc", ...div props, children })` - its surface is the
+    caller's (`Card asChild`).
+
+**Background (measured on the tree after Task 6b).** `Tag` sets `inline-flex items-center`; three of the five pills
+(the two on `/ablauf`, "Technik" on `/online-lernen`) have no display of their own (inline `span`s in a flex row), so
+they cannot become a `Tag` size without changing `display` - hence `Pill`, which sets none (the other two, the
+`/kontakt` label and the legal-page badge, carry their own `inline-flex` as before). Each pill keeps its
+tone and size 1:1 (`/ablauf` 2x `inverse sm`, `/online-lernen` `accent code`, the legal-page badge `muted doc` on a
+`div`, `/kontakt` `on-accent md`). The two check lists are the measured sizes: `md` (`/preise`: gaps 3.5/3, 20px
+marks, body text) and `sm inverse` (`/ablauf`: gaps 3/2.5, 18px light-coral marks, small text inheriting
+`text-on-navy`). The `/preise` list was the revealed element (`<Reveal className="flex flex-col gap-3.5">`), so it
+becomes `<Reveal as={CheckList}>` - the same single element. `InfoRow` has the three measured rows: `inverse` (the
+booker aside), `summary` (the booked slot, a `Card asChild surface="inset"` around it) and `doc` (the legal-page
+facts, `Card asChild surface="inset" radius="xl"`). Kept: the booker's navy "Dein Termin" box (no icon, stacked: a
+`Card surface="glass"` since 6a), the `Select` trigger (C8), the chips (C8), and the check-mark badges of the
+feature cards on `/` and `/online-lernen` (a badge, not a list). No scenario renders the booking confirmation:
+`labels.test.tsx` renders it composed (`Card asChild surface="inset" className="mx-auto mb-5 max-w-xs p-3.5
+text-left"` around `InfoRow variant="summary"`) and pins its sorted class set, which is the old element's
+(`rounded-2xl border border-line bg-bg mx-auto mb-5 flex max-w-xs items-center gap-3 p-3.5 text-left`). A dry run of
+this task gave: HTML equal after sorting class tokens, `_styles.css` byte-identical; `compare-computed` 72 page
+states, no differences.
+
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-icon-button`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/primitives/labels.test.tsx`:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+
+import { Card } from "./card";
+import { CheckList } from "./check-list";
+import { InfoRow } from "./info-row";
+import { Pill } from "./pill";
+
+// The check marks observe their element; jsdom has no IntersectionObserver.
+beforeEach(() => {
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+test("Pill is a rounded label with a tone and a size, and no display of its own", () => {
+  render(
+    <>
+      <Pill tone="inverse" size="sm">
+        Discord
+      </Pill>
+      <Pill as="div" tone="muted" size="doc" className="inline-flex">
+        Datenschutz
+      </Pill>
+    </>,
+  );
+  expect(screen.getByText("Discord").className).toBe(
+    "rounded-full border border-overlay-25 text-white px-3.5 py-1.5 text-small font-semibold",
+  );
+  const badge = screen.getByText("Datenschutz");
+  expect(badge.tagName).toBe("DIV");
+  expect(badge.className).toBe(
+    "rounded-full border border-line bg-surface-2 text-ink-soft px-3 py-1 text-prose-sm inline-flex",
+  );
+});
+
+test("CheckList renders each item behind a check mark, in two sizes and tones", () => {
+  render(
+    <>
+      <CheckList items={["Vorbereitung"]} className="mt-2" />
+      <CheckList items={["Bildschirm teilen"]} size="sm" tone="inverse" />
+    </>,
+  );
+  const item = screen.getByText("Vorbereitung");
+  expect(item.className).toBe("text-body text-ink");
+  expect(item.parentElement?.className).toBe("flex items-start gap-3");
+  expect(item.previousElementSibling?.getAttribute("class")).toBe(
+    "mt-0.5 shrink-0 size-5 text-coral",
+  );
+  expect(item.parentElement?.parentElement?.className).toBe(
+    "flex flex-col gap-3.5 mt-2",
+  );
+  const small = screen.getByText("Bildschirm teilen");
+  expect(small.className).toBe("text-small");
+  expect(small.parentElement?.className).toBe(
+    "flex items-start gap-2.5 text-on-navy",
+  );
+  expect(small.previousElementSibling?.getAttribute("class")).toBe(
+    "mt-0.5 shrink-0 size-4.5 text-coral-light",
+  );
+});
+
+test("InfoRow puts the icon in its badge next to the value", () => {
+  render(
+    <>
+      <InfoRow icon="☎">Telefon</InfoRow>
+      <Card
+        asChild
+        surface="inset"
+        className="mx-auto mb-5 max-w-xs p-3.5 text-left"
+      >
+        <InfoRow variant="summary" icon="◷" label="Dein Termin">
+          Montag, 10:00 Uhr
+        </InfoRow>
+      </Card>
+      <InfoRow variant="doc" icon="✉" label="Kontakt" className="p-3">
+        mail@example.com
+      </InfoRow>
+    </>,
+  );
+  const inverse = screen.getByText("Telefon");
+  expect(inverse.className).toBe("text-small");
+  expect(inverse.parentElement?.className).toBe(
+    "flex items-center gap-3 text-on-navy",
+  );
+  expect(screen.getByText("☎").className).toBe(
+    "flex items-center justify-center size-8 rounded-lg bg-overlay-8 text-accent-blue shrink-0",
+  );
+  expect(screen.getByText("Dein Termin").tagName).toBe("P");
+  expect(screen.getByText("Montag, 10:00 Uhr").className).toBe(
+    "font-heading font-bold text-ink",
+  );
+  // The booking confirmation (no scenario renders it): card and row are one element.
+  const summary =
+    screen.getByText("Montag, 10:00 Uhr").parentElement!.parentElement!;
+  expect(summary.className.split(" ").sort().join(" ")).toBe(
+    "bg-bg border border-line flex gap-3 items-center max-w-xs mb-5 mx-auto p-3.5 rounded-2xl text-left",
+  );
+  expect(screen.getByText("◷").className).toBe(
+    "flex items-center justify-center size-9 rounded-lg bg-accent-tint-12 text-coral shrink-0",
+  );
+  const doc = screen.getByText("mail@example.com");
+  expect(doc.className).toBe("truncate text-prose-sm font-medium text-ink");
+  expect(doc.parentElement?.parentElement?.className).toBe(
+    "flex items-center gap-3 p-3",
+  );
+  expect(screen.getByText("✉").className).toBe(
+    "grid place-items-center size-9 rounded-md bg-surface-2 text-ink-soft shrink-0",
+  );
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/primitives/labels`.
+Expected: FAIL - `Failed to resolve import "./check-list"`.
+
+- [ ] **Step 3: The primitives.** Create `packages/ui/src/primitives/pill.tsx`:
+
+```tsx
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+/* ----------------------------------------------------------------------------
+ * Pill: a rounded label. Unlike `Tag` it sets no display, so it renders the way
+ * its parent lays it out; a pill with an icon adds `inline-flex` itself. Tones
+ * and sizes are the measured ones.
+   ------------------------------------------------------------------------- */
+const pillVariants = cva("rounded-full", {
+  variants: {
+    tone: {
+      /** Outlined on coral or navy: a white wash border, white text. */
+      inverse: "border border-overlay-25 text-white",
+      /** Coral text on the card surface. */
+      accent: "border border-line bg-surface text-coral",
+      /** Muted text on the second surface (the legal-page badge). */
+      muted: "border border-line bg-surface-2 text-ink-soft",
+      /** A glass wash on coral; the text colour is the panel's. */
+      "on-accent": "border border-overlay-35 bg-overlay-20",
+    },
+    size: {
+      sm: "px-3.5 py-1.5 text-small font-semibold",
+      /** Monospace caption (a technical label). */
+      code: "px-3 py-1.5 font-mono text-caption",
+      /** The legal pages' small text. */
+      doc: "px-3 py-1 text-prose-sm",
+      md: "px-5 py-2.5 font-semibold",
+    },
+  },
+  defaultVariants: { tone: "muted", size: "sm" },
+});
+
+type PillProps = React.HTMLAttributes<HTMLElement> &
+  VariantProps<typeof pillVariants> & {
+    as?: "span" | "div";
+  };
+
+export function Pill({
+  as: Tag = "span",
+  tone,
+  size,
+  className,
+  ...props
+}: PillProps) {
+  return (
+    <Tag className={cn(pillVariants({ tone, size }), className)} {...props} />
+  );
+}
+```
+
+`packages/ui/src/primitives/check-list.tsx`:
+
+```tsx
+"use client";
+
+import { cn } from "../utils/cn";
+import { AnimatedCheckMark } from "../motion/animated-check-mark";
+import { Text } from "../typography/text";
+
+type CheckListProps = React.ComponentProps<"div"> & {
+  items: string[];
+  /** `md`: body text, 20px marks; `sm`: small text, 18px marks, tighter gaps. */
+  size?: "md" | "sm";
+  /** `inverse`: on navy (light text, light coral marks). */
+  tone?: "default" | "inverse";
+};
+
+/**
+ * A list of short statements, each behind a check mark that draws itself in.
+ * A client module so a server page can pass it to `Reveal as={CheckList}`.
+ */
+export function CheckList({
+  items,
+  size = "md",
+  tone = "default",
+  className,
+  ...props
+}: CheckListProps) {
+  const md = size === "md";
+  const inverse = tone === "inverse";
+  return (
+    <div
+      className={cn("flex flex-col", md ? "gap-3.5" : "gap-3", className)}
+      {...props}
+    >
+      {items.map((item, index) => (
+        <div
+          key={item}
+          className={cn(
+            "flex items-start",
+            md ? "gap-3" : "gap-2.5",
+            inverse && "text-on-navy",
+          )}
+        >
+          <AnimatedCheckMark
+            index={index}
+            className={cn(
+              "mt-0.5 shrink-0",
+              md ? "size-5" : "size-4.5",
+              inverse ? "text-coral-light" : "text-coral",
+            )}
+          />
+          <Text
+            as="span"
+            size={md ? "body" : "small"}
+            tone={inverse ? "inherit" : "default"}
+          >
+            {item}
+          </Text>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+`packages/ui/src/primitives/info-row.tsx`:
+
+```tsx
+import { cn } from "../utils/cn";
+import { Eyebrow } from "../typography/eyebrow";
+import { Text } from "../typography/text";
+import { IconBadge } from "./icon-badge";
+
+type InfoRowProps = React.ComponentProps<"div"> & {
+  /** The glyph; the row puts it in its badge. */
+  icon: React.ReactNode;
+  /** A label above the value (`summary`, `doc`). */
+  label?: React.ReactNode;
+  /**
+   * `inverse`: one line on navy (the booker's details). `summary`: a labelled
+   * value with a coral badge (the booked slot). `doc`: a labelled value in the
+   * legal pages' small type, truncated.
+   */
+  variant?: "inverse" | "summary" | "doc";
+};
+
+/** An icon badge next to a value (and its label). The surface is the caller's. */
+export function InfoRow({
+  icon,
+  label,
+  variant = "inverse",
+  className,
+  children,
+  ...props
+}: InfoRowProps) {
+  if (variant === "inverse") {
+    return (
+      <div
+        className={cn("flex items-center gap-3 text-on-navy", className)}
+        {...props}
+      >
+        <IconBadge size="8" shape="lg" tone="inverse" className="shrink-0">
+          {icon}
+        </IconBadge>
+        <Text as="span" size="small" tone="inherit">
+          {children}
+        </Text>
+      </div>
+    );
+  }
+
+  const summary = variant === "summary";
+  return (
+    <div className={cn("flex items-center gap-3", className)} {...props}>
+      {summary ? (
+        <IconBadge size="9" shape="lg" tone="accent-12" className="shrink-0">
+          {icon}
+        </IconBadge>
+      ) : (
+        <IconBadge
+          layout="grid"
+          size="9"
+          shape="md"
+          tone="muted"
+          className="shrink-0"
+        >
+          {icon}
+        </IconBadge>
+      )}
+      <div className="min-w-0">
+        {summary ? (
+          <Eyebrow as="p" dot={false} tone="muted">
+            {label}
+          </Eyebrow>
+        ) : (
+          <p className="text-prose-xs text-ink-soft">{label}</p>
+        )}
+        <p
+          className={
+            summary
+              ? "font-heading font-bold text-ink"
+              : "truncate text-prose-sm font-medium text-ink"
+          }
+        >
+          {children}
+        </p>
+      </div>
+    </div>
+  );
+}
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" primitives/check-list primitives/info-row primitives/pill
+cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
+```
+
+Expected: `3 exports added`; PASS, 15 files / 82 tests.
+
+- [ ] **Step 4: The call sites.** Save as `<scratch>/c6c-map.mjs` and apply it:
+
+```js
+// C6c: hand-built pills become Pill, the two check lists CheckList, the icon +
+// value rows InfoRow. [file, from, to, count]; apply-map.mjs, then `pnpm format`.
+const A = "apps/marketing/src";
+const PILL = 'import { Pill } from "@skillsite/ui/primitives/pill";\n';
+const CHECKS =
+  'import { CheckList } from "@skillsite/ui/primitives/check-list";\n';
+const INFO = 'import { InfoRow } from "@skillsite/ui/primitives/info-row";\n';
+const MARK =
+  'import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";\n';
+
+export const REPLACEMENTS = [
+  // /ablauf: the platform pills and the highlight list on the Discord panel.
+  [`${A}/app/ablauf/page.tsx`, MARK, CHECKS + PILL, 1],
+  [
+    `${A}/app/ablauf/page.tsx`,
+    `                <span className="rounded-full border border-overlay-25 px-3.5 py-1.5 text-small font-semibold text-white">
+                  Discord
+                </span>
+                <span className="rounded-full border border-overlay-25 px-3.5 py-1.5 text-small font-semibold text-white">
+                  Microsoft Teams
+                </span>`,
+    `                <Pill tone="inverse" size="sm">
+                  Discord
+                </Pill>
+                <Pill tone="inverse" size="sm">
+                  Microsoft Teams
+                </Pill>`,
+    1,
+  ],
+  [
+    `${A}/app/ablauf/page.tsx`,
+    `              <div className="flex flex-col gap-3">
+                {discordHighlights.map((highlight, index) => (
+                  <div
+                    key={highlight}
+                    className="flex items-start gap-2.5 text-on-navy"
+                  >
+                    <AnimatedCheckMark
+                      index={index}
+                      className="mt-0.5 size-4.5 shrink-0 text-coral-light"
+                    />
+                    <Text as="span" size="small" tone="inherit">
+                      {highlight}
+                    </Text>
+                  </div>
+                ))}
+              </div>`,
+    '              <CheckList items={discordHighlights} size="sm" tone="inverse" />',
+    1,
+  ],
+
+  // /preise: the price card's list is the revealed element.
+  [`${A}/app/preise/page.tsx`, MARK, CHECKS, 1],
+  [
+    `${A}/app/preise/page.tsx`,
+    `              <Reveal
+                trigger="mount"
+                variant="rise-soft"
+                delay={220}
+                className="flex flex-col gap-3.5"
+              >
+                {priceIncludes.map((item, index) => (
+                  <div key={item} className="flex items-start gap-3">
+                    <AnimatedCheckMark
+                      index={index}
+                      className="mt-0.5 size-5 shrink-0 text-coral"
+                    />
+                    <Text as="span">{item}</Text>
+                  </div>
+                ))}
+              </Reveal>`,
+    `              <Reveal
+                as={CheckList}
+                items={priceIncludes}
+                trigger="mount"
+                variant="rise-soft"
+                delay={220}
+              />`,
+    1,
+  ],
+
+  // /online-lernen: the "Technik" label.
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    'import { Tag } from "@skillsite/ui/primitives/tag";\n',
+    'import { Tag } from "@skillsite/ui/primitives/tag";\n' + PILL,
+    1,
+  ],
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    `            <span className="rounded-full border border-line bg-surface px-3 py-1.5 font-mono text-caption text-coral">
+              Technik
+            </span>`,
+    `            <Pill tone="accent" size="code">
+              Technik
+            </Pill>`,
+    1,
+  ],
+
+  // /kontakt: the "Jetzt anschreiben" label on the WhatsApp card.
+  [
+    `${A}/app/kontakt/page.tsx`,
+    'import { Card } from "@skillsite/ui/primitives/card";\n',
+    'import { Card } from "@skillsite/ui/primitives/card";\n' + PILL,
+    1,
+  ],
+  [
+    `${A}/app/kontakt/page.tsx`,
+    `                <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-overlay-35 bg-overlay-20 px-5 py-2.5 font-semibold">
+                  Jetzt anschreiben <ArrowRight className="size-4" />
+                </span>`,
+    `                <Pill
+                  tone="on-accent"
+                  size="md"
+                  className="mt-6 inline-flex w-fit items-center gap-2"
+                >
+                  Jetzt anschreiben <ArrowRight className="size-4" />
+                </Pill>`,
+    1,
+  ],
+
+  // Legal pages: the hero badge and the hero facts.
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    'import { IconBadge } from "@skillsite/ui/primitives/icon-badge";\n',
+    INFO + PILL,
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `        <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1 text-prose-sm text-ink-soft">
+          <Icon className="size-4" aria-hidden />
+          {badge}
+        </div>`,
+    `        <Pill
+          as="div"
+          tone="muted"
+          size="doc"
+          className="inline-flex items-center gap-2"
+        >
+          <Icon className="size-4" aria-hidden />
+          {badge}
+        </Pill>`,
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `                <Card
+                  key={fact.label}
+                  surface="inset"
+                  radius="xl"
+                  className="flex items-center gap-3 p-3"
+                >
+                  <IconBadge
+                    layout="grid"
+                    size="9"
+                    shape="md"
+                    tone="muted"
+                    className="shrink-0"
+                  >
+                    <FactIcon className="size-4" aria-hidden />
+                  </IconBadge>
+                  <div className="min-w-0">
+                    <p className="text-prose-xs text-ink-soft">{fact.label}</p>
+                    <p className="truncate text-prose-sm font-medium text-ink">
+                      {fact.children}
+                    </p>
+                  </div>
+                </Card>`,
+    `                <Card
+                  asChild
+                  key={fact.label}
+                  surface="inset"
+                  radius="xl"
+                  className="p-3"
+                >
+                  <InfoRow
+                    variant="doc"
+                    icon={<FactIcon className="size-4" aria-hidden />}
+                    label={fact.label}
+                  >
+                    {fact.children}
+                  </InfoRow>
+                </Card>`,
+    1,
+  ],
+
+  // Booker: the aside rows move to the package; the booked slot is a summary row.
+  [
+    `${A}/components/booking/booker.tsx`,
+    'import { IconButton } from "@skillsite/ui/primitives/icon-button";\n',
+    'import { IconButton } from "@skillsite/ui/primitives/icon-button";\n' +
+      INFO,
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `function InfoRow({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3 text-on-navy">
+      <IconBadge size="8" shape="lg" tone="inverse" className="shrink-0">
+        {icon}
+      </IconBadge>
+      <Text as="span" size="small" tone="inherit">
+        {children}
+      </Text>
+    </div>
+  );
+}
+
+`,
+    "",
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `          <Card
+            surface="inset"
+            className="mx-auto mb-5 flex max-w-xs items-center gap-3 p-3.5 text-left"
+          >
+            <IconBadge
+              size="9"
+              shape="lg"
+              tone="accent-12"
+              className="shrink-0"
+            >
+              {event === "kennenlernen" ? (
+                <Phone className="size-4" aria-hidden />
+              ) : (
+                <Video className="size-4" aria-hidden />
+              )}
+            </IconBadge>
+            <div className="min-w-0">
+              <Eyebrow as="p" dot={false} tone="muted">
+                Dein Termin
+              </Eyebrow>
+              <p className="font-heading font-bold text-ink">{summary}</p>
+            </div>
+          </Card>`,
+    `          <Card
+            asChild
+            surface="inset"
+            className="mx-auto mb-5 max-w-xs p-3.5 text-left"
+          >
+            <InfoRow
+              variant="summary"
+              label="Dein Termin"
+              icon={
+                event === "kennenlernen" ? (
+                  <Phone className="size-4" aria-hidden />
+                ) : (
+                  <Video className="size-4" aria-hidden />
+                )
+              }
+            >
+              {summary}
+            </InfoRow>
+          </Card>`,
+    1,
+  ],
+];
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/apply-map.mjs" "$SCRATCH/c6c-map.mjs" && pnpm format && just static-checks
+bash "$SCRATCH/c6-grep.sh" | sed -n '/^## pills/,/^## private/p'
+```
+
+Expected: `6 files rewritten`; static checks green; the pills section prints only `chips-field.tsx` (C8); the check
+marks section only `online-lernen/page.tsx` and `benefit-grid.tsx` (the feature badges).
+
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` (the 14 URLs and `_styles.css`; the raw snapshots differ only in class order);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
+- [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): pills, check lists and info rows from the duplicates`.
+
+PR body: Summary (`Pill` without a display of its own and why not `Tag` sizes; `CheckList` in two sizes and tones,
+`Reveal as={CheckList}` on `/preise`; `InfoRow` with three variants and `Card asChild` for its surface; the booker's
+private `InfoRow` removed); _What changes for a visitor_: nothing - HTML equal after sorting class tokens, CSS
+byte-identical, `compare-computed` 72 page states; _Grep list_: the pills and check-mark sections with reasons; _Deviations from the
+plan_; _How to check_: `/ablauf` (Discord panel: pills and list), `/preise` (the price card's list), `/online-lernen`
+("Technik"), `/kontakt` ("Jetzt anschreiben"), `/termin` (booker aside rows; after booking the confirmation - only
+with a live Cal.com key), `/datenschutz` (hero badge and facts); 390 and 1280 px, light and dark.
+
+---
+
+### Task 6d: CenteredState and StatusPage (spec C6, part 4)
+
+**Branch:** `refactor/ui-states` from `refactor/ui-labels`. **PR title:** `refactor(ui): centered states and status
+pages from the duplicates`.
+
+**Files:**
+
+- Create: `packages/ui/src/layout/{centered-state,status-page}.tsx`, `packages/ui/src/layout/states.test.tsx`
+- Modify: `packages/ui/package.json` (`exports`)
+- Modify: `apps/marketing/src/components/booking/booker.tsx`, `app/{not-found,error,zahlung/page}.tsx`
+
+**Interfaces:**
+
+- Consumes: Task 6b (`IconBadge`), Task 5a (`Container`), Task 4b (typography).
+- Produces: `CenteredState({ icon, title, children? })` and `StatusPage({ eyebrow, title, lead, actions, children? })`
+  in `@skillsite/ui/layout/*` (the spec's _Target shape_ puts both in `layout/`).
+
+**Background (measured on the tree after Task 6c).** `CenteredState` is the booker's private helper, moved verbatim
+(its circle is `IconBadge as="div" size="14" shape="full" tone="accent-16"` since 6b); the booker keeps its seven
+uses. The three status pages share one skeleton - a centred `Container` with `min-h-[60vh]`, a dotted `Eyebrow`, an
+`h1`, a muted lead, a row of buttons - and differ only in content; `/zahlung` adds two lines below the buttons
+(`children`). `error.tsx` is a client component and never renders in a build; it uses the same `StatusPage` as the
+404, which the snapshot and `compare-computed` cover, and `states.test.tsx` pins the skeleton. A dry run of this task
+gave: the raw HTML snapshots byte-identical (no class moved); `compare-computed` 72 page states, no differences.
+
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-labels`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/layout/states.test.tsx`:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, test } from "vitest";
+
+import { CenteredState } from "./centered-state";
+import { StatusPage } from "./status-page";
+
+afterEach(cleanup);
+
+test("CenteredState: icon circle, an h3 title, then the message", () => {
+  render(
+    <CenteredState icon={<svg data-testid="icon" />} title="Termin gebucht!">
+      <p>Die Bestätigung kommt per E-Mail.</p>
+    </CenteredState>,
+  );
+  const heading = screen.getByRole("heading", {
+    level: 3,
+    name: "Termin gebucht!",
+  });
+  expect(heading.className).toBe(
+    "font-heading text-balance hyphens-heading text-h4 mb-2",
+  );
+  const circle = screen.getByTestId("icon").parentElement!;
+  expect(circle.tagName).toBe("DIV");
+  expect(circle.className).toBe(
+    "flex items-center justify-center size-14 rounded-full bg-accent-tint-16 mx-auto mb-4",
+  );
+  expect(circle.parentElement?.className).toBe(
+    "m-auto max-w-sm text-center motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]",
+  );
+  expect(heading.nextElementSibling?.textContent).toBe(
+    "Die Bestätigung kommt per E-Mail.",
+  );
+});
+
+test("StatusPage: eyebrow, h1, lead, actions, then the extra lines", () => {
+  render(
+    <StatusPage
+      eyebrow="Fehler 404"
+      title="Seite nicht gefunden."
+      lead="Diese Seite gibt es nicht."
+      actions={<a href="/">Zur Startseite</a>}
+    >
+      <p>Alle Kontaktwege</p>
+    </StatusPage>,
+  );
+  const heading = screen.getByRole("heading", {
+    level: 1,
+    name: "Seite nicht gefunden.",
+  });
+  const page = heading.parentElement!;
+  expect(page.className).toBe(
+    "mx-auto w-full max-w-page px-6 flex min-h-[60vh] flex-col items-center justify-center py-section text-center",
+  );
+  expect([...page.children].map((child) => child.textContent?.trim())).toEqual([
+    "Fehler 404",
+    "Seite nicht gefunden.",
+    "Diese Seite gibt es nicht.",
+    "Zur Startseite",
+    "Alle Kontaktwege",
+  ]);
+  expect(screen.getByText("Diese Seite gibt es nicht.").className).toBe(
+    "text-lead text-ink-soft mt-4 max-w-measure-34",
+  );
+  expect(screen.getByRole("link").parentElement?.className).toBe(
+    "mt-8 flex flex-wrap justify-center gap-3.5",
+  );
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/layout/states`.
+Expected: FAIL - `Failed to resolve import "./centered-state"`.
+
+- [ ] **Step 3: The components.** Create `packages/ui/src/layout/centered-state.tsx`:
+
+```tsx
+import { IconBadge } from "../primitives/icon-badge";
+import { Heading } from "../typography/heading";
+
+type CenteredStateProps = {
+  /** The state's icon (or a spinner); it sets its own size and colour. */
+  icon: React.ReactNode;
+  title: React.ReactNode;
+  /** The message and its actions. */
+  children?: React.ReactNode;
+};
+
+/**
+ * A centred message inside a panel - loading, empty, done or failed - that rises
+ * in on mount. The panel must be a flex column for `m-auto` to centre it.
+ */
+export function CenteredState({ icon, title, children }: CenteredStateProps) {
+  return (
+    <div className="m-auto max-w-sm text-center motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
+      <IconBadge
+        as="div"
+        size="14"
+        shape="full"
+        tone="accent-16"
+        className="mx-auto mb-4"
+      >
+        {icon}
+      </IconBadge>
+      <Heading as="h3" size="h4" className="mb-2">
+        {title}
+      </Heading>
+      {children}
+    </div>
+  );
+}
+```
+
+`packages/ui/src/layout/status-page.tsx`:
+
+```tsx
+import { Eyebrow } from "../typography/eyebrow";
+import { Heading } from "../typography/heading";
+import { Text } from "../typography/text";
+import { Container } from "./container";
+
+type StatusPageProps = {
+  eyebrow: React.ReactNode;
+  /** The page's h1. */
+  title: React.ReactNode;
+  lead: React.ReactNode;
+  /** The buttons below the lead. */
+  actions: React.ReactNode;
+  /** Lines below the actions. */
+  children?: React.ReactNode;
+};
+
+/** A page that is only a status message: not found, an error, an unusable link. */
+export function StatusPage({
+  eyebrow,
+  title,
+  lead,
+  actions,
+  children,
+}: StatusPageProps) {
+  return (
+    <Container className="flex min-h-[60vh] flex-col items-center justify-center py-section text-center">
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <Heading as="h1" size="h1" className="mt-4">
+        {title}
+      </Heading>
+      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
+        {lead}
+      </Text>
+      <div className="mt-8 flex flex-wrap justify-center gap-3.5">
+        {actions}
+      </div>
+      {children}
+    </Container>
+  );
+}
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" layout/centered-state layout/status-page
+cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
+```
+
+Expected: `2 exports added`; PASS, 16 files / 84 tests.
+
+- [ ] **Step 4: The call sites.** Save as `<scratch>/c6d-map.mjs` and apply it:
+
+```js
+// C6d: the booker's private CenteredState moves to the package; the three status
+// pages become StatusPage. [file, from, to, count]; apply-map.mjs, then `pnpm format`.
+const A = "apps/marketing/src";
+const STATUS =
+  'import { StatusPage } from "@skillsite/ui/layout/status-page";\n';
+const imports = (...names) =>
+  names
+    .map((name) => {
+      const [group, module, symbol] = name.split(":");
+      return `import { ${symbol} } from "@skillsite/ui/${group}/${module}";\n`;
+    })
+    .join("");
+
+export const REPLACEMENTS = [
+  // Booker.
+  [
+    `${A}/components/booking/booker.tsx`,
+    'import { IconBadge } from "@skillsite/ui/primitives/icon-badge";\n',
+    "",
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    'import { Select } from "@skillsite/ui/forms/select";\n',
+    'import { Select } from "@skillsite/ui/forms/select";\nimport { CenteredState } from "@skillsite/ui/layout/centered-state";\n',
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `function CenteredState({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="m-auto max-w-sm text-center motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
+      <IconBadge
+        as="div"
+        size="14"
+        shape="full"
+        tone="accent-16"
+        className="mx-auto mb-4"
+      >
+        {icon}
+      </IconBadge>
+      <Heading as="h3" size="h4" className="mb-2">
+        {title}
+      </Heading>
+      {children}
+    </div>
+  );
+}
+
+`,
+    "",
+    1,
+  ],
+
+  // 404.
+  [
+    `${A}/app/not-found.tsx`,
+    imports(
+      "layout:container:Container",
+      "typography:eyebrow:Eyebrow",
+      "primitives:button:Button",
+      "typography:heading:Heading",
+      "typography:text:Text",
+    ),
+    STATUS + imports("primitives:button:Button"),
+    1,
+  ],
+  [
+    `${A}/app/not-found.tsx`,
+    `    <Container className="flex min-h-[60vh] flex-col items-center justify-center py-section text-center">
+      <Eyebrow>Fehler 404</Eyebrow>
+      <Heading as="h1" size="h1" className="mt-4">
+        Seite nicht gefunden.
+      </Heading>
+      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
+        Diese Seite gibt es nicht. Vielleicht hilft dir eine dieser Optionen
+        weiter.
+      </Text>
+      <div className="mt-8 flex flex-wrap justify-center gap-3.5">`,
+    `    <StatusPage
+      eyebrow="Fehler 404"
+      title="Seite nicht gefunden."
+      lead={
+        <>
+          Diese Seite gibt es nicht. Vielleicht hilft dir eine dieser Optionen
+          weiter.
+        </>
+      }
+      actions={
+        <>`,
+    1,
+  ],
+  [
+    `${A}/app/not-found.tsx`,
+    `      </div>
+    </Container>`,
+    `        </>
+      }
+    />`,
+    1,
+  ],
+
+  // Error boundary.
+  [
+    `${A}/app/error.tsx`,
+    imports(
+      "layout:container:Container",
+      "typography:eyebrow:Eyebrow",
+      "primitives:button:Button",
+      "typography:heading:Heading",
+      "typography:text:Text",
+    ),
+    STATUS + imports("primitives:button:Button"),
+    1,
+  ],
+  [
+    `${A}/app/error.tsx`,
+    `    <Container className="flex min-h-[60vh] flex-col items-center justify-center py-section text-center">
+      <Eyebrow>Ein Fehler ist aufgetreten</Eyebrow>
+      <Heading as="h1" size="h1" className="mt-4">
+        Da ist etwas schiefgelaufen.
+      </Heading>
+      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
+        Bitte versuch es noch einmal. Wenn es weiterhin klemmt, schreib mir
+        einfach direkt – wir kriegen das hin.
+      </Text>
+      <div className="mt-8 flex flex-wrap justify-center gap-3.5">`,
+    `    <StatusPage
+      eyebrow="Ein Fehler ist aufgetreten"
+      title="Da ist etwas schiefgelaufen."
+      lead={
+        <>
+          Bitte versuch es noch einmal. Wenn es weiterhin klemmt, schreib mir
+          einfach direkt – wir kriegen das hin.
+        </>
+      }
+      actions={
+        <>`,
+    1,
+  ],
+  [
+    `${A}/app/error.tsx`,
+    `      </div>
+    </Container>`,
+    `        </>
+      }
+    />`,
+    1,
+  ],
+
+  // /zahlung with an unusable link: the contact lines follow the actions.
+  [
+    `${A}/app/zahlung/page.tsx`,
+    imports(
+      "layout:container:Container",
+      "typography:eyebrow:Eyebrow",
+      "primitives:button:Button",
+      "typography:heading:Heading",
+      "typography:text:Text",
+    ),
+    STATUS + imports("primitives:button:Button", "typography:text:Text"),
+    1,
+  ],
+  [
+    `${A}/app/zahlung/page.tsx`,
+    `    <Container className="flex min-h-[60vh] flex-col items-center justify-center py-section text-center">
+      <Eyebrow>Zahlung</Eyebrow>
+      <Heading as="h1" size="h1" className="mt-4">
+        Dieser Zahlungslink führt nicht weiter.
+      </Heading>
+      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
+        Vermutlich ist der Link aus der Rechnung unterwegs abgeschnitten worden.
+        Schreib mir kurz mit deiner Rechnungsnummer – du bekommst sofort einen
+        neuen Link.
+      </Text>
+      <div className="mt-8 flex flex-wrap justify-center gap-3.5">`,
+    `    <StatusPage
+      eyebrow="Zahlung"
+      title="Dieser Zahlungslink führt nicht weiter."
+      lead={
+        <>
+          Vermutlich ist der Link aus der Rechnung unterwegs abgeschnitten
+          worden. Schreib mir kurz mit deiner Rechnungsnummer – du bekommst
+          sofort einen neuen Link.
+        </>
+      }
+      actions={
+        <>`,
+    1,
+  ],
+  [
+    `${A}/app/zahlung/page.tsx`,
+    `      </div>
+      <Text size="small" tone="muted" className="mt-6">`,
+    `        </>
+      }
+    >
+      <Text size="small" tone="muted" className="mt-6">`,
+    1,
+  ],
+  [`${A}/app/zahlung/page.tsx`, "    </Container>\n", "    </StatusPage>\n", 1],
+];
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/apply-map.mjs" "$SCRATCH/c6d-map.mjs" && pnpm format && just static-checks
+grep -rnE 'function CenteredState|min-h-\[60vh\]' "$WORKTREE/apps/marketing/src"
+```
+
+Expected: `4 files rewritten`; static checks green; the `grep` prints nothing.
+
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+diff -r "$SCRATCH/html-before" "$SCRATCH/html-after" && echo RAW-IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` and `RAW-IDENTICAL` (the raw snapshots are byte-identical: no class moved);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
+- [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): centered states and status pages from the duplicates`.
+
+PR body: Summary (`CenteredState` from the booker into `layout/`, `StatusPage` for 404, error and `/zahlung`);
+_What changes for a visitor_: nothing - the raw HTML of the 14 URLs and the CSS byte-identical, `compare-computed` 72
+page states; _Grep list_: `function CenteredState` and `min-h-[60vh]` gone from the app; _Phase E_: `min-h-[60vh]`
+moves into the package with `StatusPage` as an arbitrary value the ratchet does not count - a height token for
+phase E; _Deviations from the plan_;
+_How to check_: `/gibt-es-nicht`, `/zahlung?re=x&betrag=abc`, `/termin` and `/kontakt` without a Cal.com key (the
+"nicht verfügbar" state); 390 and 1280 px, light and dark.
+
+---
+
+### Task 6e: Collapsible and AnimatedHeight (spec C6, part 5)
+
+**Branch:** `refactor/ui-collapsible` from `refactor/ui-states`. **PR title:** `refactor(ui): collapsible and
+animated height in the package`.
+
+**Files:**
+
+- Create: `packages/ui/src/motion/{collapsible,animated-height}.tsx`, `packages/ui/src/motion/collapsible.test.tsx`
+- Modify: `packages/ui/package.json` (`exports`), `packages/ui/src/primitives/accordion.tsx`
+- Modify: `apps/marketing/src/components/layout/navbar.tsx`, `components/booking/booker.tsx`
+
+**Interfaces:**
+
+- Consumes: Task 6d's tree.
+- Produces: `Collapsible({ open, ...inner div props })` and `AnimatedHeight({ className?, children })` in
+  `@skillsite/ui/motion/*`. C8 reuses `Collapsible`; the "one dismiss logic" is C8's, not this task's.
+
+**Background (measured on the tree after Task 6d).** The accordion (package) and the mobile menu's "Online lernen"
+list write the same collapsible: an outer grid animating `grid-template-rows` 0fr <-> 1fr and an inner
+`overflow-hidden` element that is `inert` while closed. `Collapsible` is exactly that; `id`, `role`, `aria-*` go to
+the inner element as before. `AnimatedHeight` is the booker's private ResizeObserver helper, moved verbatim. The open
+states (an open FAQ item, the open sub-list) are not in a scenario; `collapsible.test.tsx` pins both states' class
+strings. One trap found in the dry run: a test variable named `resize` made Tailwind (which scans tests) emit a new
+`.resize` rule - the byte comparison of `_styles.css` caught it; the test uses `notifyResize`. Motion: `compare-computed`
+never reaches the open states and runs with reduced motion, so the open transition is covered by
+`e2e/motion.spec.ts` "an FAQ answer slides in" (in `just check`: it opens an accordion item on `/preise` and measures
+the answer mid-slide inside the `Collapsible`); `AnimatedHeight`'s motion is covered only by its verbatim move. A dry
+run of this task gave: the raw HTML snapshots byte-identical; `compare-computed` 72 page states, no differences.
+
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-states`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/motion/collapsible.test.tsx`:
+
+```tsx
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+
+import { AnimatedHeight } from "./animated-height";
+import { Collapsible } from "./collapsible";
+
+let notifyResize: () => void = () => {};
+beforeEach(() => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(callback: () => void) {
+        notifyResize = callback;
+      }
+      observe() {}
+      disconnect() {}
+    },
+  );
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+test("a closed Collapsible has zero rows and an inert, clipping panel", () => {
+  render(
+    <Collapsible open={false} id="panel" role="region">
+      Antwort
+    </Collapsible>,
+  );
+  const panel = screen.getByText("Antwort");
+  expect(panel.id).toBe("panel");
+  expect(panel.getAttribute("role")).toBe("region");
+  expect(panel.hasAttribute("inert")).toBe(true);
+  expect(panel.className).toBe("overflow-hidden");
+  expect(panel.parentElement?.className).toBe(
+    "grid transition-[grid-template-rows] duration-base ease-soft grid-rows-[0fr]",
+  );
+});
+
+test("an open Collapsible has one full row and a live panel", () => {
+  render(<Collapsible open>Antwort</Collapsible>);
+  const panel = screen.getByText("Antwort");
+  expect(panel.hasAttribute("inert")).toBe(false);
+  expect(panel.parentElement?.className).toBe(
+    "grid transition-[grid-template-rows] duration-base ease-soft grid-rows-[1fr]",
+  );
+});
+
+test("AnimatedHeight follows the height of its content", () => {
+  render(<AnimatedHeight className="p-4">Inhalt</AnimatedHeight>);
+  const inner = screen.getByText("Inhalt");
+  expect(inner.className).toBe("p-4");
+  const outer = inner.parentElement!;
+  expect(outer.className).toBe(
+    "overflow-hidden motion-safe:transition-[height] motion-safe:duration-slow motion-safe:ease-soft",
+  );
+  expect(outer.style.height).toBe("");
+  Object.defineProperty(inner, "offsetHeight", { value: 240 });
+  act(() => notifyResize());
+  expect(outer.style.height).toBe("240px");
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/motion`.
+Expected: FAIL - `Failed to resolve import "./animated-height"`.
+
+- [ ] **Step 3: The components.** Create `packages/ui/src/motion/collapsible.tsx`:
+
+```tsx
+import { cn } from "../utils/cn";
+
+type CollapsibleProps = React.ComponentProps<"div"> & {
+  open: boolean;
+};
+
+/**
+ * A panel that opens and closes by animating its height: grid rows 0fr <-> 1fr
+ * animate a variable height. The inner element clips and is `inert` while
+ * closed, so collapsed content stays out of focus and the accessibility tree but
+ * still renders (which `hidden` would prevent, killing the animation). `id`,
+ * `role`, `aria-*` and `className` go to that inner element.
+ */
+export function Collapsible({
+  open,
+  className,
+  children,
+  ...props
+}: CollapsibleProps) {
+  return (
+    <div
+      className={cn(
+        "grid transition-[grid-template-rows] duration-base ease-soft",
+        open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+      )}
+    >
+      <div
+        inert={!open}
+        className={cn("overflow-hidden", className)}
+        {...props}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+```
+
+`packages/ui/src/motion/animated-height.tsx`:
+
+```tsx
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+/**
+ * Animates its height to follow its content (a ResizeObserver on the inner
+ * element), e.g. when a panel swaps one step for another. `className` goes to
+ * the inner element that holds the content.
+ */
+export function AnimatedHeight({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number>();
+
+  useEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setHeight(el.offsetHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      style={{ height }}
+      className="overflow-hidden motion-safe:transition-[height] motion-safe:duration-slow motion-safe:ease-soft"
+    >
+      <div ref={innerRef} className={className}>
+        {children}
+      </div>
+    </div>
+  );
+}
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" motion/animated-height motion/collapsible
+cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
+```
+
+Expected: `2 exports added`; PASS, 17 files / 87 tests.
+
+- [ ] **Step 4: The call sites.** Save as `<scratch>/c6e-map.mjs` and apply it:
+
+```js
+// C6e: the grid-rows collapsible (accordion, mobile menu) becomes Collapsible;
+// the booker's private AnimatedHeight moves to the package.
+// [file, from, to, count]; apply-map.mjs, then `pnpm format`.
+const A = "apps/marketing/src";
+
+export const REPLACEMENTS = [
+  // Accordion (package).
+  [
+    "packages/ui/src/primitives/accordion.tsx",
+    'import { cn } from "../utils/cn";\n',
+    'import { Collapsible } from "../motion/collapsible";\nimport { cn } from "../utils/cn";\n',
+    1,
+  ],
+  [
+    "packages/ui/src/primitives/accordion.tsx",
+    `            {/* grid 0fr<->1fr animates variable height; the inner div clips and
+                carries \`inert\` so collapsed content stays out of focus/a11y but
+                still renders (which \`hidden\` would prevent, killing the anim). */}
+            <div
+              className={cn(
+                "grid transition-[grid-template-rows] duration-base ease-soft",
+                isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+              )}
+            >
+              <div
+                id={panelId}
+                role="region"
+                aria-labelledby={triggerId}
+                inert={!isOpen}
+                className="overflow-hidden"
+              >`,
+    `            <Collapsible
+              open={isOpen}
+              id={panelId}
+              role="region"
+              aria-labelledby={triggerId}
+            >`,
+    1,
+  ],
+  [
+    "packages/ui/src/primitives/accordion.tsx",
+    `                  {item.answer}
+                </div>
+              </div>
+            </div>`,
+    `                  {item.answer}
+                </div>
+            </Collapsible>`,
+    1,
+  ],
+
+  // Mobile menu: the "Online lernen" sub-list.
+  [
+    `${A}/components/layout/navbar.tsx`,
+    'import { Container } from "@skillsite/ui/layout/container";\n',
+    'import { Container } from "@skillsite/ui/layout/container";\nimport { Collapsible } from "@skillsite/ui/motion/collapsible";\n',
+    1,
+  ],
+  [
+    `${A}/components/layout/navbar.tsx`,
+    `        <div
+          className={cn(
+            "grid transition-[grid-template-rows] duration-base ease-soft",
+            platformOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+          )}
+        >
+          <div
+            id="mobile-platform-nav"
+            inert={!platformOpen}
+            className="overflow-hidden"
+          >`,
+    '        <Collapsible open={platformOpen} id="mobile-platform-nav">',
+    1,
+  ],
+  [
+    `${A}/components/layout/navbar.tsx`,
+    `              ))}
+            </div>
+          </div>
+        </div>
+      </Container>`,
+    `              ))}
+            </div>
+        </Collapsible>
+      </Container>`,
+    1,
+  ],
+
+  // Booker: AnimatedHeight from the package.
+  [
+    `${A}/components/booking/booker.tsx`,
+    'import { CenteredState } from "@skillsite/ui/layout/centered-state";\n',
+    'import { CenteredState } from "@skillsite/ui/layout/centered-state";\nimport { AnimatedHeight } from "@skillsite/ui/motion/animated-height";\n',
+    1,
+  ],
+  [
+    `${A}/components/booking/booker.tsx`,
+    `function AnimatedHeight({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number>();
+
+  useEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setHeight(el.offsetHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      style={{ height }}
+      className="overflow-hidden motion-safe:transition-[height] motion-safe:duration-slow motion-safe:ease-soft"
+    >
+      <div ref={innerRef} className={className}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+`,
+    "",
+    1,
+  ],
+];
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/apply-map.mjs" "$SCRATCH/c6e-map.mjs" && pnpm format && just static-checks
+grep -rnE 'grid-rows-\[|ResizeObserver' "$WORKTREE/apps/marketing/src" "$WORKTREE/packages/ui/src/primitives"
+```
+
+Expected: `3 files rewritten`; static checks green; the `grep` prints nothing.
+
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+diff -r "$SCRATCH/html-before" "$SCRATCH/html-after" && echo RAW-IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` and `RAW-IDENTICAL` (the raw snapshots are byte-identical: no class moved);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
+- [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): collapsible and animated height in the package`.
+
+PR body: Summary (`Collapsible` for the accordion and the mobile menu, `AnimatedHeight` from the booker; the dismiss
+logic stays for C8); _What changes for a visitor_: nothing - raw HTML and CSS byte-identical, `compare-computed` 72
+page states, the open states pinned by the test, the open motion by `motion.spec.ts` ("an FAQ answer slides in"),
+`AnimatedHeight` moved verbatim; _Deviations from the plan_; _How to check_: open and close a FAQ
+item (`/faecher`), the mobile menu at 390 px -> "Online lernen" open and closed, `/termin` -> slot -> form -> back (the
+panel height morphs); light and dark.
+
+---
+
+### Task 6f: Text, arrow and nav links on one rule (spec C6, part 6)
+
+**Branch:** `refactor/ui-links` from `refactor/ui-collapsible`. **PR title:** `refactor(ui): text, arrow and nav
+links on one link rule`.
+
+**Files:**
+
+- Create: `packages/ui/src/primitives/link.tsx`, `packages/ui/src/primitives/link.test.tsx`
+- Modify: `packages/ui/package.json` (`exports`)
+- Modify: `apps/marketing/src/components/layout/{footer,navbar}.tsx`, `components/docs/doc-section-nav.tsx`,
+  `app/{termin,zahlung,datenschutz,impressum,agb,online-lernen,preise}/page.tsx`
+
+**Interfaces:**
+
+- Consumes: Task 6e's tree; `next/link`, `lucide-react` (peer dependencies of the package).
+- Produces, in `@skillsite/ui/primitives/link`:
+  - `SmartLink({ href, ...anchor props without target/rel })` - **the one link rule:** a route goes through
+    `next/link`; an `http(s):` address opens in a new tab with `rel="noopener noreferrer"`; `mailto:`, `tel:` and
+    `#anchor` links are plain anchors. Callers cannot set `target` or `rel`.
+  - `TextLink({ variant?: "site" | "doc" | "underline" | "inverse" | "inverse-muted" })` - `site`/`doc` are the old
+    `InlineLink` looks (underline offset 4px / 3px), `underline` the `/zahlung` link, `inverse`/`inverse-muted` the
+    footer's links.
+  - `ArrowLink` - the coral link with a trailing decorative arrow (`/termin`).
+  - `NavLink({ variant?: "menu" | "menu-sub" | "toc", active? })` - the active emphasis per variant;
+    `aria-current` stays the caller's (a link to the current section is active, only the current page is
+    `aria-current="page"`).
+
+**Background (measured on the tree after Task 6e).** `FooterLink` already applied this rule; the rule is now the
+package's and every text, arrow and nav link uses it where it reproduces today's element and attributes exactly:
+the footer (`FooterLink` 4x, 3 legal links, 6 social links), the `/termin` arrow link, the `/zahlung` link, the mobile
+menu rows (2 variants), the legal table of contents, the 10 `InlineLink`s whose `href` is `mailto:`, `tel:` or `#`,
+and the anchors of the three buttons that open another site (`<Button asChild><SmartLink>`: same attributes). Left
+for Task 6g, because the rule changes them: the three `InlineLink`s whose `href` is a route (they render `<a>`
+today, a full page load) and the three anchors with `rel="noreferrer"` (`DocProviderLink`, `DocLinkList`, the
+`/kontakt` WhatsApp card). Not links, so they stay: the "Mehr erfahren ->" labels inside the subject and classroom
+link cards (a nested link is invalid). Not changed either: the desktop nav and the "Online lernen" dropdown items
+(`Button asChild variant="ghost"`; the dropdown is C8's, and a `NavLink` under `Button`'s `Slot` would put its
+active classes before the button's, so `cn` would drop them), `mailto:` anchors inside `Button`/`Card asChild` (the
+rule's own result), and the `/zahlung` WhatsApp button, which opens in the same tab (open point 17). The server HTML
+cannot tell `next/link` from `<a>`, so `check-navigation.mjs` clicks 12 links in both builds, and `link.test.tsx`
+mocks `next/link` so that its output carries a marker (a route rendered as a plain `<a>` fails; checked by breaking
+the rule). The navbar keeps `activeText` for its buttons (the desktop nav, the C8 dropdown trigger, the mobile
+toggle): it repeats `NavLink`'s menu classes; the grep list names it. One trap found in the
+dry run: a variant named `inline-doc` is itself a Tailwind utility (`inline-size` with the `doc` spacing) and emitted
+`.inline-doc{inline-size:…}`; the variants keep `InlineLink`'s names `site` and `doc`. A dry run of this task gave:
+HTML equal after sorting class tokens, `_styles.css` byte-identical; `check-navigation` "Same navigation." (12 links);
+`compare-computed` 72 page states, no differences.
+
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-collapsible`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `c6-grep.sh`, `add-exports.mjs`, `check-navigation.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/primitives/link.test.tsx`:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, test, vi } from "vitest";
+
+import { ArrowLink, NavLink, SmartLink, TextLink } from "./link";
+
+// next/link renders an <a> too: the mock marks it, so a route rendered as a
+// plain anchor (a full page load) fails the attribute checks below.
+vi.mock("next/link", () => ({
+  default: (props: React.ComponentProps<"a">) => (
+    <a data-next-link="" {...props} />
+  ),
+}));
+
+afterEach(cleanup);
+
+test("the link rule: routes, web addresses and plain anchors", () => {
+  render(
+    <>
+      <SmartLink href="/preise">Preise</SmartLink>
+      <SmartLink href="https://discord.gg/x">Discord</SmartLink>
+      <SmartLink href="mailto:a@b.de">E-Mail</SmartLink>
+      <SmartLink href="tel:+49">Telefon</SmartLink>
+      <SmartLink href="#kontakt">Abschnitt</SmartLink>
+    </>,
+  );
+  const link = (name: string) => screen.getByRole("link", { name });
+  const attributes = (name: string) =>
+    [...link(name).attributes].map((a) => `${a.name}=${a.value}`).sort();
+  expect(attributes("Preise")).toEqual(["data-next-link=", "href=/preise"]);
+  expect(attributes("Discord")).toEqual([
+    "href=https://discord.gg/x",
+    "rel=noopener noreferrer",
+    "target=_blank",
+  ]);
+  expect(attributes("E-Mail")).toEqual(["href=mailto:a@b.de"]);
+  expect(attributes("Telefon")).toEqual(["href=tel:+49"]);
+  expect(attributes("Abschnitt")).toEqual(["href=#kontakt"]);
+});
+
+test("TextLink variants keep the measured looks", () => {
+  render(
+    <>
+      <TextLink href="mailto:a@b.de">Inline</TextLink>
+      <TextLink variant="doc" href="#a">
+        Doc
+      </TextLink>
+      <TextLink variant="inverse" href="/kontakt">
+        Kontakt
+      </TextLink>
+    </>,
+  );
+  expect(screen.getByRole("link", { name: "Inline" }).className).toBe(
+    "font-medium text-coral underline transition-colors hover:text-coral-2 underline-offset-4",
+  );
+  expect(screen.getByRole("link", { name: "Doc" }).className).toBe(
+    "font-medium text-coral underline transition-colors hover:text-coral-2 underline-offset-[3px]",
+  );
+  expect(screen.getByRole("link", { name: "Kontakt" }).className).toBe(
+    "w-fit text-small text-on-navy-soft transition-colors hover:text-white",
+  );
+});
+
+test("ArrowLink ends in a decorative arrow after a space", () => {
+  render(<ArrowLink href="/kontakt#kennenlernen">Erstgespräch</ArrowLink>);
+  const link = screen.getByRole("link", { name: "Erstgespräch" });
+  expect(link.hasAttribute("data-next-link")).toBe(true);
+  expect(link.className).toBe(
+    "font-semibold text-coral underline underline-offset-[3px]",
+  );
+  expect(link.textContent).toBe("Erstgespräch ");
+  expect(link.lastElementChild?.getAttribute("aria-hidden")).toBe("true");
+  expect(link.lastElementChild?.getAttribute("class")).toContain(
+    "inline size-4",
+  );
+});
+
+test("NavLink shows the active entry per variant; aria-current is the caller's", () => {
+  render(
+    <>
+      <NavLink href="/preise" active aria-current="page">
+        Preise
+      </NavLink>
+      <NavLink variant="menu-sub" href="/termin">
+        Termin
+      </NavLink>
+      <NavLink variant="toc" href="#a" active>
+        Abschnitt
+      </NavLink>
+    </>,
+  );
+  const current = screen.getByRole("link", { name: "Preise" });
+  expect(current.hasAttribute("data-next-link")).toBe(true);
+  expect(current.getAttribute("aria-current")).toBe("page");
+  expect(current.className).toBe(
+    "border-b border-line py-3 text-body font-semibold text-ink",
+  );
+  expect(screen.getByRole("link", { name: "Termin" }).className).toBe(
+    "border-b border-line py-2.5 pl-4 text-small font-medium text-ink-soft",
+  );
+  expect(screen.getByRole("link", { name: "Abschnitt" }).className).toBe(
+    "block rounded-lg px-2 py-1.5 transition-colors bg-surface-2 font-medium text-ink",
+  );
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/primitives/link`.
+Expected: FAIL - `Failed to resolve import "./link"`.
+
+- [ ] **Step 3: The link module.** Create `packages/ui/src/primitives/link.tsx`:
+
+```tsx
+import NextLink from "next/link";
+import { ArrowRight } from "lucide-react";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "../utils/cn";
+
+/** An address outside the site: it opens in a new tab. */
+const EXTERNAL = /^https?:/;
+/** Not a route: a mail or phone link, or a jump within the page. */
+const PLAIN = /^(mailto:|tel:|#)/;
+
+type SmartLinkProps = Omit<
+  React.ComponentProps<"a">,
+  "href" | "target" | "rel"
+> & {
+  href: string;
+};
+
+/**
+ * The one link rule. A route goes through next/link (client-side navigation);
+ * an http(s) address opens in a new tab with `rel="noopener noreferrer"`; a
+ * mailto:, tel: or #anchor link is a plain anchor. Callers cannot set `target`
+ * or `rel`.
+ */
+export function SmartLink({ href, ...props }: SmartLinkProps) {
+  if (EXTERNAL.test(href))
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" {...props} />
+    );
+  if (PLAIN.test(href)) return <a href={href} {...props} />;
+  return <NextLink href={href} {...props} />;
+}
+
+const textLinkVariants = cva("", {
+  variants: {
+    variant: {
+      /** Coral and underlined, in running text. */
+      site: "font-medium text-coral underline transition-colors hover:text-coral-2 underline-offset-4",
+      /** The same in legal text, with the tighter underline. */
+      doc: "font-medium text-coral underline transition-colors hover:text-coral-2 underline-offset-[3px]",
+      /** Underlined in the surrounding colour. */
+      underline: "underline underline-offset-4",
+      /** On navy: the footer's column links. */
+      inverse:
+        "w-fit text-small text-on-navy-soft transition-colors hover:text-white",
+      /** On navy, quieter: the footer's legal and social links. */
+      "inverse-muted": "text-on-navy-muted transition-colors hover:text-white",
+    },
+  },
+  defaultVariants: { variant: "site" },
+});
+
+type TextLinkProps = SmartLinkProps & VariantProps<typeof textLinkVariants>;
+
+/** A text link on the link rule. */
+export function TextLink({ variant, className, ...props }: TextLinkProps) {
+  return (
+    <SmartLink
+      className={cn(textLinkVariants({ variant }), className)}
+      {...props}
+    />
+  );
+}
+
+/** A coral text link with a trailing arrow (decorative) on the link rule. */
+export function ArrowLink({ className, children, ...props }: SmartLinkProps) {
+  return (
+    <SmartLink
+      className={cn(
+        "font-semibold text-coral underline underline-offset-[3px]",
+        className,
+      )}
+      {...props}
+    >
+      {children} <ArrowRight className="inline size-4" aria-hidden />
+    </SmartLink>
+  );
+}
+
+const navLinkVariants = cva("", {
+  variants: {
+    variant: {
+      /** A row of the mobile menu. */
+      menu: "border-b border-line py-3 text-body",
+      /** An indented row under a menu entry. */
+      "menu-sub": "border-b border-line py-2.5 pl-4 text-small",
+      /** An entry of a page's table of contents. */
+      toc: "block rounded-lg px-2 py-1.5 transition-colors",
+    },
+    active: { true: "", false: "" },
+  },
+  compoundVariants: [
+    {
+      variant: ["menu", "menu-sub"],
+      active: true,
+      class: "font-semibold text-ink",
+    },
+    {
+      variant: ["menu", "menu-sub"],
+      active: false,
+      class: "font-medium text-ink-soft",
+    },
+    {
+      variant: "toc",
+      active: true,
+      class: "bg-surface-2 font-medium text-ink",
+    },
+    { variant: "toc", active: false, class: "text-ink-soft hover:text-ink" },
+  ],
+  defaultVariants: { variant: "menu", active: false },
+});
+
+type NavLinkProps = SmartLinkProps & VariantProps<typeof navLinkVariants>;
+
+/**
+ * A navigation link that shows whether it is active. `aria-current` is the
+ * caller's: a link to the current section is active, but only a link to the
+ * current page is `aria-current="page"`.
+ */
+export function NavLink({
+  variant,
+  active,
+  className,
+  ...props
+}: NavLinkProps) {
+  return (
+    <SmartLink
+      className={cn(navLinkVariants({ variant, active }), className)}
+      {...props}
+    />
+  );
+}
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/add-exports.mjs" primitives/link
+cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run
+```
+
+Expected: `1 exports added`; PASS, 18 files / 91 tests.
+
+- [ ] **Step 4: The call sites.** Save as `<scratch>/c6f-map.mjs` and apply it:
+
+```js
+// C6f: text, arrow and nav links on the link primitives - every link whose
+// element and attributes the link rule reproduces exactly. The internal
+// InlineLinks and the rel="noreferrer" anchors stay for Task 6g (a fix).
+// [file, from, to, count]; apply-map.mjs, then `pnpm format`.
+const A = "apps/marketing/src";
+const LINK = (...names) =>
+  `import { ${names.join(", ")} } from "@skillsite/ui/primitives/link";\n`;
+
+export const REPLACEMENTS = [
+  // Footer: FooterLink (the same rule) becomes TextLink; legal and social links.
+  [
+    `${A}/components/layout/footer.tsx`,
+    'import { Logo } from "@skillsite/ui/shell/logo";\n',
+    'import { TextLink } from "@skillsite/ui/primitives/link";\nimport { Logo } from "@skillsite/ui/shell/logo";\n',
+    1,
+  ],
+  [
+    `${A}/components/layout/footer.tsx`,
+    `const legalLinkClass = "text-on-navy-muted transition-colors hover:text-white";
+const footerLinkClass =
+  "w-fit text-small text-on-navy-soft transition-colors hover:text-white";
+
+`,
+    "",
+    1,
+  ],
+  [
+    `${A}/components/layout/footer.tsx`,
+    `/** Internal routes use next/link; http/mailto/tel render a plain anchor. */
+function FooterLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  const isExternal = /^(https?:|mailto:|tel:)/.test(href);
+  if (isExternal) {
+    const isHttp = href.startsWith("http");
+    return (
+      <a
+        href={href}
+        className={footerLinkClass}
+        {...(isHttp ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      >
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link href={href} className={footerLinkClass}>
+      {children}
+    </Link>
+  );
+}
+
+`,
+    "",
+    1,
+  ],
+  [
+    `${A}/components/layout/footer.tsx`,
+    "<FooterLink ",
+    '<TextLink variant="inverse" ',
+    4,
+  ],
+  [`${A}/components/layout/footer.tsx`, "</FooterLink>", "</TextLink>", 4],
+  [
+    `${A}/components/layout/footer.tsx`,
+    `            <a
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={social.label}
+              className="block text-on-navy-muted transition-colors hover:text-white"
+            >
+              <Icon size={20} aria-hidden />
+            </a>`,
+    `            <TextLink
+              variant="inverse-muted"
+              href={social.href}
+              aria-label={social.label}
+              className="block"
+            >
+              <Icon size={20} aria-hidden />
+            </TextLink>`,
+    1,
+  ],
+  [
+    `${A}/components/layout/footer.tsx`,
+    `            <Link href={routes.impressum} className={legalLinkClass}>
+              Impressum
+            </Link>
+            <Link href={routes.datenschutz} className={legalLinkClass}>
+              Datenschutz
+            </Link>
+            <Link href={routes.agb} className={legalLinkClass}>
+              AGB
+            </Link>`,
+    `            <TextLink variant="inverse-muted" href={routes.impressum}>
+              Impressum
+            </TextLink>
+            <TextLink variant="inverse-muted" href={routes.datenschutz}>
+              Datenschutz
+            </TextLink>
+            <TextLink variant="inverse-muted" href={routes.agb}>
+              AGB
+            </TextLink>`,
+    1,
+  ],
+
+  // /termin: the arrow link below the booker.
+  [`${A}/app/termin/page.tsx`, 'import Link from "next/link";\n\n', "", 1],
+  [
+    `${A}/app/termin/page.tsx`,
+    'import { PageHeader } from "@skillsite/ui/layout/page-header";\n',
+    'import { PageHeader } from "@skillsite/ui/layout/page-header";\n' +
+      LINK("ArrowLink"),
+    1,
+  ],
+  [
+    `${A}/app/termin/page.tsx`,
+    'import { ArrowRight } from "lucide-react";\n',
+    "",
+    1,
+  ],
+  [
+    `${A}/app/termin/page.tsx`,
+    `            <Link
+              href={routes.firstMeeting}
+              className="font-semibold text-coral underline underline-offset-[3px]"
+            >
+              Starte mit dem kostenlosen Erstgespräch{" "}
+              <ArrowRight className="inline size-4" aria-hidden />
+            </Link>`,
+    `            <ArrowLink href={routes.firstMeeting}>
+              Starte mit dem kostenlosen Erstgespräch
+            </ArrowLink>`,
+    1,
+  ],
+
+  // /zahlung: "Alle Kontaktwege".
+  [`${A}/app/zahlung/page.tsx`, 'import Link from "next/link";\n', "", 1],
+  [
+    `${A}/app/zahlung/page.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+    'import { Button } from "@skillsite/ui/primitives/button";\n' +
+      LINK("TextLink"),
+    1,
+  ],
+  [
+    `${A}/app/zahlung/page.tsx`,
+    `        <Link href={routes.contact} className="underline underline-offset-4">
+          Alle Kontaktwege
+        </Link>`,
+    `        <TextLink variant="underline" href={routes.contact}>
+          Alle Kontaktwege
+        </TextLink>`,
+    1,
+  ],
+
+  // Mobile menu: the rows.
+  [
+    `${A}/components/layout/navbar.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+    'import { Button } from "@skillsite/ui/primitives/button";\n' +
+      LINK("NavLink"),
+    1,
+  ],
+  [
+    `${A}/components/layout/navbar.tsx`,
+    `          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={currentPage(pathname, item.href)}
+            onClick={onNavigate}
+            className={cn(
+              "border-b border-line py-3 text-body",
+              activeText(isActive(pathname, item.href)),
+            )}
+          >
+            {item.label}
+          </Link>`,
+    `          <NavLink
+            key={item.href}
+            href={item.href}
+            active={isActive(pathname, item.href)}
+            aria-current={currentPage(pathname, item.href)}
+            onClick={onNavigate}
+          >
+            {item.label}
+          </NavLink>`,
+    1,
+  ],
+  [
+    `${A}/components/layout/navbar.tsx`,
+    `              <Link
+                key={\`\${item.href}:\${item.label}\`}
+                href={item.href}
+                aria-current={currentPage(pathname, item.href)}
+                onClick={onNavigate}
+                className={cn(
+                  "border-b border-line py-2.5 pl-4 text-small",
+                  activeText(isActive(pathname, item.href)),
+                )}
+              >
+                {item.label}
+              </Link>`,
+    `              <NavLink
+                key={\`\${item.href}:\${item.label}\`}
+                variant="menu-sub"
+                href={item.href}
+                active={isActive(pathname, item.href)}
+                aria-current={currentPage(pathname, item.href)}
+                onClick={onNavigate}
+              >
+                {item.label}
+              </NavLink>`,
+    1,
+  ],
+
+  // Legal pages: the section nav and every InlineLink that is not a route.
+  [
+    `${A}/components/docs/doc-section-nav.tsx`,
+    'import { cn } from "@skillsite/ui/utils/cn";\n',
+    LINK("NavLink"),
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-section-nav.tsx`,
+    `              <a
+                href={\`#\${section.id}\`}
+                className={cn(
+                  "block rounded-lg px-2 py-1.5 transition-colors",
+                  active === section.id
+                    ? "bg-surface-2 font-medium text-ink"
+                    : "text-ink-soft hover:text-ink",
+                )}
+              >
+                {section.label}
+              </a>`,
+    `              <NavLink
+                variant="toc"
+                href={\`#\${section.id}\`}
+                active={active === section.id}
+              >
+                {section.label}
+              </NavLink>`,
+    1,
+  ],
+  ...["datenschutz", "impressum"].flatMap((page) => {
+    const count = page === "datenschutz" ? 6 : 2;
+    return [
+      [
+        `${A}/app/${page}/page.tsx`,
+        'import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";\n',
+        'import { ProseP } from "@skillsite/ui/typography/prose";\n' +
+          LINK("TextLink"),
+        1,
+      ],
+      [`${A}/app/${page}/page.tsx`, "<InlineLink", "<TextLink", count],
+      [`${A}/app/${page}/page.tsx`, "</InlineLink>", "</TextLink>", count],
+    ];
+  }),
+  [
+    `${A}/app/agb/page.tsx`,
+    'import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";\n',
+    'import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";\n' +
+      LINK("TextLink"),
+    1,
+  ],
+  [
+    `${A}/app/agb/page.tsx`,
+    `<InlineLink variant="doc" href={\`mailto:\${agbContact.email}\`}>
+                  {agbContact.email}
+                </InlineLink>`,
+    `<TextLink variant="doc" href={\`mailto:\${agbContact.email}\`}>
+                  {agbContact.email}
+                </TextLink>`,
+    1,
+  ],
+  [
+    `${A}/app/agb/page.tsx`,
+    `<InlineLink variant="doc" href={\`mailto:\${agbContact.email}\`}>
+              {agbContact.email}
+            </InlineLink>`,
+    `<TextLink variant="doc" href={\`mailto:\${agbContact.email}\`}>
+              {agbContact.email}
+            </TextLink>`,
+    1,
+  ],
+
+  // Buttons that open another site: the anchor follows the rule.
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+    'import { Button } from "@skillsite/ui/primitives/button";\n' +
+      LINK("SmartLink"),
+    1,
+  ],
+  [
+    `${A}/app/online-lernen/page.tsx`,
+    '<a href={discordInvite} target="_blank" rel="noopener noreferrer">',
+    "<SmartLink href={discordInvite}>",
+    2,
+  ],
+  [`${A}/app/online-lernen/page.tsx`, "</a>", "</SmartLink>", 2],
+  [
+    `${A}/app/preise/page.tsx`,
+    'import { Button } from "@skillsite/ui/primitives/button";\n',
+    'import { Button } from "@skillsite/ui/primitives/button";\n' +
+      LINK("SmartLink"),
+    1,
+  ],
+  [
+    `${A}/app/preise/page.tsx`,
+    `              <a
+                href={but.officialInfo.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {but.officialInfo.label}
+                <ExternalLink className="size-4" aria-hidden />
+              </a>`,
+    `              <SmartLink href={but.officialInfo.href}>
+                {but.officialInfo.label}
+                <ExternalLink className="size-4" aria-hidden />
+              </SmartLink>`,
+    1,
+  ],
+];
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/apply-map.mjs" "$SCRATCH/c6f-map.mjs" && pnpm format && just static-checks
+bash "$SCRATCH/c6-grep.sh" | sed -n '/^## hand-built links/,/^## hand-built field/p'
+```
+
+Expected: `10 files rewritten`; static checks green; the links section prints only the 6g lines: `kontakt/page.tsx`
+(`target`/`rel` of the WhatsApp card), `agb/page.tsx` (the `InlineLink` import and the "Preisübersicht" link),
+`booking-form.tsx` (the `InlineLink` import and 2 links), `doc-components.tsx` (the `InlineLink` import,
+`DocLinkList`'s and `DocProviderLink`'s `target`/`rel`).
+
+- [ ] **Step 5: Prove the result identical and the navigation unchanged.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+node "$SCRATCH/check-navigation.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL`; 12 navigation lines, the first nine `client` (footer, menu, arrow, `/zahlung`, table
+of contents), the last three `document` (the 6g links), then `Same navigation.`;
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
+- [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): text, arrow and nav links on one link rule`.
+
+PR body: Summary (the link rule in `SmartLink`; `TextLink`, `ArrowLink`, `NavLink`; `FooterLink` and the footer's
+class constants removed; what is left for 6g and why); _What changes for a visitor_: nothing - HTML equal after
+sorting class tokens, CSS byte-identical, `compare-computed` 72 page states, `check-navigation` the same for 12 links;
+_Grep list_: the links section with the 6g lines, the raw anchors (two `mailto:` anchors, the skip link, the
+`/zahlung` WhatsApp button) and `activeText`; _Question for the maintainer_: the `/zahlung` WhatsApp button opens
+WhatsApp in the same tab, while the footer and the `/kontakt` card open a new one - a bug or a design choice? It stays
+as it is (open point 17); _Naming_: the `NavLink` component shares its name with the `NavLink` type in
+`content/site.ts` (no file imports both; nothing renamed); _Deviations from the plan_; _How to check_: the footer (hover the
+links on navy; social icons open a new tab), the mobile menu at 390 px (the current page's row is bold),
+`/datenschutz` (table of contents follows the scroll; e-mail and phone links), `/impressum`, `/termin` ("Starte mit
+dem kostenlosen Erstgespräch ->"), `/zahlung?re=x&betrag=abc` ("Alle Kontaktwege"), `/online-lernen` and `/preise`
+(the external buttons open a new tab); light and dark.
+
+---
+
+### Task 6g: Internal text links on next/link (spec C6, the behaviour fix)
+
+**Branch:** `fix/text-links` from `refactor/ui-links`. **PR title:** `fix(links): navigate internal text links
+without a page load`.
+
+**Files:**
+
+- Modify: `apps/marketing/src/app/{agb,kontakt}/page.tsx`, `components/booking/booking-form.tsx`,
+  `components/docs/doc-components.tsx`
+- Modify: `packages/ui/src/typography/prose.tsx` (`InlineLink` removed), `typography/prose.test.tsx`,
+  `typography/typography.test.tsx`
+- Modify: `apps/marketing/e2e/smoke.spec.ts` (client-side navigation from running text)
+
+**Interfaces:**
+
+- Consumes: Task 6f's link module.
+- Produces: `InlineLink` no longer exists (`TextLink` replaces it); no hand-written `target` or `rel` is left in
+  the app.
+
+**Background (measured on the tree after Task 6f).** Three text links point at routes but render a plain `<a>`
+(`InlineLink` never used `next/link`): "Preisübersicht" in the AGB, "AGB" and "Datenschutzerklärung" in the paid
+booking form. A click loads the whole document; every other internal link navigates client-side. The spec asks for
+text links "on next/link" - a behaviour change, so it is a `fix:` PR of its own (the rules of the refactor, as in
+4c): the three links now navigate client-side, and nothing looks different. The same PR moves the three anchors
+with `rel="noreferrer"` onto the rule's `rel="noopener noreferrer"`: `DocProviderLink` (10 on `/datenschutz`),
+`DocLinkList` (7) and the `/kontakt` WhatsApp card. `noreferrer` already implies `noopener`, so their behaviour does
+not change; the server HTML does (18 `rel` values). A dry run of this task gave: the smoke test red ("Expected: true,
+Received: false") before and green after; the HTML equal to the before snapshot with the `rel` map applied, CSS
+byte-identical; `check-navigation` exactly the three links `document -> client`; `compare-computed` 72 page states,
+no differences.
+
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `refactor/ui-links`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `apply-map.mjs`, `expect-html.mjs`, `check-navigation.mjs`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
+- [ ] **Step 2: Write the failing tests.** Append to `apps/marketing/e2e/smoke.spec.ts`:
+
+```ts
+test("a route in running text navigates without a page load", async ({
+  page,
+}) => {
+  await isolate(page);
+  await page.goto("/agb");
+  // A page load drops this marker; a client-side navigation keeps the document.
+  await page.evaluate(() => Object.assign(window, { navigationMarker: true }));
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: "Preisübersicht" })
+    .click();
+  await expect(page).toHaveURL(/\/preise$/);
+  expect(await page.evaluate(() => "navigationMarker" in window)).toBe(true);
+});
+```
+
+In `packages/ui/src/typography/prose.test.tsx`, import only `{ ProseH2, ProseH3, ProseP }` from `./prose`, remove
+`"InlineLink",` from the expected export list and delete the test "an inline link keeps its site and doc underline
+offsets"; in `packages/ui/src/typography/typography.test.tsx`, remove `"InlineLink",` from the expected export list.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run src/typography
+cd "$WORKTREE" && just build && cd apps/marketing && pnpm exec playwright test -g "navigates without a page load"
+```
+
+Expected: FAIL - the two export-list tests (`InlineLink` is still exported); the smoke test fails with
+`Expected: true` / `Received: false` (the click loads a new document).
+
+- [ ] **Step 3: The fix.** Save as `<scratch>/c6g-map.mjs` and apply it:
+
+```js
+// C6g (fix): the last InlineLinks - three routes and the provider links - and the
+// two raw anchors with rel="noreferrer" go onto the link rule; InlineLink goes.
+// [file, from, to, count, snapshots?]; apply-map.mjs, then `pnpm format`.
+// The "(html)" entries are the expected server-HTML change (expect-html.mjs).
+const A = "apps/marketing/src";
+const LINK = (...names) =>
+  `import { ${names.join(", ")} } from "@skillsite/ui/primitives/link";\n`;
+
+export const REPLACEMENTS = [
+  // /agb: "Preisübersicht" is a route.
+  [
+    `${A}/app/agb/page.tsx`,
+    'import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";\n',
+    'import { ProseP } from "@skillsite/ui/typography/prose";\n',
+    1,
+  ],
+  [
+    `${A}/app/agb/page.tsx`,
+    `          <InlineLink variant="doc" href={routes.pricing}>
+            Preisübersicht
+          </InlineLink>`,
+    `          <TextLink variant="doc" href={routes.pricing}>
+            Preisübersicht
+          </TextLink>`,
+    1,
+  ],
+
+  // Booking form: "AGB" and "Datenschutzerklärung" are routes.
+  [
+    `${A}/components/booking/booking-form.tsx`,
+    'import { InlineLink } from "@skillsite/ui/typography/prose";\n',
+    LINK("TextLink"),
+    1,
+  ],
+  [
+    `${A}/components/booking/booking-form.tsx`,
+    "<InlineLink href=",
+    "<TextLink href=",
+    2,
+  ],
+  [
+    `${A}/components/booking/booking-form.tsx`,
+    "</InlineLink>",
+    "</TextLink>",
+    2,
+  ],
+
+  // Legal pages: the provider links and the link list.
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    'import { InfoRow } from "@skillsite/ui/primitives/info-row";\n',
+    'import { InfoRow } from "@skillsite/ui/primitives/info-row";\n' +
+      LINK("SmartLink", "TextLink"),
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    'import { InlineLink, ProseH2, ProseH3 } from "@skillsite/ui/typography/prose";\n',
+    'import { ProseH2, ProseH3 } from "@skillsite/ui/typography/prose";\n',
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `      <InlineLink
+        variant="doc"
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1"
+      >
+        {children}
+        <ExternalLink className="size-3.5" aria-hidden />
+      </InlineLink>`,
+    `      <TextLink
+        variant="doc"
+        href={href}
+        className="inline-flex items-center gap-1"
+      >
+        {children}
+        <ExternalLink className="size-3.5" aria-hidden />
+      </TextLink>`,
+    1,
+  ],
+  [
+    `${A}/components/docs/doc-components.tsx`,
+    `            <a href={link.href} target="_blank" rel="noreferrer">
+              <span>{link.label}</span>
+              <ExternalLink
+                className="size-3.5 shrink-0 text-ink-soft"
+                aria-hidden
+              />
+            </a>`,
+    `            <SmartLink href={link.href}>
+              <span>{link.label}</span>
+              <ExternalLink
+                className="size-3.5 shrink-0 text-ink-soft"
+                aria-hidden
+              />
+            </SmartLink>`,
+    1,
+  ],
+
+  // /kontakt: the WhatsApp card.
+  [
+    `${A}/app/kontakt/page.tsx`,
+    'import { Card } from "@skillsite/ui/primitives/card";\n',
+    'import { Card } from "@skillsite/ui/primitives/card";\n' +
+      LINK("SmartLink"),
+    1,
+  ],
+  [
+    `${A}/app/kontakt/page.tsx`,
+    '<a href={whatsapp} target="_blank" rel="noreferrer">',
+    "<SmartLink href={whatsapp}>",
+    1,
+  ],
+  [
+    `${A}/app/kontakt/page.tsx`,
+    `              </a>
+            </Card>
+          </Reveal>`,
+    `              </SmartLink>
+            </Card>
+          </Reveal>`,
+    1,
+  ],
+
+  // The package: InlineLink is gone (TextLink replaces it).
+  [
+    "packages/ui/src/typography/prose.tsx",
+    `
+
+type InlineLinkProps = React.ComponentProps<"a"> & {
+  /** \`doc\` in legal text (tighter underline), \`site\` elsewhere. */
+  variant?: "site" | "doc";
+};
+
+export function InlineLink({
+  className,
+  variant = "site",
+  ...props
+}: InlineLinkProps) {
+  return (
+    <a
+      className={cn(
+        "font-medium text-coral underline transition-colors hover:text-coral-2",
+        variant === "doc" ? "underline-offset-[3px]" : "underline-offset-4",
+        className,
+      )}
+      {...props}
+    />
+  );
+}`,
+    "",
+    1,
+  ],
+
+  // Expected server-HTML change: the rel of the three anchors that had "noreferrer".
+  [
+    "(html)",
+    'rel="noreferrer"',
+    'rel="noopener noreferrer"',
+    0,
+    ["kontakt.txt", "datenschutz.txt"],
+  ],
+];
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && node "$SCRATCH/apply-map.mjs" "$SCRATCH/c6g-map.mjs" && pnpm format && just static-checks
+cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run
+grep -rnE 'InlineLink|target="_blank"|rel="' "$WORKTREE/apps/marketing/src" "$WORKTREE/packages/ui/src" | grep -v 'manifest.ts'
+```
+
+Expected: `5 files rewritten`; static checks green; PASS, 18 files / 90 tests; the `grep` prints only
+`packages/ui/src/primitives/link.tsx` (the rule, 2 lines).
+
+- [ ] **Step 4: Prove the change and nothing else.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build && (cd apps/marketing && pnpm exec playwright test -g "navigates without a page load")
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/expect-html.mjs" "$SCRATCH/c6g-map.mjs" "$SCRATCH/html-before" "$SCRATCH/html-expected"
+for side in after expected; do node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-$side" "$SCRATCH/html-$side-n"; done
+diff -r -x _styles.css "$SCRATCH/html-expected-n" "$SCRATCH/html-after-n" && echo EXPECTED
+cmp "$SCRATCH/html-before/_styles.css" "$SCRATCH/html-after/_styles.css" && echo CSS-IDENTICAL
+node "$SCRATCH/check-navigation.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 | tail -4
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `1 passed`; `EXPECTED`; `CSS-IDENTICAL`; `agb Preisübersicht: /preise document -> /preise client`,
+`form AGB: /agb document -> /agb client`, `form Datenschutzerklärung: /datenschutz document -> /datenschutz client`,
+`3 links navigate differently.` (exit code 1 by design); `No differences.`
+
+- [ ] **Step 5: Commit.** `just check`, commit `fix(links): navigate internal text links without a page load`.
+
+PR body: Summary (the three route links were plain anchors - a full page load - because `InlineLink` never used
+`next/link`; they now follow the link rule; `InlineLink` is gone; the three `rel="noreferrer"` anchors take the
+rule's `rel`); _What changes for a visitor_: nothing looks different; clicking "Preisübersicht" in the AGB, or "AGB" /
+"Datenschutzerklärung" in the paid booking form, switches the page without reloading it (header and footer stay,
+like every other internal link); the 18 external links on `/datenschutz` and `/kontakt` keep opening a new tab
+(`rel` "noreferrer" -> "noopener noreferrer", same behaviour); proof: the smoke test red/green, `check-navigation`
+exactly these three links, HTML equal to the expected `rel` change, CSS identical, `compare-computed` 72 page states;
+_Grep list_: no `InlineLink`, `target` or `rel` left in the app; _Deviations from the spec_: C4's technique (spec, C4)
+still lists `InlineLink` in the Prose module - 6g removes it (`TextLink variant="doc"` replaces it); the _Target
+shape_ names `primitives/links`, the plan's module is `primitives/link.tsx` (one module, singular like its
+siblings); _Deviations from the plan_; _How to check_: `/agb`
+-> "Preisübersicht" (no reload flash; in DevTools' network panel a small RSC request instead of a document), `/termin`
+-> slot -> form (paid) -> "AGB", `/datenschutz` -> any provider link (new tab); 390 and 1280 px, light and dark.
+
+---
+
+### Task 6h: Field slots (spec C6, V4 - the last C6 PR)
+
+**Branch:** `refactor/ui-field` from `fix/text-links`. **PR title:** `refactor(ui): field error, description and
+required slots`.
+
+**Files:**
+
+- Modify: `packages/ui/src/forms/field.tsx`
+- Create: `packages/ui/src/forms/field.test.tsx`
+- Modify: `docs/specs/foundation-refactor.md` (the C6 box)
+
+**Interfaces:**
+
+- Consumes: nothing new.
+- Produces: `Field({ label, htmlFor?, hint?, description?, error?, required?, children })`, a client module (it
+  provides a context). `Input` and `Textarea` take `aria-describedby`, `aria-invalid` and `required` from the Field
+  unless they set them themselves; without the slots nothing is added.
+
+**Background (measured on the tree after Task 6g).** V4: `Field` gets error and description slots; the booking keeps
+its visible error pattern for now. The spec's C6 technique adds `required`. No caller passes the slots - the booking
+form's `TextField` keeps its own `required`/`aria-invalid` and its summary line under the submit button - so nothing
+renders differently; `Field` renders only in the booking form, which `compare-computed` covers ("booker form"). The
+slot looks are the planner's proposal from existing classes (description: caption, muted; error: caption, semibold,
+coral; required: a coral `*` after the label, hidden from assistive technology, which reads the `required`
+attribute) - open point 20; `ml-0.5` for the marker added a new CSS rule in the dry run, so it uses the existing
+`ml-1`. A dry run of this task gave: field tests red (2 of 4) then green; the raw HTML snapshots and CSS
+byte-identical; `compare-computed` 72 page states, no differences; `just check` green (19 files / 94 package tests,
+60 smoke tests).
+
+- [ ] **Step 1: Toolkit and before tree.** In this task's worktree, before any change, write `<scratch>/toolkit.sh`
+      (the `toolkit.sh` block of the _Verification toolkit_; it records `BASE`, the tip of `fix/text-links`) and copy
+      these scripts verbatim from the _Verification toolkit_ into `<scratch>`: `snapshot-html.mjs`, `normalize-snapshot.mjs`, `compare-computed.mjs`, `c6-grep.sh`. Then build the
+      before tree and snapshot it:
+
+```bash
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" worktree add --detach "$SCRATCH/before" "$BASE"
+cd "$SCRATCH/before" && pnpm install --frozen-lockfile && just build
+serve "$SCRATCH/before" 3110
+node "$SCRATCH/snapshot-html.mjs" "$SCRATCH/before" http://localhost:3110 "$SCRATCH/html-before"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-before" "$SCRATCH/html-before-n"
+```
+
+Expected: the build is green; the snapshot prints 14 lines `<route>: <n> lines` and `1 stylesheet(s)`.
+
+- [ ] **Step 2: Write the failing test.** Create `packages/ui/src/forms/field.test.tsx`:
+
+```tsx
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, test } from "vitest";
+
+import { Field, Input, Textarea } from "./field";
+
+afterEach(cleanup);
+
+test("without the slots a Field adds nothing to its control", () => {
+  render(
+    <Field label="Name" htmlFor="name" hint="(optional)">
+      <Input id="name" />
+    </Field>,
+  );
+  const input = screen.getByRole("textbox", { name: /^Name/ });
+  expect(
+    [...input.attributes].map((attribute) => attribute.name).sort(),
+  ).toEqual(["class", "id"]);
+  expect(input.closest("div")?.children).toHaveLength(2);
+});
+
+test("description and error are announced with the control; an error marks it invalid", () => {
+  render(
+    <Field
+      label="E-Mail"
+      htmlFor="mail"
+      description="Für die Bestätigung."
+      error="Bitte eine E-Mail-Adresse angeben."
+    >
+      <Input id="mail" type="email" />
+    </Field>,
+  );
+  const input = screen.getByRole("textbox", { name: "E-Mail" });
+  expect(input.getAttribute("aria-invalid")).toBe("true");
+  const [description, error] = (input.getAttribute("aria-describedby") ?? "")
+    .split(" ")
+    .map((id) => document.getElementById(id)?.textContent);
+  expect(description).toBe("Für die Bestätigung.");
+  expect(error).toBe("Bitte eine E-Mail-Adresse angeben.");
+  expect(screen.getByText("Bitte eine E-Mail-Adresse angeben.").className).toBe(
+    "mt-1.5 text-caption font-semibold text-coral",
+  );
+});
+
+test("required marks the control required and shows a marker assistive technology skips", () => {
+  render(
+    <Field label="Nachricht" htmlFor="message" required>
+      <Textarea id="message" />
+    </Field>,
+  );
+  const textarea = screen.getByRole("textbox", { name: "Nachricht" });
+  expect(textarea.hasAttribute("required")).toBe(true);
+  expect(screen.getByText("*").getAttribute("aria-hidden")).toBe("true");
+});
+
+test("a control's own state wins over the Field's", () => {
+  render(
+    <Field label="Telefon" htmlFor="tel" error="Fehlt.">
+      <Input id="tel" aria-invalid={false} aria-describedby="eigene" />
+    </Field>,
+  );
+  const input = screen.getByRole("textbox", { name: "Telefon" });
+  expect(input.getAttribute("aria-invalid")).toBe("false");
+  expect(input.getAttribute("aria-describedby")).toBe("eigene");
+});
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/forms/field`.
+Expected: FAIL - 2 of the 4 tests ("description and error are announced ...", "required marks the control ...").
+
+- [ ] **Step 3: The slots.** Replace `packages/ui/src/forms/field.tsx` with:
+
+```tsx
+"use client";
+
+import { createContext, useContext, useId } from "react";
+
+import { cn } from "../utils/cn";
+
+const controlClass =
+  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-body text-ink transition-[border-color,box-shadow] placeholder:text-ink-soft focus:border-coral focus:outline-none focus:shadow-focus";
+
+/** What a Field tells its control: the lines that describe it, and its state. */
+type FieldState = {
+  describedBy?: string;
+  invalid?: true;
+  required?: true;
+};
+
+const FieldContext = createContext<FieldState>({});
+
+type FieldProps = {
+  label: string;
+  htmlFor?: string;
+  /** A short note after the label, e.g. "(optional)". */
+  hint?: string;
+  /** A help line below the control, announced with it. */
+  description?: React.ReactNode;
+  /** An error line below the control; marks the control invalid and is announced with it. */
+  error?: React.ReactNode;
+  /** Marks the control required; the label shows a marker that assistive technology skips. */
+  required?: boolean;
+  children: React.ReactNode;
+};
+
+/**
+ * Label + control (+ description, error). The `Input`/`Textarea` inside take
+ * `aria-describedby`, `aria-invalid` and `required` from the Field unless they
+ * set them themselves. Without the slots, nothing is added.
+ */
+export function Field({
+  label,
+  htmlFor,
+  hint,
+  description,
+  error,
+  required,
+  children,
+}: FieldProps) {
+  const id = useId();
+  const descriptionId = description ? `${id}-description` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+  const describedBy =
+    [descriptionId, errorId].filter(Boolean).join(" ") || undefined;
+
+  return (
+    <div>
+      <label
+        htmlFor={htmlFor}
+        className="mb-1.5 block text-small font-semibold text-ink"
+      >
+        {label}
+        {required ? (
+          <span aria-hidden className="ml-1 text-coral">
+            *
+          </span>
+        ) : null}
+        {hint ? (
+          <span className="ml-1 font-normal text-ink-soft">{hint}</span>
+        ) : null}
+      </label>
+      <FieldContext
+        value={{
+          describedBy,
+          invalid: error ? true : undefined,
+          required: required ? true : undefined,
+        }}
+      >
+        {children}
+      </FieldContext>
+      {description ? (
+        <p id={descriptionId} className="mt-1.5 text-caption text-ink-soft">
+          {description}
+        </p>
+      ) : null}
+      {error ? (
+        <p
+          id={errorId}
+          className="mt-1.5 text-caption font-semibold text-coral"
+        >
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** The Field's state, where the control does not set it itself. */
+function useFieldProps<
+  T extends {
+    "aria-describedby"?: string;
+    "aria-invalid"?: React.AriaAttributes["aria-invalid"];
+    required?: boolean;
+  },
+>(props: T) {
+  const field = useContext(FieldContext);
+  return {
+    ...props,
+    "aria-describedby": props["aria-describedby"] ?? field.describedBy,
+    "aria-invalid": props["aria-invalid"] ?? field.invalid,
+    required: props.required ?? field.required,
+  };
+}
+
+export function Input({ className, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input className={cn(controlClass, className)} {...useFieldProps(props)} />
+  );
+}
+
+export function Textarea({
+  className,
+  ...props
+}: React.ComponentProps<"textarea">) {
+  return (
+    <textarea
+      className={cn(controlClass, "resize-y", className)}
+      {...useFieldProps(props)}
+    />
+  );
+}
+```
+
+Run `source <scratch>/toolkit.sh; cd "$WORKTREE" && pnpm format && pnpm --filter @skillsite/ui exec vitest run`.
+Expected: PASS, 19 files / 94 tests.
+
+- [ ] **Step 4: Tick the C6 box.** In `docs/specs/foundation-refactor.md`, tick C6's acceptance criterion ("No
+      hand-built copy of these patterns is left outside the package ..."). Then the full grep list for the PR body:
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just static-checks && bash "$SCRATCH/c6-grep.sh"
+```
+
+Expected: static checks green; the grep list prints exactly the kept lines of the C6 tasks - card: the navbar
+dropdown panel (C8); navy/coral: the `/preise` and booker navy halves, the skip link, the footer; raw buttons: the
+testimonials dots, the booker's day cell and time slot, the chips and radio rows (C8), the mobile "Online lernen"
+toggle; pills: the chips (C8); check marks: the two feature badges; field labels: the chips and radio fields (C8,
+RadioGroup/chips); raw anchors: the `/kontakt` e-mail card and the `/zahlung` e-mail button (`mailto:`, the rule's
+own result), the `/zahlung` WhatsApp button (same tab, open point 17) and the skip link (`#main`); active-state
+helpers: `activeText` in `navbar.tsx` (buttons, not links); the icon, private-helper and link sections empty.
+
+- [ ] **Step 5: Prove the result identical.**
+      `compare-computed` takes about 5 minutes: run this block with a 600000 ms timeout or in the background.
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && just build
+serve "$WORKTREE" 3111
+node "$SCRATCH/snapshot-html.mjs" "$WORKTREE" http://localhost:3111 "$SCRATCH/html-after"
+node "$SCRATCH/normalize-snapshot.mjs" "$SCRATCH/html-after" "$SCRATCH/html-after-n"
+diff -r "$SCRATCH/html-before-n" "$SCRATCH/html-after-n" && echo IDENTICAL
+diff -r "$SCRATCH/html-before" "$SCRATCH/html-after" && echo RAW-IDENTICAL
+node "$SCRATCH/compare-computed.mjs" "$WORKTREE" http://localhost:3110 http://localhost:3111 > "$SCRATCH/computed.txt"; tail -2 "$SCRATCH/computed.txt"
+stop 3110; stop 3111; git -C "$WORKTREE" worktree remove --force "$SCRATCH/before"
+```
+
+Expected: `IDENTICAL` and `RAW-IDENTICAL` (the raw snapshots are byte-identical: no class moved);
+`72 page states, 20374 elements, 14768 forced pseudo-states compared.` and `No differences.` A difference in `_styles.css` alone is a stray rule from an identifier (_Verification toolkit_, known properties):
+rename the identifier, never allow-list the rule.
+
+- [ ] **Step 6: Commit.** `just check`, commit `refactor(ui): field error, description and required slots` (with the
+      spec).
+
+PR body: Summary (V4: `description`, `error`, `required` on `Field`, wired to `Input`/`Textarea` through a context;
+the booking keeps its pattern; the C6 box ticked); _What changes for a visitor_: nothing - raw HTML and CSS
+byte-identical, `compare-computed` 72 page states; _Grep list (C6 acceptance)_: the full `c6-grep.sh` output with a
+reason per line and the ratchet (`raw-button` 12 -> 6 over C6), including the two lines the review added (raw
+anchors, `activeText`); _Question for the maintainer_: open point 17 (the `/zahlung` WhatsApp button, same tab); _The
+spec's counts_: the spec's summary (from the audit) names 12 icon badges, 5 info-row variants and 7 nav-link
+variants; C6 found 9 badges in the app plus the accordion's "+" and the `Select` badge (C8) - the others were in the
+consent code deleted in A2 -, 3 info-row variants plus the `Select` trigger (C8) and the navy slot summary (no
+icon, a `Card surface="glass"`), and 3 `NavLink` variants plus the desktop nav (`Button asChild`), the dropdown items
+(C8) and the two footer link styles (`TextLink inverse`, `inverse-muted`); _Deviations from the plan_; _How to
+check_: `/termin`
+-> slot -> form: fill and leave a required field empty (the booking's own pattern, unchanged); 390 and 1280 px, light
+and dark.
 
 ---
 
 ### Task 7: Headless spike (spec C7, gate)
 
-**Branch:** `spike/headless-widgets` from the last C6 branch. **PR:** draft,
-`chore: headless widget spike - Radix Primitives vs React Aria Components`; never merged.
+**Branch:** `spike/headless-widgets` from `refactor/ui-tokens` (the C3 result, 943fb6e) - **not** from the C6 tip:
+it runs in parallel to Tasks 4a-6 (_Decisions_, wave 3). **PR:** a **draft** against `refactor/ui-tokens`, title
+`chore: headless widget spike - Radix Primitives vs React Aria Components`. It is **never merged**; the spike code is
+thrown away after the maintainer's choice.
 
-**Files:** spike stories in Storybook only (on the spike branch): dialog, dropdown menu, radio group, combobox and
-date picker, each built once on Radix Primitives and once on React Aria Components in the brand look; the two
-libraries are added to `packages/ui` on the spike branch only.
+**Files** (all on the spike branch only):
 
-**Interfaces:** none - the spike code is thrown away. Output: a comparison in the PR body (accessibility, German
-date formats, fit with the motion tokens, bundle size, composition `asChild` vs render props) and a
-recommendation. The spec's C7 box and the _Decisions_ row are written only after the maintainer has chosen, in the
-docs PR that opens C8.
+- Modify: `packages/ui/package.json` (10 exact-pinned devDependencies), `pnpm-lock.yaml`
+- Modify: `packages/ui/src/exports.test.ts` (one filter line: `src/spike/` is never exported)
+- Modify: `scripts/design-ratchet.mjs` (one `SKIP` alternative: `packages/ui/src/spike/` is measured on its own)
+- Create: `packages/ui/src/spike/look.ts` (the shared brand look), `radix.stories.tsx`, `rac.stories.tsx`
+- Create: `packages/ui/src/spike/radix/{motion.ts,dialog,dropdown-menu,radio-group,combobox,date-picker}.tsx`
+- Create: `packages/ui/src/spike/rac/{motion.ts,dialog,dropdown-menu,radio-group,combobox,date-picker}.tsx`
+- Scratch only (never committed): `toolkit.sh`, `spike-a11y.mjs`, `spike-dates.mjs`, `spike-motion.mjs`,
+  `spike-bundle.mjs`, `spike-ratchet.mjs` and their output
+- Not touched: anything under `apps/`, `docs/specs/` (the C7 box stays open), `design-ratchet.json`
 
-**Background.** Spec C7, E-21. Time-boxed. Phase C stops here until the maintainer picks.
+**Interfaces:**
 
-_Detailed steps: wave 3, written against the code after C6._
+- Consumes (from C2/C3, all present on `refactor/ui-tokens`): `Button` with `asChild`
+  (`../../primitives/button`), `cn` (`../../utils/cn`), the tokens `z-overlay`, `z-dropdown`, `shadow-card`,
+  `shadow-focus`, `bg-coral-gradient`, `text-card-title`, `text-body`, `text-small`, `text-caption`, `ease-flow`,
+  `duration-quick`/`duration-base`, `animate-rise`/`animate-fade`, and the Storybook workbench
+  (`pnpm --filter @skillsite/ui build-storybook`).
+- Produces: nothing any task imports. The output is the PR body: a comparison table (criteria x library, measured
+  values), a recommendation with reasons, and the statement "The maintainer chooses (gate C7); C8 follows the
+  choice." The spec's C7 box and the _Decisions_ row are written only after the maintainer has chosen, in the docs
+  PR that opens C8 (_After the gate_).
+
+**Background (measured in a dry run on 943fb6e).** Spec C7, E-21 (and E-11: `Dialog` stays - C8 rebuilds it on the
+chosen base). Radix Primitives have **no combobox and no date picker**; the spike does not invent them. The Radix
+side uses the common substitutes and scores them as such ("not in Radix Primitives; third-party"): a Radix
+`Popover` around `cmdk` for the combobox, and a Radix `Popover` around `react-day-picker` (date-fns locales) with a
+hand-built `date-fns` parser for the date picker. React Aria Components (RAC) ship all five. Versions (current
+stable on `npm view <pkg> version`, 2026-09-28, pinned exactly): `@radix-ui/react-dialog` 1.1.23,
+`@radix-ui/react-dropdown-menu` 2.1.24, `@radix-ui/react-popover` 1.1.23, `@radix-ui/react-radio-group` 1.4.7 (all
+on `@radix-ui/react-slot` 1.3.3, the version C2 already ships), `cmdk` 1.1.1, `react-day-picker` 10.0.1,
+`date-fns` 4.4.0, `react-aria-components` 1.21.1 (brings `react-aria` 3.52.1, `react-stately` 3.50.0,
+`@internationalized/date` 3.12.4), and for the measurements `axe-core` 4.13.0 and `esbuild` 0.28.2. Single Radix
+packages, not the `radix-ui` umbrella (1.6.7), to match the existing `@radix-ui/react-slot`.
+
+Exclusions, checked: `exports.test.ts` globs every non-story, non-test module of `src/`, so the 13 spike modules
+fail "every module is exported, and only modules are" until one filter line excludes `src/spike/`. The ratchet
+counts nothing in the spike code (dry run: 0 on every pattern) and skips `*.stories.tsx` already; the `SKIP`
+alternative is there so a raw value in a spike story can never block the spike - the bypasses are counted on
+their own by `spike-ratchet.mjs` and reported. Storybook needs no change (`stories: ["../src/**/*.stories.tsx"]`,
+`@source "../src"` already cover `src/spike/`); `just typecheck` and `just lint` cover the spike code
+(`packages/ui/tsconfig.json` includes `src`). `storybook-static/` is gitignored.
+
+Dry-run results (reference values - the implementer measures again; a changed PASS/FAIL or a size more than 10 %
+off is itself a finding to explain):
+
+- Keyboard (passed/total) and axe (violations closed/open): dialog Radix 7/7, 0/0 - RAC 7/7, 0/0; dropdown menu
+  Radix 12/12, 0/1 (`aria-hidden-focus`, serious: the modal menu hides the focused trigger) - RAC 12/12, 0/0; radio
+  group 7/7, 0/0 each; combobox Radix 6/7, 0/0 (`cmdk` never sets `aria-activedescendant`: a screen reader does not
+  hear the active option) - RAC 7/7, 0/0; date picker 9/9, 0/0 each.
+- German dates: both show `Mo Di Mi Do Fr Sa So` (Monday first), "Oktober 2026", day names like
+  "Donnerstag, 1. Oktober 2026". Typed `1.10.2026`: Radix keeps the raw text, RAC shows `01.10.2026`; `31.02.2026`:
+  Radix selects nothing and says nothing, RAC clamps to `28.02.2026`; `01.10.26`: **both** take year 26 (C8 needs
+  its own two-digit-year rule either way). RAC with `de-DE` alone shows `1.10.2026` (the `Intl` default); leading
+  zeros need `shouldForceLeadingZeros`.
+- Motion: every enter and exit runs on `ease-flow` with `duration-base` (enter) and `duration-quick` (exit), and
+  every exit plays (panel still mounted at +40 ms, gone at +1 s); with reduced motion nothing runs and panels unmount
+  at once. Radix waits only for CSS **animations** on `data-state="closed"`, so its exit needs a keyframe - the
+  brand has entrance keyframes only, so `fade` runs reversed via the arbitrary property `[animation-direction:reverse]`
+  (C8 on Radix would add exit keyframes as tokens). RAC waits for animations **or transitions** while
+  `data-exiting` is set, so one token transition with `data-entering:`/`data-exiting:` covers both.
+- Bundle, gzip added per widget (Radix / RAC / RAC with de-DE strings only): dialog 12.8 / 20.7 / 20.3 kB, dropdown
+  menu 27.7 / 44.2 / 41.8 kB, radio group 9.5 / 14.3 / 14.3 kB, combobox 26.9 / 55.5 / 49.6 kB, date picker 47.1 /
+  70.7 / 57.3 kB, all five 62.0 / 108.6 / 89.1 kB. RAC bundles the UI strings of 34 locales; its
+  `@react-aria/optimize-locales-plugin` 2.0.2 exists for webpack/Vite/Rollup but not Turbopack (the site's bundler),
+  and its esbuild build fails on its own virtual module - so `spike-bundle.mjs` strips the other locales itself and
+  reports RAC both ways.
+- Bypasses: ratchet patterns 0 for both; arbitrary syntax Radix 7 (value variants like `data-[state=open]`, one of
+  them carrying the reversed keyframe), RAC 1 (`transition-[opacity,translate]`, like the `transition-[...]` in
+  `forms/select.tsx` today).
+- Composition: Radix `asChild` puts the C2 `Button` in as the trigger unchanged (`<Dialog.Trigger asChild><Button>`).
+  RAC triggers need a pressable child: the C2 `Button` joins through `<Pressable>` (it spreads props onto a host
+  `<button>`), or RAC's own `Button` takes the CVA classes (`buttonVariants` is not exported today) and exposes
+  states as render props/`data-*` instead of `:hover`/`:focus-visible`. RAC collection items with render-function
+  children need `textValue`, or filtering and typeahead see empty text (the dry run's first RAC combobox found
+  nothing).
+- RAC hides the page behind a modal with `inert`, Radix with `aria-hidden`; Playwright's `getByRole` does not treat
+  `inert` as hidden, so the script reads Chromium's accessibility tree instead.
+- `just check` green on the spike branch (static checks, 104 tests, build, 48 smoke tests): no app file changes.
+
+**Time box.** Setup (Steps 1-3) 30 min; per widget pair, both libraries, from code to a clean story: dialog 45 min,
+dropdown menu 45 min, radio group 30 min, combobox 60 min, date picker 90 min; measurements (Steps 8-12) 60 min;
+comparison and PR (Steps 13-15) 60 min - about 7.5 h. The code below is complete and was dry-run, so the boxes cover
+deviations (a changed API, a check that behaves differently). **When a box is exceeded:** stop that widget where it
+is, mark its unmet checks "not reached in the time box" in the table with one sentence on why, and move on - no
+polishing, no workaround. The only fix allowed inside a box is a prop or attribute the library documents for exactly
+that purpose and that does not change the widget's behaviour (as the dry run did with RAC `textValue` and
+`shouldForceLeadingZeros`, DayPicker `autoFocus`, and a label on the Radix popover); the table names it as "needs
+X". A default that would need a behaviour change to pass (Radix `DropdownMenu modal={false}` for the
+`aria-hidden-focus` finding) stays a finding. If the whole spike passes 1.5x its box (about 11 h), stop, open the
+draft PR with what exists, and say so in its first lines.
+
+- [ ] **Step 1: Branch and toolkit.** The controller creates `<worktree>` on `spike/headless-widgets` from
+      `refactor/ui-tokens`. Write the spike toolkit (it replaces the site toolkit for this task: the spike serves
+      the static Storybook, not the site):
+
+```bash
+cat > <scratch>/toolkit.sh <<EOF
+WORKTREE=<worktree>
+SCRATCH=<scratch>
+BASE=$(git -C <worktree> rev-parse HEAD)
+EOF
+cat >> <scratch>/toolkit.sh <<'EOF'
+# serve_storybook: build the worktree's static Storybook and serve it on 6106.
+# Stops the port first, so a server from an earlier build never answers.
+serve_storybook() {
+  kill $(lsof -ti tcp:6106) 2>/dev/null; sleep 1
+  (cd "$WORKTREE" && pnpm --filter @skillsite/ui build-storybook > "$SCRATCH/storybook-build.log" 2>&1) ||
+    { tail -20 "$SCRATCH/storybook-build.log"; return 1; }
+  (python3 -m http.server 6106 -d "$WORKTREE/packages/ui/storybook-static" > "$SCRATCH/storybook-6106.log" 2>&1 &)
+  until curl -sf localhost:6106/index.json > /dev/null; do sleep 1; done
+}
+stop() { kill $(lsof -ti tcp:"$1") 2>/dev/null; }
+EOF
+source <scratch>/toolkit.sh
+git -C "$WORKTREE" log --oneline -1
+cd "$WORKTREE" && pnpm install --frozen-lockfile && serve_storybook
+node -e 'fetch("http://localhost:6106/index.json").then((r) => r.json()).then((j) => console.log(Object.keys(j.entries).length))'
+```
+
+Expected: `943fb6e refactor(ui): name every design value as a token` (or the C3 squash commit, if C3 is merged by
+then), and the story count `6` (on 943fb6e). If `serve_storybook` does not return within a minute, read
+`$SCRATCH/storybook-build.log`.
+
+- [ ] **Step 2: Add the libraries and the measurement tools** - devDependencies of `@skillsite/ui` on this branch
+      only (nothing here ships):
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm add -D --filter @skillsite/ui \
+  @radix-ui/react-dialog@1.1.23 @radix-ui/react-dropdown-menu@2.1.24 @radix-ui/react-popover@1.1.23 \
+  @radix-ui/react-radio-group@1.4.7 cmdk@1.1.1 react-day-picker@10.0.1 date-fns@4.4.0 \
+  react-aria-components@1.21.1 axe-core@4.13.0 esbuild@0.28.2
+cd "$WORKTREE" && pnpm install --frozen-lockfile && git diff --stat
+```
+
+Expected: `packages/ui/package.json` gains exactly these 10 under `devDependencies`, each pinned without a range
+(`"cmdk": "1.1.1"`), and `pnpm-lock.yaml` about 880 added lines; `dependencies` is unchanged.
+
+- [ ] **Step 3: The shared brand look and the two motion recipes.** Create `packages/ui/src/spike/look.ts`:
+
+```ts
+/**
+ * Spike only (C7): the brand look both libraries are styled with, so the
+ * comparison measures the library, not the styling. Values are the tokens of
+ * the existing Dialog and Select. Motion is per library: `radix/motion.ts`,
+ * `rac/motion.ts`.
+ */
+export const look = {
+  overlay:
+    "fixed inset-0 z-overlay flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm",
+  dialog:
+    "relative w-full max-w-lg rounded-3xl border border-line bg-surface p-6 shadow-card outline-none sm:p-7",
+  panel:
+    "z-dropdown min-w-56 rounded-xl border border-line bg-surface p-1.5 shadow-card outline-none",
+  item: "flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-small font-medium text-ink-soft outline-none",
+  trigger:
+    "flex items-center gap-3 rounded-xl border border-line bg-bg px-3 py-2.5 text-left text-small font-semibold text-ink",
+  input:
+    "w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-small text-ink outline-none focus:shadow-focus",
+  radio:
+    "flex size-5 shrink-0 items-center justify-center rounded-full border-[1.5px] border-line",
+  radioDot: "size-2.5 rounded-full bg-coral",
+  day: "flex size-10 items-center justify-center rounded-full text-small font-medium text-ink outline-none",
+  daySelected: "bg-coral-gradient font-semibold text-white",
+  weekday: "text-caption font-semibold text-ink-soft",
+  caption: "text-body font-semibold text-ink",
+} as const;
+```
+
+Create `packages/ui/src/spike/radix/motion.ts`:
+
+```ts
+/**
+ * Spike only (C7): the brand motion as Radix listens to it. Presence keeps an
+ * element mounted only while a CSS *animation* runs on `data-state="closed"`, so
+ * exit needs a keyframe; the brand has entrance keyframes only, so `fade` runs
+ * reversed.
+ */
+export const motion =
+  "data-[state=open]:animate-rise data-[state=closed]:animate-fade data-[state=closed]:[animation-direction:reverse]";
+```
+
+Create `packages/ui/src/spike/rac/motion.ts`:
+
+```ts
+/**
+ * Spike only (C7): the brand motion as React Aria listens to it. It waits for
+ * every animation *or transition* on the element while `data-exiting` is set,
+ * so one token transition covers enter and exit.
+ */
+export const motion =
+  "transition-[opacity,translate] duration-base ease-flow data-entering:translate-y-3 data-entering:opacity-0 data-exiting:opacity-0 data-exiting:duration-quick";
+```
+
+- [ ] **Step 4: Dialog (time box 45 min).** Both open from the C2 `Button`, carry a title, a description and one
+      input, and close with Escape, the overlay or a button. Create `packages/ui/src/spike/radix/dialog.tsx`:
+
+```tsx
+"use client";
+
+import * as Dialog from "@radix-ui/react-dialog";
+
+import { Button } from "../../primitives/button";
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+export function RadixDialog() {
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger asChild>
+        <Button>Termin anfragen</Button>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay className={cn(look.overlay, motion)}>
+          <Dialog.Content className={cn(look.dialog, motion)}>
+            <Dialog.Title className="text-card-title font-bold text-ink">
+              Termin anfragen
+            </Dialog.Title>
+            <Dialog.Description className="mt-2 text-body text-ink-soft">
+              Wir melden uns innerhalb eines Tages.
+            </Dialog.Description>
+            <label className="mt-5 block text-small font-semibold text-ink">
+              Name
+              <input className={cn(look.input, "mt-1.5")} name="name" />
+            </label>
+            <div className="mt-6 flex justify-end gap-3">
+              <Dialog.Close asChild>
+                <Button variant="ghost">Abbrechen</Button>
+              </Dialog.Close>
+              <Dialog.Close asChild>
+                <Button>Senden</Button>
+              </Dialog.Close>
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/dialog.tsx`:
+
+```tsx
+"use client";
+
+import {
+  Dialog,
+  DialogTrigger,
+  Heading,
+  Modal,
+  ModalOverlay,
+  Pressable,
+} from "react-aria-components";
+
+import { Button } from "../../primitives/button";
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+export function RacDialog() {
+  return (
+    <DialogTrigger>
+      {/* Pressable hands RAC's press events to the C2 Button (a host <button>). */}
+      <Pressable>
+        <Button>Termin anfragen</Button>
+      </Pressable>
+      <ModalOverlay isDismissable className={cn(look.overlay, motion)}>
+        <Modal className={cn(look.dialog, motion)}>
+          <Dialog className="outline-none">
+            {({ close }) => (
+              <>
+                <Heading
+                  slot="title"
+                  className="text-card-title font-bold text-ink"
+                >
+                  Termin anfragen
+                </Heading>
+                <p className="mt-2 text-body text-ink-soft">
+                  Wir melden uns innerhalb eines Tages.
+                </p>
+                <label className="mt-5 block text-small font-semibold text-ink">
+                  Name
+                  <input className={cn(look.input, "mt-1.5")} name="name" />
+                </label>
+                <div className="mt-6 flex justify-end gap-3">
+                  <Button variant="ghost" onClick={close}>
+                    Abbrechen
+                  </Button>
+                  <Button onClick={close}>Senden</Button>
+                </div>
+              </>
+            )}
+          </Dialog>
+        </Modal>
+      </ModalOverlay>
+    </DialogTrigger>
+  );
+}
+```
+
+- [ ] **Step 5: Dropdown menu (45 min) and radio group (30 min).** The menu echoes the navbar's "Online lernen"
+      dropdown, the radio group the booker's subject choice. Create `packages/ui/src/spike/radix/dropdown-menu.tsx`:
+
+```tsx
+"use client";
+
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDown } from "lucide-react";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const items = ["Discord", "Microsoft Teams", "Vor Ort"];
+
+export function RadixDropdownMenu() {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger className={look.trigger}>
+        Online lernen <ChevronDown aria-hidden className="size-4" />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          sideOffset={8}
+          align="start"
+          className={cn(look.panel, motion)}
+        >
+          {items.map((item) => (
+            <DropdownMenu.Item
+              key={item}
+              className={cn(
+                look.item,
+                "data-highlighted:bg-surface-2 data-highlighted:text-ink",
+              )}
+            >
+              {item}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/dropdown-menu.tsx`:
+
+```tsx
+"use client";
+
+import { ChevronDown } from "lucide-react";
+import {
+  Button,
+  Menu,
+  MenuItem,
+  MenuTrigger,
+  Popover,
+} from "react-aria-components";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const items = ["Discord", "Microsoft Teams", "Vor Ort"];
+
+export function RacDropdownMenu() {
+  return (
+    <MenuTrigger>
+      <Button className={look.trigger}>
+        Online lernen <ChevronDown aria-hidden className="size-4" />
+      </Button>
+      <Popover
+        offset={8}
+        placement="bottom start"
+        className={cn(look.panel, motion)}
+      >
+        <Menu className="outline-none">
+          {items.map((item) => (
+            <MenuItem
+              key={item}
+              id={item}
+              className={cn(
+                look.item,
+                "data-focused:bg-surface-2 data-focused:text-ink",
+              )}
+            >
+              {item}
+            </MenuItem>
+          ))}
+        </Menu>
+      </Popover>
+    </MenuTrigger>
+  );
+}
+```
+
+Create `packages/ui/src/spike/radix/radio-group.tsx`:
+
+```tsx
+"use client";
+
+import * as RadioGroup from "@radix-ui/react-radio-group";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+
+const options = ["Mathe", "Physik", "Informatik"];
+
+export function RadixRadioGroup() {
+  return (
+    <RadioGroup.Root
+      defaultValue="Mathe"
+      aria-label="Fach"
+      className="flex flex-col gap-3"
+    >
+      {options.map((option) => (
+        <label
+          key={option}
+          className="flex cursor-pointer items-center gap-3 text-body text-ink"
+        >
+          <RadioGroup.Item
+            value={option}
+            className={cn(look.radio, "data-[state=checked]:border-coral")}
+          >
+            <RadioGroup.Indicator
+              className={cn(look.radioDot, "data-[state=checked]:animate-fade")}
+            />
+          </RadioGroup.Item>
+          {option}
+        </label>
+      ))}
+    </RadioGroup.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/radio-group.tsx`:
+
+```tsx
+"use client";
+
+import { Label, Radio, RadioGroup } from "react-aria-components";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+
+const options = ["Mathe", "Physik", "Informatik"];
+
+export function RacRadioGroup() {
+  return (
+    <RadioGroup defaultValue="Mathe" className="flex flex-col gap-3">
+      <Label className="sr-only">Fach</Label>
+      {options.map((option) => (
+        <Radio
+          key={option}
+          value={option}
+          className="group flex cursor-pointer items-center gap-3 text-body text-ink outline-none"
+        >
+          {({ isSelected }) => (
+            <>
+              <span
+                className={cn(
+                  look.radio,
+                  "group-data-focus-visible:outline-3 group-data-focus-visible:outline-offset-3 group-data-focus-visible:outline-accent",
+                  isSelected && "border-coral",
+                )}
+              >
+                {isSelected ? (
+                  <span className={cn(look.radioDot, "animate-fade")} />
+                ) : null}
+              </span>
+              {option}
+            </>
+          )}
+        </Radio>
+      ))}
+    </RadioGroup>
+  );
+}
+```
+
+- [ ] **Step 6: Combobox (60 min) and date picker (90 min).** Radix side: the substitutes named in _Background_,
+      each file says so in its header. Create `packages/ui/src/spike/radix/combobox.tsx`:
+
+```tsx
+"use client";
+
+/**
+ * Radix Primitives have no combobox. This is the common substitute: a Radix
+ * Popover around `cmdk` (a third-party command list built on Radix parts).
+ */
+import * as Popover from "@radix-ui/react-popover";
+import { Command } from "cmdk";
+import { Check, ChevronDown } from "lucide-react";
+import { useId, useState } from "react";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const subjects = ["Mathe", "Physik", "Informatik", "Chemie", "Deutsch"];
+
+export function RadixCombobox() {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState<string>();
+  const labelId = useId();
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <span id={labelId} className="block text-small font-semibold text-ink">
+        Fach
+      </span>
+      <Popover.Trigger
+        role="combobox"
+        aria-expanded={open}
+        aria-labelledby={labelId}
+        className={cn(look.trigger, "mt-1.5 w-64 justify-between")}
+      >
+        {value ?? "Fach wählen"}
+        <ChevronDown aria-hidden className="size-4" />
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          sideOffset={8}
+          align="start"
+          aria-labelledby={labelId}
+          className={cn(look.panel, "w-64", motion)}
+        >
+          <Command label="Fach">
+            <Command.Input
+              placeholder="Fach suchen"
+              className={cn(look.input, "mb-1.5")}
+            />
+            <Command.List>
+              <Command.Empty className="px-3 py-2 text-small text-ink-soft">
+                Kein Fach gefunden.
+              </Command.Empty>
+              {subjects.map((subject) => (
+                <Command.Item
+                  key={subject}
+                  value={subject}
+                  onSelect={() => {
+                    setValue(subject);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    look.item,
+                    "data-[selected=true]:bg-surface-2 data-[selected=true]:text-ink",
+                  )}
+                >
+                  {subject}
+                  {value === subject ? (
+                    <Check aria-hidden className="size-4 text-coral" />
+                  ) : null}
+                </Command.Item>
+              ))}
+            </Command.List>
+          </Command>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/combobox.tsx`:
+
+```tsx
+"use client";
+
+import { Check, ChevronDown } from "lucide-react";
+import {
+  Button,
+  ComboBox,
+  Input,
+  Label,
+  ListBox,
+  ListBoxItem,
+  Popover,
+} from "react-aria-components";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const subjects = ["Mathe", "Physik", "Informatik", "Chemie", "Deutsch"];
+
+export function RacCombobox() {
+  return (
+    <ComboBox className="w-64">
+      <Label className="text-small font-semibold text-ink">Fach</Label>
+      <div className="relative mt-1.5">
+        <Input placeholder="Fach suchen" className={cn(look.input, "pr-10")} />
+        <Button className="absolute inset-y-0 right-0 flex items-center px-3 text-ink-soft">
+          <ChevronDown aria-hidden className="size-4" />
+        </Button>
+      </div>
+      <Popover offset={8} className={cn(look.panel, "w-64", motion)}>
+        <ListBox
+          className="outline-none"
+          renderEmptyState={() => (
+            <p className="px-3 py-2 text-small text-ink-soft">
+              Kein Fach gefunden.
+            </p>
+          )}
+        >
+          {subjects.map((subject) => (
+            <ListBoxItem
+              key={subject}
+              id={subject}
+              textValue={subject}
+              className={cn(
+                look.item,
+                "data-focused:bg-surface-2 data-focused:text-ink",
+              )}
+            >
+              {({ isSelected }) => (
+                <>
+                  {subject}
+                  {isSelected ? (
+                    <Check aria-hidden className="size-4 text-coral" />
+                  ) : null}
+                </>
+              )}
+            </ListBoxItem>
+          ))}
+        </ListBox>
+      </Popover>
+    </ComboBox>
+  );
+}
+```
+
+Create `packages/ui/src/spike/radix/date-picker.tsx`:
+
+```tsx
+"use client";
+
+/**
+ * Radix Primitives have no date picker. This is the common substitute: a Radix
+ * Popover around `react-day-picker` (third-party calendar, date-fns locales).
+ * The text input and its parsing are hand-built with date-fns.
+ */
+import * as Popover from "@radix-ui/react-popover";
+import { format, isValid, parse } from "date-fns";
+import { de } from "date-fns/locale";
+import { CalendarDays } from "lucide-react";
+import { useId, useState } from "react";
+import { DayPicker } from "react-day-picker";
+import { de as dayPickerDe } from "react-day-picker/locale";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+const PATTERN = "dd.MM.yyyy";
+
+export function RadixDatePicker() {
+  const [date, setDate] = useState<Date>();
+  const [text, setText] = useState("");
+  const [open, setOpen] = useState(false);
+  const inputId = useId();
+  const pick = (next: Date | undefined) => {
+    setDate(next);
+    setText(next ? format(next, PATTERN, { locale: de }) : "");
+  };
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <label
+        htmlFor={inputId}
+        className="block text-small font-semibold text-ink"
+      >
+        Datum
+      </label>
+      <div className="mt-1.5 flex w-64 items-center gap-2">
+        <input
+          id={inputId}
+          data-spike="date-value"
+          placeholder="TT.MM.JJJJ"
+          value={text}
+          onChange={(event) => {
+            setText(event.target.value);
+            const parsed = parse(event.target.value, PATTERN, new Date(), {
+              locale: de,
+            });
+            setDate(isValid(parsed) ? parsed : undefined);
+          }}
+          className={look.input}
+        />
+        <Popover.Trigger aria-label="Kalender öffnen" className={look.trigger}>
+          <CalendarDays aria-hidden className="size-4" />
+        </Popover.Trigger>
+      </div>
+      <Popover.Portal>
+        <Popover.Content
+          sideOffset={8}
+          align="start"
+          aria-label="Kalender"
+          // Let the calendar focus the selected day instead of the first button.
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          className={cn(look.panel, "p-4", motion)}
+        >
+          <DayPicker
+            mode="single"
+            autoFocus
+            locale={dayPickerDe}
+            selected={date}
+            defaultMonth={date}
+            onSelect={(next) => {
+              pick(next);
+              setOpen(false);
+            }}
+            classNames={{
+              month_caption: cn(look.caption, "mb-3"),
+              nav: "absolute right-4 top-4 flex gap-1",
+              weekday: look.weekday,
+              day: "rounded-full",
+              day_button: look.day,
+              selected: look.daySelected,
+              today: "text-coral",
+            }}
+          />
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+```
+
+Create `packages/ui/src/spike/rac/date-picker.tsx`:
+
+```tsx
+"use client";
+
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Button,
+  Calendar,
+  CalendarCell,
+  CalendarGrid,
+  CalendarGridBody,
+  CalendarGridHeader,
+  CalendarHeaderCell,
+  DateInput,
+  DatePicker,
+  DateSegment,
+  Dialog,
+  Group,
+  Heading,
+  I18nProvider,
+  Label,
+  Popover,
+} from "react-aria-components";
+
+import { cn } from "../../utils/cn";
+import { look } from "../look";
+import { motion } from "./motion";
+
+export function RacDatePicker() {
+  return (
+    <I18nProvider locale="de-DE">
+      {/* de-DE alone shows "1.10.2026" (Intl default); DIN 5008 wants leading zeros. */}
+      <DatePicker shouldForceLeadingZeros className="w-64">
+        <Label className="text-small font-semibold text-ink">Datum</Label>
+        <Group className={cn(look.input, "mt-1.5 flex items-center")}>
+          <DateInput data-spike="date-value" className="flex flex-1">
+            {(segment) => (
+              <DateSegment
+                segment={segment}
+                className="rounded px-0.5 tabular-nums outline-none data-focused:bg-surface-2 data-placeholder:text-ink-soft"
+              />
+            )}
+          </DateInput>
+          <Button aria-label="Kalender öffnen" className="text-ink-soft">
+            <CalendarDays aria-hidden className="size-4" />
+          </Button>
+        </Group>
+        <Popover
+          offset={8}
+          placement="bottom start"
+          className={cn(look.panel, "p-4", motion)}
+        >
+          <Dialog className="outline-none">
+            <Calendar>
+              <header className="mb-3 flex items-center justify-between">
+                <Button slot="previous" className="text-ink-soft">
+                  <ChevronLeft aria-hidden className="size-4" />
+                </Button>
+                <Heading className={look.caption} />
+                <Button slot="next" className="text-ink-soft">
+                  <ChevronRight aria-hidden className="size-4" />
+                </Button>
+              </header>
+              <CalendarGrid weekdayStyle="short">
+                <CalendarGridHeader>
+                  {(day) => (
+                    <CalendarHeaderCell className={look.weekday}>
+                      {day}
+                    </CalendarHeaderCell>
+                  )}
+                </CalendarGridHeader>
+                <CalendarGridBody>
+                  {(date) => (
+                    <CalendarCell
+                      date={date}
+                      className={cn(
+                        look.day,
+                        "data-outside-month:invisible data-selected:bg-coral-gradient data-selected:font-semibold data-selected:text-white",
+                      )}
+                    />
+                  )}
+                </CalendarGridBody>
+              </CalendarGrid>
+            </Calendar>
+          </Dialog>
+        </Popover>
+      </DatePicker>
+    </I18nProvider>
+  );
+}
+```
+
+- [ ] **Step 7: Stories, the export-map exclusion, and a look at them.** Create
+      `packages/ui/src/spike/radix.stories.tsx`:
+
+```tsx
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+
+import { RadixCombobox } from "./radix/combobox";
+import { RadixDatePicker } from "./radix/date-picker";
+import { RadixDialog } from "./radix/dialog";
+import { RadixDropdownMenu } from "./radix/dropdown-menu";
+import { RadixRadioGroup } from "./radix/radio-group";
+
+/** Spike only (C7): Radix Primitives in the brand look. Thrown away after the gate. */
+const meta = { title: "Spike/Radix" } satisfies Meta;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Dialog: Story = { render: () => <RadixDialog /> };
+export const DropdownMenu: Story = { render: () => <RadixDropdownMenu /> };
+export const RadioGroup: Story = { render: () => <RadixRadioGroup /> };
+export const Combobox: Story = { render: () => <RadixCombobox /> };
+export const DatePicker: Story = { render: () => <RadixDatePicker /> };
+```
+
+Create `packages/ui/src/spike/rac.stories.tsx`:
+
+```tsx
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+
+import { RacCombobox } from "./rac/combobox";
+import { RacDatePicker } from "./rac/date-picker";
+import { RacDialog } from "./rac/dialog";
+import { RacDropdownMenu } from "./rac/dropdown-menu";
+import { RacRadioGroup } from "./rac/radio-group";
+
+/** Spike only (C7): React Aria Components in the brand look. Thrown away after the gate. */
+const meta = { title: "Spike/React Aria" } satisfies Meta;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Dialog: Story = { render: () => <RacDialog /> };
+export const DropdownMenu: Story = { render: () => <RacDropdownMenu /> };
+export const RadioGroup: Story = { render: () => <RacRadioGroup /> };
+export const Combobox: Story = { render: () => <RacCombobox /> };
+export const DatePicker: Story = { render: () => <RacDatePicker /> };
+```
+
+Run the export-map test to see the spike modules counted as public API:
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/exports.test.ts
+```
+
+Expected: FAIL in "every module is exported, and only modules are", listing the 13 modules under `./src/spike/`
+(`look.ts`, two `motion.ts`, ten widgets). In `packages/ui/src/exports.test.ts`, add the exclusion after the
+stories/tests filter:
+
+```ts
+const modules = globSync("src/**/*.{ts,tsx}", { cwd: packageRoot })
+  .filter((file) => !/\.(stories|test)\.tsx?$/.test(file))
+  // Spike only (C7): src/spike/ is never exported; the branch is thrown away.
+  .filter((file) => !file.startsWith("src/spike/"))
+  .map((file) => `./${file}`)
+  .sort();
+```
+
+In `scripts/design-ratchet.mjs`, replace the `SKIP` line with:
+
+```js
+// Spike only (C7): packages/ui/src/spike/ is measured on its own; the branch is thrown away.
+const SKIP =
+  /(\.stories\.tsx|\.test\.(ts|tsx|mts|mjs))$|^packages\/ui\/src\/spike\//;
+```
+
+```bash
+source <scratch>/toolkit.sh
+cd "$WORKTREE" && pnpm --filter @skillsite/ui exec vitest run src/exports.test.ts && just ratchet
+cd "$WORKTREE" && pnpm --filter @skillsite/ui typecheck && pnpm --filter @skillsite/ui lint
+serve_storybook && curl -s localhost:6106/index.json | grep -o 'spike-[a-z-]*--[a-z-]*' | sort -u
+```
+
+Expected: 4 tests pass, the ratchet prints nothing, typecheck and lint are silent, and ten story ids:
+`spike-radix--{combobox,date-picker,dialog,dropdown-menu,radio-group}` and the same five under
+`spike-react-aria--`. Then open `pnpm storybook` (`http://localhost:6006`), _Spike / Radix_ and _Spike / React
+Aria_: every story in light and dark (toolbar _Theme_), open, at 390 px and desktop width. Both sides must read as
+the brand (surface, line, coral selection, the existing Select panel's radius and shadow); a visible difference
+between the two sides that is not the library's doing is fixed in `look.ts`, not per side.
+
+- [ ] **Step 8: Accessibility - keyboard script and axe.** The same expectations run against both libraries; a
+      step marked `only` is one library's own way to open or enter a widget (Radix's substitute combobox opens
+      from a button, RAC's is an input). `axe-core` is injected into the page from `packages/ui/node_modules`
+      (Step 2) and runs the WCAG 2.0/2.1/2.2 A/AA and best-practice rules, minus three page-level rules a story
+      cannot satisfy. Write `<scratch>/spike-a11y.mjs`:
+
+```js
+// C7 spike: keyboard walk-through and axe-core check of every spike story in the
+// static Storybook build, per library and widget. The same expectations run
+// against both libraries; a step marked `only` is a library's own way to open
+// or enter a widget. Failures are findings, not errors: the exit code is 0.
+// Usage: node spike-a11y.mjs <repo-root> <storybook-url> <out.json>
+import { writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import path from "node:path";
+
+const [root, baseUrl, outFile] = process.argv.slice(2);
+const { chromium } = createRequire(
+  path.join(root, "apps/marketing/package.json"),
+)("@playwright/test");
+const axePath = createRequire(
+  path.join(root, "packages/ui/package.json"),
+).resolve("axe-core/axe.min.js");
+
+const LIBRARIES = [
+  { key: "radix", story: "spike-radix" },
+  { key: "rac", story: "spike-react-aria" },
+];
+
+/** Keyboard focus is on the element with this role and name (itself or as active descendant). */
+const isFocused = (role, name) => async (page) => {
+  for (const element of await page.getByRole(role, { name }).all()) {
+    const hit = await element.evaluate((node) => {
+      const active = document.activeElement;
+      return (
+        node === active ||
+        (!!node.id && active?.getAttribute("aria-activedescendant") === node.id)
+      );
+    });
+    if (hit) return true;
+  }
+  return false;
+};
+/** The focused element (not a descendant) has this role, explicit or implicit. */
+const focusRole = (role) => async (page) =>
+  page.evaluate(
+    (wanted) => document.activeElement?.getAttribute("role") === wanted,
+    role,
+  );
+const visible = (role, options) => async (page) =>
+  page.getByRole(role, options).first().isVisible();
+const gone = (role) => async (page) => {
+  await page.waitForTimeout(700); // let the exit animation finish
+  return (await page.getByRole(role).count()) === 0;
+};
+const checked = (name) => async (page) =>
+  page.getByRole("radio", { name, exact: true }).isChecked();
+/** Chromium's accessibility tree has no unignored node with this role and name. */
+const hiddenFromAt = (role, name) => async (page) => {
+  const cdp = await page.context().newCDPSession(page);
+  const { nodes } = await cdp.send("Accessibility.getFullAXTree");
+  return !nodes.some(
+    (node) =>
+      !node.ignored && node.role?.value === role && node.name?.value === name,
+  );
+};
+/** The date field's visible value: an input's value or the segments' text. */
+const dateValue = (expected) => async (page) =>
+  (
+    await page
+      .locator('[data-spike="date-value"]')
+      .evaluate((el) => el.value || el.innerText)
+  ).replace(/[\s\u2066-\u2069]+/g, "") === expected;
+const inDialog = async (page) =>
+  page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'));
+
+/** Steps per widget: keys to press or type, or an expectation with a label. */
+const WIDGETS = {
+  dialog: [
+    { press: "Tab" },
+    {
+      expect: isFocused("button", "Termin anfragen"),
+      label: "trigger reachable by Tab",
+    },
+    { press: "Enter" },
+    {
+      expect: visible("dialog", { name: "Termin anfragen" }),
+      label: "Enter opens a dialog named by its title",
+      axe: true,
+    },
+    { expect: inDialog, label: "focus moves into the dialog" },
+    { press: "Tab" },
+    { press: "Tab" },
+    { press: "Tab" },
+    { press: "Tab" },
+    { press: "Tab" },
+    { expect: inDialog, label: "Tab x5 stays inside (focus trap)" },
+    {
+      expect: hiddenFromAt("button", "Termin anfragen"),
+      label: "the page behind leaves the accessibility tree",
+    },
+    { press: "Escape" },
+    { expect: gone("dialog"), label: "Escape closes" },
+    {
+      expect: isFocused("button", "Termin anfragen"),
+      label: "focus returns to the trigger",
+    },
+  ],
+  "dropdown-menu": [
+    { press: "Tab" },
+    {
+      expect: isFocused("button", "Online lernen"),
+      label: "trigger reachable by Tab",
+    },
+    { press: "Enter" },
+    { expect: visible("menu"), label: "Enter opens a menu", axe: true },
+    {
+      expect: isFocused("menuitem", "Discord"),
+      label: "focus on the first item",
+    },
+    { press: "ArrowDown" },
+    {
+      expect: isFocused("menuitem", "Microsoft Teams"),
+      label: "ArrowDown moves to the next item",
+    },
+    { press: "End" },
+    {
+      expect: isFocused("menuitem", "Vor Ort"),
+      label: "End moves to the last item",
+    },
+    { press: "Home" },
+    {
+      expect: isFocused("menuitem", "Discord"),
+      label: "Home moves to the first item",
+    },
+    { type: "v" },
+    {
+      expect: isFocused("menuitem", "Vor Ort"),
+      label: "typeahead 'v' finds 'Vor Ort'",
+    },
+    { press: "Escape" },
+    { expect: gone("menu"), label: "Escape closes" },
+    {
+      expect: isFocused("button", "Online lernen"),
+      label: "focus returns to the trigger",
+    },
+    { press: "ArrowDown" },
+    {
+      expect: visible("menu"),
+      label: "ArrowDown on the trigger opens the menu",
+    },
+    { press: "Enter" },
+    { expect: gone("menu"), label: "Enter on an item closes the menu" },
+    {
+      expect: isFocused("button", "Online lernen"),
+      label: "focus returns to the trigger after a choice",
+    },
+  ],
+  "radio-group": [
+    { press: "Tab" },
+    {
+      expect: visible("radiogroup", { name: "Fach" }),
+      label: "a radio group named 'Fach'",
+      axe: true,
+    },
+    {
+      expect: isFocused("radio", "Mathe"),
+      label: "Tab lands on the checked radio",
+    },
+    { press: "ArrowDown" },
+    { expect: checked("Physik"), label: "ArrowDown checks the next radio" },
+    { expect: isFocused("radio", "Physik"), label: "focus follows the check" },
+    { press: "ArrowDown" },
+    { press: "ArrowDown" },
+    {
+      expect: checked("Mathe"),
+      label: "arrows wrap from the last to the first",
+    },
+    { press: "ArrowUp" },
+    { expect: checked("Informatik"), label: "ArrowUp wraps back to the last" },
+    { press: "Tab" },
+    {
+      expect: async (page) =>
+        page.evaluate(
+          () => !document.activeElement?.closest('[role="radiogroup"]'),
+        ),
+      label: "Tab leaves the group (one tab stop)",
+    },
+  ],
+  combobox: [
+    { press: "Tab" },
+    { expect: focusRole("combobox"), label: "a combobox is reachable by Tab" },
+    { press: "Enter", only: "radix" },
+    { type: "ph" },
+    { expect: visible("listbox"), label: "typing shows a listbox", axe: true },
+    {
+      expect: async (page) => (await page.getByRole("option").count()) === 1,
+      label: "the list filters to one option",
+    },
+    { press: "ArrowDown", only: "rac" },
+    {
+      expect: isFocused("option", "Physik"),
+      label: "the matching option is the active descendant",
+    },
+    { press: "Enter" },
+    { expect: gone("listbox"), label: "Enter picks it and closes" },
+    {
+      expect: async (page) =>
+        (await page
+          .getByRole("combobox")
+          .first()
+          .evaluate((el) => (el.value || el.textContent).trim())) === "Physik",
+      label: "the combobox shows 'Physik'",
+    },
+    { expect: focusRole("combobox"), label: "focus is back on the combobox" },
+  ],
+  "date-picker": [
+    { press: "Tab" },
+    { type: "01.10.2026", only: "radix" },
+    { type: "01102026", only: "rac" },
+    {
+      expect: dateValue("01.10.2026"),
+      label: "typed date is parsed and shown as 01.10.2026",
+    },
+    { press: "Tab" },
+    {
+      expect: isFocused("button", "Kalender öffnen"),
+      label: "calendar button reachable by Tab",
+    },
+    { press: "Enter" },
+    {
+      expect: visible("grid"),
+      label: "Enter opens a calendar grid",
+      axe: true,
+    },
+    {
+      expect: async (page) =>
+        (await page.getByText("Oktober 2026").count()) > 0,
+      label: "the month shows as 'Oktober 2026'",
+    },
+    {
+      expect: async (page) =>
+        /^Mo/.test(
+          (await page.locator('[role="grid"] th').first().innerText()).trim(),
+        ),
+      label: "the week starts on Monday",
+    },
+    {
+      expect: isFocused("button", /1\. Oktober 2026/),
+      label: "focus lands on the selected day",
+    },
+    { press: "ArrowRight" },
+    { press: "Enter" },
+    {
+      expect: gone("grid"),
+      label: "ArrowRight + Enter picks the next day and closes",
+    },
+    { expect: dateValue("02.10.2026"), label: "the field shows 02.10.2026" },
+    {
+      expect: isFocused("button", "Kalender öffnen"),
+      label: "focus returns to the calendar button",
+    },
+  ],
+};
+
+const AXE_OPTIONS = {
+  runOnly: {
+    type: "tag",
+    values: [
+      "wcag2a",
+      "wcag2aa",
+      "wcag21a",
+      "wcag21aa",
+      "wcag22aa",
+      "best-practice",
+    ],
+  },
+  // Page-level rules: a story is a fragment of a page, not a page.
+  rules: {
+    region: { enabled: false },
+    "landmark-one-main": { enabled: false },
+    "page-has-heading-one": { enabled: false },
+  },
+};
+async function axe(page) {
+  await page.addScriptTag({ path: axePath });
+  const { violations } = await page.evaluate(
+    (options) => window.axe.run(document, options),
+    AXE_OPTIONS,
+  );
+  return violations.map((v) => `${v.id} (${v.impact}, ${v.nodes.length})`);
+}
+
+const browser = await chromium.launch();
+const results = [];
+for (const [widget, steps] of Object.entries(WIDGETS)) {
+  for (const library of LIBRARIES) {
+    const page = await browser.newPage({
+      locale: "de-DE",
+      timezoneId: "Europe/Berlin",
+    });
+    await page.goto(
+      `${baseUrl}/iframe.html?id=${library.story}--${widget}&viewMode=story`,
+    );
+    await page
+      .locator("#storybook-root :is(button, input):visible")
+      .first()
+      .waitFor();
+    const result = {
+      library: library.key,
+      widget,
+      passed: 0,
+      total: 0,
+      failed: [],
+      axeClosed: await axe(page),
+      axeOpen: [],
+    };
+    for (const step of steps) {
+      if (step.only && step.only !== library.key) continue;
+      if (step.press || step.type) {
+        if (step.press) await page.keyboard.press(step.press);
+        else await page.keyboard.type(step.type, { delay: 30 });
+        await page.waitForTimeout(350);
+        continue;
+      }
+      result.total += 1;
+      const ok = await step.expect(page).catch(() => false);
+      if (ok) result.passed += 1;
+      else result.failed.push(step.label);
+      console.log(
+        `${library.key.padEnd(5)} ${widget.padEnd(13)} ${ok ? "PASS" : "FAIL"}  ${step.label}`,
+      );
+      if (step.axe) result.axeOpen = await axe(page);
+    }
+    console.log(
+      `${library.key.padEnd(5)} ${widget.padEnd(13)} axe closed: ${result.axeClosed.join(", ") || "0"}; open: ${result.axeOpen.join(", ") || "0"}`,
+    );
+    results.push(result);
+    await page.close();
+  }
+}
+await browser.close();
+writeFileSync(outFile, `${JSON.stringify(results, null, 2)}\n`);
+console.log("\nkeyboard passed/total, axe violations closed/open:");
+for (const r of results)
+  console.log(
+    `${r.library.padEnd(5)} ${r.widget.padEnd(13)} ${r.passed}/${r.total}  axe ${r.axeClosed.length}/${r.axeOpen.length}`,
+  );
+```
+
+```bash
+source <scratch>/toolkit.sh
+serve_storybook
+node "$SCRATCH/spike-a11y.mjs" "$WORKTREE" http://localhost:6106 "$SCRATCH/a11y.json" | tee "$SCRATCH/a11y.log"
+```
+
+Expected (dry run): the summary block
+
+```
+radix dialog        7/7  axe 0/0
+rac   dialog        7/7  axe 0/0
+radix dropdown-menu 12/12  axe 0/1
+rac   dropdown-menu 12/12  axe 0/0
+radix radio-group   7/7  axe 0/0
+rac   radio-group   7/7  axe 0/0
+radix combobox      6/7  axe 0/0
+rac   combobox      7/7  axe 0/0
+radix date-picker   9/9  axe 0/0
+rac   date-picker   9/9  axe 0/0
+```
+
+with the one keyboard FAIL `radix combobox ... the matching option is the active descendant` and the axe finding
+`aria-hidden-focus (serious, 1)` on the open Radix menu. Then check with a screen reader for 10 minutes (VoiceOver:
+Cmd+F5 in Safari on `http://localhost:6106/iframe.html?id=<story-id>&viewMode=story`): dialog title announced, menu
+items, the radio group's name and state, the active combobox option, the date picker's segments (RAC) or field
+(Radix) and the calendar grid. Record what is announced per widget; the script cannot hear.
+
+- [ ] **Step 9: German date formats.** `spike-dates.mjs` records what is shown rather than pass/fail: weekday
+      headers (text and label), month caption, a day's accessible name, and what four typed inputs become (a normal
+      date, no leading zero, a two-digit year, an impossible date). Write `<scratch>/spike-dates.mjs`:
+
+```js
+// C7 spike: German date formats of both date pickers, as the visitor meets them.
+// Records what is shown (not pass/fail): weekday headers, month caption, the
+// accessible name of a day, and what each typed input turns into.
+// Usage: node spike-dates.mjs <repo-root> <storybook-url>
+import { createRequire } from "node:module";
+import path from "node:path";
+
+const [root, baseUrl] = process.argv.slice(2);
+const { chromium } = createRequire(
+  path.join(root, "apps/marketing/package.json"),
+)("@playwright/test");
+
+const LIBRARIES = [
+  { key: "radix", story: "spike-radix--date-picker" },
+  { key: "rac", story: "spike-react-aria--date-picker" },
+];
+/** What a visitor types; RAC's segments take digits, so separators are typed too. */
+const INPUTS = ["01.10.2026", "1.10.2026", "01.10.26", "31.02.2026"];
+
+const browser = await chromium.launch();
+async function open(story) {
+  const page = await browser.newPage({
+    locale: "de-DE",
+    timezoneId: "Europe/Berlin",
+  });
+  await page.goto(`${baseUrl}/iframe.html?id=${story}&viewMode=story`);
+  await page
+    .locator("#storybook-root :is(button, input):visible")
+    .first()
+    .waitFor();
+  return page;
+}
+const fieldValue = (page) =>
+  page
+    .locator('[data-spike="date-value"]')
+    .evaluate((el) =>
+      (el.value || el.innerText).replace(/[\s\u2066-\u2069]+/g, ""),
+    );
+
+for (const library of LIBRARIES) {
+  for (const input of INPUTS) {
+    const page = await open(library.story);
+    await page.keyboard.press("Tab");
+    await page.keyboard.type(input, { delay: 30 });
+    await page.keyboard.press("Tab"); // leave the field: commit
+    await page.waitForTimeout(300);
+    const shown = await fieldValue(page);
+    await page.keyboard.press("Enter"); // open the calendar
+    await page.waitForTimeout(500);
+    const selected = await page
+      .locator('[role="gridcell"][aria-selected="true"]')
+      .first()
+      .evaluate((cell) =>
+        (cell.querySelector("[aria-label]") ?? cell).getAttribute("aria-label"),
+      )
+      .catch(() => "none");
+    console.log(
+      `${library.key.padEnd(5)} typed ${JSON.stringify(input).padEnd(13)} shown ${JSON.stringify(shown).padEnd(14)} selected ${selected}`,
+    );
+    if (input === INPUTS[0]) {
+      const weekdays = await page
+        .locator('[role="grid"] th')
+        .evaluateAll((cells) =>
+          cells.map(
+            (cell) =>
+              `${cell.innerText.trim()}(${cell.getAttribute("aria-label") ?? ""})`,
+          ),
+        );
+      // The visible month caption: RAC's Heading, DayPicker's caption label.
+      const caption = await page
+        .locator('[role="dialog"] :is(h2, .rdp-caption_label)')
+        .first()
+        .innerText();
+      const grid = await page
+        .getByRole("grid")
+        .first()
+        .getAttribute("aria-label");
+      console.log(`${library.key.padEnd(5)} weekdays ${weekdays.join(" ")}`);
+      console.log(
+        `${library.key.padEnd(5)} caption "${caption}", grid label "${grid}"`,
+      );
+    }
+    await page.close();
+  }
+}
+await browser.close();
+```
+
+```bash
+source <scratch>/toolkit.sh
+node "$SCRATCH/spike-dates.mjs" "$WORKTREE" http://localhost:6106 | tee "$SCRATCH/dates.log"
+```
+
+Expected (dry run):
+
+```
+radix typed "01.10.2026"  shown "01.10.2026"   selected Donnerstag, 1. Oktober 2026, ausgewählt
+radix weekdays Mo(Montag) Di(Dienstag) Mi(Mittwoch) Do(Donnerstag) Fr(Freitag) Sa(Samstag) So(Sonntag)
+radix caption "Oktober 2026", grid label "Oktober 2026"
+radix typed "1.10.2026"   shown "1.10.2026"    selected Donnerstag, 1. Oktober 2026, ausgewählt
+radix typed "01.10.26"    shown "01.10.26"     selected Donnerstag, 1. Oktober 26, ausgewählt
+radix typed "31.02.2026"  shown "31.02.2026"   selected none
+rac   typed "01.10.2026"  shown "01.10.2026"   selected Donnerstag, 1. Oktober 2026 ausgewählt
+rac   weekdays Mo() Di() Mi() Do() Fr() Sa() So()
+rac   caption "Oktober 2026", grid label "Oktober 2026"
+rac   typed "1.10.2026"   shown "01.10.2026"   selected Donnerstag, 1. Oktober 2026 ausgewählt
+rac   typed "01.10.26"    shown "01.10.26"     selected Donnerstag, 1. Oktober 26 ausgewählt
+rac   typed "31.02.2026"  shown "28.02.2026"   selected Samstag, 28. Februar 2026 ausgewählt
+```
+
+- [ ] **Step 10: Motion-token fit.** `spike-motion.mjs` opens each overlay widget, samples every running animation
+      and transition (the trigger's `lift` left out), closes with Escape, samples again and checks that the panel
+      stayed mounted for its exit; durations and easings print as token names. Write `<scratch>/spike-motion.mjs`:
+
+```js
+// C7 spike: do enter and exit animations run on the brand motion tokens?
+// Opens each overlay widget (click on its one trigger button), samples every
+// running animation/transition of the document, closes it with Escape and samples
+// again; then checks whether the panel stayed mounted for its exit animation.
+// Runs once with motion allowed and once with reduced motion.
+// Usage: node spike-motion.mjs <repo-root> <storybook-url>
+import { createRequire } from "node:module";
+import path from "node:path";
+
+const [root, baseUrl] = process.argv.slice(2);
+const { chromium } = createRequire(
+  path.join(root, "apps/marketing/package.json"),
+)("@playwright/test");
+
+const TOKENS = {
+  "cubic-bezier(0.22, 1, 0.36, 1)": "ease-flow",
+  "cubic-bezier(0.65, 0, 0.35, 1)": "ease-soft",
+  160: "duration-quick",
+  260: "duration-base",
+  420: "duration-slow",
+};
+const WIDGETS = ["dialog", "dropdown-menu", "combobox", "date-picker"];
+const LIBRARIES = [
+  { key: "radix", story: "spike-radix" },
+  { key: "rac", story: "spike-react-aria" },
+];
+const PANEL = '[role="dialog"], [role="menu"], [role="listbox"]';
+
+/** Every running animation but the trigger's `lift`: kind, target, duration, easing. */
+function sample() {
+  const animations = document
+    .getAnimations()
+    .filter((animation) => animation.effect.target.tagName !== "BUTTON");
+  return animations.map((animation) => {
+    const effect = animation.effect;
+    const timing = effect.getTiming();
+    const easing =
+      timing.easing !== "linear"
+        ? timing.easing
+        : (effect.getKeyframes()[0]?.easing ?? "linear");
+    const what =
+      animation.animationName ?? `transition:${animation.transitionProperty}`;
+    const target = effect.target;
+    const role = target.getAttribute("role") ?? target.tagName.toLowerCase();
+    return `${role} ${what} ${Math.round(timing.duration)}ms ${easing}`;
+  });
+}
+const named = (line) =>
+  line.replace(
+    /(\d+)ms (.*)$/,
+    (_, ms, easing) => `${TOKENS[ms] ?? `${ms}ms`} ${TOKENS[easing] ?? easing}`,
+  );
+
+const browser = await chromium.launch();
+for (const reducedMotion of ["no-preference", "reduce"]) {
+  console.log(`\n== ${reducedMotion}`);
+  for (const widget of WIDGETS) {
+    for (const library of LIBRARIES) {
+      const page = await browser.newPage({ reducedMotion });
+      await page.goto(
+        `${baseUrl}/iframe.html?id=${library.story}--${widget}&viewMode=story`,
+      );
+      const trigger = page.locator("#storybook-root button:visible").first();
+      await trigger.waitFor();
+      await trigger.click();
+      await page.waitForTimeout(20);
+      const enter = await page.evaluate(sample);
+      await page.waitForTimeout(600);
+      const panel = await page.locator(PANEL).first().elementHandle();
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(20);
+      const exit = await page.evaluate(sample);
+      const mountedAt40 = await panel.evaluate((el) => el.isConnected);
+      await page.waitForTimeout(1000);
+      const mountedAt1000 = await panel.evaluate((el) => el.isConnected);
+      const tag = `${library.key.padEnd(5)} ${widget.padEnd(13)}`;
+      console.log(`${tag} enter: ${enter.map(named).join("; ") || "none"}`);
+      console.log(`${tag} exit:  ${exit.map(named).join("; ") || "none"}`);
+      console.log(
+        `${tag} exit plays: ${mountedAt40 && !mountedAt1000 ? "yes" : "no"} (mounted at +40ms: ${mountedAt40}, at +1s: ${mountedAt1000})`,
+      );
+      await page.close();
+    }
+  }
+}
+await browser.close();
+```
+
+```bash
+source <scratch>/toolkit.sh
+node "$SCRATCH/spike-motion.mjs" "$WORKTREE" http://localhost:6106 | tee "$SCRATCH/motion.log"
+grep -c 'exit plays: yes' "$SCRATCH/motion.log"
+```
+
+Expected: `8` (four widgets x two libraries, motion allowed); every `enter:` line on `duration-base ease-flow`,
+every `exit:` line on `duration-quick ease-flow` - Radix as keyframes (`rise`, then `fade` reversed), RAC as
+`transition:opacity`/`transition:translate`; under `== reduce` every `exit plays: no (mounted at +40ms: false...)`.
+Radix's other exit route, `forceMount` with own hiding of the closed content, is not built (it moves presence,
+focus and `aria-hidden` handling into our code); name it in the comparison as the alternative to exit keyframes.
+
+- [ ] **Step 11: Bundle size.** Measured the same way for both: esbuild bundles each widget file (minified,
+      production flags), with React and everything the site already ships left out (`clsx`, `tailwind-merge`, CVA,
+      `lucide-react`, `@radix-ui/react-slot`, the package's own modules, `look.ts`), gzip level 9; "total" is one
+      entry with all five widgets of a library. Write `<scratch>/spike-bundle.mjs`:
+
+```js
+// C7 spike: the gzip size each library adds, per widget and in total, measured the
+// same way for both: esbuild bundles each widget file (minified, production React
+// build flags), with React and everything the site already ships (clsx,
+// tailwind-merge, CVA, lucide-react, @radix-ui/react-slot, the package's own
+// modules and the spike's shared look) left out, then gzip -9 the output.
+// "total" bundles all five widgets of a library in one entry (shared code once).
+// React Aria bundles the UI strings of 34 locales. Its optimize-locales plugin
+// (webpack/Vite/Rollup, not Turbopack - the site's bundler) drops all but the
+// listed ones; `germanOnly` does the same here (the plugin's esbuild build fails
+// on its own virtual module), so React Aria is measured both ways.
+// Usage: node spike-bundle.mjs <repo-root>
+import { createRequire } from "node:module";
+import path from "node:path";
+import { gzipSync } from "node:zlib";
+
+const [root] = process.argv.slice(2);
+const ui = path.join(root, "packages/ui");
+const requireUi = createRequire(path.join(ui, "package.json"));
+const { build } = requireUi("esbuild");
+
+const WIDGETS = [
+  "dialog",
+  "dropdown-menu",
+  "radio-group",
+  "combobox",
+  "date-picker",
+];
+const EXTERNAL = [
+  "react",
+  "react-dom",
+  "react/jsx-runtime",
+  "clsx",
+  "tailwind-merge",
+  "class-variance-authority",
+  "lucide-react",
+  "@radix-ui/react-slot",
+];
+/** The package's own modules and the spike's shared look: already shipped / not a library. */
+const localExternal = {
+  name: "local-external",
+  setup(b) {
+    b.onResolve({ filter: /\/(primitives|utils)\/|^\.\.\/look$/ }, (args) => ({
+      path: args.path,
+      external: true,
+    }));
+  },
+};
+
+/** Replace every locale string file but de-DE with an empty module. */
+const germanOnly = {
+  name: "german-only",
+  setup(b) {
+    b.onResolve(
+      { filter: /\/intl\/(?:[\w-]+\/)?[a-z]{2}-[A-Z]{2}\.m?js$/ },
+      (args) =>
+        args.path.includes("de-DE")
+          ? undefined
+          : { path: args.path, namespace: "empty-locale" },
+    );
+    b.onLoad({ filter: /.*/, namespace: "empty-locale" }, () => ({
+      contents: "export default {};",
+    }));
+  },
+};
+
+async function gzipped(contents, resolveDir, extraPlugins = []) {
+  const result = await build({
+    stdin: { contents, resolveDir, loader: "tsx" },
+    bundle: true,
+    write: false,
+    minify: true,
+    format: "esm",
+    platform: "browser",
+    target: "es2022",
+    jsx: "automatic",
+    define: { "process.env.NODE_ENV": '"production"' },
+    external: EXTERNAL,
+    plugins: [localExternal, ...extraPlugins],
+    logLevel: "error",
+  });
+  const code = result.outputFiles[0].contents;
+  return { min: code.length, gzip: gzipSync(code, { level: 9 }).length };
+}
+const kb = (bytes) => (bytes / 1024).toFixed(1);
+
+const rows = [];
+for (const widget of [...WIDGETS, "total"]) {
+  const row = [widget];
+  const files = widget === "total" ? WIDGETS : [widget];
+  const entry = files.map((file) => `export * from "./${file}";`).join("\n");
+  for (const [library, plugins] of [
+    ["radix", []],
+    ["rac", []],
+    ["rac", [germanOnly]],
+  ]) {
+    const { min, gzip } = await gzipped(
+      entry,
+      path.join(ui, "src/spike", library),
+      plugins,
+    );
+    row.push(`${kb(gzip)} kB (${kb(min)} kB min)`);
+  }
+  rows.push(row);
+}
+console.log(
+  "| widget | Radix gzip (min) | React Aria gzip (min) | React Aria, de-DE only |",
+);
+console.log("| --- | --- | --- | --- |");
+for (const row of rows) console.log(`| ${row.join(" | ")} |`);
+```
+
+```bash
+source <scratch>/toolkit.sh
+node "$SCRATCH/spike-bundle.mjs" "$WORKTREE" | tee "$SCRATCH/bundle.md"
+```
+
+Expected (dry run):
+
+```
+| widget | Radix gzip (min) | React Aria gzip (min) | React Aria, de-DE only |
+| --- | --- | --- | --- |
+| dialog | 12.8 kB (37.7 kB min) | 20.7 kB (62.6 kB min) | 20.3 kB (61.6 kB min) |
+| dropdown-menu | 27.7 kB (79.3 kB min) | 44.2 kB (140.1 kB min) | 41.8 kB (134.0 kB min) |
+| radio-group | 9.5 kB (27.1 kB min) | 14.3 kB (43.6 kB min) | 14.3 kB (43.6 kB min) |
+| combobox | 26.9 kB (76.9 kB min) | 55.5 kB (187.8 kB min) | 49.6 kB (159.2 kB min) |
+| date-picker | 47.1 kB (155.2 kB min) | 70.7 kB (234.7 kB min) | 57.3 kB (175.3 kB min) |
+| total | 62.0 kB (202.0 kB min) | 108.6 kB (370.6 kB min) | 89.1 kB (283.6 kB min) |
+```
+
+The Radix combobox and date picker include `cmdk` and `react-day-picker` + `date-fns` (the substitutes); say so
+under the table.
+
+- [ ] **Step 12: Design-system bypasses.** Write `<scratch>/spike-ratchet.mjs`:
+
+```js
+// C7 spike: the design-system bypasses each library's spike code needed, counted
+// with the ratchet's own patterns (the ratchet itself skips src/spike/), plus
+// arbitrary values and properties the ratchet does not count.
+// Usage: node spike-ratchet.mjs <repo-root>
+import { globSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const [root] = process.argv.slice(2);
+const { countPatterns } = await import(
+  pathToFileURL(path.join(root, "scripts/design-ratchet.mjs")).href
+);
+for (const library of ["radix", "rac"]) {
+  const files = globSync(`packages/ui/src/spike/${library}/*.{ts,tsx}`, {
+    cwd: root,
+  }).map((file) => ({
+    // Outside src/spike/, so the ratchet's skip rule does not apply.
+    path: file.replace("src/spike/", "src/"),
+    content: readFileSync(path.join(root, file), "utf8"),
+  }));
+  const counts = Object.entries(countPatterns(files, {})).filter(
+    ([, n]) => n > 0,
+  );
+  const arbitrary = files.flatMap(
+    ({ content }) => content.match(/(?<=["\s])[\w:-]*\[[^\]\s"]+\]/g) ?? [],
+  );
+  console.log(
+    `${library.padEnd(5)} ratchet: ${counts.map(([k, n]) => `${k} ${n}`).join(", ") || "0"}; arbitrary: ${arbitrary.join(" ") || "none"}`,
+  );
+}
+```
+
+```bash
+source <scratch>/toolkit.sh
+node "$SCRATCH/spike-ratchet.mjs" "$WORKTREE"
+```
+
+Expected (dry run): `radix ratchet: 0; arbitrary: data-[state=open] data-[state=closed] data-[state=closed]
+data-[selected=true] data-[selected=true] data-[state=checked] data-[state=checked]` and `rac ratchet: 0;
+arbitrary: transition-[opacity,translate]`.
+
+- [ ] **Step 13: Composition.** No script: compare how each library meets the C2 API, from the spike code. The PR
+      body carries this comparison (fill in what the spike found):
+
+```tsx
+// Radix: `asChild` hands trigger behaviour (handlers, ref, ARIA) to the C2 Button
+// through Slot - the same mechanism as `Button asChild` itself.
+<Dialog.Trigger asChild>
+  <Button variant="primary">Termin anfragen</Button>
+</Dialog.Trigger>
+<Dialog.Close asChild>
+  <Button variant="ghost">Abbrechen</Button>
+</Dialog.Close>
+
+// React Aria: triggers need a pressable child. The C2 Button joins through
+// Pressable (it spreads props onto a host <button>) ...
+<DialogTrigger>
+  <Pressable>
+    <Button variant="primary">Termin anfragen</Button>
+  </Pressable>
+  <ModalOverlay>...</ModalOverlay>
+</DialogTrigger>
+// ... closing uses the Dialog's render prop (or RAC's own Button with slot="close"):
+<Dialog>{({ close }) => <Button variant="ghost" onClick={close}>Abbrechen</Button>}</Dialog>
+// ... or RAC's Button carries the CVA classes (C8 would export buttonVariants);
+// states come as render props / data-* (data-pressed, data-focus-visible):
+<RacButton className={({ isFocusVisible }) => cn(buttonVariants({ variant: "primary" }), isFocusVisible && "...")} />
+```
+
+Also note: RAC collection items with render-function children need `textValue`; RAC links take client navigation
+through `RouterProvider`, Radix through `asChild` on `next/link`; Radix state styling uses value variants
+(`data-[state=open]:`), RAC boolean ones (`data-open:`, `data-selected:`).
+
+- [ ] **Step 14: Checks and commit.**
+
+```bash
+source <scratch>/toolkit.sh
+stop 6106
+cd "$WORKTREE" && pnpm format && just check
+cd "$WORKTREE" && git status --short
+```
+
+Expected: `just check` green (dry run: 104 tests, build, 48 smoke tests); `git status` lists only
+`packages/ui/package.json`, `packages/ui/src/exports.test.ts`, `packages/ui/src/spike/`, `pnpm-lock.yaml`,
+`scripts/design-ratchet.mjs` - no file under `apps/` or `docs/`. Commit
+`chore: headless widget spike - Radix Primitives vs React Aria Components` (plain message, no trailer).
+
+- [ ] **Step 15: Draft PR.** Push and open the PR as a **draft** against `refactor/ui-tokens`, following the run's
+      rules file (for example `gh pr create --draft --base refactor/ui-tokens --head spike/headless-widgets`). Do
+      not tick the spec's C7 box, do not edit _Decisions_, do not mark the PR ready. Report the PR to the
+      controller; phase C's automatic run stops here (gate C7).
+
+PR body (first line verbatim):
+
+- "Draft spike - never merged. The code is thrown away after the maintainer's choice (gate C7)."
+- "Based on `refactor/ui-tokens` (C3); runs in parallel to C4-C6." and "Part of #139."
+- _What was built_: the five widgets on both libraries in the brand look (`packages/ui/src/spike/`, stories under
+  _Spike_), the two named Radix substitutes, the two exclusions (export map, ratchet), the versions.
+- _Method_: one line per script (keyboard + axe on the static Storybook, German dates, motion sampling, esbuild +
+  gzip, bypass count) with the exact command, and the time spent per widget pair against its box.
+- _Comparison_ - a table, criteria x library, measured values only:
+
+  | Criterion                  | Radix Primitives                                                             | React Aria Components                       |
+  | -------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------- |
+  | Coverage (5 widgets)       | 3 native; combobox (`cmdk`) and date picker (`react-day-picker`) third-party | 5 native                                    |
+  | Keyboard (passed/total)    | per widget, from `a11y.log`                                                  | per widget                                  |
+  | axe (closed/open)          | per widget, rule ids                                                         | per widget, rule ids                        |
+  | Screen reader (VoiceOver)  | per widget, what is announced                                                | per widget                                  |
+  | German dates               | format, first day, names, the four typed inputs                              | same                                        |
+  | Motion tokens              | enter/exit route, exit keyframes needed, reduced motion                      | same                                        |
+  | Bundle, gzip (all five)    | total and per widget                                                         | total, per widget, and de-DE only           |
+  | Composition with C2 Button | `asChild`                                                                    | `Pressable` / render props                  |
+  | Design-system bypasses     | ratchet count, arbitrary syntax                                              | same                                        |
+  | Needed fixes (documented)  | e.g. `autoFocus`, popover label                                              | e.g. `textValue`, `shouldForceLeadingZeros` |
+  | Time spent vs. box         | per pair                                                                     | per pair                                    |
+
+- _Findings_: every FAIL, violation, "not reached in the time box" and surprise, one line each, with the widget.
+- _Recommendation_ - input for the choice, not the choice: which library the spike's numbers favour and why, and
+  under which weighting the other one wins (e.g. bundle size vs. native coverage and German date handling).
+- Verbatim: "The maintainer chooses (gate C7); C8 follows the choice."
+- _How to check_: `git switch spike/headless-widgets && pnpm install && pnpm storybook`, then _Spike / Radix_ and
+  _Spike / React Aria_: each story by keyboard only (Tab, Enter, arrows, Escape), in light and dark (toolbar
+  _Theme_), at phone width (toolbar _Viewport_, 390 px) and desktop width; the date pickers: type `01.10.2026`,
+  `1.10.2026` and `31.02.2026`. Nothing on the site changes: the PR touches no file under `apps/`.
+
+After the maintainer's choice (not part of this task): the docs PR that opens C8 ticks the spec's C7 box, records
+the choice in the spec's _Decisions_ and in this plan's _After the gate_, and closes this PR; its branch is deleted.
 
 ---
 
