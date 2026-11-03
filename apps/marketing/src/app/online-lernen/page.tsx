@@ -5,6 +5,7 @@ import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
+import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -156,9 +157,9 @@ export default function OnlineLearningPage() {
               as={Card}
               className="flex items-start gap-4 p-6"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-tint-14 text-coral">
+              <IconBadge className="shrink-0">
                 <AnimatedCheckMark index={index} className="size-5" />
-              </span>
+              </IconBadge>
               <div>
                 <Heading as="h3" size="title" className="mb-1.5">
                   {feature.title}
