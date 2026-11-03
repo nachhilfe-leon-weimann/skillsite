@@ -5,6 +5,7 @@ import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
 import { Pill } from "@skillsite/ui/primitives/pill";
 import { Button } from "@skillsite/ui/primitives/button";
+import { SmartLink } from "@skillsite/ui/primitives/link";
 import { Card } from "@skillsite/ui/primitives/card";
 import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
@@ -52,9 +53,9 @@ export default function OnlineLearningPage() {
           </Link>
         </Button>
         <Button asChild variant="outline" size="lg">
-          <a href={discordInvite} target="_blank" rel="noopener noreferrer">
+          <SmartLink href={discordInvite}>
             <SiDiscord className="size-4" aria-hidden /> Server beitreten
-          </a>
+          </SmartLink>
         </Button>
       </PageHeader>
 
@@ -105,9 +106,9 @@ export default function OnlineLearningPage() {
             Sobald du Discord hast, komm auf den Server – ich schalte dich frei.
           </Text>
           <Button asChild variant="primary">
-            <a href={discordInvite} target="_blank" rel="noopener noreferrer">
+            <SmartLink href={discordInvite}>
               <SiDiscord className="size-4" aria-hidden /> Server beitreten
-            </a>
+            </SmartLink>
           </Button>
         </Reveal>
         <Reveal variant="rise-soft">

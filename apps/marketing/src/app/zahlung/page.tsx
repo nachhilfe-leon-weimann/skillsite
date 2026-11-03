@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { StatusPage } from "@skillsite/ui/layout/status-page";
 import { Button } from "@skillsite/ui/primitives/button";
+import { TextLink } from "@skillsite/ui/primitives/link";
 import { Text } from "@skillsite/ui/typography/text";
 import { contactDetails } from "@/content/contact";
 import {
@@ -76,9 +76,9 @@ export default async function PaymentPage({
         {contactDetails.eMail.content} · {contactDetails.whatsapp.content}
       </Text>
       <Text size="small" tone="muted" className="mt-2">
-        <Link href={routes.contact} className="underline underline-offset-4">
+        <TextLink variant="underline" href={routes.contact}>
           Alle Kontaktwege
-        </Link>
+        </TextLink>
       </Text>
     </StatusPage>
   );

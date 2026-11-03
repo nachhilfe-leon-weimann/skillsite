@@ -5,6 +5,7 @@ import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Card } from "@skillsite/ui/primitives/card";
 import { Button } from "@skillsite/ui/primitives/button";
+import { SmartLink } from "@skillsite/ui/primitives/link";
 import { CheckList } from "@skillsite/ui/primitives/check-list";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -156,14 +157,10 @@ export default function PricingPage() {
               variant="outline"
               aria-label={`${but.officialInfo.label} auf ${but.officialInfo.source} öffnen`}
             >
-              <a
-                href={but.officialInfo.href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <SmartLink href={but.officialInfo.href}>
                 {but.officialInfo.label}
                 <ExternalLink className="size-4" aria-hidden />
-              </a>
+              </SmartLink>
             </Button>
           </Reveal>
         </div>
