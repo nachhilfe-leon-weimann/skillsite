@@ -4,6 +4,7 @@ import { Section } from "@skillsite/ui/layout/section";
 import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
 import { Button } from "@skillsite/ui/primitives/button";
+import { Card } from "@skillsite/ui/primitives/card";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
@@ -75,7 +76,8 @@ export default function OnlineLearningPage() {
               key={step.n}
               variant="rise-soft"
               index={i}
-              className="rounded-2xl border border-line bg-surface p-6 shadow-card"
+              as={Card}
+              className="p-6"
             >
               <span className="font-heading text-digit-md font-extrabold leading-none text-coral">
                 {step.n}
@@ -93,7 +95,9 @@ export default function OnlineLearningPage() {
         {/* Beitreten-Band: Server-Link genau dort, wo er gebraucht wird */}
         <Reveal
           variant="rise-soft"
-          className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-surface-2 px-6 py-5"
+          as={Card}
+          surface="subtle"
+          className="mt-6 flex flex-wrap items-center justify-between gap-4 px-6 py-5"
         >
           <Text className="font-medium">
             Sobald du Discord hast, komm auf den Server – ich schalte dich frei.
@@ -124,7 +128,9 @@ export default function OnlineLearningPage() {
           />
           <Reveal
             variant="rise-soft"
-            className="rounded-2xl border border-line bg-bg p-panel-timeline"
+            as={Card}
+            surface="inset"
+            className="p-panel-timeline"
           >
             <LessonTimeline steps={lessonSteps} />
           </Reveal>
@@ -147,7 +153,8 @@ export default function OnlineLearningPage() {
               key={feature.title}
               variant="rise-soft"
               index={index}
-              className="flex items-start gap-4 rounded-2xl border border-line bg-surface p-6 shadow-card"
+              as={Card}
+              className="flex items-start gap-4 p-6"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-tint-14 text-coral">
                 <AnimatedCheckMark index={index} className="size-5" />
@@ -168,10 +175,7 @@ export default function OnlineLearningPage() {
       {/* Microsoft Teams + Technik */}
       <Section surface id="ms-teams">
         <div className="grid gap-5">
-          <Reveal
-            variant="rise-soft"
-            className="rounded-2xl border border-line bg-bg p-7"
-          >
+          <Reveal variant="rise-soft" as={Card} surface="inset" className="p-7">
             <div className="mb-3.5 flex items-center justify-between gap-4">
               <Heading as="h3" size="h4">
                 {teamsNote.name}
@@ -183,7 +187,9 @@ export default function OnlineLearningPage() {
           <Reveal
             variant="rise-soft"
             index={1}
-            className="flex flex-wrap items-center gap-3.5 rounded-2xl border border-line bg-bg px-6 py-6"
+            as={Card}
+            surface="inset"
+            className="flex flex-wrap items-center gap-3.5 px-6 py-6"
           >
             <span className="rounded-full border border-line bg-surface px-3 py-1.5 font-mono text-caption text-coral">
               Technik
