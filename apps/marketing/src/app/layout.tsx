@@ -3,7 +3,7 @@ import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
 
 import "./globals.css";
 import { cn } from "@skillsite/ui/utils";
-import { SITE_URL } from "@/lib/routes";
+import { siteMetadata } from "@/lib/metadata";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -23,35 +23,7 @@ const hanken = Hanken_Grotesk({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: "Online-Nachhilfe für Mathe, Informatik und Physik",
-    template: "%s – Nachhilfe Leon Weimann",
-  },
-  description:
-    "Persönliche Online-Nachhilfe in Mathematik, Informatik und Physik – flexibel, ohne Mindestlaufzeit und für 30 € pro 60 Minuten.",
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    locale: "de_DE",
-    siteName: "Nachhilfe Leon Weimann",
-    title: "Online-Nachhilfe für Mathe, Informatik und Physik",
-    description:
-      "Persönliche Online-Nachhilfe – flexibel, ohne Mindestlaufzeit und für 30 € pro 60 Minuten.",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Online-Nachhilfe für Mathe, Informatik und Physik",
-    description:
-      "Persönliche Online-Nachhilfe – flexibel, ohne Mindestlaufzeit und für 30 € pro 60 Minuten.",
-  },
-  verification: {
-    other: {
-      "facebook-domain-verification": "mgl8asl7f0d24t8p3g6kb2x9bw9or0",
-    },
-  },
-};
+export const metadata: Metadata = siteMetadata;
 
 export const viewport: Viewport = {
   viewportFit: "cover",
