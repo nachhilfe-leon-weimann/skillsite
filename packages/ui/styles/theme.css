@@ -224,6 +224,12 @@
     outline-offset: 3px;
   }
 
+  /* Enabled buttons show the pointer; utilities (e.g. cursor-not-allowed) still win. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
   /* Honour reduced-motion preferences globally. */
   @media (prefers-reduced-motion: reduce) {
     html {
@@ -257,6 +263,9 @@
 }
 @utility pb-section {
   padding-bottom: clamp(3.5rem, 7vw, 5.5rem);
+}
+@utility pb-section-sm {
+  padding-bottom: clamp(2.25rem, 5vw, 3.5rem);
 }
 
 /* German-aware hyphenation for headings: only break long words and keep the
