@@ -7,6 +7,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 
 import { cn } from "@skillsite/ui/utils/cn";
 import { Container } from "@skillsite/ui/layout/container";
+import { Collapsible } from "@skillsite/ui/motion/collapsible";
 import { Logo } from "@skillsite/ui/shell/logo";
 import { Button } from "@skillsite/ui/primitives/button";
 import { IconButton } from "@skillsite/ui/primitives/icon-button";
@@ -300,35 +301,24 @@ function MobileMenu({
           />
         </button>
 
-        <div
-          className={cn(
-            "grid transition-[grid-template-rows] duration-base ease-soft",
-            platformOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-          )}
-        >
-          <div
-            id="mobile-platform-nav"
-            inert={!platformOpen}
-            className="overflow-hidden"
-          >
-            <div className="flex flex-col">
-              {platformNav.map((item) => (
-                <Link
-                  key={`${item.href}:${item.label}`}
-                  href={item.href}
-                  aria-current={currentPage(pathname, item.href)}
-                  onClick={onNavigate}
-                  className={cn(
-                    "border-b border-line py-2.5 pl-4 text-small",
-                    activeText(isActive(pathname, item.href)),
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
+        <Collapsible open={platformOpen} id="mobile-platform-nav">
+          <div className="flex flex-col">
+            {platformNav.map((item) => (
+              <Link
+                key={`${item.href}:${item.label}`}
+                href={item.href}
+                aria-current={currentPage(pathname, item.href)}
+                onClick={onNavigate}
+                className={cn(
+                  "border-b border-line py-2.5 pl-4 text-small",
+                  activeText(isActive(pathname, item.href)),
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
-        </div>
+        </Collapsible>
       </Container>
 
       <Container className="flex flex-col gap-2 border-t border-line py-4">
