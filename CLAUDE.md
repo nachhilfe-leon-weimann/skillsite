@@ -70,8 +70,9 @@ there slice by slice.
 - Bulk edits over German files only with UTF-8-safe tools (`perl -CSD -pi -e ...`); plain `sed`/`perl` destroy
   umlauts and ß.
 - `next dev` serving stale CSS: delete `apps/marketing/.next` and restart.
-- Tailwind v4 `translate-*` / `scale-*` set the `translate` / `scale` properties, not `transform`;
-  `transition-transform` does not cover them. Verify every motion change in a browser.
+- Tailwind v4 `translate-*` / `scale-*` set the `translate` / `scale` properties, not `transform`.
+  `transition-transform` covers them; an explicit list such as `transition-[opacity,transform]` does not -
+  write `transition-[opacity,translate,scale]`. Verify every motion change in a browser (`e2e/motion.spec.ts`).
 - `next-themes` runs with `disableTransitionOnChange`: theme switches do not animate, on purpose.
 - `next/font/google` downloads the fonts at build time: `just build` needs network access to Google Fonts.
 - The iOS 26 Safari toolbar tint follows the `footer` element

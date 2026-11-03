@@ -311,7 +311,10 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 - _Check:_ `/ueber-mich` bottom spacing under the quote; open/close select, accordion, navbar dropdown; resize
   across 1080px; hover over the booking controls; jump to `#` anchors from the navigation.
 - _Acceptance criteria:_
-  - [ ] Each of the four transitions measurably interpolates (not a single-frame jump).
+  - [x] Each of the four transitions measurably interpolates (not a single-frame jump).
+    - Select panel, accordion answer and navbar dropdown are measured by `e2e/motion.spec.ts`; the switch thumb
+      already interpolated (`transition-transform` covers `translate`) and no route renders it - its story comes
+      with C.
 
 **B3 - Metadata.**
 

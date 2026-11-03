@@ -119,12 +119,9 @@ export function ThemeToggle() {
     >
       <span
         aria-hidden
-        // The indicator moves via an inline transform, not a Tailwind
-        // `translate-x-*` utility: in Tailwind v4 those write the
-        // `--tw-translate-x` custom property (registered `syntax: "*"`,
-        // non-interpolatable), so the `translate` longhand's specified value
-        // never changes and the transition never fires. Setting `transform`
-        // directly keeps the glide animatable.
+        // The indicator moves via an inline transform so its glide does not depend on
+        // Tailwind's translate utilities; either way the transition must list the
+        // property it animates.
         style={{
           transform:
             indicatorPosition === "dark" ? "translateX(100%)" : "translateX(0)",
