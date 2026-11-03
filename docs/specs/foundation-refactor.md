@@ -409,7 +409,8 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 
 - _Technique:_ on the chosen base: `Dialog` (focus trap), `Select`, `Popover`/dropdown (one dismiss logic
   instead of three), `RadioGroup` and chips (arrow-key model, single-choice chips not deselectable by accident),
-  `Switch`; the booker calendar grid gets grid semantics and arrow keys.
+  `Switch`; the booker calendar grid gets grid semantics and arrow keys; Escape in the navbar "Online lernen"
+  dropdown returns focus to its trigger (today focus drops to `<body>` once the panel hides).
 - _Check:_ the booker end to end by keyboard; select, navbar dropdown; look unchanged.
 
 **C9 - Workbench coverage.**
