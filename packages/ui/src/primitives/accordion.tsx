@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 
+import { Collapsible } from "../motion/collapsible";
 import { cn } from "../utils/cn";
 import { Card } from "./card";
 import { IconBadge } from "./icon-badge";
@@ -55,34 +56,23 @@ export function Accordion({
                 </IconBadge>
               </button>
             </h3>
-            {/* grid 0fr<->1fr animates variable height; the inner div clips and
-                carries `inert` so collapsed content stays out of focus/a11y but
-                still renders (which `hidden` would prevent, killing the anim). */}
-            <div
-              className={cn(
-                "grid transition-[grid-template-rows] duration-base ease-soft",
-                isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-              )}
+            <Collapsible
+              open={isOpen}
+              id={panelId}
+              role="region"
+              aria-labelledby={triggerId}
             >
               <div
-                id={panelId}
-                role="region"
-                aria-labelledby={triggerId}
-                inert={!isOpen}
-                className="overflow-hidden"
+                className={cn(
+                  "px-6 pb-6 leading-relaxed text-ink-soft transition-[opacity,translate] duration-base ease-flow",
+                  isOpen
+                    ? "translate-y-0 opacity-100"
+                    : "-translate-y-1 opacity-0",
+                )}
               >
-                <div
-                  className={cn(
-                    "px-6 pb-6 leading-relaxed text-ink-soft transition-[opacity,translate] duration-base ease-flow",
-                    isOpen
-                      ? "translate-y-0 opacity-100"
-                      : "-translate-y-1 opacity-0",
-                  )}
-                >
-                  {item.answer}
-                </div>
+                {item.answer}
               </div>
-            </div>
+            </Collapsible>
           </Card>
         );
       })}
