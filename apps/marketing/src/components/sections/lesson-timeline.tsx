@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 
 import { Text } from "@skillsite/ui/typography/text";
+import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { useInView } from "@skillsite/ui/hooks/use-in-view";
 import { cn } from "@skillsite/ui/utils/cn";
 
@@ -28,9 +29,13 @@ export function LessonTimeline({ steps }: { steps: LessonStep[] }) {
             style={{ "--reveal-index": i } as CSSProperties}
           >
             <div className="flex flex-col items-center">
-              <span className="tl-node flex size-7.5 shrink-0 items-center justify-center rounded-full bg-accent-tint-14 text-small font-bold text-coral">
+              <IconBadge
+                size="7.5"
+                shape="full"
+                className="tl-node shrink-0 text-small font-bold"
+              >
                 {step.n}
-              </span>
+              </IconBadge>
               {!last ? (
                 <span className="tl-line mt-1.5 w-0.5 flex-1 rounded-full bg-accent-tint-35" />
               ) : null}

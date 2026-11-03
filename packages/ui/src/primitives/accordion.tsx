@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 
 import { cn } from "../utils/cn";
 import { Card } from "./card";
+import { IconBadge } from "./icon-badge";
 
 export type AccordionEntry = {
   question: string;
@@ -40,15 +41,18 @@ export function Accordion({
                 className="flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-5 text-left font-heading text-accordion font-semibold text-ink"
               >
                 <span>{item.question}</span>
-                <span
+                <IconBadge
                   aria-hidden
+                  size="7.5"
+                  shape="full"
+                  tone="subtle"
                   className={cn(
-                    "flex size-7.5 shrink-0 items-center justify-center rounded-full bg-surface-2 text-accordion-icon leading-none text-coral transition-transform duration-quick ease-soft",
+                    "shrink-0 text-accordion-icon leading-none transition-transform duration-quick ease-soft",
                     isOpen && "rotate-45",
                   )}
                 >
                   +
-                </span>
+                </IconBadge>
               </button>
             </h3>
             {/* grid 0fr<->1fr animates variable height; the inner div clips and
