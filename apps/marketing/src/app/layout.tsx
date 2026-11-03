@@ -47,7 +47,7 @@ export default function RootLayout({
       <body className="flex min-h-dvh flex-col">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-overlay focus:rounded-full focus:bg-navy focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:shadow-card"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-overlay focus:rounded-full focus:bg-navy focus:px-5 focus:py-2.5 focus:text-skip-link focus:font-semibold focus:text-white focus:shadow-card"
         >
           Zum Inhalt springen
         </a>

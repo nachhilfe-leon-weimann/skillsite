@@ -17,7 +17,7 @@ const buttonVariants = cva(
         ghost: "text-ink-soft hover:bg-surface-2 hover:text-ink",
       },
       size: {
-        sm: "px-3.5 py-1.5 text-sm",
+        sm: "px-3.5 py-1.5 text-button-sm",
         md: "px-5 py-2.5 text-button",
         lg: "px-6 py-3 text-button-lg",
       },

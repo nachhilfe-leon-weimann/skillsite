@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Tag } from "@skillsite/ui/primitives/tag";
+import { Heading } from "@skillsite/ui/typography/heading";
 import { subjects } from "@/content/subjects";
 import { ArrowRight } from "lucide-react";
 
@@ -31,9 +32,15 @@ function SubjectCard({ subject }: { subject: (typeof subjects)[number] }) {
         </span>
         {subject.tag ? <Tag>{subject.tag}</Tag> : null}
       </div>
-      <h3 className="mt-5 font-heading text-card-title font-bold text-ink">
+      <Heading
+        as="h3"
+        size="card-title"
+        wrap="normal"
+        tone="default"
+        className="mt-5"
+      >
         {subject.name}
-      </h3>
+      </Heading>
       <p className="mt-2 flex-1 text-ink-soft">{subject.claim}</p>
       <span className="mt-4 text-card-link font-semibold text-ink flex flex-row items-center gap-1">
         Mehr erfahren <ArrowRight className="size-4" />

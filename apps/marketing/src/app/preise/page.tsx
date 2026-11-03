@@ -58,16 +58,12 @@ export default function PricingPage() {
                 <span className="font-heading text-price font-extrabold leading-none">
                   {lessonPrice.amount}
                 </span>
-                <Text
-                  as="span"
-                  tone="inverse-muted"
-                  className="text-price-unit"
-                >
+                <Text as="span" tone="inverse-soft" className="text-price-unit">
                   {lessonPrice.unit}
                 </Text>
               </Reveal>
               <Reveal trigger="mount" variant="rise-soft" delay={360}>
-                <Text tone="inverse-muted" className="mb-6">
+                <Text tone="inverse-soft" className="mb-6">
                   {lessonPrice.note}
                 </Text>
               </Reveal>
@@ -156,7 +152,7 @@ export default function PricingPage() {
             delay={140}
             className="mt-8 flex flex-col items-start gap-2 sm:flex-row sm:items-center"
           >
-            <Text as="span" tone="muted" className="text-sm">
+            <Text as="span" size="note" tone="muted">
               Quelle: {but.officialInfo.source}
             </Text>
             <Button

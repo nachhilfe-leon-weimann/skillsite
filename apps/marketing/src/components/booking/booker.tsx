@@ -16,6 +16,7 @@ import {
 
 import { Button } from "@skillsite/ui/primitives/button";
 import { Select } from "@skillsite/ui/forms/select";
+import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { cn } from "@skillsite/ui/utils/cn";
@@ -321,14 +322,11 @@ export function Booker({
     >
       <div className="grid @2xl:grid-cols-[20rem_1fr]">
         <aside className="flex flex-col bg-navy p-panel-booker text-on-navy">
-          <span className="inline-flex items-center gap-2.25 text-eyebrow uppercase text-accent-blue">
-            <span className="size-1.75 rounded-full bg-coral" aria-hidden />
-            Buchung
-          </span>
+          <Eyebrow tone="inverse-accent">Buchung</Eyebrow>
           <Heading as="h2" size="h4" className="mt-3.5 text-white">
             {title}
           </Heading>
-          <Text size="small" tone="inverse-muted" className="mt-1 mb-5">
+          <Text size="small" tone="inverse-soft" className="mt-1 mb-5">
             {subtitle}
           </Text>
 
@@ -370,9 +368,9 @@ export function Booker({
 
           {summary && step !== "result" ? (
             <div className="mt-6 rounded-2xl border border-overlay-12 bg-overlay-8 p-4">
-              <p className="text-eyebrow uppercase text-accent-blue">
+              <Eyebrow as="p" dot={false} tone="inverse-accent">
                 Dein Termin
-              </p>
+              </Eyebrow>
               <p className="mt-1.5 font-heading font-bold text-white">
                 {summary}
               </p>
@@ -792,9 +790,9 @@ function ResultStep({
               )}
             </span>
             <div className="min-w-0">
-              <p className="text-eyebrow uppercase text-ink-soft">
+              <Eyebrow as="p" dot={false} tone="muted">
                 Dein Termin
-              </p>
+              </Eyebrow>
               <p className="font-heading font-bold text-ink">{summary}</p>
             </div>
           </div>
