@@ -7,13 +7,14 @@ payment links printed on invoices - as a pnpm/Turborepo workspace with the Next.
 ## Development
 
 Needs Node 26, `pnpm`, `just` and an `apps/marketing/.env` (see `.env.example` next to it;
-`.env.local.example` documents what only local development needs).
+`.env.local.example` documents what only local development needs). `just check`'s smoke test needs a
+one-time browser install: `pnpm --filter @skillsite/marketing exec playwright install chromium`.
 
-| Command                                 |                                                      |
-| --------------------------------------- | ---------------------------------------------------- |
-| `just dev`                              | run the site                                         |
-| `just check`                            | lint, tests and build - keep green before every push |
-| `just docker-build` / `just docker-run` | build and run the production image locally           |
+| Command                                 |                                                                             |
+| --------------------------------------- | --------------------------------------------------------------------------- |
+| `just dev`                              | run the site                                                                |
+| `just check`                            | everything that must be green before a push; CI's `check` job runs the same |
+| `just docker-build` / `just docker-run` | build and run the production image locally                                  |
 
 Everything else is in the [`justfile`](justfile). The image builds the marketing app by default;
 another app comes from `--build-arg APP=<name>`.
