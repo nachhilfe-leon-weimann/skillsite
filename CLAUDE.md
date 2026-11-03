@@ -23,7 +23,7 @@ apps/marketing/        the Next.js site (nachhilfe.leonweimann.de)
   src/components/      booking/, layout/, sections/, ...
   src/content/         all visible text (German)
   src/lib/             booking/, payment/, routes, metadata, health
-  e2e/                 Playwright smoke suite
+  e2e/                 Playwright suites (smoke, motion, layout, a11y)
 packages/ui/           @skillsite/ui - tokens (styles/theme.css), primitives, hooks, Storybook
 packages/config/       shared tsconfig, ESLint and Prettier presets
 scripts/               repo scripts (e.g. the design ratchet)
@@ -72,7 +72,8 @@ there slice by slice.
 - `next dev` serving stale CSS: delete `apps/marketing/.next` and restart.
 - Tailwind v4 `translate-*` / `scale-*` set the `translate` / `scale` properties, not `transform`.
   `transition-transform` covers them; an explicit list such as `transition-[opacity,transform]` does not -
-  write `transition-[opacity,translate,scale]`. Verify every motion change in a browser (`e2e/motion.spec.ts`).
+  write `transition-[opacity,translate,scale]`. Verify every motion change in a browser
+  (`apps/marketing/e2e/motion.spec.ts`).
 - `next-themes` runs with `disableTransitionOnChange`: theme switches do not animate, on purpose.
 - `next/font/google` downloads the fonts at build time: `just build` needs network access to Google Fonts.
 - The iOS 26 Safari toolbar tint follows the `footer` element
