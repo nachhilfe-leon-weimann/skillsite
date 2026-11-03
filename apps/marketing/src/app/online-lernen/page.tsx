@@ -3,6 +3,7 @@ import { Container } from "@skillsite/ui/layout/container";
 import { Section } from "@skillsite/ui/layout/section";
 import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
+import { Pill } from "@skillsite/ui/primitives/pill";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
 import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
@@ -192,9 +193,9 @@ export default function OnlineLearningPage() {
             surface="inset"
             className="flex flex-wrap items-center gap-3.5 px-6 py-6"
           >
-            <span className="rounded-full border border-line bg-surface px-3 py-1.5 font-mono text-caption text-coral">
+            <Pill tone="accent" size="code">
               Technik
-            </span>
+            </Pill>
             <Text tone="muted">{techNote}</Text>
           </Reveal>
         </div>
