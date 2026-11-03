@@ -19,7 +19,7 @@ FROM base AS pruner
 ARG APP
 COPY . .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm dlx turbo@2.10.5 prune "@skillsite/${APP}" --docker
+    pnpm dlx turbo@2.11.2 prune "@skillsite/${APP}" --docker
 
 # --- Build the selected app ---
 FROM base AS build
