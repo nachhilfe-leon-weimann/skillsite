@@ -5,7 +5,7 @@ import {
   DocShell,
   DocSubSection,
 } from "@/components/docs/doc-components";
-import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";
+import { ProseP } from "@skillsite/ui/typography/prose";
 import { TextLink } from "@skillsite/ui/primitives/link";
 import {
   agbContact,
@@ -148,9 +148,9 @@ export default function AgbPage() {
       <AgbSection id="preise">
         <ProseP>
           Es gelten die zum Zeitpunkt der Buchung aktuellen Preise gemäß der{" "}
-          <InlineLink variant="doc" href={routes.pricing}>
+          <TextLink variant="doc" href={routes.pricing}>
             Preisübersicht
-          </InlineLink>
+          </TextLink>
           , soweit nicht im Einzelfall ausdrücklich ein abweichender Preis
           vereinbart ist. Alle Preise sind Endpreise; Umsatzsteuer wird gemäß §
           19 UStG nicht erhoben (Kleinunternehmerregelung).
