@@ -3,10 +3,11 @@ import { ExternalLink, type LucideIcon, Scale } from "lucide-react";
 import { Container } from "@skillsite/ui/layout/container";
 import { Card } from "@skillsite/ui/primitives/card";
 import { InfoRow } from "@skillsite/ui/primitives/info-row";
+import { SmartLink, TextLink } from "@skillsite/ui/primitives/link";
 import { Pill } from "@skillsite/ui/primitives/pill";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
-import { InlineLink, ProseH2, ProseH3 } from "@skillsite/ui/typography/prose";
+import { ProseH2, ProseH3 } from "@skillsite/ui/typography/prose";
 import { Lead } from "@skillsite/ui/typography/lead";
 import { cn } from "@skillsite/ui/utils/cn";
 
@@ -237,13 +238,13 @@ export function DocLinkList({
             radius="xl"
             className="flex items-center justify-between gap-3 px-3 py-2.5 text-prose-sm text-ink transition-colors hover:border-coral"
           >
-            <a href={link.href} target="_blank" rel="noreferrer">
+            <SmartLink href={link.href}>
               <span>{link.label}</span>
               <ExternalLink
                 className="size-3.5 shrink-0 text-ink-soft"
                 aria-hidden
               />
-            </a>
+            </SmartLink>
           </Card>
         </li>
       ))}
@@ -260,16 +261,14 @@ export function DocProviderLink({
 }) {
   return (
     <p className="leading-7 not-first:mt-4">
-      <InlineLink
+      <TextLink
         variant="doc"
         href={href}
-        target="_blank"
-        rel="noreferrer"
         className="inline-flex items-center gap-1"
       >
         {children}
         <ExternalLink className="size-3.5" aria-hidden />
-      </InlineLink>
+      </TextLink>
     </p>
   );
 }

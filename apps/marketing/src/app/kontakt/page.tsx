@@ -6,6 +6,7 @@ import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Card } from "@skillsite/ui/primitives/card";
+import { SmartLink } from "@skillsite/ui/primitives/link";
 import { Pill } from "@skillsite/ui/primitives/pill";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
@@ -65,7 +66,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               lift="sm"
               className="flex h-full flex-col justify-center overflow-hidden p-panel-contact shadow-glow-md"
             >
-              <a href={whatsapp} target="_blank" rel="noreferrer">
+              <SmartLink href={whatsapp}>
                 <Eyebrow dot={false} tone="on-accent">
                   Am liebsten per WhatsApp
                 </Eyebrow>
@@ -97,7 +98,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                     Oder den QR-Code mit dem Handy scannen.
                   </Text>
                 </div>
-              </a>
+              </SmartLink>
             </Card>
           </Reveal>
 
