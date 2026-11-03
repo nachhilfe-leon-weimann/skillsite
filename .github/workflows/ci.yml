@@ -44,24 +44,6 @@ jobs:
       - name: Run checks
         run: just check
 
-  # Transitional: the `main` ruleset still requires the check name "Lint and build", which `check`
-  # replaces. This job carries the old name and fails whenever `check` did not succeed. Remove it
-  # once the ruleset requires `check` (see the release-flow spec, platform contract).
-  lint-build:
-    name: Lint and build
-    needs: check
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Report the result of check
-        env:
-          CHECK_RESULT: ${{ needs.check.result }}
-        run: |
-          echo "check: ${CHECK_RESULT}"
-          [[ "${CHECK_RESULT}" == "success" ]] || exit 1
-
   changes:
     name: Detect Docker changes
     runs-on: ubuntu-latest
