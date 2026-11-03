@@ -1,7 +1,8 @@
-import { cn } from "./utils";
-import { Eyebrow } from "./eyebrow";
-import { Reveal } from "./reveal";
-import { Heading, type HeadingSize, Lead } from "./typography";
+import { cn } from "../utils/cn";
+import { Eyebrow } from "../typography/eyebrow";
+import { Reveal } from "../motion/reveal";
+import { Heading, type HeadingSize } from "../typography/heading";
+import { Lead } from "../typography/lead";
 
 type SectionHeaderProps = {
   eyebrow?: React.ReactNode;

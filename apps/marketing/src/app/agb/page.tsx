@@ -5,7 +5,7 @@ import {
   DocShell,
   DocSubSection,
 } from "@/components/docs/doc-components";
-import { InlineLink, P } from "@skillsite/ui/typography";
+import { InlineLink, P } from "@skillsite/ui/typography/prose";
 import {
   agbContact,
   agbEffectiveDate,

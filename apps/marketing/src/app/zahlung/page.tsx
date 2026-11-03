@@ -3,9 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Container } from "@/components/layout/container";
-import { Eyebrow } from "@skillsite/ui/eyebrow";
-import { LinkButton } from "@skillsite/ui/button";
-import { Heading, Text } from "@skillsite/ui/typography";
+import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
+import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Heading } from "@skillsite/ui/typography/heading";
+import { Text } from "@skillsite/ui/typography/text";
 import { contactDetails } from "@/content/contact";
 import {
   buildPaypalUrl,

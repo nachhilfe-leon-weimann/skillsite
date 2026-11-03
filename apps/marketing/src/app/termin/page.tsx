@@ -2,8 +2,8 @@ import Link from "next/link";
 
 import { Container } from "@/components/layout/container";
 import { PageHeader } from "@/components/layout/page-header";
-import { Reveal } from "@skillsite/ui/reveal";
-import { Text } from "@skillsite/ui/typography";
+import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Text } from "@skillsite/ui/typography/text";
 import { Booker } from "@/components/booking/booker";
 import { CtaSection } from "@/components/sections/cta-section";
 import { routes } from "@/lib/routes";

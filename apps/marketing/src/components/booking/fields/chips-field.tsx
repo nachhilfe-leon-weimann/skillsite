@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@skillsite/ui/utils";
+import { cn } from "@skillsite/ui/utils/cn";
 import type { FieldDef, FieldValue } from "@/lib/booking/fields";
 
 /**
