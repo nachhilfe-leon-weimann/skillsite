@@ -5,7 +5,7 @@ import { extendTailwindMerge } from "tailwind-merge";
  * tailwind-merge that knows the theme of `styles/theme.css`. Without this it
  * reads unknown names as colours (`text-eyebrow` as a text colour, `bg-coral-gradient`
  * as a background colour) and drops them next to a real colour. Every token and
- * `@utility` of theme.css is listed here; `utils.test.ts` fails when one is missing.
+ * `@utility` of theme.css is listed here; `cn.test.ts` fails when one is missing.
  */
 const twMerge = extendTailwindMerge({
   extend: {

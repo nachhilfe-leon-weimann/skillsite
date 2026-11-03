@@ -1,4 +1,4 @@
-import { cn } from "./utils";
+import { cn } from "../utils/cn";
 
 const controlClass =
   "w-full rounded-xl border border-line bg-bg px-4 py-3 text-body text-ink transition-[border-color,box-shadow] placeholder:text-ink-soft focus:border-coral focus:outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--coral)_22%,transparent)]";

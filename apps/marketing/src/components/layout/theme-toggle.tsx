@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 
-import { cn } from "@skillsite/ui/utils";
+import { cn } from "@skillsite/ui/utils/cn";
 import { useHydrated } from "@skillsite/ui/hooks/use-hydrated";
 
 type ThemeOverride = "light" | "dark";

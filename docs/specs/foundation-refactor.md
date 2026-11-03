@@ -11,7 +11,7 @@
 
 The site works and looks right, but the code underneath is not a system the portal can build on:
 
-- **The type scale is mostly not applied.** `cn` in [`utils.ts`](../../packages/ui/src/utils.ts) calls an
+- **The type scale is mostly not applied.** `cn` in [`utils.ts`](../../packages/ui/src/utils/cn.ts) calls an
   unconfigured `twMerge`. tailwind-merge takes the theme's font-size utilities (`text-eyebrow`, `text-lead`,
   `text-small`, `text-caption`, `text-body`, `text-h4`, ...) for text colours and drops them whenever a colour
   class follows. About 82 call sites render without their declared size: `Text` 51 of 53, `Lead` 5 of 5,
@@ -339,8 +339,8 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 - _Technique:_ move files into the groups of _Target shape_; `package.json` exports each public module
   explicitly; stories not exported; rewrite imports in the apps.
 - _Acceptance criteria:_
-  - [ ] Importing a story or an unexported file fails to resolve.
-  - [ ] Built CSS rules and the text and class attributes of the built HTML are identical (hashes aside).
+  - [x] Importing a story or an unexported file fails to resolve.
+  - [x] Built CSS rules and the text and class attributes of the built HTML are identical (hashes aside).
 
 **C2 - CVA, Slot and role names.** _(E-08)_
 

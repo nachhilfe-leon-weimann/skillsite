@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { Card } from "./card";
-import { Eyebrow } from "./eyebrow";
+import { Eyebrow } from "../typography/eyebrow";
 import { Tag } from "./tag";
 
 const meta = {

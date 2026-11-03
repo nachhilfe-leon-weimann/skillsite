@@ -3,9 +3,10 @@
 import { useEffect } from "react";
 
 import { Container } from "@/components/layout/container";
-import { Eyebrow } from "@skillsite/ui/eyebrow";
-import { Button, LinkButton } from "@skillsite/ui/button";
-import { Heading, Text } from "@skillsite/ui/typography";
+import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
+import { Button, LinkButton } from "@skillsite/ui/primitives/button";
+import { Heading } from "@skillsite/ui/typography/heading";
+import { Text } from "@skillsite/ui/typography/text";
 import { routes } from "@/lib/routes";
 
 /**

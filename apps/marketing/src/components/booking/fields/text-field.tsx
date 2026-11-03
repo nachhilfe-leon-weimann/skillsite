@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Field, Input, Textarea } from "@skillsite/ui/field";
+import { Field, Input, Textarea } from "@skillsite/ui/forms/field";
 import type { FieldDef } from "@/lib/booking/fields";
 
 const INPUT_TYPE = { text: "text", email: "email", tel: "tel" } as const;

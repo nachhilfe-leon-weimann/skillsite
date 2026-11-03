@@ -12,7 +12,7 @@ import {
   DocSubSection,
 } from "@/components/docs/doc-components";
 import { ContactAddress } from "@/components/shared/contact-address";
-import { InlineLink, P } from "@skillsite/ui/typography";
+import { InlineLink, P } from "@skillsite/ui/typography/prose";
 import {
   analyticsDomain,
   dataRecipientCategories,

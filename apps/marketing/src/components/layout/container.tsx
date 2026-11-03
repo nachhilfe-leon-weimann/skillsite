@@ -1,4 +1,4 @@
-import { cn } from "@skillsite/ui/utils";
+import { cn } from "@skillsite/ui/utils/cn";
 
 export function Container({
   className,
