@@ -116,11 +116,18 @@ under `packages/ui/e2e/`, package scripts/devDependencies, `justfile`, `turbo.js
 
 **Acceptance**
 
-- [ ] A fresh static build and Button keyboard probe pass through `just widgets`; `just check` invokes it.
-- [ ] An occupied fixture port or a deliberately broken selected story fails; cleanup leaves no server behind.
-- [ ] No fixture route, dev server reuse, extra required CI job or production dependency is introduced.
-- [ ] Storybook build-in-CI is brought forward from C9 for C8 fixtures. C9 stays open until every exported
+- [x] A fresh static build and Button keyboard probe pass through `just widgets`; `just check` invokes it.
+- [x] An occupied fixture port or a deliberately broken selected story fails; cleanup leaves no server behind.
+- [x] No fixture route, dev server reuse, extra required CI job or production dependency is introduced.
+- [x] Storybook build-in-CI is brought forward from C9 for C8 fixtures. C9 stays open until every exported
       component and variant has a story; do not claim full C9 coverage here.
+
+Verification on 2026-10-21: `just widgets` rebuilt the static Storybook and passed the existing Primary Button
+story's Tab, Enter and Space probes in light/dark. The same command rejected a foreign listener on 6106 without
+stopping it. Temporary console/page errors in the selected story failed both probes; the story was restored.
+No listener remained after the successful run or either failure. `just check` runs this uncached task through
+the existing CI `check` job and keeps the production marketing suite. This slice makes no widget migration or
+human VoiceOver/Safari acceptance claim; C8 and the full C9 story audit remain open.
 
 ## C8.2 - Dialog
 
