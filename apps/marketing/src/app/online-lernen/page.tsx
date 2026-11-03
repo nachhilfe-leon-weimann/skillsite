@@ -39,7 +39,7 @@ export default function OnlineLearningPage() {
       <PageHeader
         eyebrow="Discord – unser Klassenzimmer"
         title="So läuft deine Nachhilfe über Discord."
-        titleClassName="max-w-[15em]"
+        titleClassName="max-w-measure-15"
         lead="Discord ist unser Klassenzimmer – kostenlos und per App oder Browser schnell startklar. Den Zugriff auf die Unterrichtskanäle schalte ich persönlich frei. Microsoft Teams ist ebenfalls möglich."
       >
         <Button asChild variant="primary" size="lg">
@@ -62,7 +62,7 @@ export default function OnlineLearningPage() {
           </Heading>
         </Reveal>
         <Reveal variant="rise-soft" index={1}>
-          <Text tone="muted" className="mb-8 max-w-[42em]">
+          <Text tone="muted" className="mb-8 max-w-measure-42">
             Das machst du genau einmal. Danach klickst du dich vor jeder Stunde
             einfach ein.
           </Text>
@@ -76,7 +76,7 @@ export default function OnlineLearningPage() {
               index={i}
               className="rounded-2xl border border-line bg-surface p-6 shadow-card"
             >
-              <span className="font-heading text-[2.2rem] font-extrabold leading-none text-coral">
+              <span className="font-heading text-digit-md font-extrabold leading-none text-coral">
                 {step.n}
               </span>
               <Heading as="h3" size="title" className="mt-3 mb-1.5">
@@ -113,7 +113,7 @@ export default function OnlineLearningPage() {
 
       {/* Phase 2 — So läuft deine Stunde */}
       <Section surface>
-        <div className="grid items-start gap-[clamp(1.75rem,4vw,3.5rem)] lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid items-start gap-split lg:grid-cols-[0.9fr_1.1fr]">
           <SectionHeader
             eyebrow="In vier Schritten"
             title="So läuft deine Stunde."
@@ -122,7 +122,7 @@ export default function OnlineLearningPage() {
           />
           <Reveal
             variant="rise-soft"
-            className="rounded-2xl border border-line bg-bg p-[clamp(1.5rem,4vw,2.25rem)]"
+            className="rounded-2xl border border-line bg-bg p-panel-timeline"
           >
             <LessonTimeline steps={lessonSteps} />
           </Reveal>
@@ -135,7 +135,7 @@ export default function OnlineLearningPage() {
           eyebrow="Server-Funktionen"
           title="Dein Kanal – auch zwischen den Stunden."
           size="h3"
-          titleClassName="max-w-[16em]"
+          titleClassName="max-w-measure-16"
           className="mb-9"
         />
         <div className="grid gap-5 md:grid-cols-2">
@@ -146,7 +146,7 @@ export default function OnlineLearningPage() {
               index={index}
               className="flex items-start gap-4 rounded-2xl border border-line bg-surface p-6 shadow-card"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--coral)_14%,transparent)] text-coral">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-tint-14 text-coral">
                 <AnimatedCheckMark index={index} className="size-5" />
               </span>
               <div>

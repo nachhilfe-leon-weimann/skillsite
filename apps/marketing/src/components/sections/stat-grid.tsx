@@ -24,7 +24,7 @@ export function StatGrid({
     <div
       className={cn(
         "grid gap-px overflow-hidden border border-line bg-line",
-        lg ? "rounded-2xl" : "rounded-[18px]",
+        lg ? "rounded-2xl" : "rounded-stat",
         className,
       )}
     >
@@ -39,7 +39,7 @@ export function StatGrid({
           <div
             className={cn(
               "font-heading font-extrabold tracking-[-0.02em] text-ink",
-              lg ? "text-[clamp(1.9rem,3.5vw,2.6rem)]" : "text-[1.5rem]",
+              lg ? "text-stat" : "text-stat-sm",
             )}
           >
             {animateValue ? (
@@ -51,7 +51,7 @@ export function StatGrid({
           <div
             className={cn(
               "text-ink-soft",
-              lg ? "mt-1 text-[0.92rem]" : "text-[0.78rem]",
+              lg ? "mt-1 text-stat-label" : "text-stat-label-sm",
             )}
           >
             {stat.label}

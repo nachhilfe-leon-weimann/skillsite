@@ -26,16 +26,16 @@ function SubjectCard({ subject }: { subject: (typeof subjects)[number] }) {
       className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 shadow-card lift [--lift:-0.375rem] hover:border-coral"
     >
       <div className="flex items-center justify-between">
-        <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-[1.4rem] font-bold text-coral">
+        <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
           <Icon className="size-6" />
         </span>
         {subject.tag ? <Tag>{subject.tag}</Tag> : null}
       </div>
-      <h3 className="mt-5 font-heading text-[1.4rem] font-bold text-ink">
+      <h3 className="mt-5 font-heading text-card-title font-bold text-ink">
         {subject.name}
       </h3>
       <p className="mt-2 flex-1 text-ink-soft">{subject.claim}</p>
-      <span className="mt-4 text-[0.95rem] font-semibold text-ink flex flex-row items-center gap-1">
+      <span className="mt-4 text-card-link font-semibold text-ink flex flex-row items-center gap-1">
         Mehr erfahren <ArrowRight className="size-4" />
       </span>
     </Link>

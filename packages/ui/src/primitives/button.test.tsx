@@ -21,7 +21,7 @@ test("asChild renders the child element with the button's classes", () => {
   expect(link.getAttribute("href")).toBe("/termin");
   expect(screen.queryByRole("button")).toBeNull();
   expect(link.className).toBe(
-    "inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap no-underline cursor-pointer lift disabled:pointer-events-none disabled:opacity-60 border-[1.5px] border-line bg-transparent text-ink hover:border-ink px-6 py-3 text-[1.05rem] mt-6",
+    "inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap no-underline cursor-pointer lift disabled:pointer-events-none disabled:opacity-60 border-[1.5px] border-line bg-transparent text-ink hover:border-ink px-6 py-3 text-button-lg mt-6",
   );
 });
 

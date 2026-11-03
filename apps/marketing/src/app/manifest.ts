@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { brandColors } from "@skillsite/ui/tokens/colors";
 import { brand } from "@/content/site";
 
 // Web app manifest. Next serves this at /manifest.webmanifest and auto-injects
@@ -16,8 +17,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     display: "standalone",
     // Matches the light theme-color in the root viewport export.
-    background_color: "#faf6f0",
-    theme_color: "#faf6f0",
+    background_color: brandColors.bg,
+    theme_color: brandColors.bg,
     icons: [
       {
         src: "/web-app-manifest-192x192.png",

@@ -28,11 +28,11 @@ export function LessonTimeline({ steps }: { steps: LessonStep[] }) {
             style={{ "--reveal-index": i } as CSSProperties}
           >
             <div className="flex flex-col items-center">
-              <span className="tl-node flex size-7.5 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--coral)_14%,transparent)] text-small font-bold text-coral">
+              <span className="tl-node flex size-7.5 shrink-0 items-center justify-center rounded-full bg-accent-tint-14 text-small font-bold text-coral">
                 {step.n}
               </span>
               {!last ? (
-                <span className="tl-line mt-1.5 w-0.5 flex-1 rounded-full bg-[color-mix(in_srgb,var(--coral)_35%,transparent)]" />
+                <span className="tl-line mt-1.5 w-0.5 flex-1 rounded-full bg-accent-tint-35" />
               ) : null}
             </div>
             <div className={cn("tl-body", !last && "pb-5")}>

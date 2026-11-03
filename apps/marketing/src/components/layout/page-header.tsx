@@ -33,7 +33,7 @@ export function PageHeader({
   return (
     <Container
       className={cn(
-        "pt-[clamp(2.5rem,6vw,4.5rem)] pb-[clamp(1.25rem,3vw,2rem)]",
+        "pt-page-top pb-page-header-bottom",
         centered && "text-center",
       )}
     >
@@ -68,7 +68,7 @@ export function PageHeader({
           index={step++}
           className="mt-5"
         >
-          <Lead className={cn("max-w-[34em]", centered && "mx-auto")}>
+          <Lead className={cn("max-w-measure-34", centered && "mx-auto")}>
             {lead}
           </Lead>
         </Reveal>
