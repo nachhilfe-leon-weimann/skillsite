@@ -1,0 +1,13 @@
+# Written by release-please - formatting them would dirty every release PR.
+CHANGELOG.md
+.release-please-manifest.json
+pnpm-lock.yaml
+# Private notes, not versioned.
+docs/ref/
+docs/security-audit-*/
+docs/wording/
+# Build output.
+**/.next/
+**/.turbo/
+**/storybook-static/
+**/next-env.d.ts

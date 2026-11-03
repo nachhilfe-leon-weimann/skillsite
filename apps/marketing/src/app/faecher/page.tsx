@@ -70,8 +70,7 @@ export default function SubjectsPage() {
                   variant="navy"
                   className="mt-6"
                 >
-                  Erstgespräch: {subject.name}{" "}
-                  <ArrowRight className="size-4" />
+                  Erstgespräch: {subject.name} <ArrowRight className="size-4" />
                 </LinkButton>
               </Reveal>
 

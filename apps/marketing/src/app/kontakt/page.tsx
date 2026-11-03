@@ -74,8 +74,8 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                 tone="inherit"
                 className="max-w-[24em] text-white/90"
               >
-                Über WhatsApp erreichst du mich am schnellsten. Meistens antworte
-                ich noch am selben Tag.
+                Über WhatsApp erreichst du mich am schnellsten. Meistens
+                antworte ich noch am selben Tag.
               </Text>
               <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/35 bg-white/20 px-5 py-2.5 font-semibold">
                 Jetzt anschreiben <ArrowRight className="size-4" />
@@ -109,7 +109,9 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               </Text>
             </a>
             <Link href={routes.onlineLearning} className={sideCardClass}>
-              <span className={sideLabelClass}>Discord und Microsoft Teams</span>
+              <span className={sideLabelClass}>
+                Discord und Microsoft Teams
+              </span>
               <Heading as="h2" size="title" className="mt-2 mb-1">
                 Unser Klassenzimmer
               </Heading>
