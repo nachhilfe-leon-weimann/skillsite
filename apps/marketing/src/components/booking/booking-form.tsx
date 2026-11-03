@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Calendar } from "lucide-react";
 
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
+import { IconButton } from "@skillsite/ui/primitives/icon-button";
 import { InlineLink } from "@skillsite/ui/typography/prose";
 import { Text } from "@skillsite/ui/typography/text";
 import { cn } from "@skillsite/ui/utils/cn";
@@ -154,14 +155,14 @@ export function BookingForm({
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
+        <IconButton
+          size="sm"
           onClick={onBack}
           aria-label="Zurück zur Terminwahl"
-          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink transition-colors hover:border-ink"
+          className="shrink-0"
         >
           <ArrowLeft className="size-4" aria-hidden />
-        </button>
+        </IconButton>
         <div className="min-w-0">
           <Text className="font-semibold text-ink">Deine Daten</Text>
           <span className="mt-0.5 flex items-center gap-1.5 text-small text-ink-soft">

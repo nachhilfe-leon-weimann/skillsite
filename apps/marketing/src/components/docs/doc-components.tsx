@@ -2,6 +2,7 @@ import { ExternalLink, type LucideIcon, Scale } from "lucide-react";
 
 import { Container } from "@skillsite/ui/layout/container";
 import { Card } from "@skillsite/ui/primitives/card";
+import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { InlineLink, ProseH2, ProseH3 } from "@skillsite/ui/typography/prose";
@@ -77,9 +78,15 @@ export function DocHero({
                   radius="xl"
                   className="flex items-center gap-3 p-3"
                 >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-2 text-ink-soft">
+                  <IconBadge
+                    layout="grid"
+                    size="9"
+                    shape="md"
+                    tone="muted"
+                    className="shrink-0"
+                  >
                     <FactIcon className="size-4" aria-hidden />
-                  </span>
+                  </IconBadge>
                   <div className="min-w-0">
                     <p className="text-prose-xs text-ink-soft">{fact.label}</p>
                     <p className="truncate text-prose-sm font-medium text-ink">

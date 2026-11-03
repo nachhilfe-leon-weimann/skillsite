@@ -7,6 +7,7 @@ import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
+import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
@@ -59,9 +60,13 @@ export default function SubjectsPage() {
             <Split align="start" ratio="0.9/1.1">
               <Reveal variant="rise-soft">
                 <div className="flex items-center gap-3.5">
-                  <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
+                  <IconBadge
+                    size="13"
+                    tone="subtle"
+                    className="font-heading text-icon-badge font-bold"
+                  >
                     <Icon className="size-6" />
-                  </span>
+                  </IconBadge>
                   <div>
                     <Heading size="h3">{subject.name}</Heading>
                     <Tag className="mt-2">30 € · 60 Min.</Tag>
