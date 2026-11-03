@@ -9,6 +9,7 @@ import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
+import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { FaqSection } from "@/components/sections/faq-section";
 import { CtaSection } from "@/components/sections/cta-section";
 import {
@@ -98,7 +99,7 @@ export default function PricingPage() {
       </Container>
 
       <Container className="py-section-sm">
-        <div className="grid gap-5 md:grid-cols-2">
+        <CardGrid columns="md-2">
           <Reveal variant="rise-soft" index={0}>
             <Card className="h-full p-7">
               <Heading as="h2" size="h4" className="mb-4">
@@ -133,7 +134,7 @@ export default function PricingPage() {
               </div>
             </Card>
           </Reveal>
-        </div>
+        </CardGrid>
       </Container>
 
       <Section id="but" surface>
@@ -172,7 +173,7 @@ export default function PricingPage() {
           </Reveal>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-3">
+        <CardGrid>
           {but.steps.map((step, i) => (
             <Reveal
               key={step.n}
@@ -186,7 +187,7 @@ export default function PricingPage() {
               <Text className="mt-3">{step.text}</Text>
             </Reveal>
           ))}
-        </div>
+        </CardGrid>
       </Section>
 
       <FaqSection
