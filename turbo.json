@@ -8,6 +8,11 @@
     "lint": {},
     "test": {},
     "typecheck": {},
+    "e2e": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "passThroughEnv": ["CI"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

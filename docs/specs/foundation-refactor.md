@@ -270,7 +270,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   errors; the booker on `/termin` reaches the slot list with `/api/booking/availability` stubbed by `page.route`.
   Functional only, no screenshots.
 - _Acceptance criteria:_
-  - [ ] `just smoke` and CI run the suite green; breaking a route's render makes it red.
+  - [x] `just smoke` and CI run the suite green; breaking a route's render makes it red.
 
 **A7 - Design ratchet.** _(E-13)_
 
