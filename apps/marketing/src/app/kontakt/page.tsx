@@ -6,6 +6,7 @@ import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Card } from "@skillsite/ui/primitives/card";
+import { Pill } from "@skillsite/ui/primitives/pill";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { Split } from "@skillsite/ui/layout/split";
@@ -79,9 +80,13 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                   Über WhatsApp erreichst du mich am schnellsten. Meistens
                   antworte ich noch am selben Tag.
                 </Text>
-                <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-overlay-35 bg-overlay-20 px-5 py-2.5 font-semibold">
+                <Pill
+                  tone="on-accent"
+                  size="md"
+                  className="mt-6 inline-flex w-fit items-center gap-2"
+                >
                   Jetzt anschreiben <ArrowRight className="size-4" />
-                </span>
+                </Pill>
                 <div className="mt-7 hidden items-center gap-4 sm:flex">
                   <WhatsappQr value={whatsapp} />
                   <Text
