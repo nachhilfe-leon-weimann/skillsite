@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, Calendar } from "lucide-react";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
 import { IconButton } from "@skillsite/ui/primitives/icon-button";
-import { InlineLink } from "@skillsite/ui/typography/prose";
+import { TextLink } from "@skillsite/ui/primitives/link";
 import { Text } from "@skillsite/ui/typography/text";
 import { cn } from "@skillsite/ui/utils/cn";
 import { routes } from "@/lib/routes";
@@ -216,12 +216,9 @@ export function BookingForm({
           ) : null}
           <Text size="note" tone="muted">
             Mit Klick auf „Zahlungspflichtig buchen“ akzeptierst du die{" "}
-            <InlineLink href={routes.agb}>AGB</InlineLink>. Informationen zur
+            <TextLink href={routes.agb}>AGB</TextLink>. Informationen zur
             Datenverarbeitung findest du in der{" "}
-            <InlineLink href={routes.datenschutz}>
-              Datenschutzerklärung
-            </InlineLink>
-            .
+            <TextLink href={routes.datenschutz}>Datenschutzerklärung</TextLink>.
           </Text>
         </Card>
       ) : null}
