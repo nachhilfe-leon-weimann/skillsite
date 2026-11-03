@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Tag } from "@skillsite/ui/primitives/tag";
 import { Heading } from "@skillsite/ui/typography/heading";
+import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { subjects } from "@/content/subjects";
 import { ArrowRight } from "lucide-react";
 
@@ -19,13 +20,13 @@ export function SubjectCards({
   headingAs?: HeadingLevel;
 }) {
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <CardGrid columns="sm-2-lg-3">
       {subjects.map((subject, i) => (
         <Reveal key={subject.key} variant="rise-soft" index={i}>
           <SubjectCard subject={subject} headingAs={headingAs} />
         </Reveal>
       ))}
-    </div>
+    </CardGrid>
   );
 }
 

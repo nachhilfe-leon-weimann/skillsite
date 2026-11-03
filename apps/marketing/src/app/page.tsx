@@ -10,6 +10,7 @@ import { Lead } from "@skillsite/ui/typography/lead";
 import { Text } from "@skillsite/ui/typography/text";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { PageHeader } from "@skillsite/ui/layout/page-header";
+import { Split } from "@skillsite/ui/layout/split";
 import { StatGrid } from "@/components/sections/stat-grid";
 import { StepGrid } from "@/components/sections/step-grid";
 import { BenefitGrid } from "@/components/sections/benefit-grid";
@@ -30,7 +31,7 @@ export default function HomePage() {
     <>
       {/* Hero */}
       <Container className="pt-hero-top pb-hero-bottom">
-        <div className="grid items-center gap-split-hero lg:grid-cols-[1.15fr_0.85fr]">
+        <Split gap="split-hero" ratio="1.15/0.85">
           <div>
             <Reveal trigger="mount" variant="rise-soft" index={0}>
               <Eyebrow>Nachhilfe in Mathematik, Informatik und Physik</Eyebrow>
@@ -132,7 +133,7 @@ export default function HomePage() {
               Ohne Mindestlaufzeit <Check className="size-4" />
             </Reveal>
           </div>
-        </div>
+        </Split>
       </Container>
 
       {/* Stats */}
