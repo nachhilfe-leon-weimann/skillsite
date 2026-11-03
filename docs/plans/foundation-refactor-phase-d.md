@@ -139,7 +139,7 @@ C8.3-C8.9 change these files that phase D also touches:
   independently of C8. Beyond new story files, C9a splits `packages/ui/src/typography/typography.stories.tsx`
   into per-component files and C9b edits `packages/ui/.storybook/preview.tsx` (the `ownsTheme` switch); no C8
   slice edits either file. Only C9c - which audits the C8 widget stories and adds the coverage guard - waits for C8.8
-  on `main`. Whether that is acceptable, or C9 waits for the spec's C8 box, is open question 6.
+  on `main`. Whether that is acceptable, or C9 waits for the spec's C8 box, is Q6.
 - **Later:** D5 after C9 and D1-D4; D6 after D5 (spec timeline).
 - **Rebasing.** Branch the post-C8 slices from a fresh `origin/main`, never from a C8 branch. When a C8 PR lands
   while D1b is open, `git rebase origin/main`; git's rename detection carries the C8 edits onto the moved files.
@@ -316,12 +316,12 @@ copied example never stops `just dev`), `README.md` (env paragraph), `CLAUDE.md`
 
 **Behaviour changes, all of them** (operator-facing only; a visitor on a correctly configured server sees none):
 
-| Change                                                                  | Today                                                          | After D3                                                                                     | Why it stays in a `refactor:` PR                                                    |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| A present, malformed `CAL_API_KEY`                                      | server starts; Cal answers 401; booker shows error             | `next start` exits with an `[env]` line                                                      | The spec's own D3 acceptance demands it; the shape itself is Q1                     |
-| A whitespace-only `CAL_API_KEY`                                         | configured; Cal 401; error state                               | malformed: `next start` exits                                                                | A case of the row above; it never silently becomes `unconfigured`                   |
-| A malformed `CAL_API_KEY` in a local `.env`                             | `just dev`, `just smoke`, `just check` run; booker shows error | `next dev` exits too (`register()` runs in dev): `just dev`, `just smoke`, `just check` stop | Same rule as row 1; smoke inherits the local `.env`; the `[env]` line names the fix |
-| A hand-made malformed submission (values null, a number as field value) | `failed` log with a `TypeError` text; generic error            | `failed` log naming the shape; same error                                                    | Same outcome and message; only the `error` text inside the log line changes         |
+| Change                                                                  | Today                                                          | After D3                                                                                                                                                | Why it stays in a `refactor:` PR                                            |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| A present, malformed `CAL_API_KEY`                                      | server starts; Cal answers 401; booker shows error             | `next start` exits with an `[env]` line                                                                                                                 | The spec's own D3 acceptance demands it; the shape itself is Q1             |
+| A whitespace-only `CAL_API_KEY`                                         | configured; Cal 401; error state                               | malformed: `next start` exits                                                                                                                           | A case of the row above; it never silently becomes `unconfigured`           |
+| A malformed `CAL_API_KEY` in a local `.env`                             | `just dev`, `just smoke`, `just check` run; booker shows error | `next dev` exits too (`register()` runs in dev), stopping `just dev`; `just smoke` and so `just check` stop because `next start` reads the local `.env` | Same rule as row 1; the `[env]` line names the fix                          |
+| A hand-made malformed submission (values null, a number as field value) | `failed` log with a `TypeError` text; generic error            | `failed` log naming the shape; same error                                                                                                               | Same outcome and message; only the `error` text inside the log line changes |
 
 Anything beyond this table is a regression: stop and report.
 
@@ -515,7 +515,7 @@ each; modify `components/booker.tsx`, `model/dates.ts`, `content/booking.ts`. Sp
 
 **Test environments.** The marketing Vitest config has only the node project `unit` (`src/**/*.test.{ts,mts}`)
 until D4 adds the jsdom project `components` (`src/**/*.test.tsx`, Testing Library); D4 adds it, earlier than
-the booker slice `CLAUDE.md` anticipated. D2 therefore starts only once D4 is on `main` (PR table); before
+the booker slice `CLAUDE.md` anticipated. So D2 starts only once D4 is on `main` (PR table); before
 writing tests, confirm `apps/marketing/vitest.config.mts` lists the `components` project, or a `.test.tsx` file
 matches no glob and silently never runs. Every test that renders or uses `renderHook` is therefore a
 `.test.tsx`, including `use-availability.test.tsx`; pure model tests (`pricing.test.ts`) stay `.test.ts`.
@@ -584,7 +584,7 @@ HTML text nodes identical and computed styles identical with the toolkit; class 
 1. Regenerate the list: `rg -n '(leading|tracking|mt|left|bottom|h|w)-\[' apps/marketing/src`. On `572762d` it is:
    `leading-[1.35]` (`/ueber-mich` quote), `tracking-[0.04em]` (`/preise`), `tracking-[-0.02em]`
    (`stat-grid.tsx`), `leading-[1.7]` (`code-typewriter.tsx`), `mt-[0.7rem]` (`doc-components.tsx`),
-   `leading-[1.28] tracking-[-0.015em]` (`testimonials.tsx`, see open question 5), the hero underline geometry
+   `leading-[1.28] tracking-[-0.015em]` (`testimonials.tsx`, see Q5), the hero underline geometry
    (`app/page.tsx`) and the caret geometry (`code-typewriter.tsx`).
 2. Name each type and spacing value 1:1 as a token with its `cn` registration and drift test. The underline and
    caret geometry describe one decorative element each: they stay local and move with their block in D5.1/D5.5.
@@ -605,8 +605,8 @@ HTML text nodes identical and computed styles identical with the toolkit; class 
 | D5.5  | `/ueber-mich` - `app/ueber-mich/page.tsx` (18), `content/about.ts`                                     | `code-typewriter` -> `app/ueber-mich/_components/`; quote panel                                                                                  |
 | D5.6  | `/online-lernen` - `app/online-lernen/page.tsx` (23), `content/online-learning.ts`                     | platform steps and checklist cards to `_components`                                                                                              |
 | D5.7  | `/termin`, `/kontakt` - both pages (2/18), `content/contact.ts`, `content/booking.ts`                  | `whatsapp-qr` -> `app/kontakt/_components/`; contact cards; page intros to content                                                               |
-| D5.8  | `/impressum`, `/datenschutz`, `/agb` - pages (0/4/0), `components/docs/*`                              | inline legal prose to content in the form chosen by open question 4; nothing visible changes                                                     |
-| D5.9  | `/zahlung`, 404, error boundaries - `zahlung/page.tsx`, `not-found.tsx`, `_components/error-state.tsx` | status copy to `content/status.ts`; `/zahlung` actions on `SmartLink` only as open question 3 decides                                            |
+| D5.8  | `/impressum`, `/datenschutz`, `/agb` - pages (0/4/0), `components/docs/*`                              | inline legal prose to content in the form chosen by Q4; nothing visible changes                                                                  |
+| D5.9  | `/zahlung`, 404, error boundaries - `zahlung/page.tsx`, `not-found.tsx`, `_components/error-state.tsx` | status copy to `content/status.ts`; `/zahlung` actions on `SmartLink` only as Q3 decides                                                         |
 
 Steps per route PR: (1) toolkit before-tree; (2) move one-user blocks; (3) swap hand-built markup for components;
 (4) move text (`perl -CSD` for any bulk edit); (5) toolkit after-run, `just ratchet-update` if a count fell;
@@ -655,7 +655,7 @@ steps; `design-ratchet.json`; `CLAUDE.md`; spec status line.
 1. Confirm `apps/marketing/src/providers` does not exist; move `contact-address.tsx` and delete `components/shared/`.
 2. List exports without importers (`rg` over `apps/marketing/src` and `packages/ui/src`, stories excluded). Remove
    `useBodyScrollLock` if C8.4 left it without a consumer (C8 forbids a second scroll lock). Keep `Dialog` and
-   `Switch` (E-11) and every module's public entry. Resolve `testimonials` per open question 5; anything else
+   `Switch` (E-11) and every module's public entry. Resolve `testimonials` per Q5; anything else
    ambiguous goes to the maintainer.
 3. Final ratchet: `just ratchet-update`; allow-list `opengraph-image.tsx` for `inline-style` with the Satori reason
    (it already is for `hex-color`); list every remaining `raw-button` and `inline-style` occurrence with its reason
