@@ -1,11 +1,8 @@
 # Foundation refactor: phase D (marketing structure and migration) and C9
 
 > Status: Implementation plan, 2026-11-03. Not implemented; the maintainer approves this plan before any slice
-> starts. At the time of writing C8.1/C8.2 are on `main` and C8.3-C8.9 are an open, unmerged stack. Each numbered
+> starts. At the time of writing C8.1/C8.2 are on `main` and C8.3-C8.9 are in progress as a stack. Each numbered
 > slice below is one branch and one PR. Implement only a dispatched slice, with its tests.
-
-> **For agentic workers:** REQUIRED SUB-SKILL: use superpowers:subagent-driven-development (recommended) or
-> superpowers:executing-plans to implement a slice task by task. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** give the marketing app the module structure of E-03/E-04 (D1), a decomposed booker (D2), one env module
 and zod validation (D3), error boundaries in the site's look (D4), pages built from `@skillsite/ui` with their text
@@ -51,8 +48,9 @@ refines it and reopens no decision. Read the [C8 plan](foundation-refactor-c8.md
 1. **Server code in a client bundle.** A client-safe `index.ts` that re-exports from `server/`, or a client
    component that imports a server entry, ships secrets or fails the build late. D1a/D1b test that no `index.ts`
    imports `./server`, and `next build` proves `server-only` holds.
-2. **An empty `CAL_API_KEY` that stops the server.** CI, smoke and the pixel toolkit run with `CAL_API_KEY=`; today
-   an empty value means "unconfigured". D3's schema treats an empty string as absent (test case).
+2. **An empty `CAL_API_KEY` that stops the server.** CI and smoke run without the variable (smoke inherits a local
+   `.env`); the pixel toolkit pins `CAL_API_KEY=` empty. Today an empty value means "unconfigured". D3's schema
+   treats the empty string as absent (test case).
 3. **A `loading.tsx` that breaks the payment redirect.** `redirect()` inside a streamed boundary becomes a
    client-side meta refresh instead of the 307 that `e2e/smoke.spec.ts` asserts. D4 adds no `loading.tsx` to
    `/zahlung`.
@@ -80,17 +78,19 @@ Verified by reading the tree; the spec's audit numbers are from `72197da` and so
 - **`booker.tsx`** is 804 lines with five components: `Booker` (lines 98-450: state, the availability effect with
   abort and month auto-advance, the scroll effect, the submit flow, the sidebar and the step switch),
   `UnavailableNotice` (452-488), `SelectStep` (504-638, month header and day grid), `TimeSlots` (640-673),
-  `ResultStep` (684-804). The price (`EUR`, `slotPrice`), `dateLabel`, `WEEKDAYS`, `MONTHS` and
-  `MAX_MONTH_OFFSET` sit at its top. `booking-form.tsx` has 246 lines.
+  `ResultStep` (684-804). `EUR`, `dateLabel`, `WEEKDAYS`, `MONTHS` and `MAX_MONTH_OFFSET` sit at its top; the price
+  (`slotPrice`) and `durationLabel` are locals inside `Booker` (about line 314). `booking-form.tsx` has 246 lines.
 - **`process.env` reads in `apps/marketing/src`:** `CAL_API_KEY` in `lib/booking/availability.ts:51` and
   `lib/booking/cal/client.ts:12` (the two reads the spec names); `APP_VERSION` in `lib/health.ts:12` (inlined at
   build by `next.config.ts` `env`); `NODE_ENV` in `components/analytics/umami.tsx:20`. Outside `src`:
   `ALLOWED_DEV_ORIGINS` in `next.config.ts`, `CI` in both Playwright configs. No `instrumentation.ts`, no zod
   dependency (zod 4.6.5 is only transitive), no `server-only`.
 - **Route files:** `app/error.tsx` (root segment, `StatusPage`, uses `reset`), `app/not-found.tsx`. No
-  `loading.tsx`, no `global-error.tsx`. `/zahlung` is `force-dynamic` and redirects with 307; every other page is
-  static. Next 16.3 made `retry` the stable recovery prop (`node_modules/next/dist/docs`, error.md); `global-error`
-  must render its own `<html>`/`<body>`, styles and fonts.
+  `loading.tsx`, no `global-error.tsx`. Two pages render per request: `/zahlung` (`force-dynamic`, redirects
+  with 307) and `/kontakt` (awaits `searchParams` for `?fach=<anchor>`, which preselects the subject in the booker via
+  `initialSubject`). Every other page is static. Next 16.3 made `retry` the stable recovery prop
+  (`node_modules/next/dist/docs`, error.md); `global-error` must render its own `<html>`/`<body>`, styles and
+  fonts.
 - **Duplicated log helpers:** `lib/booking/log.ts` and `lib/payment/log.ts` each define `LEVEL`,
   `MAX_LOGGED_LENGTH = 64`, `loggable()`, the `[domain] outcome {json}` line and the drop-`undefined` loop. Other
   duplicates: `"Europe/Berlin"` literal in `mapping.ts` next to `BOOKING_TIMEZONE`; the generic failure sentence
@@ -119,26 +119,34 @@ C8.3-C8.9 change these files that phase D also touches:
 | C8.3     | `components/layout/navbar.tsx` (`PlatformDropdown`)                                                  | none              |
 | C8.4     | `components/layout/navbar.tsx` (mobile menu); may leave `useBodyScrollLock` without a consumer       | D6b               |
 | C8.5     | `components/booking/booker.tsx` (duration `Select`)                                                  | D1b, D2           |
-| C8.6     | `components/booking/fields/{radio-field,chips-field}.tsx`; new `forms/{radio-group,choice-chips}`    | D1b, C9           |
-| C8.7     | `packages/ui/src/forms/switch.tsx` and its story                                                     | C9                |
-| C8.8     | `booker.tsx` (`SelectStep`, month changes, error focus), a date adapter next to it, `forms/calendar` | D1b, D2, C9       |
+| C8.6     | `components/booking/fields/{radio-field,chips-field}.tsx`; new `forms/{radio-group,choice-chips}`    | D1b, C9c          |
+| C8.7     | `packages/ui/src/forms/switch.tsx` and its story                                                     | C9c               |
+| C8.8     | `booker.tsx` (`SelectStep`, month changes, error focus), a date adapter next to it, `forms/calendar` | D1b, D2, C9c      |
 | C8.9     | marketing/Storybook E2E, spec checklist, C8 plan status                                              | none (spec lines) |
 
-- **May start now, on `main`, beside the C8 stack:** D1a, D3, D4 (one small stack). They touch no file of the C8
-  slices: payment, the ESLint preset, `lib/env.ts`, `instrumentation.ts`,
-  `lib/booking/{availability,actions,validation}.ts`, `lib/booking/cal/client.ts`, a new schema file,
-  `app/error.tsx`, `app/global-error.tsx`. D3 must keep `validateBookingValues`' signature so
-  `use-booking-form.ts` and `booking-form.tsx` stay untouched.
-- **Start only after C8.8 is on `main`:** D1b (moves every file C8.5/C8.6/C8.8 edit), D2 (decomposes the C8.8
-  booker), C9 (needs every C8 widget and story). C8.9 may still be open: it adds tests and evidence only.
+- **May start now, on `main`, beside the C8 stack:** D1a, D3, D4 (one small stack). They touch none of the C8
+  slices' source files - payment, the ESLint preset, `lib/env.ts`, `instrumentation.ts`,
+  `lib/booking/{availability,actions,validation,fields}.ts`, `lib/booking/cal/client.ts`, a new schema file,
+  `app/error.tsx`, `app/global-error.tsx`. They may share plumbing with C8 (`pnpm-lock.yaml`, package manifests,
+  possibly `apps/marketing/vitest.config.mts`); the rebase rules below cover those. D3 must keep
+  `validateBookingValues`' signature so `use-booking-form.ts` and `booking-form.tsx` stay untouched.
+- **Start only after C8.8 is on `main`:** D1b (moves every file C8.5/C8.6/C8.8 edit) and D2 (decomposes the C8.8
+  booker). C8.9 may still be open: it adds tests and evidence only.
+- **C9 - a declared deviation from the spec's `C8 -> C9`.** C8 counts as complete only after C8.9's human
+  VoiceOver/Safari gate, and D5 waits for C9; read strictly, a pending manual gate would block D5 indefinitely.
+  C9a/C9b add story files for components no C8 slice touches, so this plan lets them start on today's `main`,
+  independently of C8. Only C9c - which audits the C8 widget stories and adds the coverage guard - waits for C8.8
+  on `main`. Whether that is acceptable, or C9 waits for the spec's C8 box, is open question 6.
 - **Later:** D5 after C9 and D1-D4; D6 after D5 (spec timeline).
 - **Rebasing.** Branch the post-C8 slices from a fresh `origin/main`, never from a C8 branch. When a C8 PR lands
   while D1b is open, `git rebase origin/main`; git's rename detection carries the C8 edits onto the moved files.
   Prove it: for every moved file, `diff <(git show origin/main:<old path>) <new path>` shows only import lines.
   Conflicts in `pnpm-lock.yaml`: take `origin/main`'s lockfile, run `pnpm install`, commit the result. Conflicts in
   `design-ratchet.json`: take `origin/main`'s file, run `just ratchet-update`. Spec checkbox conflicts: keep both
-  ticks. After a squash merge inside a stack: `git rebase --onto origin/main <merged-branch> <next-branch>`,
-  `just check`, `git push --force-with-lease`.
+  ticks. Shared content files used by several routes (`content/site.ts`, `content/faqs.ts`, `content/subjects.ts`):
+  a route PR only adds keys there, never edits or reorders existing ones, so a conflict is resolved by keeping both
+  sides' additions. After a squash merge inside a stack:
+  `git rebase --onto origin/main <merged-branch> <next-branch>`, `just check`, `git push --force-with-lease`.
 
 ## PR sequence
 
@@ -146,37 +154,42 @@ Kind: **R** refactor, pixel-identical; **F** `fix:` with a described visible cha
 Each PR body starts with its base ("Stacked on #N - merge after it." or "Based on `main`.") and "Part of #140."
 (C9 PRs: "Part of #139.").
 
-| Slice | Branch                        | Conventional PR title                                                    | Kind | Starts after            |
-| ----- | ----------------------------- | ------------------------------------------------------------------------ | ---- | ----------------------- |
-| D0    | `docs/phase-d-plan`           | `docs: plan phase d and c9`                                              | -    | -                       |
-| D1a   | `refactor/payment-module`     | `refactor(payment): move payment into a module with enforced boundaries` | R    | D0                      |
-| D3    | `refactor/env-zod`            | `refactor: read env through one module and validate with zod`            | R    | D1a (stacked)           |
-| D4    | `fix/route-errors`            | `fix(errors): render root layout errors in the site's look`              | F    | D3 (stacked)            |
-| D1b   | `refactor/booking-module`     | `refactor(booking): move booking into a module`                          | R    | C8.8, D1a, D3 on `main` |
-| C9a   | `test/ui-stories-primitives`  | `test(ui): stories for the primitives and typography`                    | T    | C8.8 on `main`          |
-| C9b   | `test/ui-stories-layout`      | `test(ui): stories for layout, motion and shell`                         | T    | C8.8 on `main`          |
-| C9c   | `test/ui-story-coverage`      | `test(ui): guard story coverage of every exported component`             | T    | C9a + C9b (stacked)     |
-| D2    | `refactor/booker-decompose`   | `refactor(booking): decompose the booker`                                | R    | D1b                     |
-| D5.0  | `refactor/ui-page-patterns`   | `refactor(ui): name the last page values and add a step number`          | R    | C9c, D2, D4 on `main`   |
-| D5.1  | `refactor/page-home`          | `refactor(home): build the home page from the design system`             | R    | D5.0                    |
-| D5.2  | `refactor/page-subjects`      | `refactor(subjects): build /faecher from the design system`              | R    | D5.0                    |
-| D5.3  | `refactor/page-process`       | `refactor(process): build /ablauf from the design system`                | R    | D5.0                    |
-| D5.4  | `refactor/page-pricing`       | `refactor(pricing): build /preise from the design system`                | R    | D5.0                    |
-| D5.5  | `refactor/page-about`         | `refactor(about): build /ueber-mich from the design system`              | R    | D5.0                    |
-| D5.6  | `refactor/page-online`        | `refactor(online): build /online-lernen from the design system`          | R    | D5.0                    |
-| D5.7  | `refactor/page-booking`       | `refactor(booking): build /termin and /kontakt from the design system`   | R    | D5.0                    |
-| D5.8  | `refactor/page-legal`         | `refactor(legal): move the legal pages' text into content`               | R    | D5.0, open question 4   |
-| D5.9  | `refactor/page-status`        | `refactor(status): move the status pages' text into content`             | R    | D5.0, open question 3   |
-| D6a   | `refactor/log-core-numbering` | `refactor: one log core and one legal numbering registry`                | R    | all D5                  |
-| D6b   | `chore/phase-d-cleanup`       | `chore: remove leftovers and record the final ratchet`                   | R    | D6a (stacked)           |
+| Slice | Branch                        | Conventional PR title                                                    | Kind | Starts after                      |
+| ----- | ----------------------------- | ------------------------------------------------------------------------ | ---- | --------------------------------- |
+| D0    | `docs/phase-d-plan`           | `docs: plan phase d and c9`                                              | -    | -                                 |
+| D1a   | `refactor/payment-module`     | `refactor(payment): move payment into a module with enforced boundaries` | R    | D0                                |
+| D3    | `refactor/env-zod`            | `refactor: read env through one module and validate with zod`            | R    | D1a (stacked), Q1                 |
+| D4    | `fix/route-errors`            | `fix(errors): render root layout errors in the site's look`              | F    | D3 (stacked), Q2                  |
+| D4r   | `fix/error-retry`             | `fix(errors): retry the failed segment from the error page`              | F    | D4 (stacked), only if Q2 says bug |
+| D1b   | `refactor/booking-module`     | `refactor(booking): move booking into a module`                          | R    | C8.8, D1a, D3 on `main`           |
+| C9a   | `test/ui-stories-primitives`  | `test(ui): stories for the primitives and typography`                    | T    | D0 (Q6)                           |
+| C9b   | `test/ui-stories-layout`      | `test(ui): stories for layout, motion and shell`                         | T    | D0 (Q6)                           |
+| C9c   | `test/ui-story-coverage`      | `test(ui): guard story coverage of every exported component`             | T    | C9a, C9b, C8.8 on `main`          |
+| D2    | `refactor/booker-decompose`   | `refactor(booking): decompose the booker`                                | R    | D1b                               |
+| D5.0  | `refactor/ui-page-patterns`   | `refactor(ui): name the last page values and add a step number`          | R    | C9c, D2, D4 on `main`             |
+| D5.1  | `refactor/page-home`          | `refactor(home): build the home page from the design system`             | R    | D5.0                              |
+| D5.2  | `refactor/page-subjects`      | `refactor(subjects): build /faecher from the design system`              | R    | D5.0                              |
+| D5.3  | `refactor/page-process`       | `refactor(process): build /ablauf from the design system`                | R    | D5.0                              |
+| D5.4  | `refactor/page-pricing`       | `refactor(pricing): build /preise from the design system`                | R    | D5.0                              |
+| D5.5  | `refactor/page-about`         | `refactor(about): build /ueber-mich from the design system`              | R    | D5.0                              |
+| D5.6  | `refactor/page-online`        | `refactor(online): build /online-lernen from the design system`          | R    | D5.0                              |
+| D5.7  | `refactor/page-booking`       | `refactor(booking): build /termin and /kontakt from the design system`   | R    | D5.0                              |
+| D5.8  | `refactor/page-legal`         | `refactor(legal): move the legal pages' text into content`               | R    | D5.0, open question 4             |
+| D5.9  | `refactor/page-status`        | `refactor(status): move the status pages' text into content`             | R    | D5.0, open question 3             |
+| D6a   | `refactor/log-core-numbering` | `refactor: one log core and one legal numbering registry`                | R    | all D5                            |
+| D6b   | `chore/phase-d-cleanup`       | `chore: remove leftovers and record the final ratchet`                   | R    | D6a (stacked), Q5                 |
 
-D1 is split in two PRs so the payment module and the boundary rule need not wait for C8; the spec's D1 box is
-ticked in D1b. C9 is split by group so each PR's check fits in a few lines; its box is ticked in C9c.
+"Qn" is the open question of that number at the end of this plan; a slice waits for its answer. D1 is split in two
+PRs so the payment module and the boundary rule need not wait for C8; the spec's D1 box is ticked in D1b. C9 is
+split by group so each PR's check fits in a few lines; its box is ticked in C9c. D4r exists only if Q2 calls
+`reset` a bug: `CLAUDE.md` fixes each bug in its own `fix:` PR, and D4's visible change (layout errors) is a
+different one, so the recovery fix does not ride along in D4.
 
-**Parallelism (E-17).** D1a -> D3 -> D4 is linear (shared `package.json`, lockfile, ESLint and Vitest config).
-D1b runs beside C9a/C9b (apps versus `packages/ui` stories). D5.1-D5.9 run in parallel: each owns its
-`app/<route>/` folder and route content file; shared `design-ratchet.json` and `content/site.ts` conflicts are
-resolved by the rebase rules above. D5.0 runs alone because it edits `packages/ui` tokens and typography that
+**Parallelism (E-17).** D1a -> D3 -> D4 (-> D4r) is linear (shared `package.json`, lockfile, ESLint and Vitest
+config). C9a and C9b are independent PRs on `main` (different story files); C9c starts once both are merged, no
+stack. D1b runs beside C9 (apps versus `packages/ui` stories). D5.1-D5.9 run in parallel: each owns its
+`app/<route>/` folder and route content file; `design-ratchet.json` and shared content files are resolved by the
+rebase rules above. D5.0 runs alone because it edits `packages/ui` tokens and typography that
 every route PR consumes. D6a/D6b are sequential.
 
 ## Verification toolkit
@@ -205,8 +218,9 @@ port another agent uses; the toolkit's ports are 3110/3111, smoke uses 3100, wid
 
 **Files:** create `apps/marketing/src/modules/payment/{index.ts,server.ts,model/invoice-link.ts,server/log.ts}`
 (moved from `lib/payment/`, tests move along as `model/invoice-link.test.mts` and `server/log.test.mts`); modify
-`app/zahlung/page.tsx` (imports only), `packages/config/eslint/` (new `boundaries.mjs`, exported next to
-`next.mjs`), `apps/marketing/eslint.config.mjs`, `packages/ui/eslint.config.mjs`, `apps/marketing/vitest.config.mts`,
+`app/zahlung/page.tsx` (imports only), `packages/config/eslint/` (new `boundaries.mjs` next to `next.mjs`, whose
+header comment "Module-boundary rules join here once ..." is updated to point at it),
+`apps/marketing/eslint.config.mjs`, `packages/ui/eslint.config.mjs`, `apps/marketing/vitest.config.mts`,
 `apps/marketing/package.json` (`server-only`), `pnpm-lock.yaml`, `README.md` (payment path), `CLAUDE.md` (layout).
 Test: `apps/marketing/src/modules/boundaries.test.ts`.
 
@@ -222,6 +236,11 @@ Test: `apps/marketing/src/modules/boundaries.test.ts`.
   directories of `<appRoot>/src/modules/`; for each module it forbids imports of anything but `index.ts` and
   `server.ts` from every top-level entry of `src/` and from every other module. `packageBoundaries` forbids any
   import from `../../apps`. Messages name the rule ("Import modules/<name> through its index.ts or server.ts").
+- **Risk to clear first:** the apps lint with ESLint 10.14 (since #186), while `@skillsite/config` declares a peer
+  of `eslint ^9` and `eslint-plugin-import` 2.32 targets ESLint 9 or lower. A rule that silently never reports
+  would pass every other check, which is why step 3 must see the test red for the right reason (a reported
+  `import/no-restricted-paths`, not a crash or a missing rule). If the rule cannot run on ESLint 10, stop and
+  report - switching plugins is a dependency decision for the maintainer.
 
 1. Move the two payment files and their tests with `git mv`; rewrite the relative test imports and the page
    imports (`@/modules/payment`, `@/modules/payment/server`). Bodies stay byte-identical.
@@ -231,10 +250,12 @@ Test: `apps/marketing/src/modules/boundaries.test.ts`.
 3. Write `boundaries.test.ts` first: it lints source text with ESLint's Node API (`new ESLint({ cwd: <app> })`,
    `lintText(code, { filePath })`) and asserts: `app/zahlung/page.tsx` importing `@/modules/payment/server/log`
    reports `import/no-restricted-paths`; importing `@/modules/payment/server` and `@/modules/payment` reports
-   nothing; a file under `modules/payment/` may import its own `./server/log`; a `packages/ui` file importing
-   `../../apps/marketing/src/lib/routes` is reported. Run it red, then add `boundaries.mjs` and wire both configs.
+   nothing; a file under `modules/payment/` may import its own `./server/log`; `packages/ui/src/x.tsx` importing
+   `../../../apps/marketing/src/lib/routes` (a path that resolves - `no-restricted-paths` ignores unresolvable
+   imports) is reported. Run it red, then add `boundaries.mjs` and wire both configs.
 4. Add a test that no `modules/*/index.ts` contains an import or re-export from `./server` (string scan).
-5. Fix `README.md` and the `CLAUDE.md` layout block (`src/modules/  booking/, payment/ - see module rules`).
+5. Fix `README.md` and the `CLAUDE.md` layout block: `lib/` loses `payment/`, a new line
+   `src/modules/  payment/ - see module rules` (booking joins it in D1b, once the folder exists).
 
 **Acceptance**
 
@@ -246,54 +267,82 @@ Test: `apps/marketing/src/modules/boundaries.test.ts`.
 
 **Files:** create `apps/marketing/src/lib/env.ts` (+ `env.test.ts`), `apps/marketing/src/instrumentation.ts`,
 `apps/marketing/src/lib/booking/schema.ts` (+ `schema.test.ts`); modify
-`lib/booking/{availability,validation,actions}.ts`, `lib/booking/cal/client.ts`, `lib/health.ts`,
+`lib/booking/{availability,validation,actions,fields}.ts`, `lib/booking/cal/client.ts`, `lib/health.ts`,
 `components/analytics/umami.tsx`, `apps/marketing/eslint.config.mjs`, `apps/marketing/package.json` (`zod`),
-`pnpm-lock.yaml`, `.env.example` (comment only), `README.md` (env paragraph), `CLAUDE.md` (env rule).
-Spec: both D3 boxes.
+`pnpm-lock.yaml`, `.env.example` (placeholder `API_KEY_HERE` -> `CAL_API_KEY=` plus a comment on the shape, so a
+copied example never stops `just dev`), `README.md` (env paragraph), `CLAUDE.md` (env rule). Spec: both D3 boxes.
 
 **Contracts**
 
 - `lib/env.ts` starts with `import "server-only";` and never parses at import time (V6).
   - `parseServerEnv(source: Record<string, string | undefined> = process.env): ServerEnv` with
-    `ServerEnv = { CAL_API_KEY?: string }`. An empty or whitespace-only value is absent. A present value that does
-    not match the agreed shape (open question 1) throws `EnvError` whose message names the variable and the rule,
-    never the value.
+    `ServerEnv = { CAL_API_KEY?: string }`. Only the empty string is absent - exactly today's
+    `process.env.CAL_API_KEY || null`. Any other value that does not match the agreed shape (Q1; whitespace-only
+    included) throws `EnvError` whose message names the variable and the rule, never the value.
   - `serverEnv(): ServerEnv` - parses once and memoizes; the only accessor for runtime variables.
   - `appVersion(): string` (`process.env.APP_VERSION ?? "unknown"`, a literal member access so Next keeps inlining
     it) and `isProduction(): boolean` (`process.env.NODE_ENV === "production"`).
 - `instrumentation.ts`: `export async function register()` - only when `process.env.NEXT_RUNTIME === "nodejs"`,
   dynamically imports `@/lib/env` and calls `parseServerEnv()`; on `EnvError` it logs `[env] <message>` and
   rethrows.
-- `lib/booking/schema.ts`: `fieldValueSchema(field: FieldDef)` and `bookingValuesSchema(event: BookingEventKey)`,
-  derived from the field declarations (required/empty, `maxLength` on strings, `format` via the existing
-  `EMAIL_RE`/`PHONE_RE`, option whitelist, `multiple` -> `string[]`); `bookingSubmissionSchema` for the transport
-  shape of `BookingSubmission` (event key, non-empty slot, optional duration, values record, optional agreements,
-  honeypot and fill duration); `checkBookingSubmission(submission: unknown, now?: number): BookingIssue | null`
-  with `BookingIssue` the union of `{ check: "slot" }`, `{ check: "fields"; fields: string[] }`,
-  `{ check: "terms" }` and `{ check: "withdrawal_notice" }`.
+- `EMAIL_RE` and `PHONE_RE` move from `validation.ts` to `fields.ts` (the field primitives, which import nothing
+  from the booking domain), so `schema.ts` and `validation.ts` both import them without a cycle; `toE164` stays in
+  `validation.ts`. Update every importer (`rg -n 'EMAIL_RE|PHONE_RE' apps/marketing/src`).
+- `lib/booking/schema.ts` imports `config.ts` and `fields.ts`, never `validation.ts`:
+  - `fieldValueSchema(field: FieldDef)` and `bookingValuesSchema(event: BookingEventKey)`, derived from the field
+    declarations (required/empty, `maxLength` on strings, `format` via `EMAIL_RE`/`PHONE_RE`, option whitelist,
+    `multiple` -> `string[]`).
+  - `bookingSubmissionSchema` checks **only what today's action checks**, with today's semantics: the event is an
+    own key of `bookingEvents`, `slot` is truthy, `values` per field as above, and `agreements?.termsAccepted` /
+    `agreements?.earlyPerformanceRequested` read as truthy flags. Everything else (`duration`, `honeypot`,
+    `fillDurationMs`, unknown keys) passes through untouched (`.passthrough()` / loose objects): `duration` reaches
+    Cal unvalidated today (`mapping.ts:93`), and validating it is the backlog's duration allow-list (decision S).
+  - `checkBookingSubmission(submission: BookingSubmission, now?: number): BookingIssue | null` with
+    `BookingIssue` the union of `{ check: "slot" }`, `{ check: "fields"; fields: string[] }`,
+    `{ check: "terms" }` and `{ check: "withdrawal_notice" }`, returned in today's order.
+  - **Malformed shapes.** Where today's code throws - `values` missing or not an object, a field value that is
+    neither a string nor an array where `.trim()` is reached - `checkBookingSubmission` throws
+    `MalformedSubmissionError` too. `requestBooking`'s existing catch turns it into today's outcome: a `failed`
+    log line and the generic failure. Where today's code returns a result for odd input (an array on a text field,
+    a non-empty non-string slot), the schema returns the same result. The characterization table pins each case.
 - `validateBookingValues(event, values): string[]` keeps its signature and result (labels via
   `shortLabel ?? label`, declaration order); it now reads the schema.
+
+**Behaviour changes, all of them** (operator-facing only; a visitor on a correctly configured server sees none):
+
+| Change                                                                     | Today                                               | After D3                                  | Why it stays in a `refactor:` PR                                            |
+| -------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------- |
+| A present, malformed `CAL_API_KEY`                                         | server starts; Cal answers 401; booker shows error  | `next start` exits with an `[env]` line   | The spec's own D3 acceptance demands it; the shape itself is Q1             |
+| A whitespace-only `CAL_API_KEY`                                            | configured; Cal 401; error state                    | malformed: `next start` exits             | A case of the row above; it never silently becomes `unconfigured`           |
+| A hand-made malformed submission (values missing, a number as field value) | `failed` log with a `TypeError` text; generic error | `failed` log naming the shape; same error | Same outcome and message; only the `error` text inside the log line changes |
+
+Anything beyond this table is a regression: stop and report.
 
 1. Characterize first: `schema.test.ts` holds a table of inputs run against the **current**
    `validateBookingValues` (both events; blank, whitespace-only, at and over each `FIELD_LIMITS` value, invalid
    e-mail, a five- and a six-digit phone, an option not offered, an empty and a mixed multi-chip array, a missing
-   key). Commit the table green on the old code, then switch to zod and keep it green.
+   key; and hand-made shapes: `values` missing, a number as a field value, an array on a text field). Each row pins
+   today's result - the label list, or "throws". Commit the table green on the old code, then switch to zod and
+   keep it green.
 2. Add action tests for `checkBookingSubmission`: unknown event and empty slot -> `slot`; missing fields ->
    `fields` with the same labels; paid event without `termsAccepted` -> `terms`; a slot within the withdrawal
    period without `earlyPerformanceRequested` -> `withdrawal_notice`; the free event never needs agreements.
 3. Rewrite `processBooking` in `actions.ts` to call `checkBookingSubmission` after rate limit and anti-spam (same
-   order as today) and map each issue to today's message and log `check` value. A non-string field value from a
-   hand-made request is now rejected as `validation` instead of throwing into the generic failure; name this in
-   the PR body (no form can send it).
-4. Write `env.test.ts`: absent, `""`, `"  "` -> `{}`; a valid shape -> kept; malformed -> `EnvError` without the
-   value in its message; `serverEnv()` memoizes. Then replace both `CAL_API_KEY` reads with `serverEnv()`, and
-   `health.ts`/`umami.tsx` with `appVersion()`/`isProduction()`. `health.test.mts` stays green unchanged.
+   order as today) and map each issue to today's message and log `check` value. A malformed shape throws into
+   the existing catch (see _Malformed shapes_). The PR body carries the behaviour-change table above.
+4. Write `env.test.ts`: absent and `""` -> `{}`; a valid shape -> kept; `"  "` and other malformed values ->
+   `EnvError` without the value in its message; `serverEnv()` memoizes. Then replace both `CAL_API_KEY` reads
+   with `serverEnv()`, and `health.ts`/`umami.tsx` with `appVersion()`/`isProduction()`. `health.test.mts` stays
+   green unchanged.
 5. Add `instrumentation.ts`. Measure in a production build (scratch only): `CAL_API_KEY=` and no variable -> server
    starts, `/termin` shows "Online-Terminwahl gerade nicht verfügbar"; a malformed value -> `next start` exits
    non-zero within seconds with the `[env]` line. If Next keeps serving after `register()` throws, call
    `process.exit(1)` after logging and say so in the PR. Note whether `next build` invokes `register()`.
 6. ESLint: `no-restricted-properties` for `process.env` in `apps/marketing/src/**`, except `lib/env.ts`,
    `instrumentation.ts` and test files. `rg -n 'process\.env' apps/marketing/src` lists only those.
+   `next.config.ts` and the Playwright configs stay outside the rule on purpose: they run in plain Node (before
+   or beside the app), where `lib/env.ts`'s `server-only` import throws, and they read tooling variables
+   (`ALLOWED_DEV_ORIGINS`, `CI`), not the app's runtime environment.
 7. `zod` is a direct dependency of `apps/marketing` (current stable 4.x, recorded in the PR). Report the first-load
    JS of `/termin` and `/kontakt` before/after; zod reaches the client through `validation.ts`.
 
@@ -302,7 +351,8 @@ Spec: both D3 boxes.
 - [ ] `next build` without `.env` is green (a fresh worktree has none) - spec box.
 - [ ] Without `CAL_API_KEY` the booker shows `unconfigured` exactly as today (HTML snapshot identical); a present
       but malformed value stops `next start` with a clear message - spec box.
-- [ ] Characterization table and action tests green; every log line and user message of the action unchanged.
+- [ ] Characterization table and action tests green; every log line and user message of the action unchanged
+      except the rows of the behaviour-change table.
 - [ ] `.env.example` and README state the variable is optional and what shape it needs.
 
 ## D4 - Route robustness
@@ -313,21 +363,29 @@ jsdom, Testing Library), `apps/marketing/package.json` (`jsdom`, `@testing-libra
 `@testing-library/dom`, versions as in `packages/ui`), `CLAUDE.md` (test projects line). Spec: the D4 box.
 If a C8 slice has added a marketing `components` project by the time D4 rebases, keep that one; D2 reuses it.
 
-**Rulings.** No `loading.tsx`: every page except `/zahlung` is static and has nothing to wait for, and on
-`/zahlung` a boundary would turn the 307 into a meta refresh. `global-error.tsx` shows the existing error copy -
-no new text - without navbar and footer (the layout is what failed); it is a `fix:` because a root layout error
-renders Next's bare default page today.
+**Rulings.** No `loading.tsx`. The static pages have nothing to wait for. The two per-request pages render in one
+server pass without slow data: on `/kontakt` a fallback would only flash before the page, and on `/zahlung` a
+streamed boundary would turn the 307 into a meta refresh. `global-error.tsx` shows the existing error copy - no
+new text - without navbar and footer (the layout is what failed); it is a `fix:` because a root layout error
+renders Next's bare default page today. `error.tsx` keeps `reset` in D4; a switch to `retry` is D4r (Q2).
 
-1. Extract the `StatusPage` of `app/error.tsx` into `ErrorState({ onRetry }: { onRetry: () => void })`;
-   `error.tsx` renders it with `reset` (or `retry`, per open question 2). Markup unchanged (HTML snapshot of the
-   404/error states, component test asserting the eyebrow, title, both actions and the contact link).
-2. `global-error.tsx` (`"use client"`): `<html lang="de" className={fontVariables}>`, imports `./globals.css`
-   after `@skillsite/ui/shell/fonts` (keep `layout-imports.test.ts`'s order rule satisfied), wraps
-   `<ThemeProvider>` around `<main id="main"><ErrorState /></main>` so the stored theme applies. A `<title>` only
-   if open question 2 says so.
-3. Component tests (jsdom; mock `@skillsite/ui/shell/fonts`, which calls `next/font` at import): both boundaries
-   render the heading "Da ist etwas schiefgelaufen.", the retry button calls the recovery prop once, and the
-   contact link points to `/kontakt`.
+1. First commit: add the `components` project and a temporary, uncommitted characterization test that renders
+   today's `app/error.tsx` and writes its `container.innerHTML` to the scratchpad. Then extract the `StatusPage`
+   into `ErrorState({ onRetry }: { onRetry: () => void })` and render it from `error.tsx` with `reset`; the
+   rerun writes a byte-identical `innerHTML`. (The server HTML snapshot never reaches an error boundary, so this is
+   the pixel-identity proof for the extraction.)
+2. `global-error.tsx` (`"use client"`) mirrors `layout.tsx`'s document:
+   `<html lang="de" suppressHydrationWarning className={fontVariables}>` (next-themes sets `data-theme` early),
+   `<body className="flex min-h-dvh flex-col">`, then `<ThemeProvider>` around
+   `<main id="main" className="flex-1"><ErrorState onRetry={reset} /></main>`. It imports `./globals.css` after
+   `@skillsite/ui/shell/fonts` (keep `layout-imports.test.ts`'s order rule satisfied). A `<title>` only if Q2
+   says so. **If adding the `globals.css` import changes any route's stylesheet links or served CSS (HTML
+   snapshot), stop and report.**
+3. Component tests (jsdom) target `ErrorState`, not `global-error.tsx`: rendering `<html>` inside a Testing
+   Library container only produces nesting warnings. Assert the heading "Da ist etwas schiefgelaufen.", that the
+   retry button calls `onRetry` once, and that the contact link points to `/kontakt`. `global-error.test.tsx`
+   checks the document with `renderToStaticMarkup` instead of a container (mock `@skillsite/ui/shell/fonts`, which
+   calls `next/font` at import): `lang="de"`, the font classes, the body classes and the `ErrorState` heading.
 4. Manual proof in a scratch copy only (never committed): a client component that throws after a click, once
    inside a page (expect `error.tsx` inside navbar/footer) and once in the navbar (expect `global-error.tsx` with
    the brand fonts and the stored theme), in a production build, light and dark.
@@ -338,6 +396,12 @@ renders Next's bare default page today.
       renders `global-error.tsx` with fonts, styles and the stored theme - spec box.
 - [ ] All routes' HTML identical; the 307 smoke test green; no `loading.tsx` added.
 - [ ] PR body: the visible change (layout errors: bare Next page -> site error page), screenshots light/dark.
+
+### D4r - Retry from the error page (only if Q2 calls `reset` a bug)
+
+`app/error.tsx` and `global-error.tsx` pass `retry` instead of `reset` to `ErrorState`. Test: the button calls
+`retry` once. Manual proof in a scratch copy: a server component that throws once (a module-level counter) recovers
+on "Nochmal versuchen" with `retry` and stays on the error page with `reset`. The PR body names exactly that change.
 
 ## D1b - Booking module
 
@@ -380,6 +444,10 @@ Create `index.ts`, `server.ts`, `server/availability-route.ts`; modify `app/api/
 - [ ] A deep import (`modules/booking/server/...` from `app/`) fails lint; built output identical - spec box
       (HTML snapshot, computed styles of the booker scenarios, smoke and C8 booking E2E green).
 - [ ] `next build` passes with `server-only` in both `server.ts` files; no `index.ts` imports `./server`.
+- [ ] `/kontakt?fach=mathematik` still preselects the subject in the booker form (`initialSubject`), as on `main`.
+
+How to check: `/termin` (duration -> calendar -> slot -> form) and `/kontakt?fach=mathematik` (slot -> form, the
+subject chip preselected), light/dark, 390/1280 px - nothing changes.
 
 ## C9 - Workbench coverage
 
@@ -395,8 +463,8 @@ Select, RadioGroup, choice chips, Switch and Calendar - C9c only audits those):
 | PR  | Component (variant keys to cover)                                                                                                                                                        |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | C9a | `Card` (tone, radius, lift, surface incl. glass on inverse, `asChild`) - extend the existing story                                                                                       |
-| C9a | `Tag` (tone), `Pill` (tone, size, `as`), `IconBadge` (layout, size, shape, tone), `IconButton` (size, surface)                                                                           |
-| C9a | `CheckList`, `CheckMark`, `InfoRow` (default, inverse, summary, doc), `Accordion`                                                                                                        |
+| C9a | `Tag` (tone), `Pill` (tone, size, `as`), `IconBadge` (layout, size, shape, tone), `IconButton` (size, surface, hover: border/none)                                                       |
+| C9a | `CheckList` (size, tone), `CheckMark`, `InfoRow` (default, inverse, summary, doc), `Accordion`                                                                                           |
 | C9a | `SmartLink`, `TextLink` (site, doc, underline, inverse, inverse-muted), `ArrowLink`, `NavLink` (menu, menu-sub, toc; active)                                                             |
 | C9a | `Heading` (every size incl. title/card-title/step-title, tone, wrap) and `Text` (size, tone, `Address`) - extend typography; `Eyebrow` (tone, dot), `Lead`, `ProseH2`/`ProseH3`/`ProseP` |
 | C9a | `Field` (label, description, error, required) with `Input` and `Textarea`                                                                                                                |
@@ -407,6 +475,11 @@ Select, RadioGroup, choice chips, Switch and Calendar - C9c only audits those):
 
 1. **C9a/C9b:** write the stories of the table; check each in `pnpm storybook` light and dark. `Reveal` and
    `CountUp` stories must reach their end state deterministically (the widget suite runs under reduced motion).
+   C9a renames the existing `Primitives/Typography` story file into per-component files titled
+   `Typography/Heading`, `Typography/Text`, ... (the `<Group>/<Name>` rule; no E2E references its story id).
+   `ThemeToggle` would fight the preview decorator, which writes `data-theme` on every render: C9b teaches the
+   decorator to skip that write when a story sets `parameters.ownsTheme: true`, and the `ThemeToggle` story sets
+   it and lets its `ThemeProvider` own the attribute.
 2. **C9c, guard first:** `packages/ui/src/stories.test.ts` (node) maps every exported `.tsx` module of
    `primitives`, `typography`, `forms`, `overlays`, `layout`, `motion`, `shell` to the component names it exports
    and asserts each name is imported by at least one `*.stories.tsx`. It fails on today's tree and passes after
@@ -426,8 +499,12 @@ Select, RadioGroup, choice chips, Switch and Calendar - C9c only audits those):
 **Files** (all under `apps/marketing/src/modules/booking/`): create the components `booker-aside`, `select-step`,
 `booking-calendar`, `time-slots`, `booking-result`, `unavailable-notice` (`components/*.tsx`), the hooks
 `use-availability` and `use-booking-submission` (`components/*.ts`), `model/pricing.ts`, tests next to
-each (`*.test.tsx` / `*.test.ts`); modify `components/booker.tsx`, `model/dates.ts`, `content/booking.ts`.
-Spec: the D2 box.
+each; modify `components/booker.tsx`, `model/dates.ts`, `content/booking.ts`. Spec: the D2 box.
+
+**Test environments.** The marketing Vitest config has only the node project `unit` (`src/**/*.test.{ts,mts}`)
+until D4 adds the jsdom project `components` (`src/**/*.test.tsx`, Testing Library) - D4, not this slice, is
+"the booker slice" `CLAUDE.md` anticipated. Every test that renders or uses `renderHook` is therefore a
+`.test.tsx`, including `use-availability.test.tsx`; pure model tests (`pricing.test.ts`) stay `.test.ts`.
 
 **Contracts** (adapt the names of the C8.8 calendar props as merged; keep its manual month path)
 
@@ -435,6 +512,8 @@ Spec: the D2 box.
   `{ shown, monthOffset, availability, loading, status, changeMonth(delta: number), restartSearch(), retry() }`.
   It owns the fetch, the `AbortController`, `reloadKey` and the auto-advance ref; `changeMonth` switches
   auto-advance off and clamps to `0..MAX_MONTH_OFFSET`; `restartSearch` switches it on and reloads.
+  `onFirstFreeDay` is held in a ref updated on every render and is **not** an effect dependency: the effect's
+  dependencies stay today's (`event`, `duration`, the shown month, `reloadKey`, `monthOffset`).
 - `useBookingSubmission(event, duration)` returns `{ phase, error, submit(draft), retryBooking(), reset() }` - the
   `finalizeBooking` flow, `withFillDuration`, the three analytics events, unchanged.
 - `model/pricing.ts`: `formatSlotPrice(config: BookingEventConfig, duration: number): string | null` and
@@ -444,11 +523,13 @@ Spec: the D2 box.
 - The booker's inline strings move to `bookerText` in `content/booking.ts`, byte-identical (entities as their
   characters, e.g. `&nbsp;` -> `\u00a0`).
 
-1. Characterize first, in a temporary uncommitted test: render the whole `Booker` (fetch stubbed, `requestBooking`
+1. Characterize first, in a temporary uncommitted test: render the whole `Booker` for both events (the
+   `kennenlernen` form also with `initialSubject`, as `/kontakt?fach=` passes it; fetch stubbed, `requestBooking`
    mocked to each outcome: confirmed, slot_taken, rate_limited, blocked, too_fast, generic, rejected promise) and
    write each state's `container.innerHTML` to the scratchpad. Run it on the base commit; it is the reference.
-2. Write the committed tests: `use-availability.test.ts` (first-day callback; empty month advances until
-   `MAX_MONTH_OFFSET` and stops; manual `changeMonth` into an empty month does not bounce; a duration change aborts
+2. Write the committed tests: `use-availability.test.tsx` (mount fetches exactly once; a new `onFirstFreeDay`
+   identity on rerender does not refetch; first-day callback; empty month advances until `MAX_MONTH_OFFSET` and
+   stops; manual `changeMonth` into an empty month does not bounce; a duration change aborts
    the in-flight request and ignores its late answer; non-OK -> `error`; `retry` refetches once),
    `pricing.test.ts` (45/60/90 -> `"22,50\u00a0€"`, `"30,00\u00a0€"`, `"45,00\u00a0€"`; free event -> `null`),
    `booking-result.test.tsx` (title and actions per phase and reason, both events), `time-slots.test.tsx`,
@@ -465,6 +546,11 @@ Spec: the D2 box.
 - [ ] Characterized states identical; HTML and computed styles identical on `/termin` and `/kontakt` (calendar,
       form, empty month, `unconfigured`, `error`, generic failure).
 - [ ] Network requests per flow unchanged (same availability queries in the same order in the E2E run).
+- [ ] `/kontakt?fach=mathematik` preselects the subject exactly as before (characterized state and E2E).
+
+How to check: `/termin` -> duration -> calendar (month back/forward, an empty month) -> slot -> form -> submit
+(generic failure without a Cal key); `/kontakt` and `/kontakt?fach=mathematik` -> slot -> form with the subject
+preselected; the `unconfigured` state - light/dark, 390/1280 px, nothing changes.
 
 ## D5 - Page migration
 
@@ -501,7 +587,7 @@ HTML text nodes identical and computed styles identical with the toolkit; class 
 | D5.1  | `/` - `app/page.tsx` (22 `className`), `content/home.ts`                                               | `benefit-grid` -> `app/_components/`; hero block (underline, price badge, floating tag) -> `app/_components/hero.tsx`; section intros to content |
 | D5.2  | `/faecher` - `app/faecher/page.tsx` (12), `content/subjects.ts`                                        | subject detail cards to a `_components` block; glyph badge on `IconBadge` if a variant matches                                                   |
 | D5.3  | `/ablauf` - `app/ablauf/page.tsx` (12), `content/process.ts`                                           | Discord panel to `_components`; intros to content                                                                                                |
-| D5.4  | `/preise` - `app/preise/page.tsx` (29), `content/pricing.ts`                                           | price panel and conditions cards to `_components`; steps on `StepNumber`                                                                         |
+| D5.4  | `/preise` - `app/preise/page.tsx` (29), `content/pricing.ts`                                           | price panel and conditions cards to `_components` (its step digits are already on `StepNumber` since D5.0)                                       |
 | D5.5  | `/ueber-mich` - `app/ueber-mich/page.tsx` (18), `content/about.ts`                                     | `code-typewriter` -> `app/ueber-mich/_components/`; quote panel                                                                                  |
 | D5.6  | `/online-lernen` - `app/online-lernen/page.tsx` (23), `content/online-learning.ts`                     | platform steps and checklist cards to `_components`                                                                                              |
 | D5.7  | `/termin`, `/kontakt` - both pages (2/18), `content/contact.ts`, `content/booking.ts`                  | `whatsapp-qr` -> `app/kontakt/_components/`; contact cards; page intros to content                                                               |
@@ -510,7 +596,9 @@ HTML text nodes identical and computed styles identical with the toolkit; class 
 
 Steps per route PR: (1) toolkit before-tree; (2) move one-user blocks; (3) swap hand-built markup for components;
 (4) move text (`perl -CSD` for any bulk edit); (5) toolkit after-run, `just ratchet-update` if a count fell;
-(6) `just check`.
+(6) `just check`. D5.9 additionally proves the error boundaries, which the HTML snapshot never reaches: a
+temporary component test writes the `innerHTML` of `ErrorState` and of `global-error.tsx`'s
+`renderToStaticMarkup` output to the scratchpad before and after the copy move; both must be byte-identical.
 
 **Acceptance (each D5 PR)**
 
@@ -559,7 +647,7 @@ steps; `design-ratchet.json`; `CLAUDE.md`; spec status line.
    (it already is for `hex-color`); list every remaining `raw-button` and `inline-style` occurrence with its reason
    in the PR body.
 4. `CLAUDE.md`: layout (`src/modules/`, `app/<route>/_components/`), module rules and the lint that enforces them,
-   `process.env` only through `lib/env.ts`, the marketing `components` test project, booking paths in traps. Flip
+   `process.env` only through `lib/env.ts`, the marketing `components` test project. Flip
    the spec status line to "Phase D done" once every D box is ticked.
 
 **Acceptance:** HTML identical on all routes; `just check` green; every path in `CLAUDE.md` and `README.md` exists.
@@ -583,7 +671,8 @@ and its base, the changed public API (module entries, new exports), the toolkit 
 
 - **Refactor slices:** the routes touched, light and dark, 390 px and 1280 px, "nothing looks or behaves
   differently". Booking slices add the flows: `/termin` -> duration -> calendar (month back/forward, empty month)
-  -> slot -> form -> submit with no Cal key (generic failure); `/kontakt` -> slot -> form; the `unconfigured` state.
+  -> slot -> form -> submit with no Cal key (generic failure); `/kontakt` and `/kontakt?fach=mathematik` -> slot ->
+  form (subject preselected); the `unconfigured` state.
 - **D4 (`fix:`):** the before/after of a root layout error, screenshots light/dark, and the scratch steps to
   reproduce it locally.
 - **C9:** the Storybook groups to open and the variant checklist.
@@ -593,11 +682,12 @@ and its base, the changed public API (module entries, new exports), the toolkit 
 
 1. **D3 - what is a malformed `CAL_API_KEY`?** The spec says a malformed value stops the server, but not what
    "malformed" means. Proposal: non-empty, no whitespace, starts with `cal_`. Please confirm the production key
-   matches, or name the rule. (`.env.example`'s `API_KEY_HERE` would then stop a server that copies it unedited.)
+   matches, or name the rule. A whitespace-only value counts as malformed under the proposal (see D3's
+   behaviour-change table). D3 changes `.env.example`'s placeholder to an empty `CAL_API_KEY=` either way.
 2. **D4 - `reset` or `retry`?** `app/error.tsx` passes `reset` to "Nochmal versuchen"; since Next 16.3 `retry` is
    the stable prop that re-fetches the segment, so after a server error today's button may not recover. Is this a
-   bug to fix in D4, or intended? And should `global-error.tsx` set a tab title (for example the existing eyebrow
-   "Ein Fehler ist aufgetreten" in the site's title template) or none?
+   bug (then it gets its own PR, D4r) or intended? And should `global-error.tsx` set a tab title (for example the
+   existing eyebrow "Ein Fehler ist aufgetreten" in the site's title template) or none?
 3. **D5.9 - WhatsApp on `/zahlung`.** Its button is a raw `<a>` and opens WhatsApp in the same tab; the link rule
    (`SmartLink`) opens external links in a new tab. Bug (separate `fix(links):` PR) or intended (the button stays
    a raw anchor with a recorded exception)?
@@ -608,3 +698,6 @@ and its base, the changed public API (module entries, new exports), the toolkit 
 5. **D6 - parked testimonials.** `components/sections/testimonials.tsx` and `content/testimonials.ts` are unused
    (the home section is commented out, awaiting real testimonials). Keep them parked, or remove them as dead code
    and restore from history later?
+6. **C9 timing.** The spec orders `C8 -> C9`, but C8 completes only with C8.9's human VoiceOver/Safari gate, and
+   D5 waits for C9. This plan lets C9a/C9b (stories for components no C8 slice touches) start now and gates only
+   C9c on C8.8 being on `main`. Is that acceptable, or should C9 wait for the spec's C8 box?
