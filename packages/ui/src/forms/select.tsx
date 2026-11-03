@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 
+import { Eyebrow } from "../typography/eyebrow";
 import { cn } from "../utils/cn";
 
 export type SelectOption<T extends string | number> = {
@@ -34,7 +35,7 @@ const tones: Record<
   {
     trigger: string;
     chip: string;
-    eyebrow: string;
+    eyebrow: "muted" | "inverse-accent";
     value: string;
     chevron: string;
     panel: string;
@@ -47,7 +48,7 @@ const tones: Record<
   default: {
     trigger: "border-line bg-bg text-ink hover:bg-surface-2",
     chip: "bg-surface-2 text-coral",
-    eyebrow: "text-ink-soft",
+    eyebrow: "muted",
     value: "text-ink",
     chevron: "text-ink-soft",
     panel: "border-line bg-surface shadow-card",
@@ -60,7 +61,7 @@ const tones: Record<
     trigger:
       "border-overlay-12 bg-overlay-6 text-on-navy hover:border-overlay-22 hover:bg-overlay-10",
     chip: "bg-overlay-8 text-accent-blue",
-    eyebrow: "text-accent-blue",
+    eyebrow: "inverse-accent",
     value: "text-on-navy",
     chevron: "text-on-navy-soft",
     panel: "border-overlay-14 bg-inverse-raised shadow-popover-inverse",
@@ -215,9 +216,9 @@ export function Select<T extends string | number>({
           </span>
         ) : null}
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className={cn("text-eyebrow uppercase", t.eyebrow)}>
+          <Eyebrow dot={false} tone={t.eyebrow}>
             {hideLabel ? null : label}
-          </span>
+          </Eyebrow>
           <span className={cn("truncate text-small font-semibold", t.value)}>
             {selectedLabel}
           </span>

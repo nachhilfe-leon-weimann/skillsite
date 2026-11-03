@@ -26,7 +26,6 @@ export const metadata = pageMetadata({
 
 const sideCardClass =
   "flex flex-1 flex-col justify-center rounded-2xl border border-line bg-surface p-6 shadow-card lift [--lift:-0.25rem] hover:border-coral";
-const sideLabelClass = "text-eyebrow uppercase text-coral";
 
 type ContactPageProps = {
   searchParams?: Promise<{
@@ -64,9 +63,9 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               rel="noreferrer"
               className="flex h-full flex-col justify-center overflow-hidden rounded-2xl bg-coral-gradient p-panel-contact text-white shadow-glow-md lift [--lift:-0.25rem]"
             >
-              <span className="text-eyebrow uppercase text-on-accent-90">
+              <Eyebrow dot={false} tone="on-accent">
                 Am liebsten per WhatsApp
-              </span>
+              </Eyebrow>
               <Heading size="h3" className="mt-2.5 mb-1.5">
                 Schreib mir auf WhatsApp.
               </Heading>
@@ -96,7 +95,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
 
           <Reveal variant="rise-soft" index={1} className="flex flex-col gap-5">
             <a href={`mailto:${email}`} className={sideCardClass}>
-              <span className={sideLabelClass}>E-Mail</span>
+              <Eyebrow dot={false}>E-Mail</Eyebrow>
               <Heading
                 as="h2"
                 size="title"
@@ -110,9 +109,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               </Text>
             </a>
             <Link href={routes.onlineLearning} className={sideCardClass}>
-              <span className={sideLabelClass}>
-                Discord und Microsoft Teams
-              </span>
+              <Eyebrow dot={false}>Discord und Microsoft Teams</Eyebrow>
               <Heading as="h2" size="title" className="mt-2 mb-1">
                 Unser Klassenzimmer
               </Heading>
