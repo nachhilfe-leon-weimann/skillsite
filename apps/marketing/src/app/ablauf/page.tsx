@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Container } from "@/components/layout/container";
-import { Section } from "@/components/layout/section";
-import { PageHeader } from "@/components/layout/page-header";
-import { SectionHeader } from "@skillsite/ui/layout/section-header";
+import { Container } from "@skillsite/ui/layout/container";
+import { Section } from "@skillsite/ui/layout/section";
+import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Button } from "@skillsite/ui/primitives/button";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
@@ -48,7 +47,8 @@ export default function ProcessPage() {
       <Section surface>
         <div className="grid items-center gap-split lg:grid-cols-2">
           <div>
-            <SectionHeader
+            <PageHeader
+              variant="section"
               eyebrow="Eine Stunde – 60 Minuten"
               title="So ist eine Stunde aufgebaut."
               size="h3"

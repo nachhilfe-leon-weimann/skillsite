@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Container } from "@/components/layout/container";
-import { Section } from "@/components/layout/section";
+import { Container } from "@skillsite/ui/layout/container";
+import { Section } from "@skillsite/ui/layout/section";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Heading } from "@skillsite/ui/typography/heading";

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Container } from "@/components/layout/container";
-import { Section } from "@/components/layout/section";
-import { PageHeader } from "@/components/layout/page-header";
+import { Container } from "@skillsite/ui/layout/container";
+import { Section } from "@skillsite/ui/layout/section";
+import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Card } from "@skillsite/ui/primitives/card";
 import { Button } from "@skillsite/ui/primitives/button";
