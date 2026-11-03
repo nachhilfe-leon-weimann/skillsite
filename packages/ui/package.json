@@ -30,6 +30,7 @@
     "./forms/select": "./src/forms/select.tsx",
     "./forms/switch": "./src/forms/switch.tsx",
     "./overlays/dialog": "./src/overlays/dialog.tsx",
+    "./overlays/popover": "./src/overlays/popover.tsx",
     "./layout/centered-state": "./src/layout/centered-state.tsx",
     "./layout/container": "./src/layout/container.tsx",
     "./layout/card-grid": "./src/layout/card-grid.tsx",
@@ -58,6 +59,7 @@
   },
   "dependencies": {
     "@radix-ui/react-dialog": "1.3.1",
+    "@radix-ui/react-popover": "1.3.1",
     "@radix-ui/react-slot": "^1.3.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

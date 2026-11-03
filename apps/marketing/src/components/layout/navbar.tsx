@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 
 import { cn } from "@skillsite/ui/utils/cn";
@@ -12,6 +12,11 @@ import { Logo } from "@skillsite/ui/shell/logo";
 import { Button } from "@skillsite/ui/primitives/button";
 import { NavLink } from "@skillsite/ui/primitives/link";
 import { IconButton } from "@skillsite/ui/primitives/icon-button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@skillsite/ui/overlays/popover";
 import { brand, primaryCta, primaryNav, platformNav } from "@/content/site";
 import { useBodyScrollLock } from "@skillsite/ui/hooks/use-body-scroll-lock";
 import { useMediaQuery } from "@skillsite/ui/hooks/use-media-query";
@@ -186,57 +191,82 @@ function PlatformDropdown({
   pathname: string;
   active: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const panelId = useId();
+  // A click or key press pins the panel; a mouse hover shows it while it lasts.
+  const [pinned, setPinned] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  // After a close, a still-hovering pointer must leave before it reopens the panel.
+  const [hoverSuppressed, setHoverSuppressed] = useState(false);
+  const navigatingRef = useRef(false);
+  const open = pinned || (hovered && !hoverSuppressed);
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
+  const close = () => {
+    setPinned(false);
+    setHoverSuppressed(true);
+  };
+  const setHover = (event: React.PointerEvent, value: boolean) => {
+    if (event.pointerType !== "mouse") return;
+    setHovered(value);
+    setHoverSuppressed(false);
+  };
 
   return (
-    <div ref={ref} data-open={open || undefined} className="group relative">
-      <Button
-        type="button"
-        aria-expanded={open}
-        aria-controls={panelId}
-        variant="ghost"
-        onClick={() => setOpen((value) => !value)}
-        className={cn("px-3 nav-wide:px-3.5", activeText(active))}
+    <div
+      data-open={open || undefined}
+      onPointerEnter={(event) => setHover(event, true)}
+      onPointerLeave={(event) => setHover(event, false)}
+      className="group relative"
+    >
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) close();
+        }}
       >
-        Online lernen
-        <ChevronDown
-          className="size-3.5 transition-transform duration-quick group-hover:rotate-180 group-data-open:rotate-180"
-          aria-hidden
-        />
-      </Button>
+        <PopoverTrigger>
+          <Button
+            variant="ghost"
+            onClick={(event) => {
+              // Replace the plain toggle: a click on a hover-opened panel keeps it open.
+              event.preventDefault();
+              if (open && !pinned) {
+                setPinned(true);
+              } else if (open) {
+                close();
+              } else {
+                setPinned(true);
+                setHoverSuppressed(false);
+              }
+            }}
+            className={cn("px-3 nav-wide:px-3.5", activeText(active))}
+          >
+            Online lernen
+            <ChevronDown
+              className="size-3.5 transition-transform duration-quick group-data-open:rotate-180"
+              aria-hidden
+            />
+          </Button>
+        </PopoverTrigger>
 
-      <div
-        id={panelId}
-        className="invisible absolute right-0 top-full z-raised w-64 translate-y-2 pt-1.5 opacity-0 transition-[opacity,translate,visibility] duration-base ease-flow group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
-      >
-        <div className="flex flex-col gap-0.5 rounded-2xl border border-line bg-surface p-2 shadow-card">
+        <PopoverContent
+          label="Online lernen"
+          align="end"
+          className="flex w-64 flex-col gap-0.5"
+          onCloseAutoFocus={(event) => {
+            // A link click navigates: the destination owns focus.
+            if (navigatingRef.current) event.preventDefault();
+            navigatingRef.current = false;
+          }}
+        >
           {platformNav.map((item) => (
             <Button
               asChild
               key={`${item.href}:${item.label}`}
               variant="ghost"
               aria-current={currentPage(pathname, item.href)}
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                navigatingRef.current = true;
+                close();
+              }}
               className="flex flex-col items-start gap-0.5 rounded-xl px-3 py-2.5"
             >
               <Link href={item.href}>
@@ -247,8 +277,8 @@ function PlatformDropdown({
               </Link>
             </Button>
           ))}
-        </div>
-      </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

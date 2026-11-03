@@ -198,15 +198,29 @@ regressions and the nested integration suite. Overall C8, the C8.5 Select follow
 
 **Acceptance**
 
-- [ ] Pointer hover/click and Enter/Space open; pointer can cross to the panel without it vanishing. Keyboard-open
+- [x] Pointer hover/click and Enter/Space open; pointer can cross to the panel without it vanishing. Keyboard-open
       content can be reached by Tab; Tab/Shift+Tab can leave it and continue through the page, with no focus trap.
-- [ ] Escape closes and focuses "Online lernen"; outside pointer activation retains the clicked target's focus.
+- [x] Escape closes and focuses "Online lernen"; outside pointer activation retains the clicked target's focus.
       Pointer-only opening does not steal keyboard focus. Closing does not immediately reopen under hover.
-- [ ] Named popover/trigger association is valid; links remain links. No page-wide `aria-hidden`/inert or scroll
+- [x] Named popover/trigger association is valid; links remain links. No page-wide `aria-hidden`/inert or scroll
       lock appears for this non-modal panel; the spike's modal-menu accessibility failure is not inherited.
-- [ ] Navigation closes the panel and keeps SPA navigation; current-page/fragment behavior remains correct.
-- [ ] A11y, layout and motion tests cover desktop widths, rapid input and reduced motion. Update old role/no-popup
+- [x] Navigation closes the panel and keeps SPA navigation; current-page/fragment behavior remains correct.
+- [x] A11y, layout and motion tests cover desktop widths, rapid input and reduced motion. Update old role/no-popup
       assertions to the intentional new semantics, without dropping accessible-name or focus checks.
+
+C8.3 verification on 2026-11-03: the previous navbar failed all eighteen new marketing regressions, which address
+the named panel. Plain Radix wrapping failed three of six component tests: Radix loops Tab even in a non-modal
+popover, returns focus to the trigger only after the exit, and focuses the trigger on a close although focus is
+elsewhere. The wrapper passes Tab to the browser, returns focus on Escape at once and otherwise only when the panel
+held it; closed content is inert immediately. It passes six component tests and eleven Popover browser cases
+(light/dark keyboard path, Shift+Tab, Escape, outside click, toggle exit, link close, rapid reopen, reduced motion,
+viewport-edge collision at 390/1280px). Eighteen marketing cases cover the navbar at 1080/1280px: semantics without
+added `aria-hidden`/inert/scroll lock, Enter/Space/Tab/Shift+Tab, Escape, outside click, hover corridor without
+focus moves, hover suppression after Escape, trigger toggle, rapid input, client and fragment navigation with
+`aria-current`, rise/fall animation, exit inertness and reduced motion. The panel keeps its size, alignment and 6px
+corridor; Floating UI snaps its position to device pixels (under 0.5px at 1x). `@radix-ui/react-popover` 1.3.1
+resolves to the pinned DismissableLayer 1.2.1 and FocusScope 1.3.1. No human VoiceOver/Safari or maintainer look
+acceptance is claimed.
 
 ## C8.4 - Mobile navigation focus
 
