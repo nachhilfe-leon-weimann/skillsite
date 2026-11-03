@@ -1,42 +1,18 @@
 import { cn } from "../utils/cn";
 
 /* ----------------------------------------------------------------------------
- * Prose / legal documents (variant-based, used by the doc components)
+ * Prose: long legal text (AGB, Datenschutz, Impressum) on the prose tokens -
+ * Tailwind's default sizes, named (styles/tokens.css). The page title is a
+ * regular `Heading as="h1" size="h1"`.
    ------------------------------------------------------------------------- */
-type Variant = "site" | "doc";
-type ProseHeadingProps = React.HTMLAttributes<HTMLHeadingElement> & {
-  variant?: Variant;
-};
-
-export function H1({
+export function ProseH2({
   className,
-  variant = "site",
   ...props
-}: ProseHeadingProps) {
-  return (
-    <h1
-      className={cn(
-        "font-heading text-balance hyphens-heading",
-        variant === "site" ? "text-display" : "text-h1",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-export function H2({
-  className,
-  variant = "site",
-  ...props
-}: ProseHeadingProps) {
+}: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
       className={cn(
-        "font-heading hyphens-heading",
-        variant === "site"
-          ? "text-h2"
-          : "text-2xl font-bold tracking-tight text-ink",
+        "font-heading hyphens-heading text-prose-h2 font-bold tracking-tight text-ink",
         className,
       )}
       {...props}
@@ -44,16 +20,14 @@ export function H2({
   );
 }
 
-export function H3({
+export function ProseH3({
   className,
-  variant = "site",
   ...props
-}: ProseHeadingProps) {
+}: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
       className={cn(
-        "font-heading hyphens-heading",
-        variant === "site" ? "text-h3" : "text-lg font-bold text-ink",
+        "font-heading hyphens-heading text-prose-h3 font-bold text-ink",
         className,
       )}
       {...props}
@@ -61,38 +35,17 @@ export function H3({
   );
 }
 
-export function P({
-  className,
-  variant = "site",
-  ...props
-}: React.HTMLAttributes<HTMLParagraphElement> & { variant?: Variant }) {
-  return (
-    <p
-      className={cn(
-        "text-ink",
-        variant === "doc" ? "leading-7" : "text-body",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-export function Small({
+export function ProseP({
   className,
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-small text-ink-soft", className)} {...props} />;
+  return <p className={cn("text-prose-body text-ink", className)} {...props} />;
 }
 
-export function Muted({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-small text-ink-soft", className)} {...props} />;
-}
-
-type InlineLinkProps = React.ComponentProps<"a"> & { variant?: Variant };
+type InlineLinkProps = React.ComponentProps<"a"> & {
+  /** `doc` in legal text (tighter underline), `site` elsewhere. */
+  variant?: "site" | "doc";
+};
 
 export function InlineLink({
   className,

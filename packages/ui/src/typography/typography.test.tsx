@@ -1,8 +1,13 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
+import * as eyebrow from "./eyebrow";
 import { Eyebrow } from "./eyebrow";
+import * as heading from "./heading";
+import * as lead from "./lead";
 import { Lead } from "./lead";
+import * as prose from "./prose";
+import * as text from "./text";
 import { Text } from "./text";
 
 afterEach(cleanup);
@@ -45,4 +50,20 @@ test("Text tones on inverse surfaces are named by role", () => {
   expect(screen.getByText("Gedämpft").className).toBe(
     "text-body text-on-navy-soft",
   );
+});
+
+test("the typography group exports one API", () => {
+  expect(
+    [eyebrow, heading, lead, prose, text].flatMap(Object.keys).sort(),
+  ).toEqual([
+    "Address",
+    "Eyebrow",
+    "Heading",
+    "InlineLink",
+    "Lead",
+    "ProseH2",
+    "ProseH3",
+    "ProseP",
+    "Text",
+  ]);
 });

@@ -31,9 +31,9 @@ export function DocSectionNav({ sections }: { sections: DocNavSection[] }) {
   return (
     <nav
       aria-label="Abschnitte dieser Seite"
-      className="rounded-2xl border border-line bg-surface p-4 text-sm shadow-card"
+      className="rounded-2xl border border-line bg-surface p-4 text-prose-sm shadow-card"
     >
-      <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+      <p className="mb-3 px-2 text-prose-xs font-semibold uppercase tracking-wide text-ink-soft">
         Auf dieser Seite
       </p>
       <ul className="space-y-1">
