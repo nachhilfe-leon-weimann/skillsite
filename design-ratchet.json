@@ -1,0 +1,21 @@
+{
+  "allow": {
+    "hex-color": [
+      {
+        "file": "apps/marketing/src/app/layout.tsx",
+        "reason": "theme-color meta tags cannot read CSS variables"
+      }
+    ]
+  },
+  "counts": {
+    "arbitrary-text": 32,
+    "raw-text-size": 21,
+    "color-mix": 13,
+    "arbitrary-shadow": 7,
+    "arbitrary-radius": 3,
+    "clamp-spacing": 24,
+    "hex-color": 12,
+    "raw-button": 13,
+    "inline-style": 16
+  }
+}
