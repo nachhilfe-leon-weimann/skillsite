@@ -46,11 +46,7 @@ export function Heading({
    ------------------------------------------------------------------------- */
 export type TextSize = "lead" | "body" | "small" | "caption";
 export type TextTone =
-  | "default"
-  | "muted"
-  | "on-navy"
-  | "on-navy-soft"
-  | "inherit";
+  "default" | "muted" | "on-navy" | "on-navy-soft" | "inherit";
 
 const textSizeClass: Record<TextSize, string> = {
   lead: "text-lead",

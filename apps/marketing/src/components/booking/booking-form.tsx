@@ -104,8 +104,7 @@ export function BookingForm({
 
   const groups = useMemo(() => groupFields(config.fields), [config.fields]);
   const readyToSubmit =
-    canSubmit &&
-    (!needsEarlyPerformanceConsent || earlyPerformanceRequested);
+    canSubmit && (!needsEarlyPerformanceConsent || earlyPerformanceRequested);
   const openItems = [
     ...missing,
     ...(needsEarlyPerformanceConsent && !earlyPerformanceRequested

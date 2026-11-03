@@ -52,8 +52,7 @@ export type PaymentRequest = {
 export type PaymentRejection = "missing" | "invoice" | "amount";
 
 export type ParsedPaymentRequest =
-  | ({ ok: true } & PaymentRequest)
-  | { ok: false; reason: PaymentRejection };
+  ({ ok: true } & PaymentRequest) | { ok: false; reason: PaymentRejection };
 
 /** A query parameter as Next hands it over: absent, once, or repeated. */
 type QueryValue = string | string[] | undefined;
