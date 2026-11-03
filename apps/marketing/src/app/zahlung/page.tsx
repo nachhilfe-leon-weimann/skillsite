@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Container } from "@skillsite/ui/layout/container";
-import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
+import { StatusPage } from "@skillsite/ui/layout/status-page";
 import { Button } from "@skillsite/ui/primitives/button";
-import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { contactDetails } from "@/content/contact";
 import {
@@ -53,24 +51,27 @@ export default async function PaymentPage({
   logPayment("rejected", { reason: request.reason, ...describeLink(params) });
 
   return (
-    <Container className="flex min-h-[60vh] flex-col items-center justify-center py-section text-center">
-      <Eyebrow>Zahlung</Eyebrow>
-      <Heading as="h1" size="h1" className="mt-4">
-        Dieser Zahlungslink führt nicht weiter.
-      </Heading>
-      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
-        Vermutlich ist der Link aus der Rechnung unterwegs abgeschnitten worden.
-        Schreib mir kurz mit deiner Rechnungsnummer – du bekommst sofort einen
-        neuen Link.
-      </Text>
-      <div className="mt-8 flex flex-wrap justify-center gap-3.5">
-        <Button asChild variant="primary" size="lg">
-          <a href={contactDetails.eMail.href}>E-Mail schreiben</a>
-        </Button>
-        <Button asChild variant="outline" size="lg">
-          <a href={contactDetails.whatsapp.href}>Über WhatsApp melden</a>
-        </Button>
-      </div>
+    <StatusPage
+      eyebrow="Zahlung"
+      title="Dieser Zahlungslink führt nicht weiter."
+      lead={
+        <>
+          Vermutlich ist der Link aus der Rechnung unterwegs abgeschnitten
+          worden. Schreib mir kurz mit deiner Rechnungsnummer – du bekommst
+          sofort einen neuen Link.
+        </>
+      }
+      actions={
+        <>
+          <Button asChild variant="primary" size="lg">
+            <a href={contactDetails.eMail.href}>E-Mail schreiben</a>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <a href={contactDetails.whatsapp.href}>Über WhatsApp melden</a>
+          </Button>
+        </>
+      }
+    >
       <Text size="small" tone="muted" className="mt-6">
         {contactDetails.eMail.content} · {contactDetails.whatsapp.content}
       </Text>
@@ -79,6 +80,6 @@ export default async function PaymentPage({
           Alle Kontaktwege
         </Link>
       </Text>
-    </Container>
+    </StatusPage>
   );
 }
