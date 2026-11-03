@@ -18,8 +18,8 @@
   "devDependencies": {
     "@skillsite/config": "workspace:*",
     "prettier": "^3.9.9",
-    "turbo": "^2.11.2",
-    "vite": "^8.3.0",
+    "turbo": "^2.11.9",
+    "vite": "^8.3.4",
     "vitest": "^5.0.2"
   }
 }
