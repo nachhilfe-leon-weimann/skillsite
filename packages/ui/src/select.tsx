@@ -18,8 +18,10 @@ type SelectProps<T extends string | number> = {
   value: T;
   options: SelectOption<T>[];
   onChange: (value: T) => void;
-  /** Eyebrow shown above the value and used as the accessible name. */
+  /** Accessible name of the trigger and the list; shown as the eyebrow unless `hideLabel`. */
   label: string;
+  /** Keep the label for assistive technology only. */
+  hideLabel?: boolean;
   /** Leading icon, rendered in a small chip to echo neighbouring info rows. */
   icon?: React.ReactNode;
   tone?: SelectTone;
@@ -83,6 +85,7 @@ export function Select<T extends string | number>({
   options,
   onChange,
   label,
+  hideLabel = false,
   icon,
   tone = "default",
   disabled,
@@ -214,7 +217,7 @@ export function Select<T extends string | number>({
         ) : null}
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className={cn("text-eyebrow uppercase", t.eyebrow)}>
-            {label}
+            {hideLabel ? null : label}
           </span>
           <span className={cn("truncate text-small font-semibold", t.value)}>
             {selectedLabel}
