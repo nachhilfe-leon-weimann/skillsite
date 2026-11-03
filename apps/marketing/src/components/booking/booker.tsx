@@ -16,10 +16,10 @@ import {
 
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
-import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { IconButton } from "@skillsite/ui/primitives/icon-button";
 import { InfoRow } from "@skillsite/ui/primitives/info-row";
 import { Select } from "@skillsite/ui/forms/select";
+import { CenteredState } from "@skillsite/ui/layout/centered-state";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
@@ -474,34 +474,6 @@ function AnimatedHeight({
       <div ref={innerRef} className={className}>
         {children}
       </div>
-    </div>
-  );
-}
-
-function CenteredState({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="m-auto max-w-sm text-center motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
-      <IconBadge
-        as="div"
-        size="14"
-        shape="full"
-        tone="accent-16"
-        className="mx-auto mb-4"
-      >
-        {icon}
-      </IconBadge>
-      <Heading as="h3" size="h4" className="mb-2">
-        {title}
-      </Heading>
-      {children}
     </div>
   );
 }
