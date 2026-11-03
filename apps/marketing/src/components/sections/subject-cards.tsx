@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Tag } from "@skillsite/ui/primitives/tag";
+import { Card } from "@skillsite/ui/primitives/card";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { subjects } from "@/content/subjects";
@@ -39,29 +40,28 @@ function SubjectCard({
 }) {
   const Icon = subject.glyph;
   return (
-    <Link
-      href={subject.href}
-      className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-6 shadow-card lift [--lift:-0.375rem] hover:border-coral"
-    >
-      <div className="flex items-center justify-between">
-        <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
-          <Icon className="size-6" />
+    <Card asChild lift="md" className="group flex h-full flex-col p-6">
+      <Link href={subject.href}>
+        <div className="flex items-center justify-between">
+          <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
+            <Icon className="size-6" />
+          </span>
+          {subject.tag ? <Tag>{subject.tag}</Tag> : null}
+        </div>
+        <Heading
+          as={headingAs}
+          size="card-title"
+          wrap="normal"
+          tone="default"
+          className="mt-5"
+        >
+          {subject.name}
+        </Heading>
+        <p className="mt-2 flex-1 text-ink-soft">{subject.claim}</p>
+        <span className="mt-4 text-card-link font-semibold text-ink flex flex-row items-center gap-1">
+          Mehr erfahren <ArrowRight className="size-4" />
         </span>
-        {subject.tag ? <Tag>{subject.tag}</Tag> : null}
-      </div>
-      <Heading
-        as={headingAs}
-        size="card-title"
-        wrap="normal"
-        tone="default"
-        className="mt-5"
-      >
-        {subject.name}
-      </Heading>
-      <p className="mt-2 flex-1 text-ink-soft">{subject.claim}</p>
-      <span className="mt-4 text-card-link font-semibold text-ink flex flex-row items-center gap-1">
-        Mehr erfahren <ArrowRight className="size-4" />
-      </span>
-    </Link>
+      </Link>
+    </Card>
   );
 }

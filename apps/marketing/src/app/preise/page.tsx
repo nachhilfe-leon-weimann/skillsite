@@ -43,7 +43,11 @@ export default function PricingPage() {
 
       <Container className="py-section-sm">
         <div className="mx-auto max-w-230">
-          <div className="grid overflow-hidden rounded-3xl border border-line shadow-card md:grid-cols-2">
+          <Card
+            surface="frame"
+            radius="3xl"
+            className="grid overflow-hidden md:grid-cols-2"
+          >
             <div className="flex flex-col justify-center bg-navy p-panel-pricing text-white">
               <Reveal trigger="mount" variant="rise-soft" delay={0}>
                 <span className="font-semibold tracking-[0.04em] text-accent-blue">
@@ -94,7 +98,7 @@ export default function PricingPage() {
                 ))}
               </Reveal>
             </div>
-          </div>
+          </Card>
         </div>
       </Container>
 
@@ -179,7 +183,9 @@ export default function PricingPage() {
               key={step.n}
               variant="rise-soft"
               index={i}
-              className="rounded-2xl border border-line bg-bg p-6"
+              as={Card}
+              surface="inset"
+              className="p-6"
             >
               <span className="font-heading text-digit-sm font-extrabold leading-none text-coral">
                 {step.n}
