@@ -298,8 +298,8 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   `/ablauf` and the booker title -> `h4`; booking chips, radio rows, calendar days, the mobile platform toggle ->
   `small`. Reading widths in `em` grow or shrink with their text, so line breaks move.
 - _Acceptance criteria:_
-  - [ ] `cn("text-eyebrow text-coral")` keeps both classes (test).
-  - [ ] Built HTML contains `text-lead` wherever `Lead` is used.
+  - [x] `cn("text-eyebrow text-coral")` keeps both classes (test).
+  - [x] Built HTML contains `text-lead` wherever `Lead` is used.
 
 **B2 - Layout and motion bugs.**
 
