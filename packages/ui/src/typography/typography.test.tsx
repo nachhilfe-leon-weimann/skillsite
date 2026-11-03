@@ -33,3 +33,16 @@ test("Eyebrow keeps its size next to its coral colour", () => {
   expect(eyebrow.className).toMatch(/\btext-eyebrow\b/);
   expect(eyebrow.className).toMatch(/\btext-coral\b/);
 });
+
+test("Text tones on inverse surfaces are named by role", () => {
+  render(
+    <>
+      <Text tone="inverse">Hell</Text>
+      <Text tone="inverse-muted">Gedämpft</Text>
+    </>,
+  );
+  expect(screen.getByText("Hell").className).toBe("text-body text-on-navy");
+  expect(screen.getByText("Gedämpft").className).toBe(
+    "text-body text-on-navy-soft",
+  );
+});

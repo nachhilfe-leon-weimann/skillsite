@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 import { Container } from "@/components/layout/container";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
-import { Button, LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { routes } from "@/lib/routes";
@@ -39,9 +40,9 @@ export default function Error({
         <Button variant="primary" size="lg" onClick={reset}>
           Nochmal versuchen
         </Button>
-        <LinkButton href={routes.contact} variant="outline" size="lg">
-          Kontakt aufnehmen
-        </LinkButton>
+        <Button asChild variant="outline" size="lg">
+          <Link href={routes.contact}>Kontakt aufnehmen</Link>
+        </Button>
       </div>
     </Container>
   );
