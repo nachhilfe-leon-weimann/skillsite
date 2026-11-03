@@ -3,7 +3,8 @@ import { ExternalLink, type LucideIcon, Scale } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Card } from "@skillsite/ui/primitives/card";
 import { Reveal } from "@skillsite/ui/motion/reveal";
-import { H1, H2, H3, InlineLink } from "@skillsite/ui/typography/prose";
+import { Heading } from "@skillsite/ui/typography/heading";
+import { InlineLink, ProseH2, ProseH3 } from "@skillsite/ui/typography/prose";
 import { Lead } from "@skillsite/ui/typography/lead";
 import { cn } from "@skillsite/ui/utils/cn";
 
@@ -57,13 +58,13 @@ export function DocHero({
   return (
     <Card className="p-6 sm:p-8">
       <Reveal trigger="mount" variant="rise-soft">
-        <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1 text-sm text-ink-soft">
+        <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1 text-prose-sm text-ink-soft">
           <Icon className="size-4" aria-hidden />
           {badge}
         </div>
-        <H1 variant="doc" className="mt-5">
+        <Heading as="h1" size="h1" className="mt-5">
           {title}
-        </H1>
+        </Heading>
         <Lead className="mt-4 max-w-3xl">{lead}</Lead>
         {facts?.length ? (
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -78,8 +79,8 @@ export function DocHero({
                     <FactIcon className="size-4" aria-hidden />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-xs text-ink-soft">{fact.label}</p>
-                    <p className="truncate text-sm font-medium text-ink">
+                    <p className="text-prose-xs text-ink-soft">{fact.label}</p>
+                    <p className="truncate text-prose-sm font-medium text-ink">
                       {fact.children}
                     </p>
                   </div>
@@ -107,9 +108,7 @@ export function DocSection({
       id={id}
       className="border-b border-line py-10 last:border-b-0 sm:py-12"
     >
-      <H2 variant="doc" className="max-w-3xl">
-        {title}
-      </H2>
+      <ProseH2 className="max-w-3xl">{title}</ProseH2>
       <div className="mt-5">{children}</div>
     </section>
   );
@@ -124,9 +123,7 @@ export function DocSubSection({
 }) {
   return (
     <section className="border-l border-line pl-4 not-first:mt-8 sm:pl-6">
-      <H3 variant="doc" className="text-lg">
-        {title}
-      </H3>
+      <ProseH3>{title}</ProseH3>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -141,7 +138,7 @@ export function DocGroup({
 }) {
   return (
     <div className="not-first:mt-10">
-      <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink-soft">
+      <p className="mb-4 text-prose-sm font-semibold uppercase tracking-wide text-ink-soft">
         {title}
       </p>
       <div>{children}</div>
@@ -192,7 +189,7 @@ export function DocIndentBlock({
         ))}
       </div>
       {footnote ? (
-        <p className="mt-3 text-sm leading-6 text-ink-soft">{footnote}</p>
+        <p className="mt-3 text-prose-sm leading-6 text-ink-soft">{footnote}</p>
       ) : null}
     </div>
   );
@@ -211,8 +208,8 @@ export function DocDetailList({
 }) {
   return (
     <div className="rounded-xl border border-line bg-surface-2/60 p-4">
-      <p className="text-sm font-medium leading-6 text-ink">{title}</p>
-      <DocList items={items} className="my-3 text-sm leading-6" />
+      <p className="text-prose-sm font-medium leading-6 text-ink">{title}</p>
+      <DocList items={items} className="my-3 text-prose-sm leading-6" />
     </div>
   );
 }
@@ -230,7 +227,7 @@ export function DocLinkList({
             href={link.href}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink transition-colors hover:border-coral"
+            className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-prose-sm text-ink transition-colors hover:border-coral"
           >
             <span>{link.label}</span>
             <ExternalLink
@@ -271,7 +268,7 @@ export function DocLegalBasis({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-4 flex gap-3 rounded-xl border border-line bg-surface-2/60 p-3">
       <Scale className="mt-1 size-4 shrink-0 text-ink-soft" aria-hidden />
-      <p className="text-sm leading-6 text-ink-soft">
+      <p className="text-prose-sm leading-6 text-ink-soft">
         <span className="font-medium text-ink">Rechtsgrundlage: </span>
         {children}
       </p>
