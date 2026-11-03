@@ -42,8 +42,11 @@ there slice by slice.
   change. When it is unclear whether something is a bug or a design choice, stop and ask.
 - Next.js 16 differs from older versions: read the guide in `apps/marketing/node_modules/next/dist/docs/` before relying on an
   API you are unsure about.
-- Unit-tested modules under `src/lib` are import-free (`node --test` cannot resolve `@/`) until the Vitest slice
-  of the foundation refactor lands.
+- Tests run on Vitest (`just test`). `packages/ui`: `src/**/*.test.ts` in node (project `unit`),
+  `src/**/*.test.tsx` in jsdom with Testing Library (project `components`). `apps/marketing`:
+  `src/**/*.test.{ts,mts}` in node (project `unit`; a `components` project follows with the booker slice).
+  Repo level: `tests/**/*.test.mts`, `scripts/**/*.test.mjs`. A test file outside these globs does not run.
+  Tested modules may use the `@/` alias.
 
 ## Git and PRs
 
