@@ -18,6 +18,7 @@ import { Select } from "@skillsite/ui/select";
 import { Heading, Text } from "@skillsite/ui/typography";
 import { cn } from "@skillsite/ui/utils";
 import { BookingForm } from "@/components/booking/booking-form";
+import { bookerText } from "@/content/booking";
 import { requestBooking } from "@/lib/booking/actions";
 import { withFillDuration } from "@/lib/booking/anti-spam";
 import {
@@ -346,7 +347,8 @@ export function Booker({
             </InfoRow>
             {config.durations ? (
               <Select
-                label=""
+                label={bookerText.durationLabel}
+                hideLabel
                 tone="on-navy"
                 icon={<Clock className="size-4" aria-hidden />}
                 value={duration}
