@@ -11,8 +11,7 @@ type AvailabilityRateLimitOptions = {
 };
 
 export type AvailabilityRateLimitResult =
-  | { ok: true }
-  | { ok: false; retryAfterMs: number };
+  { ok: true } | { ok: false; retryAfterMs: number };
 
 /**
  * Resolve the public duration query without accepting alternate number syntax
@@ -42,7 +41,9 @@ export function availabilityClientId(headers: Headers): string {
   };
 
   const forwarded = headers.get("x-forwarded-for")?.split(",", 1)[0] ?? null;
-  return normalize(forwarded) ?? normalize(headers.get("x-real-ip")) ?? "unknown";
+  return (
+    normalize(forwarded) ?? normalize(headers.get("x-real-ip")) ?? "unknown"
+  );
 }
 
 /**
@@ -62,7 +63,10 @@ export class AvailabilityRateLimiter {
     return this.attempts.size;
   }
 
-  check(clientId: string, now: number = Date.now()): AvailabilityRateLimitResult {
+  check(
+    clientId: string,
+    now: number = Date.now(),
+  ): AvailabilityRateLimitResult {
     const cutoff = now - this.options.windowMs;
     const recent = (this.attempts.get(clientId) ?? []).filter(
       (timestamp) => timestamp > cutoff,
@@ -72,7 +76,10 @@ export class AvailabilityRateLimiter {
       this.store(clientId, recent, now);
       return {
         ok: false,
-        retryAfterMs: Math.max(1, (recent[0] ?? now) + this.options.windowMs - now),
+        retryAfterMs: Math.max(
+          1,
+          (recent[0] ?? now) + this.options.windowMs - now,
+        ),
       };
     }
 

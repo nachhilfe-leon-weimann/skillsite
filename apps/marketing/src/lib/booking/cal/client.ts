@@ -75,8 +75,7 @@ export async function fetchCalSlots(params: {
 
 export type CreateBookingResult =
   /** `uid` is Cal.com's booking id, `null` if the response didn't carry one. */
-  | { ok: true; uid: string | null }
-  | { ok: false; slotTaken: boolean };
+  { ok: true; uid: string | null } | { ok: false; slotTaken: boolean };
 
 /** Booking uid of a create response; recurring events answer with a list. */
 function bookingUid(json: unknown): string | null {

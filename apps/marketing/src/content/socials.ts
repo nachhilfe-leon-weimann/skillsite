@@ -1,12 +1,7 @@
 import { contactDetails } from "@/content/contact";
 
 export type SocialKey =
-  | "discord"
-  | "whatsapp"
-  | "instagram"
-  | "youtube"
-  | "tiktok"
-  | "github";
+  "discord" | "whatsapp" | "instagram" | "youtube" | "tiktok" | "github";
 
 export type Social = {
   key: SocialKey;

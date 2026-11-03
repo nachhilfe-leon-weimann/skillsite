@@ -9,11 +9,11 @@ payment links printed on invoices - as a pnpm/Turborepo workspace with the Next.
 Needs Node 26, `pnpm`, `just` and an `apps/marketing/.env` (see `.env.example` next to it;
 `.env.local.example` documents what only local development needs).
 
-| Command | |
-|---|---|
-| `just dev` | run the site |
-| `just check` | lint, tests and build - keep green before every push |
-| `just docker-build` / `just docker-run` | build and run the production image locally |
+| Command                                 |                                                      |
+| --------------------------------------- | ---------------------------------------------------- |
+| `just dev`                              | run the site                                         |
+| `just check`                            | lint, tests and build - keep green before every push |
+| `just docker-build` / `just docker-run` | build and run the production image locally           |
 
 Everything else is in the [`justfile`](justfile). The image builds the marketing app by default;
 another app comes from `--build-arg APP=<name>`.
@@ -25,14 +25,14 @@ Every booking attempt that reaches the server leaves exactly one line in the con
 the booking. The only personal detail is a masked e-mail (`ma***@example.com`), so a wrongly blocked
 customer stays recognisable.
 
-| Outcome | Level | Meaning |
-|---|---|---|
-| `created` | info | Cal.com booked it (`calUid` is the booking in Cal.com) |
-| `slot_taken` | info | the slot was taken in the meantime |
-| `blocked` | warn | the spam guard stopped it (`signal`) - can be a real customer |
-| `rate_limited` | warn | the IP hit the limit |
-| `rejected` | warn | server validation failed although the form checks the same |
-| `failed` | error | Cal.com unreachable, unconfigured or answering with an error |
+| Outcome        | Level | Meaning                                                       |
+| -------------- | ----- | ------------------------------------------------------------- |
+| `created`      | info  | Cal.com booked it (`calUid` is the booking in Cal.com)        |
+| `slot_taken`   | info  | the slot was taken in the meantime                            |
+| `blocked`      | warn  | the spam guard stopped it (`signal`) - can be a real customer |
+| `rate_limited` | warn  | the IP hit the limit                                          |
+| `rejected`     | warn  | server validation failed although the form checks the same    |
+| `failed`       | error | Cal.com unreachable, unconfigured or answering with an error  |
 
 ```bash
 docker logs <container> 2>&1 | grep -F "[booking]" | grep -vE "created|slot_taken"
