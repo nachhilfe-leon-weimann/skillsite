@@ -6,6 +6,7 @@ import { Section } from "@skillsite/ui/layout/section";
 import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
 import { Button } from "@skillsite/ui/primitives/button";
+import { Card } from "@skillsite/ui/primitives/card";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
@@ -85,7 +86,8 @@ export default function SubjectsPage() {
                     key={topic.title}
                     variant="rise-soft"
                     index={i}
-                    className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card"
+                    as={Card}
+                    className="overflow-hidden"
                   >
                     <div className="relative aspect-video border-b border-line">
                       <Image

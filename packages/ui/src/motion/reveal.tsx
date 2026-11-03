@@ -1,9 +1,9 @@
 "use client";
 
 import type {
+  ComponentPropsWithoutRef,
   CSSProperties,
   ElementType,
-  HTMLAttributes,
   ReactNode,
   Ref,
 } from "react";
@@ -28,8 +28,7 @@ const MOUNT_ANIM: Record<RevealVariant, string> = {
   settle: "motion-safe:animate-settle",
 };
 
-type RevealProps = {
-  as?: ElementType;
+type RevealOwnProps = {
   variant?: RevealVariant;
   /** mount = keyframe on paint (above-the-fold / LCP); in-view = IO transition. */
   trigger?: RevealTrigger;
@@ -45,14 +44,24 @@ type RevealProps = {
   rootMargin?: string;
   className?: string;
   children?: ReactNode;
-} & Omit<HTMLAttributes<HTMLElement>, "children">;
+  style?: CSSProperties;
+};
+
+/**
+ * `as` renders another element or component (e.g. `Card`) as the revealed
+ * element; its own props (e.g. `surface`) pass through. From a server
+ * component, a component passed as `as` must be a client module.
+ */
+type RevealProps<T extends ElementType> = RevealOwnProps & {
+  as?: T;
+} & Omit<ComponentPropsWithoutRef<T>, keyof RevealOwnProps | "as">;
 
 /**
  * Choreographed entrance wrapper. Renders server children inside a client
  * island, so the surrounding section stays a server component.
  */
-export function Reveal({
-  as: Tag = "div",
+export function Reveal<T extends ElementType = "div">({
+  as,
   variant = "rise",
   trigger = "in-view",
   index,
@@ -65,7 +74,8 @@ export function Reveal({
   children,
   style,
   ...rest
-}: RevealProps) {
+}: RevealProps<T>) {
+  const Tag: ElementType = as ?? "div";
   // Called unconditionally (rules of hooks); the ref is only attached on the
   // in-view path, so the mount path never spins up an observer.
   const { ref, inView } = useInView<HTMLElement>({ threshold, rootMargin });

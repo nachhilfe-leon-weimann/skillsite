@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 
 import { cn } from "../utils/cn";
+import { Card } from "./card";
 
 export type AccordionEntry = {
   question: string;
@@ -28,10 +29,7 @@ export function Accordion({
         const panelId = `${baseId}-panel-${index}`;
 
         return (
-          <div
-            key={item.question}
-            className="overflow-hidden rounded-xl border border-line bg-surface shadow-card"
-          >
+          <Card key={item.question} radius="xl" className="overflow-hidden">
             <h3 className="m-0">
               <button
                 id={triggerId}
@@ -81,7 +79,7 @@ export function Accordion({
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         );
       })}
     </div>

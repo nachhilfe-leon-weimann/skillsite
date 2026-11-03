@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { cn } from "@skillsite/ui/utils/cn";
+import { Card } from "@skillsite/ui/primitives/card";
 
 export type DocNavSection = { id: string; label: string };
 
@@ -29,30 +30,29 @@ export function DocSectionNav({ sections }: { sections: DocNavSection[] }) {
   }, [sections]);
 
   return (
-    <nav
-      aria-label="Abschnitte dieser Seite"
-      className="rounded-2xl border border-line bg-surface p-4 text-prose-sm shadow-card"
-    >
-      <p className="mb-3 px-2 text-prose-xs font-semibold uppercase tracking-wide text-ink-soft">
-        Auf dieser Seite
-      </p>
-      <ul className="space-y-1">
-        {sections.map((section) => (
-          <li key={section.id}>
-            <a
-              href={`#${section.id}`}
-              className={cn(
-                "block rounded-lg px-2 py-1.5 transition-colors",
-                active === section.id
-                  ? "bg-surface-2 font-medium text-ink"
-                  : "text-ink-soft hover:text-ink",
-              )}
-            >
-              {section.label}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <Card asChild className="p-4 text-prose-sm">
+      <nav aria-label="Abschnitte dieser Seite">
+        <p className="mb-3 px-2 text-prose-xs font-semibold uppercase tracking-wide text-ink-soft">
+          Auf dieser Seite
+        </p>
+        <ul className="space-y-1">
+          {sections.map((section) => (
+            <li key={section.id}>
+              <a
+                href={`#${section.id}`}
+                className={cn(
+                  "block rounded-lg px-2 py-1.5 transition-colors",
+                  active === section.id
+                    ? "bg-surface-2 font-medium text-ink"
+                    : "text-ink-soft hover:text-ink",
+                )}
+              >
+                {section.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </Card>
   );
 }

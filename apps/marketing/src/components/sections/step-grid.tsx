@@ -1,5 +1,6 @@
 import { cn } from "@skillsite/ui/utils/cn";
 import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Card } from "@skillsite/ui/primitives/card";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import type { Step } from "@/content/process";
@@ -19,9 +20,8 @@ export function StepGrid({ steps, card = false, className }: StepGridProps) {
           key={step.n}
           variant="rise-soft"
           index={i}
-          className={cn(
-            card && "rounded-2xl border border-line bg-surface p-6 shadow-card",
-          )}
+          as={card ? Card : "div"}
+          className={cn(card && "p-6")}
         >
           <span className="font-heading text-digit-lg font-extrabold leading-none text-coral">
             {step.n}
