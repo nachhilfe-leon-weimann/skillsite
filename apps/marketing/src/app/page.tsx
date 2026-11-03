@@ -1,9 +1,10 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
-import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Lead } from "@skillsite/ui/typography/lead";
 import { Text } from "@skillsite/ui/typography/text";
@@ -82,12 +83,14 @@ export default function HomePage() {
               index={3}
               className="mt-8 flex flex-wrap gap-3.5"
             >
-              <LinkButton href={primaryCta.href} variant="primary" size="lg">
-                {primaryCta.label} <ArrowRight className="size-4" />
-              </LinkButton>
-              <LinkButton href={routes.subjects} variant="outline" size="lg">
-                Fächer ansehen
-              </LinkButton>
+              <Button asChild variant="primary" size="lg">
+                <Link href={primaryCta.href}>
+                  {primaryCta.label} <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href={routes.subjects}>Fächer ansehen</Link>
+              </Button>
             </Reveal>
             <Reveal
               trigger="mount"

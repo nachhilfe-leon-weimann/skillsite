@@ -1,8 +1,9 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Container } from "@/components/layout/container";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
-import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { routes } from "@/lib/routes";
@@ -25,12 +26,12 @@ export default function NotFound() {
         weiter.
       </Text>
       <div className="mt-8 flex flex-wrap justify-center gap-3.5">
-        <LinkButton href={routes.home} variant="primary" size="lg">
-          Zur Startseite
-        </LinkButton>
-        <LinkButton href={routes.contact} variant="outline" size="lg">
-          Kontakt aufnehmen
-        </LinkButton>
+        <Button asChild variant="primary" size="lg">
+          <Link href={routes.home}>Zur Startseite</Link>
+        </Button>
+        <Button asChild variant="outline" size="lg">
+          <Link href={routes.contact}>Kontakt aufnehmen</Link>
+        </Button>
       </div>
     </Container>
   );

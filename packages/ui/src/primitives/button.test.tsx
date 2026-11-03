@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import { Button, LinkButton } from "./button";
+import { Button } from "./button";
 
 afterEach(cleanup);
 
@@ -11,16 +11,27 @@ test("a button renders as a button with the primary look by default", () => {
   expect(button.className).toContain("bg-coral-gradient");
 });
 
-test("an internal link button is a link to the route", () => {
-  render(<LinkButton href="/termin">Termin</LinkButton>);
-  expect(
-    screen.getByRole("link", { name: "Termin" }).getAttribute("href"),
-  ).toBe("/termin");
+test("asChild renders the child element with the button's classes", () => {
+  render(
+    <Button asChild variant="outline" size="lg" className="mt-6">
+      <a href="/termin">Termin</a>
+    </Button>,
+  );
+  const link = screen.getByRole("link", { name: "Termin" });
+  expect(link.getAttribute("href")).toBe("/termin");
+  expect(screen.queryByRole("button")).toBeNull();
+  expect(link.className).toBe(
+    "inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap no-underline cursor-pointer lift disabled:pointer-events-none disabled:opacity-60 border-[1.5px] border-line bg-transparent text-ink hover:border-ink px-6 py-3 text-[1.05rem] mt-6",
+  );
 });
 
-test("an external link button keeps the external href", () => {
-  render(<LinkButton href="mailto:hallo@example.com">Mail</LinkButton>);
-  expect(screen.getByRole("link", { name: "Mail" }).getAttribute("href")).toBe(
-    "mailto:hallo@example.com",
+test("the class order is base, variant, size, then className", () => {
+  render(
+    <Button variant="secondary" size="sm" className="px-4">
+      Mehr
+    </Button>,
+  );
+  expect(screen.getByRole("button", { name: "Mehr" }).className).toBe(
+    "inline-flex items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap no-underline cursor-pointer lift disabled:pointer-events-none disabled:opacity-60 bg-navy text-white hover:opacity-90 py-1.5 text-sm px-4",
   );
 });
