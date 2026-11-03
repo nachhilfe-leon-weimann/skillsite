@@ -4,8 +4,10 @@ import type { Preview } from "@storybook/nextjs-vite";
 
 import "./preview.css";
 
-/* The apps inject --font-hanken / --font-bricolage via next/font; the
-   workbench falls back to the system stack declared in the theme. */
+import { fontVariables } from "../src/shell/fonts";
+
+/* The brand fonts: the same next/font module as the apps, so the workbench
+   renders Bricolage Grotesque and Hanken Grotesk, not the system fallback. */
 const preview: Preview = {
   globalTypes: {
     theme: {
@@ -25,6 +27,7 @@ const preview: Preview = {
     (Story, context) => {
       const theme = context.globals.theme === "dark" ? "dark" : "light";
       document.documentElement.dataset.theme = theme;
+      document.documentElement.classList.add(...fontVariables.split(" "));
       return <Story />;
     },
   ],

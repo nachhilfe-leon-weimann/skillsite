@@ -1,28 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
+
+// The fonts come first: their @font-face rules stay ahead of globals.css in the built CSS.
+import { fontVariables } from "@skillsite/ui/shell/fonts";
 
 import "./globals.css";
-import { cn } from "@skillsite/ui/utils/cn";
 import { brandColors } from "@skillsite/ui/tokens/colors";
 import { siteMetadata } from "@/lib/metadata";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@skillsite/ui/shell/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { IosToolbarTint } from "@/components/layout/ios-toolbar-tint";
 import { UmamiAnalytics } from "@/components/analytics/umami";
 import { JsonLd } from "@/components/seo/json-ld";
-
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--font-bricolage",
-  display: "swap",
-});
-
-const hanken = Hanken_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-hanken",
-  display: "swap",
-});
 
 export const metadata: Metadata = siteMetadata;
 
@@ -42,7 +31,7 @@ export default function RootLayout({
       lang="de"
       data-scroll-behavior="smooth"
       suppressHydrationWarning
-      className={cn(bricolage.variable, hanken.variable)}
+      className={fontVariables}
     >
       <body className="flex min-h-dvh flex-col">
         <a
