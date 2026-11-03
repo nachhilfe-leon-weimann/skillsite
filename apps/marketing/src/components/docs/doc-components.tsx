@@ -1,6 +1,6 @@
 import { ExternalLink, type LucideIcon, Scale } from "lucide-react";
 
-import { Container } from "@/components/layout/container";
+import { Container } from "@skillsite/ui/layout/container";
 import { Card } from "@skillsite/ui/primitives/card";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";

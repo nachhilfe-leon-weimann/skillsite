@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { Container } from "@/components/layout/container";
-import { PageHeader } from "@/components/layout/page-header";
+import { Container } from "@skillsite/ui/layout/container";
+import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Text } from "@skillsite/ui/typography/text";
 import { Booker } from "@/components/booking/booker";
