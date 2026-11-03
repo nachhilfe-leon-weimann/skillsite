@@ -24,7 +24,7 @@ apps/marketing/        the Next.js site (nachhilfe.leonweimann.de)
   src/content/         all visible text (German)
   src/lib/             booking/, payment/, routes, metadata, health
   e2e/                 Playwright suites (smoke, motion, layout, a11y)
-packages/ui/           @skillsite/ui - tokens (styles/theme.css), primitives, hooks, Storybook
+packages/ui/           @skillsite/ui - src/<group>/<name> exported as @skillsite/ui/<group>/<name>; styles/theme.css imports tokens, base, components, motion; Storybook
 packages/config/       shared tsconfig, ESLint and Prettier presets
 scripts/               repo scripts (e.g. the design ratchet)
 tests/                 repo-level tests (release config, workflows, Dockerfile guard)

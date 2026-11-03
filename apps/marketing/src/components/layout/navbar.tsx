@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 
-import { cn } from "@skillsite/ui/utils";
+import { cn } from "@skillsite/ui/utils/cn";
 import { Container } from "@/components/layout/container";
 import { Logo } from "@/components/layout/logo";
-import { Button, LinkButton } from "@skillsite/ui/button";
+import { Button, LinkButton } from "@skillsite/ui/primitives/button";
 import { primaryCta, primaryNav, platformNav } from "@/content/site";
 import { useBodyScrollLock } from "@skillsite/ui/hooks/use-body-scroll-lock";
 import { useMediaQuery } from "@skillsite/ui/hooks/use-media-query";

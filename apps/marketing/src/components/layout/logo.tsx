@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { cn } from "@skillsite/ui/utils";
+import { cn } from "@skillsite/ui/utils/cn";
 import { brand } from "@/content/site";
 
 type LogoProps = {

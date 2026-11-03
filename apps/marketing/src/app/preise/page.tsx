@@ -1,12 +1,13 @@
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { PageHeader } from "@/components/layout/page-header";
-import { Eyebrow } from "@skillsite/ui/eyebrow";
-import { Card } from "@skillsite/ui/card";
-import { LinkButton } from "@skillsite/ui/button";
-import { AnimatedCheckMark } from "@skillsite/ui/animated-check-mark";
-import { Reveal } from "@skillsite/ui/reveal";
-import { Heading, Text } from "@skillsite/ui/typography";
+import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
+import { Card } from "@skillsite/ui/primitives/card";
+import { LinkButton } from "@skillsite/ui/primitives/button";
+import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
+import { Reveal } from "@skillsite/ui/motion/reveal";
+import { Heading } from "@skillsite/ui/typography/heading";
+import { Text } from "@skillsite/ui/typography/text";
 import { FaqSection } from "@/components/sections/faq-section";
 import { CtaSection } from "@/components/sections/cta-section";
 import {
