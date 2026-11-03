@@ -143,16 +143,45 @@ human VoiceOver/Safari acceptance claim; C8 and the full C9 story audit remain o
 
 **Acceptance**
 
-- [ ] Opening by keyboard moves focus inside; Tab/Shift+Tab stay inside; accessible name/description resolve.
-- [ ] Escape, close button and allowed backdrop activation call `onClose` once and return focus to the opener.
+- [x] Opening by keyboard moves focus inside; Tab/Shift+Tab stay inside; accessible name/description resolve.
+- [x] Escape, close button and allowed backdrop activation call `onClose` once and return focus to the opener.
       A removed/hidden opener has a documented visible fallback rather than focusing a stale node.
-- [ ] External controlled close and route/unmount cleanup release the lock; a harmless `onClose` callback identity
+- [x] External controlled close and route/unmount cleanup release the lock; a harmless `onClose` callback identity
       change while open does not reset focus. Nested overlay Escape dismisses only the topmost overlay.
-- [ ] Pointer interactions inside do not dismiss; background controls are unreachable to keyboard/AT while open.
-- [ ] Enter/exit keyframes run under normal motion; reduced motion has no delayed close. No closed tabbables or
+- [x] Pointer interactions inside do not dismiss; background controls are unreachable to keyboard/AT while open.
+- [x] Enter/exit keyframes run under normal motion; reduced motion has no delayed close. No closed tabbables or
       duplicate locks remain after repeated cycles. Verify focus restoration during and after exit.
-- [ ] Component tests and browser stories cover default/custom layout, controlled close, disabled opener and
-      nested overlay behavior when C8.5 adds Select. Existing panel styling remains.
+- [x] Component tests and browser stories cover default/custom layout, controlled close and disabled opener.
+      Existing panel styling remains; the current nested-overlay regression uses a second Dialog.
+- [ ] C8.5 follow-up: verify nested Select-in-Dialog behavior when Select is migrated.
+
+C8.2 verification on 2026-10-21: the previous implementation failed the new focus/browser regressions. The
+Radix wrapper passes three component tests and 18 Dialog browser cases (20 widget cases including Button):
+keyboard entry/containment, names/descriptions, callback identity, Escape/close/backdrop counts, external close,
+unmount, removed/hidden/disabled opener fallback, explicit/navigation focus destinations, immediate nested
+Escape, exit inertness, repeated reopen and reduced motion. Default panel gutters, padding and radius are
+checked at phone/desktop widths. Custom layout is fixed to the viewport with no wrapper animation/transform.
+Focus returns through Radix's close-autofocus hook after the panel exit; closed content is immediately inert,
+removed from AT and pointer interaction. No human VoiceOver/Safari or maintainer look acceptance is claimed.
+
+The controlled `open`/`onClose`, `className`, `labelledBy` and `describedBy` API remains. Additive props are
+`id`, `layout="custom"`, `returnFocusRef`, `fallbackFocusRef` and `onCloseAutoFocus`. The last may prevent default
+when navigation owns the destination. If an opener may disappear, pass a visible focusable fallback; the
+Default story demonstrates a heading with `tabIndex={-1}`. ExplicitFocusReturn/NavigationFocus demonstrate
+the optional overrides. Custom layout supplies its own styling and inner motion for C8.4.
+
+Dependency evidence: registry stable `@radix-ui/react-dialog` 1.3.1 supports React 19; its installed source
+accepts the existing external label IDs. Unpatched 1.3.1 and the documented stable 1.2.0 both failed immediate
+nested Escape. This matches upstream [issue #4143](https://github.com/radix-ui/primitives/issues/4143).
+The published dependency still has the render-time layer-listener race. The pnpm patch to DismissableLayer
+1.2.1 applies the event-time stack guard proposed in [#4147](https://github.com/radix-ui/primitives/pull/4147)
+and [#4145](https://github.com/radix-ui/primitives/pull/4145), and also attaches a listener per layer so the first
+Escape is handled rather than ignored during registration. This is a local extension, not a merged upstream
+fix. Both ESM/CJS entry points are patched; no application layer stack/listener is added. The deterministic
+registration unit test fails without the patch; the unchanged immediate browser test passes, including three
+parallel repetitions. Workspace overrides keep one patched DismissableLayer 1.2.1 and FocusScope 1.3.1 for
+later Popover/Select composition. Remove the patch/pins only after a published upstream fix passes both
+regressions and the nested integration suite. Overall C8, the C8.5 Select follow-up and full C9 remain open.
 
 ## C8.3 - Non-modal Popover and desktop navigation
 
