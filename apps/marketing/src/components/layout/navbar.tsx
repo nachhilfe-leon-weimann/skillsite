@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 
 import { cn } from "@skillsite/ui/utils/cn";
-import { Container } from "@/components/layout/container";
+import { Container } from "@skillsite/ui/layout/container";
 import { Logo } from "@/components/layout/logo";
 import { Button } from "@skillsite/ui/primitives/button";
 import { primaryCta, primaryNav, platformNav } from "@/content/site";

@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Container } from "@/components/layout/container";
-import { Section } from "@/components/layout/section";
-import { PageHeader } from "@/components/layout/page-header";
-import { SectionHeader } from "@skillsite/ui/layout/section-header";
+import { Container } from "@skillsite/ui/layout/container";
+import { Section } from "@skillsite/ui/layout/section";
+import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
 import { Button } from "@skillsite/ui/primitives/button";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
@@ -114,7 +113,8 @@ export default function OnlineLearningPage() {
       {/* Phase 2 — So läuft deine Stunde */}
       <Section surface>
         <div className="grid items-start gap-split lg:grid-cols-[0.9fr_1.1fr]">
-          <SectionHeader
+          <PageHeader
+            variant="section"
             eyebrow="In vier Schritten"
             title="So läuft deine Stunde."
             lead="Sobald ich dich freigeschaltet habe, siehst du den Sprachkanal ‚lounge‘ und deinen persönlichen Textkanal ‚vorname-nachname‘. Zur Stunde brauchst du nur die ‚lounge‘ – der Rest passiert von selbst."
@@ -131,7 +131,8 @@ export default function OnlineLearningPage() {
 
       {/* Server-Funktionen */}
       <Container className="py-section-sm">
-        <SectionHeader
+        <PageHeader
+          variant="section"
           eyebrow="Server-Funktionen"
           title="Dein Kanal – auch zwischen den Stunden."
           size="h3"

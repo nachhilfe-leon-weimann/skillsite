@@ -1,11 +1,13 @@
-import { cn } from "@skillsite/ui/utils/cn";
-import { Container } from "@/components/layout/container";
+import { cn } from "../utils/cn";
+import { Container } from "./container";
 
 type SectionProps = React.ComponentProps<"section"> & {
   /** Full-bleed surface background with top/bottom hairlines. */
   surface?: boolean;
   /** Skip the inner Container (caller controls width). */
   bleed?: boolean;
+  /** Vertical rhythm of the inner Container: `default` = py-section, `sm` = py-section-sm. */
+  spacing?: "default" | "sm";
   containerClassName?: string;
 };
 
@@ -16,6 +18,7 @@ type SectionProps = React.ComponentProps<"section"> & {
 export function Section({
   surface,
   bleed,
+  spacing = "default",
   id,
   className,
   containerClassName,
@@ -31,7 +34,12 @@ export function Section({
       {bleed ? (
         children
       ) : (
-        <Container className={cn("py-section", containerClassName)}>
+        <Container
+          className={cn(
+            spacing === "sm" ? "py-section-sm" : "py-section",
+            containerClassName,
+          )}
+        >
           {children}
         </Container>
       )}

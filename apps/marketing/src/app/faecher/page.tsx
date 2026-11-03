@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import { Container } from "@/components/layout/container";
-import { Section } from "@/components/layout/section";
-import { PageHeader } from "@/components/layout/page-header";
+import { Container } from "@skillsite/ui/layout/container";
+import { Section } from "@skillsite/ui/layout/section";
+import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Reveal } from "@skillsite/ui/motion/reveal";
