@@ -64,11 +64,18 @@
 }
 
 /* Presence hold: Radix presence unmounts closing content when no animation
-   runs. This no-op keyframe keeps it mounted while a reversible exit
-   transition plays (animate-presence-hold lasts as long as duration-base). */
+   runs. This keyframe keeps it mounted while a reversible exit transition
+   plays (animate-presence-hold lasts as long as duration-base). It animates a
+   registered property nothing reads, so it has no visible effect. */
+@property --presence-hold {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 @keyframes presence-hold {
   to {
-    visibility: visible;
+    --presence-hold: 1;
   }
 }
 

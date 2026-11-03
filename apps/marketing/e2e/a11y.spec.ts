@@ -183,6 +183,69 @@ test.describe("the desktop platform popover", () => {
     await expect(outside).toHaveAttribute("aria-expanded", "true");
   });
 
+  for (const opening of ["keyboard", "hover"]) {
+    test(`a click on plain text outside a ${opening}-opened panel never refocuses the trigger`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      if (opening === "hover") {
+        const box = (await trigger(page).boundingBox())!;
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await expect(popover(page)).toBeVisible();
+        await trigger(page).focus();
+      } else {
+        await trigger(page).focus();
+        await page.keyboard.press("Enter");
+      }
+      await page.keyboard.press("Tab");
+      await expect(popover(page).getByRole("link").first()).toBeFocused();
+      // The pointer leaves the panel on its way (a hover close), then clicks text.
+      const text = page.getByRole("main").locator("p").first();
+      await text.click({ position: { x: 2, y: 2 } });
+      await expect(page.locator("[role='dialog']")).toHaveCount(0);
+      await page.waitForTimeout(100);
+      expect(
+        await page.evaluate(() => document.activeElement === document.body),
+      ).toBe(true);
+      await expect(trigger(page)).not.toBeFocused();
+    });
+  }
+
+  // Like CSS :hover under (hover: hover) on main: a pen hovers, a touch does not.
+  for (const [pointerType, opens] of [
+    ["pen", true],
+    ["touch", false],
+  ] as const) {
+    test(`a ${pointerType} hover ${opens ? "opens" : "does not open"} it`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      // React derives enter/leave from `pointerout`: from "Kontakt" onto the trigger.
+      const kontakt = page
+        .getByRole("banner")
+        .getByRole("link", { name: "Kontakt" });
+      await kontakt.evaluate(
+        (node, [type, target]) => {
+          node.dispatchEvent(
+            new PointerEvent("pointerout", {
+              bubbles: true,
+              pointerType: type,
+              relatedTarget: target,
+            }),
+          );
+        },
+        [pointerType, await trigger(page).elementHandle()] as const,
+      );
+      if (opens) await expect(popover(page)).toBeVisible();
+      else {
+        await page.waitForTimeout(300);
+        await expect(page.locator("[role='dialog']")).toHaveCount(0);
+      }
+    });
+  }
+
   test("hover opens it without moving focus; the pointer crosses to the panel", async ({
     page,
   }) => {

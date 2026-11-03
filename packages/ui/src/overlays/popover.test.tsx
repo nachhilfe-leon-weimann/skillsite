@@ -171,3 +171,24 @@ test("a controlled close while the panel holds focus restores the trigger, unles
     unmount();
   }
 });
+
+test("an outside pointer interaction never sends focus back to the trigger", async () => {
+  render(
+    <>
+      <p>Fließtext</p>
+      <Example initialOpen />
+    </>,
+  );
+  const [first] = await screen.findAllByRole("link");
+  first!.focus();
+  // Focus is still inside when the outside press closes the panel.
+  const text = screen.getByText("Fließtext");
+  fireEvent.pointerDown(text);
+  fireEvent.pointerUp(text);
+  fireEvent.click(text);
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+  expect(document.activeElement).not.toBe(
+    screen.getByRole("button", { name: "Plattformen" }),
+  );
+});

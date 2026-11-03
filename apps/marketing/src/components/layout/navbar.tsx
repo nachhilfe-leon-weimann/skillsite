@@ -24,6 +24,9 @@ import { DESKTOP_NAV_QUERY } from "@/lib/breakpoints";
 import { routes } from "@/lib/routes";
 import { MENU_STATE_EVENT } from "@/components/layout/ios-toolbar-tint";
 
+/** The media query behind CSS `hover:` styles: a primary pointer that can hover. */
+const HOVER_QUERY = "(hover: hover)";
+
 /** Whether `href` points at the section the user is currently on. */
 function isActive(pathname: string, href: string) {
   const base = href.split("#")[0] ?? href;
@@ -191,22 +194,33 @@ function PlatformDropdown({
   pathname: string;
   active: boolean;
 }) {
-  // A click or key press pins the panel; a mouse hover shows it while it lasts.
+  // A click or key press pins the panel; a hover shows it while it lasts.
   const [pinned, setPinned] = useState(false);
   const [hovered, setHovered] = useState(false);
   // After a close, a still-hovering pointer must leave before it reopens the panel.
   const [hoverSuppressed, setHoverSuppressed] = useState(false);
+  // Set by a close other than a hover leave: that exit lets the pointer through.
+  const [passThroughExit, setPassThroughExit] = useState(false);
   const navigatingRef = useRef(false);
   const open = pinned || (hovered && !hoverSuppressed);
 
   const close = () => {
     setPinned(false);
     setHoverSuppressed(true);
+    setPassThroughExit(true);
+  };
+  const pin = () => {
+    setPinned(true);
+    setHoverSuppressed(false);
+    setPassThroughExit(false);
   };
   const setHover = (event: React.PointerEvent, value: boolean) => {
-    if (event.pointerType !== "mouse") return;
+    // Like CSS :hover under `(hover: hover)`: mouse and pen, never touch.
+    if (event.pointerType === "touch" || !matchMedia(HOVER_QUERY).matches)
+      return;
     setHovered(value);
     setHoverSuppressed(false);
+    if (value) setPassThroughExit(false);
   };
 
   return (
@@ -226,16 +240,10 @@ function PlatformDropdown({
           <Button
             variant="ghost"
             onClick={(event) => {
-              // Replace the plain toggle: a click on a hover-opened panel keeps it open.
+              // Replace the plain toggle: a click pins a hover-opened panel.
               event.preventDefault();
-              if (open && !pinned) {
-                setPinned(true);
-              } else if (open) {
-                close();
-              } else {
-                setPinned(true);
-                setHoverSuppressed(false);
-              }
+              if (open && pinned) close();
+              else pin();
             }}
             className={cn("px-3 nav-wide:px-3.5", activeText(active))}
           >
@@ -251,6 +259,9 @@ function PlatformDropdown({
           label="Online lernen"
           align="end"
           className="flex w-64 flex-col gap-0.5"
+          // After a hover leave the fading panel still catches the pointer, so
+          // coming back onto it turns it around; other closes pass through.
+          hitTestableExit={!passThroughExit}
           onCloseAutoFocus={(event) => {
             // A link click navigates: the destination owns focus.
             if (navigatingRef.current) event.preventDefault();

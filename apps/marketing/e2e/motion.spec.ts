@@ -67,17 +67,26 @@ test("an FAQ answer slides in", async ({ page }) => {
 
 type Sample = { open: boolean; opacity: number; y: number };
 
+/** Playback rate for the navbar panel's motion in the pointer-path tests. */
+const SLOW_MOTION = 0.1;
+
 /**
  * Sample the navbar panel's opacity and y translation every frame, with its
- * open state, while `run` plays.
+ * open state, while `run` plays. Its transitions and presence hold run at
+ * SLOW_MOTION, so input timing cannot outrun them under CI load.
  */
 async function samplePanel(page: Page, run: () => Promise<void>) {
-  await page.evaluate(() => {
+  await page.evaluate((rate) => {
     const samples: Sample[] = [];
     Object.assign(window, { panelSamples: samples });
     const tick = () => {
-      const panel = document.querySelector<HTMLElement>("[role='dialog']");
+      const panel = document.querySelector<HTMLElement>(
+        "[data-radix-popper-content-wrapper] > *",
+      );
       if (panel) {
+        for (const animation of panel.getAnimations())
+          if (animation.playbackRate !== rate)
+            animation.updatePlaybackRate(rate);
         const style = getComputedStyle(panel);
         const [, y = "0px"] =
           style.translate === "none" ? [] : style.translate.split(" ");
@@ -94,28 +103,47 @@ async function samplePanel(page: Page, run: () => Promise<void>) {
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  });
+  }, SLOW_MOTION);
   await run();
   return page.evaluate(
     () => (window as unknown as { panelSamples: Sample[] }).panelSamples,
   );
 }
 
+/** Wait until the panel's opacity passes `limit` in the given direction. */
+function panelOpacity(page: Page, direction: "above" | "below", limit: number) {
+  return page.waitForFunction(
+    ([direction, limit]) => {
+      const panel = document.querySelector(
+        "[data-radix-popper-content-wrapper] > *",
+      );
+      if (!panel) return false;
+      const opacity = Number(getComputedStyle(panel).opacity);
+      return direction === "above" ? opacity >= limit : opacity <= limit;
+    },
+    [direction, limit] as const,
+    { timeout: 10_000 },
+  );
+}
+
 /**
  * Frames that move against the current direction: opening only ever fades in and
- * rises, closing only fades out and sinks. The first frame after a state change
- * may still show the previous direction (it was computed before the change).
+ * rises, closing only fades out and sinks. In slow motion a frame moves far less
+ * than the tolerance, while a snap (a jump to full opacity or a restart from
+ * zero) moves far more, also on the frame of a state change.
  */
 function reversals(samples: Sample[]) {
   return samples.filter((sample, i) => {
     const previous = samples[i - 1];
-    if (!previous || previous.open !== sample.open) return false;
+    if (!previous) return false;
     return sample.open
-      ? sample.opacity < previous.opacity - 0.01 || sample.y > previous.y + 0.05
-      : sample.opacity > previous.opacity + 0.01 ||
-          sample.y < previous.y - 0.05;
+      ? sample.opacity < previous.opacity - 0.1 || sample.y > previous.y + 0.8
+      : sample.opacity > previous.opacity + 0.1 || sample.y < previous.y - 0.8;
   });
 }
+
+const panelGone = (page: Page) =>
+  expect(page.locator("[role='dialog']")).toHaveCount(0, { timeout: 10_000 });
 
 const platformTrigger = (page: Page) =>
   page.getByRole("banner").getByRole("button", { name: "Online lernen" });
@@ -134,9 +162,9 @@ test.describe("the navbar popover", () => {
     expect(translateY(y!)).toBeLessThan(8);
   });
 
-  // The panel's look on main: reversible transitions, so a pointer sweeping
-  // across the trigger never flashes the panel at full opacity.
-  test("a hover shorter than the entrance turns around without a jump", async ({
+  // The panel's motion on main: reversible transitions, so an interrupted open or
+  // close turns around and a sweep across the trigger never flashes the panel.
+  test("an interrupted entrance and a sweep turn around without a jump", async ({
     page,
   }) => {
     await page.goto("/");
@@ -145,46 +173,135 @@ test.describe("the navbar popover", () => {
     const y = box.y + box.height / 2;
     const samples = await samplePanel(page, async () => {
       await page.mouse.move(box.x + box.width / 2, y);
-      await page.waitForTimeout(60);
+      await panelOpacity(page, "above", 0.2);
       await page.mouse.move(640, 500);
-      await page.waitForTimeout(60);
-      await page.mouse.move(box.x + box.width / 2, y);
-      await page.waitForTimeout(80);
+      await panelGone(page);
       // A sweep across the trigger, Kontakt to the call to action.
       await page.mouse.move(box.x - 150, y);
       await page.mouse.move(box.x + box.width + 150, y, { steps: 12 });
-      await page.waitForTimeout(400);
+      await panelGone(page);
     });
     expect(samples.some((sample) => !sample.open)).toBe(true);
     expect(reversals(samples)).toEqual([]);
-    // It never finished an entrance, so it never reached full opacity.
     expect(Math.max(...samples.map((sample) => sample.opacity))).toBeLessThan(
-      0.95,
+      0.9,
     );
-    await expect(page.locator("[role='dialog']")).toHaveCount(0);
   });
 
-  test("reopening during the exit turns around and completes", async ({
+  for (const target of ["trigger", "panel"]) {
+    test(`pointer re-entry onto the ${target} during the exit turns it around`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      const box = (await platformTrigger(page).boundingBox())!;
+      let link = box;
+      const samples = await samplePanel(page, async () => {
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await panelOpacity(page, "above", 0.99);
+        link = (await platformPopover(page)
+          .getByRole("link", { name: /^Termin buchen/ })
+          .boundingBox())!;
+        await page.mouse.move(640, 500);
+        await panelOpacity(page, "below", 0.7);
+        const back = target === "trigger" ? box : link;
+        await page.mouse.move(
+          back.x + back.width / 2,
+          back.y + back.height / 2,
+        );
+        await expect(platformPopover(page)).toHaveAttribute(
+          "data-state",
+          "open",
+        );
+        await panelOpacity(page, "above", 0.99);
+      });
+      expect(reversals(samples)).toEqual([]);
+      const reopened = samples.findLastIndex((sample) => !sample.open) + 1;
+      expect(reopened).toBeGreaterThan(0);
+      // It turns around from the faded value instead of starting from scratch.
+      expect(samples[reopened]!.opacity).toBeGreaterThan(0.3);
+      if (target === "panel") {
+        // As on main, a click on the revived link follows it.
+        await page.mouse.click(
+          link.x + link.width / 2,
+          link.y + link.height / 2,
+        );
+        await expect(page).toHaveURL(/\/termin$/);
+      }
+    });
+  }
+
+  test("a click under a panel closed by its trigger reaches the page", async ({
     page,
   }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    const box = (await platformTrigger(page).boundingBox())!;
-    const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-    const samples = await samplePanel(page, async () => {
-      await page.mouse.move(centre.x, centre.y);
-      await page.waitForTimeout(300);
-      await page.mouse.move(640, 500);
-      await page.waitForTimeout(80);
-      await page.mouse.move(centre.x, centre.y);
-      await page.waitForTimeout(400);
+    await samplePanel(page, async () => {
+      await platformTrigger(page).click();
+      await panelOpacity(page, "above", 0.99);
+      const panel = page.locator("[role='dialog']");
+      const panelBox = (await panel.boundingBox())!;
+      await page.evaluate(() =>
+        document.addEventListener(
+          "click",
+          (event) => {
+            event.preventDefault();
+            Object.assign(window, {
+              clickedPanel: !!(event.target as Element).closest(
+                "[data-radix-popper-content-wrapper]",
+              ),
+            });
+          },
+          { capture: true, once: true },
+        ),
+      );
+      await platformTrigger(page).click();
+      await expect(panel).toHaveAttribute("data-state", "closed");
+      await page.mouse.click(
+        panelBox.x + panelBox.width / 2,
+        panelBox.y + panelBox.height / 2,
+      );
+      // Still fading out, not revived by the pointer passing over it.
+      await expect(panel).toHaveCount(1);
+      await expect(panel).toHaveAttribute("data-state", "closed");
     });
-    expect(reversals(samples)).toEqual([]);
-    const reopened = samples.findLastIndex((sample) => !sample.open) + 1;
-    expect(reopened).toBeGreaterThan(0);
-    // The reopen starts from the faded value, not from scratch.
-    expect(samples[reopened]!.opacity).toBeGreaterThan(0.05);
-    expect(samples.at(-1)).toEqual({ open: true, opacity: 1, y: 0 });
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { clickedPanel?: boolean }).clickedPanel,
+      ),
+    ).toBe(false);
+  });
+
+  // Rule: focus goes back to the trigger after the exit when the panel held focus
+  // as it began closing and focus has stayed on <body> since, across reopens.
+  test("a hover leave, return and leave with focus inside restores the trigger", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    const trigger = platformTrigger(page);
+    const box = (await trigger.boundingBox())!;
+    const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await samplePanel(page, async () => {
+      await page.mouse.move(centre.x, centre.y);
+      await panelOpacity(page, "above", 0.99);
+      await trigger.focus();
+      await page.keyboard.press("Tab");
+      await expect(
+        platformPopover(page).getByRole("link").first(),
+      ).toBeFocused();
+      await page.mouse.move(640, 500);
+      await panelOpacity(page, "below", 0.7);
+      await page.mouse.move(centre.x, centre.y);
+      await expect(platformPopover(page)).toHaveAttribute("data-state", "open");
+      // Reopening does not move focus.
+      expect(
+        await page.evaluate(() => document.activeElement === document.body),
+      ).toBe(true);
+      await page.mouse.move(640, 500);
+      await panelGone(page);
+    });
+    await expect(trigger).toBeFocused();
   });
 
   test("is inert at once while it falls out", async ({ page }) => {
@@ -199,7 +316,8 @@ test.describe("the navbar popover", () => {
     expect(translateY(y!)).toBeGreaterThan(0);
     expect(translateY(y!)).toBeLessThan(8);
     await expect(panel).toHaveAttribute("data-state", "closed");
-    await expect(panel).toHaveAttribute("inert", "");
+    await expect(panel.locator("> div")).toHaveAttribute("inert", "");
+    await expect(panel).toHaveAttribute("aria-hidden", "true");
     await expect(panel).toHaveCSS("pointer-events", "none");
     await expect(panel).toHaveCSS("animation-name", "presence-hold");
     await expect(panel).toHaveCount(0);
@@ -217,7 +335,7 @@ test.describe("the navbar popover", () => {
     const panel = page.locator("[role='dialog']");
     await expect(panel).toHaveCount(1);
     await expect(panel).toHaveAttribute("data-state", "open");
-    await expect(panel).not.toHaveAttribute("inert");
+    await expect(panel.locator("> div")).not.toHaveAttribute("inert");
     await page.waitForTimeout(400);
     await expect(trigger).toBeFocused();
     await expect(panel).toHaveCSS("opacity", "1");

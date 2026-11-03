@@ -108,11 +108,12 @@ test("the trigger toggles; the exit is inert at once and focus stays put", async
         .sort(),
     );
   expect(await transitions()).toEqual(["opacity", "translate"]);
-  await page.waitForTimeout(300);
-  const centre = (await panel.boundingBox())!;
+  await expect(panel).toHaveCSS("opacity", "1");
+  const panelBox = (await panel.boundingBox())!;
   await trigger(page).click();
   await expect(panel).toHaveAttribute("data-state", "closed");
-  await expect(panel).toHaveAttribute("inert", "");
+  // Links leave the tab order at once; the panel leaves the accessibility tree.
+  await expect(panel.locator("> div")).toHaveAttribute("inert", "");
   await expect(panel).toHaveAttribute("aria-hidden", "true");
   await expect(panel).toHaveCSS("pointer-events", "none");
   await expect(panel).toHaveCSS("animation-name", "presence-hold");
@@ -123,7 +124,10 @@ test("the trigger toggles; the exit is inert at once and focus stays put", async
       !!document
         .elementFromPoint(x, y)
         ?.closest("[data-radix-popper-content-wrapper]"),
-    { x: centre.x + centre.width / 2, y: centre.y + centre.height / 2 },
+    {
+      x: panelBox.x + panelBox.width / 2,
+      y: panelBox.y + panelBox.height / 2,
+    },
   );
   expect(hit).toBe(false);
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -154,7 +158,7 @@ test("rapid open-close-open leaves one live panel without a delayed focus steal"
   const panel = page.locator("[role='dialog']");
   await expect(panel).toHaveCount(1);
   await expect(panel).toHaveAttribute("data-state", "open");
-  await expect(panel).not.toHaveAttribute("inert");
+  await expect(panel.locator("> div")).not.toHaveAttribute("inert");
   const after = page.getByRole("button", { name: "Danach" });
   await after.focus();
   await page.waitForTimeout(400);

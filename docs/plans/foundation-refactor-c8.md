@@ -208,25 +208,29 @@ regressions and the nested integration suite. Overall C8, the C8.5 Select follow
 - [x] A11y, layout and motion tests cover desktop widths, rapid input and reduced motion. Update old role/no-popup
       assertions to the intentional new semantics, without dropping accessible-name or focus checks.
 
-C8.3 verification on 2026-11-03: the previous navbar failed all eighteen new marketing regressions, mainly because
-they address the panel as a named dialog. Plain Radix wrapping failed three of six component tests: Radix loops Tab
-even in a non-modal popover, returns focus to the trigger only after the exit, and focuses the trigger on a close
-although focus is elsewhere. The wrapper passes Tab to the browser, returns focus on Escape at once and otherwise
-only when the panel held it; closed content and its positioning wrapper stop taking input immediately. It passes
-six component tests and eleven Popover browser cases (light/dark keyboard path, Shift+Tab, Escape, outside click,
-toggle exit, link close, rapid reopen, reduced motion, viewport-edge collision at 390/1280px). Twenty marketing
-cases cover the navbar at 1080/1280px: semantics without added `aria-hidden`/inert/scroll lock,
-Enter/Space/Tab/Shift+Tab, Escape, outside click, hover corridor without focus moves, hover suppression after
-Escape, trigger toggle, rapid input, client and fragment navigation with `aria-current`, slide in/out, exit
-inertness, reduced motion and pointer sweeps. Deviation from "CSS keyframes" above, by maintainer decision (the
+C8.3 verification on 2026-11-03: the previous navbar failed all eighteen original marketing regressions, mainly
+because they address the panel as a named dialog. Plain Radix wrapping failed three of six component tests: Radix
+loops Tab even in a non-modal popover, returns focus to the trigger only after the exit, and focuses the trigger on
+a close although focus is elsewhere. The wrapper passes Tab to the browser, returns focus on Escape at once and
+otherwise only when the panel held it and no outside pointer interaction followed; closing links leave the tab
+order and the panel leaves the accessibility tree immediately. It passes seven component tests and eleven Popover
+browser cases (light/dark keyboard path, Shift+Tab, Escape, outside click, toggle exit, link close, rapid reopen,
+reduced motion, viewport-edge collision at 390/1280px). Twenty-seven marketing cases cover the navbar at
+1080/1280px: semantics without added `aria-hidden`/inert/scroll lock, Enter/Space/Tab/Shift+Tab, Escape, outside
+clicks on controls and plain text, mouse/pen/touch hover, hover corridor without focus moves, hover suppression
+after Escape, trigger toggle, rapid input, client and fragment navigation with `aria-current`, slide in/out, exit
+inertness, reduced motion, and pointer paths in slow motion (interrupted entrance, sweep, re-entry onto trigger or
+fading panel, a click on the revived link, a click through a panel closed by its trigger, focus return across a
+hover reopen); they pass five times in a row. Deviation from "CSS keyframes" above, by maintainer decision (the
 panel must look and feel exactly as on `main`): the panel keeps main's reversible opacity/translate transitions
-(8px, `duration-base`, `ease-flow`, entered via `@starting-style`), and a no-op `presence-hold` keyframe
-(`animate-presence-hold`) holds Radix presence for the exit. A keyframe version snapped on interrupted sweeps
-(closing mid-entrance jumped to full opacity, reopening mid-exit restarted from zero); the sweep regressions fail
-on it and pass now, with main's per-frame curve. The panel keeps its size, alignment and 6px corridor; Floating UI
-snaps its position to device pixels (under 0.5px at 1x), which Radix does not expose to configure.
-`@radix-ui/react-popover` 1.3.1 resolves to the pinned DismissableLayer 1.2.1 and FocusScope 1.3.1. No human
-VoiceOver/Safari or maintainer look acceptance is claimed.
+(8px, `duration-base`, `ease-flow`; the entrance starts from the closed look after one style flush), and a no-op
+`presence-hold` keyframe (`animate-presence-hold`, animating an unread registered property) holds Radix presence
+for the exit. After a hover leave the fading panel stays hit-testable, as on main, so the pointer coming back
+reopens it; other closes let pointer hits through, the positioning wrapper included. A keyframe version snapped on
+interrupted sweeps; the sweep regressions fail on it and pass now. The panel keeps its size, alignment and 6px
+corridor; Floating UI snaps its position to device pixels (under 0.5px at 1x), which Radix does not expose to
+configure. `@radix-ui/react-popover` 1.3.1 resolves to the pinned DismissableLayer 1.2.1 and FocusScope 1.3.1. No
+human VoiceOver/Safari or maintainer look acceptance is claimed.
 
 ## C8.4 - Mobile navigation focus
 
