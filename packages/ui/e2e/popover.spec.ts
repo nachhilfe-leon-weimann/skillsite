@@ -99,13 +99,33 @@ test("the trigger toggles; the exit is inert at once and focus stays put", async
   await page.goto(story());
   await trigger(page).click();
   const panel = page.locator("[role='dialog']");
-  await expect(panel).toHaveCSS("animation-name", "rise");
+  const transitions = () =>
+    panel.evaluate((node) =>
+      node
+        .getAnimations()
+        .filter((animation) => animation instanceof CSSTransition)
+        .map((animation) => (animation as CSSTransition).transitionProperty)
+        .sort(),
+    );
+  expect(await transitions()).toEqual(["opacity", "translate"]);
+  await page.waitForTimeout(300);
+  const centre = (await panel.boundingBox())!;
   await trigger(page).click();
   await expect(panel).toHaveAttribute("data-state", "closed");
   await expect(panel).toHaveAttribute("inert", "");
   await expect(panel).toHaveAttribute("aria-hidden", "true");
   await expect(panel).toHaveCSS("pointer-events", "none");
-  await expect(panel).toHaveCSS("animation-name", "fall");
+  await expect(panel).toHaveCSS("animation-name", "presence-hold");
+  expect(await transitions()).toEqual(["opacity", "translate"]);
+  // Neither the fading panel nor its positioning wrapper catches a pointer hit.
+  const hit = await page.evaluate(
+    ({ x, y }) =>
+      !!document
+        .elementFromPoint(x, y)
+        ?.closest("[data-radix-popper-content-wrapper]"),
+    { x: centre.x + centre.width / 2, y: centre.y + centre.height / 2 },
+  );
+  expect(hit).toBe(false);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(panel).toHaveCount(0);
   await expect(trigger(page)).toBeFocused();

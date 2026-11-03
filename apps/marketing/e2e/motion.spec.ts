@@ -65,24 +65,56 @@ test("an FAQ answer slides in", async ({ page }) => {
   expect(translateY(y!)).toBeLessThan(0);
 });
 
+type Sample = { open: boolean; opacity: number; y: number };
+
 /**
- * Seek the running CSS animation `name` on the element to its midpoint and return
- * the y translation there - or null when that animation does not run.
+ * Sample the navbar panel's opacity and y translation every frame, with its
+ * open state, while `run` plays.
  */
-async function animationMidpointY(element: Locator, name: string) {
-  return element.evaluate((node, animationName) => {
-    const animation = node
-      .getAnimations()
-      .find(
-        (candidate) =>
-          candidate instanceof CSSAnimation &&
-          candidate.animationName === animationName,
-      );
-    if (!animation) return null;
-    animation.pause();
-    animation.currentTime = Number(animation.effect!.getTiming().duration) / 2;
-    return new DOMMatrixReadOnly(getComputedStyle(node).transform).m42;
-  }, name);
+async function samplePanel(page: Page, run: () => Promise<void>) {
+  await page.evaluate(() => {
+    const samples: Sample[] = [];
+    Object.assign(window, { panelSamples: samples });
+    const tick = () => {
+      const panel = document.querySelector<HTMLElement>("[role='dialog']");
+      if (panel) {
+        const style = getComputedStyle(panel);
+        const [, y = "0px"] =
+          style.translate === "none" ? [] : style.translate.split(" ");
+        // Count both the translate property and a transform, so any motion shows.
+        const matrix = new DOMMatrixReadOnly(
+          style.transform === "none" ? undefined : style.transform,
+        );
+        samples.push({
+          open: panel.dataset.state === "open",
+          opacity: Number(style.opacity),
+          y: Number.parseFloat(y) + matrix.m42,
+        });
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await run();
+  return page.evaluate(
+    () => (window as unknown as { panelSamples: Sample[] }).panelSamples,
+  );
+}
+
+/**
+ * Frames that move against the current direction: opening only ever fades in and
+ * rises, closing only fades out and sinks. The first frame after a state change
+ * may still show the previous direction (it was computed before the change).
+ */
+function reversals(samples: Sample[]) {
+  return samples.filter((sample, i) => {
+    const previous = samples[i - 1];
+    if (!previous || previous.open !== sample.open) return false;
+    return sample.open
+      ? sample.opacity < previous.opacity - 0.01 || sample.y > previous.y + 0.05
+      : sample.opacity > previous.opacity + 0.01 ||
+          sample.y < previous.y - 0.05;
+  });
 }
 
 const platformTrigger = (page: Page) =>
@@ -93,25 +125,83 @@ const platformPopover = (page: Page) =>
 test.describe("the navbar popover", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
-  test("rises in", async ({ page }) => {
+  test("slides in", async ({ page }) => {
     await page.goto("/");
     await platformTrigger(page).click();
-    const y = await animationMidpointY(platformPopover(page), "rise");
-    expect(y, "rise animation").not.toBeNull();
-    expect(y!).toBeGreaterThan(0);
-    expect(y!).toBeLessThan(8);
+    const y = await midpoint(platformPopover(page), "translate");
+    expect(y, "translate transition").not.toBeNull();
+    expect(translateY(y!)).toBeGreaterThan(0);
+    expect(translateY(y!)).toBeLessThan(8);
+  });
+
+  // The panel's look on main: reversible transitions, so a pointer sweeping
+  // across the trigger never flashes the panel at full opacity.
+  test("a hover shorter than the entrance turns around without a jump", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    const box = (await platformTrigger(page).boundingBox())!;
+    const y = box.y + box.height / 2;
+    const samples = await samplePanel(page, async () => {
+      await page.mouse.move(box.x + box.width / 2, y);
+      await page.waitForTimeout(60);
+      await page.mouse.move(640, 500);
+      await page.waitForTimeout(60);
+      await page.mouse.move(box.x + box.width / 2, y);
+      await page.waitForTimeout(80);
+      // A sweep across the trigger, Kontakt to the call to action.
+      await page.mouse.move(box.x - 150, y);
+      await page.mouse.move(box.x + box.width + 150, y, { steps: 12 });
+      await page.waitForTimeout(400);
+    });
+    expect(samples.some((sample) => !sample.open)).toBe(true);
+    expect(reversals(samples)).toEqual([]);
+    // It never finished an entrance, so it never reached full opacity.
+    expect(Math.max(...samples.map((sample) => sample.opacity))).toBeLessThan(
+      0.95,
+    );
+    await expect(page.locator("[role='dialog']")).toHaveCount(0);
+  });
+
+  test("reopening during the exit turns around and completes", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    const box = (await platformTrigger(page).boundingBox())!;
+    const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    const samples = await samplePanel(page, async () => {
+      await page.mouse.move(centre.x, centre.y);
+      await page.waitForTimeout(300);
+      await page.mouse.move(640, 500);
+      await page.waitForTimeout(80);
+      await page.mouse.move(centre.x, centre.y);
+      await page.waitForTimeout(400);
+    });
+    expect(reversals(samples)).toEqual([]);
+    const reopened = samples.findLastIndex((sample) => !sample.open) + 1;
+    expect(reopened).toBeGreaterThan(0);
+    // The reopen starts from the faded value, not from scratch.
+    expect(samples[reopened]!.opacity).toBeGreaterThan(0.05);
+    expect(samples.at(-1)).toEqual({ open: true, opacity: 1, y: 0 });
   });
 
   test("is inert at once while it falls out", async ({ page }) => {
     await page.goto("/");
     await platformTrigger(page).click();
-    await expect(platformPopover(page)).toBeVisible();
+    await expect(platformPopover(page)).toHaveCSS("opacity", "1");
     const panel = page.locator("[role='dialog']");
     await page.keyboard.press("Escape");
+    // The panel sinks back over the same 8px it rose.
+    const y = await midpoint(panel, "translate");
+    expect(y, "translate transition").not.toBeNull();
+    expect(translateY(y!)).toBeGreaterThan(0);
+    expect(translateY(y!)).toBeLessThan(8);
     await expect(panel).toHaveAttribute("data-state", "closed");
     await expect(panel).toHaveAttribute("inert", "");
     await expect(panel).toHaveCSS("pointer-events", "none");
-    await expect(panel).toHaveCSS("animation-name", "fall");
+    await expect(panel).toHaveCSS("animation-name", "presence-hold");
     await expect(panel).toHaveCount(0);
   });
 

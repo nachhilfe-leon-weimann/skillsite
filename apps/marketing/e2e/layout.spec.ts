@@ -58,7 +58,7 @@ for (const width of [1080, 1280]) {
       .getByRole("button", { name: "Online lernen" });
     await trigger.click();
     const panel = page.getByRole("dialog", { name: "Online lernen" });
-    await expect(panel).toHaveCSS("animation-name", "rise");
+    await expect(panel).toBeVisible();
     await panel.evaluate((node) =>
       Promise.all(node.getAnimations().map((animation) => animation.finished)),
     );

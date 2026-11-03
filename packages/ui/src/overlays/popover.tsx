@@ -75,7 +75,7 @@ type PopoverContentProps = {
  * The panel, rendered in place right after its trigger: it follows the trigger
  * in the tab order and inherits theme and stacking. Opening never moves focus.
  * Closing returns focus to the trigger only if the panel held it; Escape does
- * so at once, other closes after the exit animation.
+ * so at once, other closes after the exit transition.
  */
 export function PopoverContent({
   label,
@@ -88,16 +88,25 @@ export function PopoverContent({
   const contentRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef(false);
 
-  // Closed content is inert at once, also while its exit animation runs.
-  // Note whether it held focus first, before inert drops that focus.
+  // Closed content is inert at once, also while its exit transition runs.
+  // Note whether it held focus first, before inert drops that focus; a reopen
+  // during the exit keeps that note while focus still sits on <body>.
   useLayoutEffect(() => {
     const content = contentRef.current;
     if (!content) return;
-    restoreFocusRef.current =
-      !open && content.contains(content.ownerDocument.activeElement);
+    const { activeElement, body } = content.ownerDocument;
+    if (!open)
+      restoreFocusRef.current =
+        content.contains(activeElement) ||
+        (restoreFocusRef.current && activeElement === body);
     content.inert = !open;
     if (open) content.removeAttribute("aria-hidden");
     else content.setAttribute("aria-hidden", "true");
+    // Radix's positioning wrapper would still catch pointer hits under the
+    // fading panel; open, the panel itself takes them (hover corridor included).
+    const wrapper = content.parentElement;
+    if (wrapper?.hasAttribute("data-radix-popper-content-wrapper"))
+      wrapper.style.pointerEvents = open ? "" : "none";
   }, [open]);
 
   const holdsFocus = () =>
@@ -129,11 +138,15 @@ export function PopoverContent({
         )
           trigger.focus({ preventScroll: true });
       }}
-      className="z-raised outline-none [--reveal-travel:8px] data-[side=bottom]:pt-1.5 data-[side=top]:pb-1.5 data-[state=closed]:pointer-events-none motion-safe:data-[state=open]:animate-rise motion-safe:data-[state=closed]:animate-fall"
+      // Reversible transitions, so an interrupted open or close turns around
+      // smoothly; presence-hold keeps closing content mounted until it ends.
+      className="z-raised outline-none transition-[opacity,translate] duration-base ease-flow starting:translate-y-2 starting:opacity-0 data-[side=bottom]:pt-1.5 data-[side=top]:pb-1.5 data-[state=closed]:pointer-events-none data-[state=closed]:translate-y-2 data-[state=closed]:opacity-0 data-[state=closed]:animate-presence-hold"
     >
       <div
         // Radix loops Tab inside even a non-modal popover. Leave Tab to the
         // browser, so focus moves on through the page (and the panel closes).
+        // This also hides Tab keydowns inside the panel from ancestor React
+        // handlers and from bubble-phase document/window listeners.
         onKeyDown={(event) => {
           if (event.key === "Tab") event.stopPropagation();
         }}

@@ -71,7 +71,7 @@ test("names a non-modal dialog, links its trigger and keeps the page reachable",
   expect(
     trigger.compareDocumentPosition(dialog) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
-  expect(document.querySelector("[aria-hidden='true']:not(span)")).toBeNull();
+  expect(document.querySelector("[aria-hidden='true']")).toBeNull();
   expect(document.body.hasAttribute("data-scroll-locked")).toBe(false);
   expect(screen.getByText("Eins").closest(".w-64")).not.toBeNull();
 });
