@@ -230,9 +230,9 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
   stay in `@skillsite/ui`.
 - _Check:_ all pages render as before; the footer looks unchanged.
 - _Acceptance criteria:_
-  - [ ] `rg -il consent apps/marketing/src` lists only the booking form (its early-performance consent) and the
+  - [x] `rg -il consent apps/marketing/src` lists only the booking form (its early-performance consent) and the
         testimonials comment; no file of the subsystem, no import, no commented-out reference is left.
-  - [ ] `just check` green; the production CSS loses only the consent rules.
+  - [x] `just check` green; the production CSS loses only the consent rules.
 
 **A3 - Prettier.** _(before the parallel slices, it touches every file)_
 
