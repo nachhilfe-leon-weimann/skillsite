@@ -29,8 +29,8 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <Container className="pt-[clamp(2.5rem,7vw,5.25rem)] pb-[clamp(3rem,6vw,4.5rem)]">
-        <div className="grid items-center gap-[clamp(2rem,5vw,4rem)] lg:grid-cols-[1.15fr_0.85fr]">
+      <Container className="pt-hero-top pb-hero-bottom">
+        <div className="grid items-center gap-split-hero lg:grid-cols-[1.15fr_0.85fr]">
           <div>
             <Reveal trigger="mount" variant="rise-soft" index={0}>
               <Eyebrow>Nachhilfe in Mathematik, Informatik und Physik</Eyebrow>
@@ -71,7 +71,7 @@ export default function HomePage() {
               index={2}
               className="mt-6"
             >
-              <Lead className="max-w-[30em]">
+              <Lead className="max-w-measure-30">
                 Hi, ich bin Leon. Ich erkläre dir den Stoff so lange, bis er
                 wirklich Sinn ergibt – persönlich, online und ohne
                 Mindestlaufzeit.
@@ -114,7 +114,7 @@ export default function HomePage() {
               delay={480}
               className="absolute -left-4 bottom-8 flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5 shadow-card"
             >
-              <span className="font-heading text-[1.6rem] font-extrabold text-coral">
+              <span className="font-heading text-price-badge font-extrabold text-coral">
                 30&nbsp;€
               </span>
               <Text size="caption" tone="muted" className="leading-tight">
@@ -127,7 +127,7 @@ export default function HomePage() {
               trigger="mount"
               variant="fade"
               delay={580}
-              className="absolute -right-3.5 top-6 rounded-[14px] flex flex-row gap-2 items-center bg-navy px-4 py-2.5 text-[0.84rem] font-semibold text-white shadow-card"
+              className="absolute -right-3.5 top-6 rounded-callout flex flex-row gap-2 items-center bg-navy px-4 py-2.5 text-callout font-semibold text-white shadow-card"
             >
               Ohne Mindestlaufzeit <Check className="size-4" />
             </Reveal>
@@ -151,7 +151,7 @@ export default function HomePage() {
         <SectionHeader
           eyebrow="Drei Fächer, ein Anspruch"
           title="Mathe, Informatik und Physik – verstanden, nicht auswendig gelernt."
-          titleClassName="max-w-[16em]"
+          titleClassName="max-w-measure-16"
         />
         <div className="mt-9">
           <SubjectCards />

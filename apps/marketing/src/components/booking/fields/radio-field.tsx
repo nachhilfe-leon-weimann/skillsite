@@ -34,7 +34,7 @@ export function RadioField({
               className={cn(
                 "flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-small font-semibold transition-colors",
                 active
-                  ? "border-coral bg-[color-mix(in_srgb,var(--coral)_8%,transparent)] text-ink"
+                  ? "border-coral bg-accent-tint-8 text-ink"
                   : "border-line bg-bg text-ink hover:border-coral",
               )}
             >

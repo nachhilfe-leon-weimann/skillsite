@@ -39,7 +39,7 @@ export function Accordion({
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 onClick={() => setOpenIndex(isOpen ? null : index)}
-                className="flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-5 text-left font-heading text-[1.08rem] font-semibold text-ink"
+                className="flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-5 text-left font-heading text-accordion font-semibold text-ink"
               >
                 <span>{item.question}</span>
                 <span

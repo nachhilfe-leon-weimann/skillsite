@@ -320,7 +320,7 @@ export function Booker({
       className="mx-auto @container overflow-hidden rounded-3xl border border-line bg-surface shadow-card"
     >
       <div className="grid @2xl:grid-cols-[20rem_1fr]">
-        <aside className="flex flex-col bg-navy p-[clamp(1.5rem,3vw,2.25rem)] text-on-navy">
+        <aside className="flex flex-col bg-navy p-panel-booker text-on-navy">
           <span className="inline-flex items-center gap-2.25 text-eyebrow uppercase text-accent-blue">
             <span className="size-1.75 rounded-full bg-coral" aria-hidden />
             Buchung
@@ -369,7 +369,7 @@ export function Booker({
           </div>
 
           {summary && step !== "result" ? (
-            <div className="mt-6 rounded-2xl border border-white/12 bg-white/8 p-4">
+            <div className="mt-6 rounded-2xl border border-overlay-12 bg-overlay-8 p-4">
               <p className="text-eyebrow uppercase text-accent-blue">
                 Dein Termin
               </p>
@@ -395,7 +395,7 @@ export function Booker({
           ) : null}
         </aside>
 
-        <AnimatedHeight className="flex min-h-96 flex-col p-[clamp(1.25rem,2.5vw,2rem)]">
+        <AnimatedHeight className="flex min-h-96 flex-col p-panel-booker-main">
           {step === "select" ? (
             <SelectStep
               monthOffset={monthOffset}
@@ -484,7 +484,7 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center gap-3 text-on-navy">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/8 text-accent-blue">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-overlay-8 text-accent-blue">
         {icon}
       </span>
       <Text as="span" size="small" tone="inherit">
@@ -505,7 +505,7 @@ function CenteredState({
 }) {
   return (
     <div className="m-auto max-w-sm text-center motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
-      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--coral)_16%,transparent)]">
+      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-accent-tint-16">
         {icon}
       </div>
       <Heading as="h3" size="h4" className="mb-2">
@@ -593,11 +593,11 @@ function SelectStep({
 
   return (
     <div className="mx-auto flex w-full flex-1 flex-col justify-start motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
-      <div className="grid gap-x-[clamp(1.25rem,2.5vw,2rem)] gap-y-5 @4xl:grid-cols-[3fr_1fr]">
+      <div className="grid gap-x-panel-booker-main gap-y-5 @4xl:grid-cols-[3fr_1fr]">
         <div>
           <div className="mb-4 flex">
             <div className="m-auto">
-              <strong className="font-heading text-[1.05rem] text-ink">
+              <strong className="font-heading text-month text-ink">
                 {MONTHS[shown.month - 1]} {shown.year}
               </strong>
             </div>
@@ -660,7 +660,7 @@ function SelectStep({
                     selected && "border-coral bg-coral font-bold text-white",
                     !selected &&
                       available &&
-                      "border-[color-mix(in_srgb,var(--coral)_45%,transparent)] bg-[color-mix(in_srgb,var(--coral)_11%,transparent)] font-semibold text-coral hover:bg-coral hover:text-white",
+                      "border-accent-tint-45 bg-accent-tint-11 font-semibold text-coral hover:bg-coral hover:text-white",
                     !available &&
                       "border-line bg-bg text-ink-soft/50 disabled:pointer-events-none",
                     loading && "animate-pulse",
@@ -784,7 +784,7 @@ function ResultStep({
       >
         {summary ? (
           <div className="mx-auto mb-5 flex max-w-xs items-center gap-3 rounded-2xl border border-line bg-bg p-3.5 text-left">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--coral)_12%,transparent)] text-coral">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-tint-12 text-coral">
               {event === "kennenlernen" ? (
                 <Phone className="size-4" aria-hidden />
               ) : (

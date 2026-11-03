@@ -31,7 +31,7 @@ export default function ProcessPage() {
       <PageHeader
         eyebrow="Ablauf"
         title="So läuft die Nachhilfe bei mir ab."
-        titleClassName="max-w-[13em]"
+        titleClassName="max-w-measure-13"
         lead="Kein Schema F. Wir klären zuerst, wo du stehst, und machen daraus einen Plan, der zu deinem Ziel passt."
       />
 
@@ -45,7 +45,7 @@ export default function ProcessPage() {
       </Container>
 
       <Section surface>
-        <div className="grid items-center gap-[clamp(1.75rem,4vw,3.5rem)] lg:grid-cols-2">
+        <div className="grid items-center gap-split lg:grid-cols-2">
           <div>
             <SectionHeader
               eyebrow="Eine Stunde – 60 Minuten"
@@ -59,7 +59,7 @@ export default function ProcessPage() {
           <Reveal variant="rise-soft">
             <div
               id="discord"
-              className="rounded-3xl bg-navy p-[clamp(1.75rem,4vw,2.5rem)] text-on-navy shadow-card"
+              className="rounded-3xl bg-navy p-panel text-on-navy shadow-card"
             >
               <span className="text-eyebrow uppercase text-accent-blue">
                 Unser Klassenzimmer
@@ -73,10 +73,10 @@ export default function ProcessPage() {
                 ist.
               </Text>
               <div className="mb-5 flex flex-wrap gap-2">
-                <span className="rounded-full border border-white/25 px-3.5 py-1.5 text-small font-semibold text-white">
+                <span className="rounded-full border border-overlay-25 px-3.5 py-1.5 text-small font-semibold text-white">
                   Discord
                 </span>
-                <span className="rounded-full border border-white/25 px-3.5 py-1.5 text-small font-semibold text-white">
+                <span className="rounded-full border border-overlay-25 px-3.5 py-1.5 text-small font-semibold text-white">
                   Microsoft Teams
                 </span>
               </div>
@@ -111,7 +111,7 @@ export default function ProcessPage() {
           <Heading size="h3">Termine selbst buchen</Heading>
         </Reveal>
         <Reveal variant="rise-soft" index={1}>
-          <Text tone="muted" className="mx-auto mt-3 mb-7 max-w-[32em]">
+          <Text tone="muted" className="mx-auto mt-3 mb-7 max-w-measure-32">
             Freie Slots direkt im Kalender wählen – wöchentlich, vor Klausuren
             intensiver oder nach Bedarf. Bis 24&nbsp;Stunden vorher kostenfrei
             absagen.

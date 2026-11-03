@@ -21,6 +21,13 @@
   --coral-2: #ff9248;
   --blue: #4f7cc4;
 
+  /* Shades for navy surfaces (theme-independent). */
+  --on-navy: #eaf1fa;
+  --on-navy-soft: #b9c8db;
+  --on-navy-muted: #8298ae;
+  --accent-blue: #9fc0ff;
+  --coral-light: #ff8a5c;
+
   --shadow:
     0 2px 4px rgba(16, 29, 45, 0.04), 0 18px 40px -22px rgba(16, 29, 45, 0.28);
 
@@ -42,6 +49,25 @@
     0 2px 4px rgba(0, 0, 0, 0.35), 0 18px 44px -20px rgba(0, 0, 0, 0.65);
 
   color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------------
+   Semantic roles. New code names the role, not the hue; the hue names above
+   keep working during the refactor. Same values, so nothing renders differently.
+--------------------------------------------------------------------------- */
+:root {
+  --accent: var(--coral);
+  --accent-2: var(--coral-2);
+  --on-accent: #ffffff;
+  --inverse: var(--navy);
+  --on-inverse: var(--on-navy);
+  --on-inverse-soft: var(--on-navy-soft);
+  --on-inverse-muted: var(--on-navy-muted);
+
+  /* Keyboard focus ring (base :focus-visible outline). */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 3px;
+  --focus-ring-color: var(--accent);
 }
 
 /* ---------------------------------------------------------------------------
@@ -70,18 +96,129 @@
   --radius-xl: 16px;
   --radius-2xl: 20px;
   --radius-3xl: 28px;
+  /* Radii off the scale, named by their one use. */
+  --radius-callout: 14px;
+  --radius-stat: 18px;
+  --radius-caret: 1px;
 
   --shadow-card: var(--shadow);
+  /* Coral glows under accent surfaces, by size. */
+  --shadow-glow-sm: 0 14px 30px -12px var(--accent);
+  --shadow-glow-md: 0 22px 44px -22px var(--accent);
+  --shadow-glow-lg: 0 30px 60px -30px var(--accent);
+  --shadow-raised: 0 12px 28px -12px rgba(0, 0, 0, 0.4);
+  --shadow-popover-inverse: 0 24px 50px -18px rgba(0, 0, 0, 0.6);
+  --shadow-logo: 0 5px 14px -5px rgba(16, 29, 45, 0.5);
+  /* Focus ring of form controls. */
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 
   /* Page width - single source of truth; bump to widen the whole site. */
   --container-page: 1280px;
 
+  /* Reading widths (line lengths), in em of the element's own font size. */
+  --container-measure-12: 12em;
+  --container-measure-13: 13em;
+  --container-measure-14: 14em;
+  --container-measure-15: 15em;
+  --container-measure-16: 16em;
+  --container-measure-18: 18em;
+  --container-measure-24: 24em;
+  --container-measure-26: 26em;
+  --container-measure-30: 30em;
+  --container-measure-32: 32em;
+  --container-measure-34: 34em;
+  --container-measure-38: 38em;
+  --container-measure-40: 40em;
+  --container-measure-42: 42em;
+
+  /* Fluid spacings: split-layout gaps, page blocks and panel paddings. */
+  --spacing-split: clamp(1.75rem, 4vw, 3.5rem);
+  --spacing-split-about: clamp(2rem, 5vw, 3.5rem);
+  --spacing-split-hero: clamp(2rem, 5vw, 4rem);
+  --spacing-hero-top: clamp(2.5rem, 7vw, 5.25rem);
+  --spacing-hero-bottom: clamp(3rem, 6vw, 4.5rem);
+  --spacing-page-top: clamp(2.5rem, 6vw, 4.5rem);
+  --spacing-page-header-bottom: clamp(1.25rem, 3vw, 2rem);
+  --spacing-intro-bottom: clamp(1.75rem, 4vw, 2.5rem);
+  --spacing-footer: clamp(40px, 5vw, 56px);
+  --spacing-doc: clamp(40px, 6vw, 72px);
+  --spacing-panel: clamp(1.75rem, 4vw, 2.5rem);
+  --spacing-panel-contact: clamp(1.75rem, 3.5vw, 2.5rem);
+  --spacing-panel-timeline: clamp(1.5rem, 4vw, 2.25rem);
+  --spacing-panel-quote: clamp(1.75rem, 4vw, 2.75rem);
+  --spacing-panel-pricing: clamp(2rem, 4vw, 2.75rem);
+  --spacing-panel-cta: clamp(2.5rem, 6vw, 4.5rem);
+  --spacing-panel-booker: clamp(1.5rem, 3vw, 2.25rem);
+  --spacing-panel-booker-main: clamp(1.25rem, 2.5vw, 2rem);
+
+  /* Stacking order. */
+  --z-index-raised: 10;
+  --z-index-dropdown: 20;
+  --z-index-sticky: 50;
+  --z-index-overlay: 100;
+
   /* Accent shades for navy surfaces (theme-independent). */
-  --color-on-navy: #eaf1fa;
-  --color-on-navy-soft: #b9c8db;
-  --color-on-navy-muted: #8298ae;
-  --color-accent-blue: #9fc0ff;
-  --color-coral-light: #ff8a5c;
+  --color-on-navy: var(--on-navy);
+  --color-on-navy-soft: var(--on-navy-soft);
+  --color-on-navy-muted: var(--on-navy-muted);
+  --color-accent-blue: var(--accent-blue);
+  --color-coral-light: var(--coral-light);
+
+  /* Semantic roles (see :root above). */
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-on-accent: var(--on-accent);
+  --color-inverse: var(--inverse);
+  --color-on-inverse: var(--on-inverse);
+  --color-on-inverse-soft: var(--on-inverse-soft);
+  --color-on-inverse-muted: var(--on-inverse-muted);
+
+  /* Accent tints: the accent over transparent, by percent. */
+  --color-accent-tint-8: color-mix(in srgb, var(--accent) 8%, transparent);
+  --color-accent-tint-11: color-mix(in srgb, var(--accent) 11%, transparent);
+  --color-accent-tint-12: color-mix(in srgb, var(--accent) 12%, transparent);
+  --color-accent-tint-14: color-mix(in srgb, var(--accent) 14%, transparent);
+  --color-accent-tint-16: color-mix(in srgb, var(--accent) 16%, transparent);
+  --color-accent-tint-35: color-mix(in srgb, var(--accent) 35%, transparent);
+  --color-accent-tint-45: color-mix(in srgb, var(--accent) 45%, transparent);
+
+  /* White washes on navy and coral surfaces (fills, lines, rings), by percent. */
+  --color-overlay-6: color-mix(in oklab, var(--color-white) 6%, transparent);
+  --color-overlay-7: color-mix(in oklab, var(--color-white) 7%, transparent);
+  --color-overlay-8: color-mix(in oklab, var(--color-white) 8%, transparent);
+  --color-overlay-10: color-mix(in oklab, var(--color-white) 10%, transparent);
+  --color-overlay-12: color-mix(in oklab, var(--color-white) 12%, transparent);
+  --color-overlay-14: color-mix(in oklab, var(--color-white) 14%, transparent);
+  --color-overlay-15: color-mix(in oklab, var(--color-white) 15%, transparent);
+  --color-overlay-20: color-mix(in oklab, var(--color-white) 20%, transparent);
+  --color-overlay-22: color-mix(in oklab, var(--color-white) 22%, transparent);
+  --color-overlay-25: color-mix(in oklab, var(--color-white) 25%, transparent);
+  --color-overlay-35: color-mix(in oklab, var(--color-white) 35%, transparent);
+  --color-overlay-40: color-mix(in oklab, var(--color-white) 40%, transparent);
+
+  /* Text on the accent surface, by opacity. */
+  --color-on-accent-75: color-mix(
+    in oklab,
+    var(--color-white) 75%,
+    transparent
+  );
+  --color-on-accent-85: color-mix(
+    in oklab,
+    var(--color-white) 85%,
+    transparent
+  );
+  --color-on-accent-90: color-mix(
+    in oklab,
+    var(--color-white) 90%,
+    transparent
+  );
+
+  /* Surfaces. */
+  --color-glass: color-mix(in srgb, var(--bg) 84%, transparent);
+  --color-inverse-raised: color-mix(in srgb, #ffffff 7%, var(--inverse));
+
+  /* Syntax colour of strings in the code mock-up. */
+  --color-syntax-string: #8fd49b;
 
   /* Type scale - one class sets size + line-height + tracking + weight. */
   --text-display: clamp(2.7rem, 6.4vw, 4.7rem);
@@ -129,6 +266,52 @@
 
   --text-caption: 0.8rem;
   --text-caption--line-height: 1.45;
+
+  /* Role sizes outside the scale: font size only, line height and weight stay
+     with the element (so each renders exactly as its old arbitrary size). */
+  --text-accordion: 1.08rem;
+  --text-button: 1rem;
+  --text-button-lg: 1.05rem;
+  --text-callout: 0.84rem;
+  --text-card-body: 0.96rem;
+  --text-card-link: 0.95rem;
+  --text-card-title: 1.4rem;
+  --text-card-title-sm: 1.12rem;
+  --text-chip-icon: 0.95em;
+  --text-code: 0.86rem;
+  --text-digit-lg: 2.4rem;
+  --text-digit-md: 2.2rem;
+  --text-digit-sm: 2rem;
+  --text-footnote: 0.82rem;
+  --text-icon-badge: 1.4rem;
+  --text-logo: 1.04rem;
+  --text-logo-tagline: 0.71rem;
+  --text-month: 1.05rem;
+  --text-price: clamp(3.6rem, 8vw, 5.2rem);
+  --text-price-badge: 1.6rem;
+  --text-price-unit: 1.1rem;
+  --text-quote: clamp(1.3rem, 2.6vw, 1.9rem);
+  --text-quote-lg: clamp(1.5rem, 3vw, 2.15rem);
+  --text-quote-source: 0.92rem;
+  --text-stat: clamp(1.9rem, 3.5vw, 2.6rem);
+  --text-stat-sm: 1.5rem;
+  --text-stat-label: 0.92rem;
+  --text-stat-label-sm: 0.78rem;
+  --text-step-title: 1.2rem;
+
+  /* Legal pages: Tailwind's default sizes, named (prose-h2 = text-2xl,
+     prose-h3 = text-lg, prose-sm = text-sm, prose-xs = text-xs; prose-body = the
+     body size with leading-7). */
+  --text-prose-h2: 1.5rem;
+  --text-prose-h2--line-height: calc(2 / 1.5);
+  --text-prose-h3: 1.125rem;
+  --text-prose-h3--line-height: calc(1.75 / 1.125);
+  --text-prose-body: 1rem;
+  --text-prose-body--line-height: 1.75rem;
+  --text-prose-sm: 0.875rem;
+  --text-prose-sm--line-height: calc(1.25 / 0.875);
+  --text-prose-xs: 0.75rem;
+  --text-prose-xs--line-height: calc(1 / 0.75);
 }
 
 /* ---------------------------------------------------------------------------
