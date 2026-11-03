@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
-import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Lead } from "@skillsite/ui/typography/lead";
 import { Text } from "@skillsite/ui/typography/text";
@@ -61,14 +62,12 @@ export default function AboutPage() {
               index={3}
               className="mt-7"
             >
-              <LinkButton
-                href={routes.firstMeeting}
-                variant="primary"
-                size="lg"
-              >
-                Finde heraus, ob wir zusammenpassen{" "}
-                <ArrowRight className="size-4" />
-              </LinkButton>
+              <Button asChild variant="primary" size="lg">
+                <Link href={routes.firstMeeting}>
+                  Finde heraus, ob wir zusammenpassen{" "}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
             </Reveal>
           </div>
 

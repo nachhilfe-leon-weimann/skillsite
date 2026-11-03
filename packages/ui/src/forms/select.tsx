@@ -12,7 +12,7 @@ export type SelectOption<T extends string | number> = {
   hint?: string;
 };
 
-type SelectTone = "default" | "on-navy";
+type SelectTone = "default" | "inverse";
 
 type SelectProps<T extends string | number> = {
   value: T;
@@ -56,7 +56,7 @@ const tones: Record<
     optionSelected: "font-semibold text-ink",
     hint: "text-ink-soft",
   },
-  "on-navy": {
+  inverse: {
     trigger:
       "border-white/12 bg-white/[0.06] text-on-navy hover:border-white/22 hover:bg-white/[0.1]",
     chip: "bg-white/8 text-accent-blue",

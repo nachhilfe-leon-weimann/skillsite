@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { Button, LinkButton } from "./button";
+import { Button } from "./button";
 
 const meta = {
   title: "Primitives/Button",
@@ -13,7 +13,7 @@ const meta = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["primary", "navy", "outline", "white", "ghost"],
+      options: ["primary", "secondary", "outline", "inverse", "ghost"],
     },
     size: { control: "select", options: ["sm", "md", "lg"] },
   },
@@ -30,8 +30,8 @@ export const Variants: Story = {
       <Button {...args} variant="primary">
         Primary
       </Button>
-      <Button {...args} variant="navy">
-        Navy
+      <Button {...args} variant="secondary">
+        Secondary
       </Button>
       <Button {...args} variant="outline">
         Outline
@@ -40,8 +40,8 @@ export const Variants: Story = {
         Ghost
       </Button>
       <span className="rounded-xl bg-navy p-3">
-        <Button {...args} variant="white">
-          White
+        <Button {...args} variant="inverse">
+          Inverse
         </Button>
       </span>
     </div>
@@ -66,8 +66,8 @@ export const Sizes: Story = {
 
 export const AsLink: Story = {
   render: (args) => (
-    <LinkButton href="https://example.com" variant={args.variant}>
-      Externer Link
-    </LinkButton>
+    <Button asChild variant={args.variant}>
+      <a href="https://example.com">Externer Link</a>
+    </Button>
   ),
 };

@@ -23,7 +23,7 @@ export const Basic: Story = {
       </p>
       <div className="mt-4 flex gap-2">
         <Tag>Oberstufe</Tag>
-        <Tag tone="navy">Abitur</Tag>
+        <Tag tone="inverse">Abitur</Tag>
       </div>
     </Card>
   ),

@@ -1,10 +1,11 @@
+import Link from "next/link";
 import Image from "next/image";
 
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { PageHeader } from "@/components/layout/page-header";
 import { Tag } from "@skillsite/ui/primitives/tag";
-import { LinkButton } from "@skillsite/ui/primitives/button";
+import { Button } from "@skillsite/ui/primitives/button";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
@@ -66,13 +67,14 @@ export default function SubjectsPage() {
                 <Text size="lead" tone="muted" className="mt-6">
                   {subject.description}
                 </Text>
-                <LinkButton
-                  href={`${routes.contact}?fach=${subject.anchorId}#kennenlernen`}
-                  variant="navy"
-                  className="mt-6"
-                >
-                  Erstgespräch: {subject.name} <ArrowRight className="size-4" />
-                </LinkButton>
+                <Button asChild variant="secondary" className="mt-6">
+                  <Link
+                    href={`${routes.contact}?fach=${subject.anchorId}#kennenlernen`}
+                  >
+                    Erstgespräch: {subject.name}{" "}
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
               </Reveal>
 
               <div className="grid gap-4 sm:grid-cols-2">
