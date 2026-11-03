@@ -48,8 +48,8 @@ refines it and reopens no decision. Read the [C8 plan](foundation-refactor-c8.md
 1. **Server code in a client bundle.** A client-safe `index.ts` that re-exports from `server/`, or a client
    component that imports a server entry, ships secrets or fails the build late. D1a/D1b test that no `index.ts`
    imports `./server`, and `next build` proves `server-only` holds.
-2. **An empty `CAL_API_KEY` that stops the server.** CI and smoke run without the variable (smoke inherits a local
-   `.env`); the pixel toolkit pins `CAL_API_KEY=` empty. Today an empty value means "unconfigured". D3's schema
+2. **An empty `CAL_API_KEY` that stops the server.** CI runs without it; local smoke reads whatever the local `.env`
+   holds; the pixel toolkit pins `CAL_API_KEY=` empty. Today an empty value means "unconfigured". D3's schema
    treats the empty string as absent (test case).
 3. **A `loading.tsx` that breaks the payment redirect.** `redirect()` inside a streamed boundary becomes a
    client-side meta refresh instead of the 307 that `e2e/smoke.spec.ts` asserts. D4 adds no `loading.tsx` to
@@ -131,11 +131,14 @@ C8.3-C8.9 change these files that phase D also touches:
   possibly `apps/marketing/vitest.config.mts`); the rebase rules below cover those. D3 must keep
   `validateBookingValues`' signature so `use-booking-form.ts` and `booking-form.tsx` stay untouched.
 - **Start only after C8.8 is on `main`:** D1b (moves every file C8.5/C8.6/C8.8 edit) and D2 (decomposes the C8.8
-  booker). C8.9 may still be open: it adds tests and evidence only.
+  booker). D2 also waits for D4 on `main`, because its component tests need the jsdom project D4 adds. C8.9 may
+  still be open: it adds tests and evidence only.
 - **C9 - a declared deviation from the spec's `C8 -> C9`.** C8 counts as complete only after C8.9's human
   VoiceOver/Safari gate, and D5 waits for C9; read strictly, a pending manual gate would block D5 indefinitely.
   C9a/C9b add story files for components no C8 slice touches, so this plan lets them start on today's `main`,
-  independently of C8. Only C9c - which audits the C8 widget stories and adds the coverage guard - waits for C8.8
+  independently of C8. Beyond new story files, C9a splits `packages/ui/src/typography/typography.stories.tsx`
+  into per-component files and C9b edits `packages/ui/.storybook/preview.tsx` (the `ownsTheme` switch); no C8
+  slice edits either file. Only C9c - which audits the C8 widget stories and adds the coverage guard - waits for C8.8
   on `main`. Whether that is acceptable, or C9 waits for the spec's C8 box, is open question 6.
 - **Later:** D5 after C9 and D1-D4; D6 after D5 (spec timeline).
 - **Rebasing.** Branch the post-C8 slices from a fresh `origin/main`, never from a C8 branch. When a C8 PR lands
@@ -165,7 +168,7 @@ Each PR body starts with its base ("Stacked on #N - merge after it." or "Based o
 | C9a   | `test/ui-stories-primitives`  | `test(ui): stories for the primitives and typography`                    | T    | D0 (Q6)                           |
 | C9b   | `test/ui-stories-layout`      | `test(ui): stories for layout, motion and shell`                         | T    | D0 (Q6)                           |
 | C9c   | `test/ui-story-coverage`      | `test(ui): guard story coverage of every exported component`             | T    | C9a, C9b, C8.8 on `main`          |
-| D2    | `refactor/booker-decompose`   | `refactor(booking): decompose the booker`                                | R    | D1b                               |
+| D2    | `refactor/booker-decompose`   | `refactor(booking): decompose the booker`                                | R    | D1b, D4 on `main`                 |
 | D5.0  | `refactor/ui-page-patterns`   | `refactor(ui): name the last page values and add a step number`          | R    | C9c, D2, D4 on `main`             |
 | D5.1  | `refactor/page-home`          | `refactor(home): build the home page from the design system`             | R    | D5.0                              |
 | D5.2  | `refactor/page-subjects`      | `refactor(subjects): build /faecher from the design system`              | R    | D5.0                              |
@@ -174,8 +177,8 @@ Each PR body starts with its base ("Stacked on #N - merge after it." or "Based o
 | D5.5  | `refactor/page-about`         | `refactor(about): build /ueber-mich from the design system`              | R    | D5.0                              |
 | D5.6  | `refactor/page-online`        | `refactor(online): build /online-lernen from the design system`          | R    | D5.0                              |
 | D5.7  | `refactor/page-booking`       | `refactor(booking): build /termin and /kontakt from the design system`   | R    | D5.0                              |
-| D5.8  | `refactor/page-legal`         | `refactor(legal): move the legal pages' text into content`               | R    | D5.0, open question 4             |
-| D5.9  | `refactor/page-status`        | `refactor(status): move the status pages' text into content`             | R    | D5.0, open question 3             |
+| D5.8  | `refactor/page-legal`         | `refactor(legal): move the legal pages' text into content`               | R    | D5.0, Q4                          |
+| D5.9  | `refactor/page-status`        | `refactor(status): move the status pages' text into content`             | R    | D5.0, Q3                          |
 | D6a   | `refactor/log-core-numbering` | `refactor: one log core and one legal numbering registry`                | R    | all D5                            |
 | D6b   | `chore/phase-d-cleanup`       | `chore: remove leftovers and record the final ratchet`                   | R    | D6a (stacked), Q5                 |
 
@@ -186,11 +189,11 @@ split by group so each PR's check fits in a few lines; its box is ticked in C9c.
 different one, so the recovery fix does not ride along in D4.
 
 **Parallelism (E-17).** D1a -> D3 -> D4 (-> D4r) is linear (shared `package.json`, lockfile, ESLint and Vitest
-config). C9a and C9b are independent PRs on `main` (different story files); C9c starts once both are merged, no
-stack. D1b runs beside C9 (apps versus `packages/ui` stories). D5.1-D5.9 run in parallel: each owns its
-`app/<route>/` folder and route content file; `design-ratchet.json` and shared content files are resolved by the
-rebase rules above. D5.0 runs alone because it edits `packages/ui` tokens and typography that
-every route PR consumes. D6a/D6b are sequential.
+config). C9a and C9b are independent PRs on `main` (different story files); C9c starts once both are merged, no stack.
+D1b runs beside C9 (apps versus `packages/ui` stories). D2 follows D1b once D4 is also on `main` (Vitest `components`
+project). D5.1-D5.9 run in parallel: each owns its `app/<route>/` folder and route content file; `design-ratchet.json`
+and shared content files are resolved by the rebase rules above. D5.0 runs alone because it edits `packages/ui` tokens
+and typography that every route PR consumes. D6a/D6b are sequential.
 
 ## Verification toolkit
 
@@ -291,7 +294,8 @@ copied example never stops `just dev`), `README.md` (env paragraph), `CLAUDE.md`
 - `lib/booking/schema.ts` imports `config.ts` and `fields.ts`, never `validation.ts`:
   - `fieldValueSchema(field: FieldDef)` and `bookingValuesSchema(event: BookingEventKey)`, derived from the field
     declarations (required/empty, `maxLength` on strings, `format` via `EMAIL_RE`/`PHONE_RE`, option whitelist,
-    `multiple` -> `string[]`).
+    `multiple` -> `string[]`). Array versus string keeps today's results: an array passes on a plain text field
+    and on a single-choice field whose entries are all offered, exactly as `isFieldValid` treats it now.
   - `bookingSubmissionSchema` checks **only what today's action checks**, with today's semantics: the event is an
     own key of `bookingEvents`, `slot` is truthy, `values` per field as above, and `agreements?.termsAccepted` /
     `agreements?.earlyPerformanceRequested` read as truthy flags. Everything else (`duration`, `honeypot`,
@@ -300,30 +304,33 @@ copied example never stops `just dev`), `README.md` (env paragraph), `CLAUDE.md`
   - `checkBookingSubmission(submission: BookingSubmission, now?: number): BookingIssue | null` with
     `BookingIssue` the union of `{ check: "slot" }`, `{ check: "fields"; fields: string[] }`,
     `{ check: "terms" }` and `{ check: "withdrawal_notice" }`, returned in today's order.
-  - **Malformed shapes.** Where today's code throws - `values` missing or not an object, a field value that is
-    neither a string nor an array where `.trim()` is reached - `checkBookingSubmission` throws
+  - **Malformed shapes.** Where today's code throws - `values` missing (`null`/`undefined`), a field value that
+    is neither a string nor an array where `.trim()` is reached - `checkBookingSubmission` throws
     `MalformedSubmissionError` too. `requestBooking`'s existing catch turns it into today's outcome: a `failed`
     log line and the generic failure. Where today's code returns a result for odd input (an array on a text field,
-    a non-empty non-string slot), the schema returns the same result. The characterization table pins each case.
+    a non-empty non-string slot, a primitive or array `values` such as `"x"`, `5` or `[]`, which today yields the
+    required-field labels as `rejected`/`validation`), the schema returns the same result. The characterization
+    table pins each case.
 - `validateBookingValues(event, values): string[]` keeps its signature and result (labels via
   `shortLabel ?? label`, declaration order); it now reads the schema.
 
 **Behaviour changes, all of them** (operator-facing only; a visitor on a correctly configured server sees none):
 
-| Change                                                                     | Today                                               | After D3                                  | Why it stays in a `refactor:` PR                                            |
-| -------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------- |
-| A present, malformed `CAL_API_KEY`                                         | server starts; Cal answers 401; booker shows error  | `next start` exits with an `[env]` line   | The spec's own D3 acceptance demands it; the shape itself is Q1             |
-| A whitespace-only `CAL_API_KEY`                                            | configured; Cal 401; error state                    | malformed: `next start` exits             | A case of the row above; it never silently becomes `unconfigured`           |
-| A hand-made malformed submission (values missing, a number as field value) | `failed` log with a `TypeError` text; generic error | `failed` log naming the shape; same error | Same outcome and message; only the `error` text inside the log line changes |
+| Change                                                                  | Today                                                          | After D3                                                                                     | Why it stays in a `refactor:` PR                                                    |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| A present, malformed `CAL_API_KEY`                                      | server starts; Cal answers 401; booker shows error             | `next start` exits with an `[env]` line                                                      | The spec's own D3 acceptance demands it; the shape itself is Q1                     |
+| A whitespace-only `CAL_API_KEY`                                         | configured; Cal 401; error state                               | malformed: `next start` exits                                                                | A case of the row above; it never silently becomes `unconfigured`                   |
+| A malformed `CAL_API_KEY` in a local `.env`                             | `just dev`, `just smoke`, `just check` run; booker shows error | `next dev` exits too (`register()` runs in dev): `just dev`, `just smoke`, `just check` stop | Same rule as row 1; smoke inherits the local `.env`; the `[env]` line names the fix |
+| A hand-made malformed submission (values null, a number as field value) | `failed` log with a `TypeError` text; generic error            | `failed` log naming the shape; same error                                                    | Same outcome and message; only the `error` text inside the log line changes         |
 
 Anything beyond this table is a regression: stop and report.
 
-1. Characterize first: `schema.test.ts` holds a table of inputs run against the **current**
-   `validateBookingValues` (both events; blank, whitespace-only, at and over each `FIELD_LIMITS` value, invalid
-   e-mail, a five- and a six-digit phone, an option not offered, an empty and a mixed multi-chip array, a missing
-   key; and hand-made shapes: `values` missing, a number as a field value, an array on a text field). Each row pins
-   today's result - the label list, or "throws". Commit the table green on the old code, then switch to zod and
-   keep it green.
+1. Characterize first: `schema.test.ts` holds a table of inputs run against the **current** `validateBookingValues`
+   (both events; blank, whitespace-only, at and over each `FIELD_LIMITS` value, invalid e-mail, a five- and a
+   six-digit phone, an option not offered, an empty and a mixed multi-chip array, a missing key; and hand-made shapes:
+   `values` missing, `values: "x"`, `values: []`, a number as a field value, an array on a text field). Each row pins
+   today's result - the label list, or "throws". Commit the table green on the old code, then switch to zod and keep
+   it green.
 2. Add action tests for `checkBookingSubmission`: unknown event and empty slot -> `slot`; missing fields ->
    `fields` with the same labels; paid event without `termsAccepted` -> `terms`; a slot within the withdrawal
    period without `earlyPerformanceRequested` -> `withdrawal_notice`; the free event never needs agreements.
@@ -336,8 +343,9 @@ Anything beyond this table is a regression: stop and report.
    green unchanged.
 5. Add `instrumentation.ts`. Measure in a production build (scratch only): `CAL_API_KEY=` and no variable -> server
    starts, `/termin` shows "Online-Terminwahl gerade nicht verfügbar"; a malformed value -> `next start` exits
-   non-zero within seconds with the `[env]` line. If Next keeps serving after `register()` throws, call
-   `process.exit(1)` after logging and say so in the PR. Note whether `next build` invokes `register()`.
+   non-zero within seconds with the `[env]` line, and `next dev` stops with the same line. If Next keeps serving after
+   `register()` throws, call `process.exit(1)` after logging and say so in the PR. Note whether `next build` invokes
+   `register()`.
 6. ESLint: `no-restricted-properties` for `process.env` in `apps/marketing/src/**`, except `lib/env.ts`,
    `instrumentation.ts` and test files. `rg -n 'process\.env' apps/marketing/src` lists only those.
    `next.config.ts` and the Playwright configs stay outside the rule on purpose: they run in plain Node (before
@@ -361,7 +369,8 @@ Anything beyond this table is a regression: stop and report.
 (+ tests); modify `app/error.tsx`, `apps/marketing/vitest.config.mts` (project `components`: `src/**/*.test.tsx`,
 jsdom, Testing Library), `apps/marketing/package.json` (`jsdom`, `@testing-library/react`,
 `@testing-library/dom`, versions as in `packages/ui`), `CLAUDE.md` (test projects line). Spec: the D4 box.
-If a C8 slice has added a marketing `components` project by the time D4 rebases, keep that one; D2 reuses it.
+If a C8 slice has added a marketing `components` project by the time D4 rebases, keep that one. D2 starts only
+after D4 is on `main` and reuses the project.
 
 **Rulings.** No `loading.tsx`. The static pages have nothing to wait for. The two per-request pages render in one
 server pass without slow data: on `/kontakt` a fallback would only flash before the page, and on `/zahlung` a
@@ -375,7 +384,8 @@ renders Next's bare default page today. `error.tsx` keeps `reset` in D4; a switc
    rerun writes a byte-identical `innerHTML`. (The server HTML snapshot never reaches an error boundary, so this is
    the pixel-identity proof for the extraction.)
 2. `global-error.tsx` (`"use client"`) mirrors `layout.tsx`'s document:
-   `<html lang="de" suppressHydrationWarning className={fontVariables}>` (next-themes sets `data-theme` early),
+   `<html lang="de" data-scroll-behavior="smooth" suppressHydrationWarning className={fontVariables}>`
+   (`data-scroll-behavior` as in `layout.tsx:32`; next-themes sets `data-theme` early),
    `<body className="flex min-h-dvh flex-col">`, then `<ThemeProvider>` around
    `<main id="main" className="flex-1"><ErrorState onRetry={reset} /></main>`. It imports `./globals.css` after
    `@skillsite/ui/shell/fonts` (keep `layout-imports.test.ts`'s order rule satisfied). A `<title>` only if Q2
@@ -401,7 +411,9 @@ renders Next's bare default page today. `error.tsx` keeps `reset` in D4; a switc
 
 `app/error.tsx` and `global-error.tsx` pass `retry` instead of `reset` to `ErrorState`. Test: the button calls
 `retry` once. Manual proof in a scratch copy: a server component that throws once (a module-level counter) recovers
-on "Nochmal versuchen" with `retry` and stays on the error page with `reset`. The PR body names exactly that change.
+on "Nochmal versuchen" with `retry` and stays on the error page with `reset`. The scratch route must render per
+request (`await connection()` in the component, or `export const dynamic = "force-dynamic"`): on a static page
+the throw fails the prerender in `next build`. The PR body names exactly that change.
 
 ## D1b - Booking module
 
@@ -502,8 +514,10 @@ Select, RadioGroup, choice chips, Switch and Calendar - C9c only audits those):
 each; modify `components/booker.tsx`, `model/dates.ts`, `content/booking.ts`. Spec: the D2 box.
 
 **Test environments.** The marketing Vitest config has only the node project `unit` (`src/**/*.test.{ts,mts}`)
-until D4 adds the jsdom project `components` (`src/**/*.test.tsx`, Testing Library) - D4, not this slice, is
-"the booker slice" `CLAUDE.md` anticipated. Every test that renders or uses `renderHook` is therefore a
+until D4 adds the jsdom project `components` (`src/**/*.test.tsx`, Testing Library); D4 adds it, earlier than
+the booker slice `CLAUDE.md` anticipated. D2 therefore starts only once D4 is on `main` (PR table); before
+writing tests, confirm `apps/marketing/vitest.config.mts` lists the `components` project, or a `.test.tsx` file
+matches no glob and silently never runs. Every test that renders or uses `renderHook` is therefore a
 `.test.tsx`, including `use-availability.test.tsx`; pure model tests (`pricing.test.ts`) stay `.test.ts`.
 
 **Contracts** (adapt the names of the C8.8 calendar props as merged; keep its manual month path)
@@ -699,5 +713,6 @@ and its base, the changed public API (module entries, new exports), the toolkit 
    (the home section is commented out, awaiting real testimonials). Keep them parked, or remove them as dead code
    and restore from history later?
 6. **C9 timing.** The spec orders `C8 -> C9`, but C8 completes only with C8.9's human VoiceOver/Safari gate, and
-   D5 waits for C9. This plan lets C9a/C9b (stories for components no C8 slice touches) start now and gates only
-   C9c on C8.8 being on `main`. Is that acceptable, or should C9 wait for the spec's C8 box?
+   D5 waits for C9. This plan lets C9a/C9b start now: they add stories for components no C8 slice touches,
+   split `typography.stories.tsx` and edit `.storybook/preview.tsx`, none of which a C8 slice edits. Only C9c
+   waits for C8.8 on `main`. Is that acceptable, or should C9 wait for the spec's C8 box?
