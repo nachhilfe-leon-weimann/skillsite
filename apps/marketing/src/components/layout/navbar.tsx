@@ -10,6 +10,7 @@ import { Container } from "@skillsite/ui/layout/container";
 import { Collapsible } from "@skillsite/ui/motion/collapsible";
 import { Logo } from "@skillsite/ui/shell/logo";
 import { Button } from "@skillsite/ui/primitives/button";
+import { NavLink } from "@skillsite/ui/primitives/link";
 import { IconButton } from "@skillsite/ui/primitives/icon-button";
 import { brand, primaryCta, primaryNav, platformNav } from "@/content/site";
 import { useBodyScrollLock } from "@skillsite/ui/hooks/use-body-scroll-lock";
@@ -267,18 +268,15 @@ function MobileMenu({
     <div className="flex min-h-0 flex-1 flex-col nav:hidden motion-safe:animate-fade-down">
       <Container className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto py-4">
         {primaryNav.map((item) => (
-          <Link
+          <NavLink
             key={item.href}
             href={item.href}
+            active={isActive(pathname, item.href)}
             aria-current={currentPage(pathname, item.href)}
             onClick={onNavigate}
-            className={cn(
-              "border-b border-line py-3 text-body",
-              activeText(isActive(pathname, item.href)),
-            )}
           >
             {item.label}
-          </Link>
+          </NavLink>
         ))}
 
         <button
@@ -304,18 +302,16 @@ function MobileMenu({
         <Collapsible open={platformOpen} id="mobile-platform-nav">
           <div className="flex flex-col">
             {platformNav.map((item) => (
-              <Link
+              <NavLink
                 key={`${item.href}:${item.label}`}
+                variant="menu-sub"
                 href={item.href}
+                active={isActive(pathname, item.href)}
                 aria-current={currentPage(pathname, item.href)}
                 onClick={onNavigate}
-                className={cn(
-                  "border-b border-line py-2.5 pl-4 text-small",
-                  activeText(isActive(pathname, item.href)),
-                )}
               >
                 {item.label}
-              </Link>
+              </NavLink>
             ))}
           </div>
         </Collapsible>
