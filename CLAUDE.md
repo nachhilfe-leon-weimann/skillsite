@@ -9,6 +9,7 @@ plan live in [`docs/specs/`](docs/specs/) - start with
 - `just dev` - run the site (`http://localhost:3000`).
 - `just check` - everything that must be green before a push; CI's `check` job runs the same. **Keep green before every push.**
 - `just test` - the tests only.
+- `just smoke` - functional smoke test against the production build (once: `pnpm --filter @skillsite/marketing exec playwright install chromium`).
 - `just build` - production build; it is also the type check of `apps/marketing`.
 - `just typecheck` - type-check the packages `next build` does not cover.
 - `just docker-build` / `just docker-run` - build and run the production image locally.
