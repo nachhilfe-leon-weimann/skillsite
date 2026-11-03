@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "test": "turbo run test && vitest run",
     "smoke": "turbo run e2e",
-    "storybook": "pnpm --filter @skillsite/ui storybook"
+    "storybook": "pnpm --filter @skillsite/ui storybook",
+    "widgets": "turbo run widgets --filter=@skillsite/ui"
   },
   "devDependencies": {
     "@skillsite/config": "workspace:*",
