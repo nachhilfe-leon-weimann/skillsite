@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { test } from "vitest";
 
-import { disallowedPaths, indexablePaths, routes } from "./routes.ts";
+import { disallowedPaths, indexablePaths, routes } from "@/lib/routes";
 
 test("the payment link is disallowed and never offered to search engines", () => {
   // robots.txt and sitemap.xml must not contradict each other: submitting a

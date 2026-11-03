@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { test, vi } from "vitest";
 
 import { describeAttempt, logBooking, maskEmail } from "./log.ts";
 
@@ -56,21 +56,19 @@ test("describing a malformed attempt never throws", () => {
   });
 });
 
-test("every outcome is one greppable line at the matching level", (t) => {
-  const info = t.mock.method(console, "info", () => {});
-  const warn = t.mock.method(console, "warn", () => {});
-  const error = t.mock.method(console, "error", () => {});
+test("every outcome is one greppable line at the matching level", () => {
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
   logBooking("created", { calUid: "abc" });
   logBooking("blocked", { signal: "honeypot", honeypot: "line\nbreak" });
   logBooking("failed", {});
 
-  assert.deepEqual(info.mock.calls[0]?.arguments, [
-    '[booking] created {"calUid":"abc"}',
-  ]);
+  assert.deepEqual(info.mock.calls[0], ['[booking] created {"calUid":"abc"}']);
   // Untrusted input stays on one line - no forged log entries.
-  assert.deepEqual(warn.mock.calls[0]?.arguments, [
+  assert.deepEqual(warn.mock.calls[0], [
     '[booking] blocked {"signal":"honeypot","honeypot":"line\\nbreak"}',
   ]);
-  assert.deepEqual(error.mock.calls[0]?.arguments, ["[booking] failed {}"]);
+  assert.deepEqual(error.mock.calls[0], ["[booking] failed {}"]);
 });
