@@ -54,7 +54,7 @@ export function Dialog({
   if (!mounted || !open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center p-4">
       <div
         aria-hidden
         onClick={onClose}
@@ -68,7 +68,7 @@ export function Dialog({
         aria-describedby={describedBy}
         tabIndex={-1}
         className={cn(
-          "relative z-10 w-full max-w-lg rounded-3xl border border-line bg-surface p-6 shadow-card outline-none motion-safe:animate-rise sm:p-7",
+          "relative z-raised w-full max-w-lg rounded-3xl border border-line bg-surface p-6 shadow-card outline-none motion-safe:animate-rise sm:p-7",
           className,
         )}
       >

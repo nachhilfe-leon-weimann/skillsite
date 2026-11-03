@@ -27,7 +27,8 @@
     "./layout/section-header": "./src/layout/section-header.tsx",
     "./motion/animated-check-mark": "./src/motion/animated-check-mark.tsx",
     "./motion/count-up": "./src/motion/count-up.tsx",
-    "./motion/reveal": "./src/motion/reveal.tsx"
+    "./motion/reveal": "./src/motion/reveal.tsx",
+    "./tokens/colors": "./src/tokens/colors.ts"
   },
   "scripts": {
     "lint": "eslint",

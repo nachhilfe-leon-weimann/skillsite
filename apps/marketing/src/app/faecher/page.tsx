@@ -31,7 +31,7 @@ export default function SubjectsPage() {
       <PageHeader
         eyebrow="Fächer"
         title="Mathe, Informatik und Physik – aus einer Hand."
-        titleClassName="max-w-[14em]"
+        titleClassName="max-w-measure-14"
         lead={
           <>
             In allen drei Fächern geht es darum, Zusammenhänge zu verstehen und
@@ -53,10 +53,10 @@ export default function SubjectsPage() {
             id={subject.anchorId}
             surface={index % 2 === 1}
           >
-            <div className="grid items-start gap-[clamp(1.75rem,4vw,3.5rem)] lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="grid items-start gap-split lg:grid-cols-[0.9fr_1.1fr]">
               <Reveal variant="rise-soft">
                 <div className="flex items-center gap-3.5">
-                  <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-[1.4rem] font-bold text-coral">
+                  <span className="flex size-13 items-center justify-center rounded-xl bg-surface-2 font-heading text-icon-badge font-bold text-coral">
                     <Icon className="size-6" />
                   </span>
                   <div>

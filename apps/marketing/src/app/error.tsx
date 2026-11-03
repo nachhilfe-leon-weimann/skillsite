@@ -32,7 +32,7 @@ export default function Error({
       <Heading as="h1" size="h1" className="mt-4">
         Da ist etwas schiefgelaufen.
       </Heading>
-      <Text size="lead" tone="muted" className="mt-4 max-w-[34em]">
+      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
         Bitte versuch es noch einmal. Wenn es weiterhin klemmt, schreib mir
         einfach direkt – wir kriegen das hin.
       </Text>

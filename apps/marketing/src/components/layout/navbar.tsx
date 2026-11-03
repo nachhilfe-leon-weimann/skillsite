@@ -93,7 +93,7 @@ function NavbarContent({ pathname }: { pathname: string }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-line bg-[color-mix(in_srgb,var(--bg)_84%,transparent)] backdrop-blur-lg",
+        "sticky top-0 z-sticky border-b border-line bg-glass backdrop-blur-lg",
         open &&
           "max-nav:fixed max-nav:inset-0 max-nav:flex max-nav:flex-col max-nav:border-b-0 max-nav:bg-bg",
       )}
@@ -224,7 +224,7 @@ function PlatformDropdown({
 
       <div
         id={panelId}
-        className="invisible absolute right-0 top-full z-10 w-64 translate-y-2 pt-1.5 opacity-0 transition-[opacity,translate,visibility] duration-base ease-flow group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
+        className="invisible absolute right-0 top-full z-raised w-64 translate-y-2 pt-1.5 opacity-0 transition-[opacity,translate,visibility] duration-base ease-flow group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
       >
         <div className="flex flex-col gap-0.5 rounded-2xl border border-line bg-surface p-2 shadow-card">
           {platformNav.map((item) => (
