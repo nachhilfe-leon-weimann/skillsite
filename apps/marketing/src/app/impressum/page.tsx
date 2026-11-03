@@ -4,7 +4,8 @@ import {
   DocShell,
 } from "@/components/docs/doc-components";
 import { ContactAddress } from "@/components/shared/contact-address";
-import { InlineLink, ProseP } from "@skillsite/ui/typography/prose";
+import { ProseP } from "@skillsite/ui/typography/prose";
+import { TextLink } from "@skillsite/ui/primitives/link";
 import { legalContact } from "@/content/legal";
 import { pageMetadata } from "@/lib/metadata";
 import { FileText } from "lucide-react";
@@ -35,14 +36,14 @@ export default function ImpressumPage() {
       <DocSection id="kontakt" title="Kontaktdaten">
         <ProseP>
           E-Mail:{" "}
-          <InlineLink variant="doc" href={`mailto:${legalContact.email}`}>
+          <TextLink variant="doc" href={`mailto:${legalContact.email}`}>
             {legalContact.email}
-          </InlineLink>
+          </TextLink>
           <br />
           Telefonnummer:{" "}
-          <InlineLink variant="doc" href={`tel:${legalContact.phone}`}>
+          <TextLink variant="doc" href={`tel:${legalContact.phone}`}>
             {legalContact.phone}
-          </InlineLink>
+          </TextLink>
         </ProseP>
       </DocSection>
 
