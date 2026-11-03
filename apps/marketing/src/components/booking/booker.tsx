@@ -20,6 +20,7 @@ import { IconButton } from "@skillsite/ui/primitives/icon-button";
 import { InfoRow } from "@skillsite/ui/primitives/info-row";
 import { Select } from "@skillsite/ui/forms/select";
 import { CenteredState } from "@skillsite/ui/layout/centered-state";
+import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
@@ -445,36 +446,6 @@ export function Booker({
         </AnimatedHeight>
       </div>
     </Card>
-  );
-}
-
-function AnimatedHeight({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const innerRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number>();
-
-  useEffect(() => {
-    const el = innerRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver(() => setHeight(el.offsetHeight));
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      style={{ height }}
-      className="overflow-hidden motion-safe:transition-[height] motion-safe:duration-slow motion-safe:ease-soft"
-    >
-      <div ref={innerRef} className={className}>
-        {children}
-      </div>
-    </div>
   );
 }
 
