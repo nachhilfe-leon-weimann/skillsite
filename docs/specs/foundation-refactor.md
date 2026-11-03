@@ -420,8 +420,8 @@ manual pass on the chosen implementation.
 - _Plan:_ [C8 implementation plan](../plans/foundation-refactor-c8.md), based on C6 through #176. Nine small
   implementation PRs follow the decision/docs PR; each carries its own tests and stories. Booking business logic,
   API integration and the D1/D2 refactor remain outside this wave.
-- _Acceptance criteria (all pending; see the plan for exact per-PR checks):_
-  - [ ] C8.1: built-Storybook browser fixture runs in the existing `check` path; C9 full coverage stays open.
+- _Acceptance criteria (see the plan for exact per-PR checks):_
+  - [x] C8.1: built-Storybook browser fixture runs in the existing `check` path; C9 full coverage stays open.
   - [ ] C8.2: Dialog focus containment, dismissal, focus return, cleanup and presence/motion are verified.
   - [ ] C8.3: non-modal desktop Popover preserves ordinary navigation links and fixes Escape/focus return.
   - [ ] C8.4: modal mobile navigation contains all active controls; route/breakpoint/tint cleanup is verified.
