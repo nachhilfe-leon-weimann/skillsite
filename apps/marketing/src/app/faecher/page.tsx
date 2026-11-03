@@ -42,7 +42,7 @@ export default function SubjectsPage() {
       />
 
       <Container>
-        <SubjectCards />
+        <SubjectCards headingAs="h2" />
       </Container>
 
       {subjects.map((subject, index) => {
