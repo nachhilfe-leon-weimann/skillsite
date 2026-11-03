@@ -3,7 +3,7 @@
 # (skillforge's README, "Rolling back").
 services:
   app:
-    image: ghcr.io/nachhilfe-leon-weimann/skillsite:v1.2.0 # x-release-please-version
+    image: ghcr.io/nachhilfe-leon-weimann/skillsite:v1.2.1 # x-release-please-version
     pull_policy: always
     restart: unless-stopped
     init: true
