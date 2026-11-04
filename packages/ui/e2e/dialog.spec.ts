@@ -184,6 +184,40 @@ for (const width of [390, 1280]) {
   });
 }
 
+test("custom layout keeps its backdrop invisible and leaves at once", async ({
+  page,
+}) => {
+  await page.goto(
+    "/iframe.html?id=overlays-dialog--custom-layout&viewMode=story",
+  );
+  await page
+    .getByRole("button", { name: "Dialog öffnen", exact: true })
+    .click();
+  await expect(
+    page.getByRole("dialog", { name: "Vollflächiger Dialog" }),
+  ).toBeVisible();
+  // The backdrop still carries the scroll lock, but no scrim or fade of its own.
+  const backdrop = page.locator("body > [data-state='open']:not([role])");
+  await expect(backdrop).toHaveCount(1);
+  await expect(backdrop).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(backdrop).toHaveCSS("backdrop-filter", "none");
+  await expect(backdrop).toHaveCSS("animation-name", "none");
+  await expect(page.locator("body")).toHaveAttribute("data-scroll-locked");
+  await page.keyboard.press("Escape");
+  // Without an exit animation nothing stays behind for a fade-out.
+  expect(
+    await page.evaluate(
+      () =>
+        new Promise<number>((resolve) =>
+          requestAnimationFrame(() =>
+            resolve(document.querySelectorAll("body > [data-state]").length),
+          ),
+        ),
+    ),
+  ).toBe(0);
+  await expect(page.locator("body")).not.toHaveAttribute("data-scroll-locked");
+});
+
 test("normal exit remains present but immediately inert, then restores focus and removes locks", async ({
   page,
 }) => {

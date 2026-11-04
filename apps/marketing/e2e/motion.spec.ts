@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { isolate, stubAvailability } from "./helpers";
+import { primaryCta } from "../src/content/site";
 
 type Motion = "translate" | "scale";
 
@@ -497,6 +498,83 @@ test.describe("the navbar popover", () => {
   });
 });
 
+/** The menu's own motion: the nearest animated ancestor of its "Preise" link. */
+const mobileMenuMotion = (page: Page) =>
+  page
+    .getByRole("dialog", { name: "Menü" })
+    .getByRole("link", { name: "Preise" })
+    .evaluate((link, ctaHref) => {
+      let node = link.parentElement;
+      while (node && getComputedStyle(node).animationName === "none")
+        node = node.parentElement;
+      if (!node) return null;
+      const style = getComputedStyle(node);
+      return {
+        name: style.animationName,
+        duration: style.animationDuration,
+        easing: style.animationTimingFunction,
+        holdsCta: !!node.querySelector(`a[href="${ctaHref}"]`),
+        isDialog: node.getAttribute("role") === "dialog",
+      };
+    }, primaryCta.href);
+
+/** Whether `element` has an animated ancestor inside the dialog (or is animated itself). */
+const movesInDialog = (element: Locator) =>
+  element.evaluate((node) => {
+    for (let n: Element | null = node; n; n = n.parentElement) {
+      if (getComputedStyle(n).animationName !== "none") return true;
+      if (n.getAttribute("role") === "dialog") return false;
+    }
+    return false;
+  });
+
+/** After one frame: the dialog and its backdrop nodes still in the document. */
+const mobileMenuNodes = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<number>((resolve) =>
+        requestAnimationFrame(() =>
+          resolve(document.querySelectorAll("body > [data-state]").length),
+        ),
+      ),
+  );
+
+test.describe("the mobile menu", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("fades its links down under a still header and closes at once", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Menü" }).click();
+    const menu = page.getByRole("dialog", { name: "Menü" });
+    await expect(menu).toBeVisible();
+    await expect(menu).toHaveCSS("animation-name", "none");
+    await expect(menu).toHaveCSS("transform", "none");
+    expect(await mobileMenuMotion(page)).toEqual({
+      name: "fade-down",
+      duration: "0.16s",
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      holdsCta: true,
+      isDialog: false,
+    });
+    // The header row stays still: neither the home link nor the close control moves.
+    expect(
+      await movesInDialog(menu.getByRole("link", { name: "Startseite" })),
+    ).toBe(false);
+    expect(
+      await movesInDialog(menu.getByRole("button", { name: "Menü" })),
+    ).toBe(false);
+    // The modal's backdrop stays invisible: the menu paints its own background.
+    const backdrop = page.locator("body > [data-state='open']:not([role])");
+    await expect(backdrop).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(backdrop).toHaveCSS("backdrop-filter", "none");
+    await expect(backdrop).toHaveCSS("animation-name", "none");
+    await menu.getByRole("button", { name: "Menü" }).click();
+    expect(await mobileMenuNodes(page)).toBe(0);
+  });
+});
+
 test.describe("with reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
@@ -515,6 +593,17 @@ test.describe("with reduced motion", () => {
         await panel.evaluate((node) => getComputedStyle(node).translate),
       ),
     ).toBe(0);
+  });
+
+  test("the mobile menu appears and goes at once", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "Menü" }).click();
+    await expect(page.getByRole("dialog", { name: "Menü" })).toBeVisible();
+    expect(await mobileMenuMotion(page)).toBeNull();
+    await page.keyboard.press("Escape");
+    expect(await mobileMenuNodes(page)).toBe(0);
+    await expect(page.getByRole("button", { name: "Menü" })).toBeFocused();
   });
 
   test("the navbar popover appears and goes at once", async ({ page }) => {

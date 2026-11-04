@@ -2,6 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { isolate, stubAvailability } from "./helpers";
 import { indexablePaths } from "../src/lib/routes";
+import { platformNav, primaryCta, primaryNav } from "../src/content/site";
+import { MENU_STATE_EVENT } from "../src/components/layout/ios-toolbar-tint";
 
 test.beforeEach(async ({ page }) => {
   await isolate(page);
@@ -57,6 +59,417 @@ test.describe("at phone width", () => {
     await expect(
       page.locator('#mobile-platform-nav a[href*="#"]'),
     ).not.toHaveAttribute("aria-current");
+  });
+});
+
+/** Records every menu state event the iOS toolbar tint receives, across client navigations. */
+async function recordMenuState(page: Page) {
+  await page.addInitScript((name) => {
+    const events: boolean[] = [];
+    Object.assign(window, { menuStateEvents: events });
+    window.addEventListener(name, (event) =>
+      events.push((event as CustomEvent<{ open: boolean }>).detail.open),
+    );
+  }, MENU_STATE_EVENT);
+}
+
+const menuStateEvents = (page: Page) =>
+  page.evaluate(
+    () => (window as unknown as { menuStateEvents: boolean[] }).menuStateEvents,
+  );
+
+/** Presses `key` `count` times; per stop, the focused element's name, prefixed when it is outside the dialog. */
+async function focusStops(page: Page, key: "Tab" | "Shift+Tab", count: number) {
+  const stops: string[] = [];
+  for (let i = 0; i < count; i++) {
+    await page.keyboard.press(key);
+    stops.push(
+      await page.evaluate(() => {
+        const element = document.activeElement;
+        const name =
+          element?.getAttribute("aria-label") ??
+          element?.textContent?.trim() ??
+          "";
+        return element?.closest("[role='dialog']") ? name : `outside: ${name}`;
+      }),
+    );
+  }
+  return stops;
+}
+
+/** What the page behind an open dialog exposes: aria-hidden/inert state and the scroll lock. */
+const background = (page: Page) =>
+  page.evaluate(() => ({
+    mainHidden: !!document
+      .querySelector("main")
+      ?.closest("[aria-hidden='true'], [inert]"),
+    footerHidden: !!document
+      .querySelector("footer")
+      ?.closest("[aria-hidden='true'], [inert]"),
+    headerInert: !!document.querySelector("body header")?.closest("[inert]"),
+    hiddenRoots: [...document.body.children]
+      .filter((node) => node.getAttribute("aria-hidden") === "true")
+      .map((node) => node.id || node.tagName.toLowerCase()),
+    inert: document.querySelectorAll("[inert]").length,
+    overflow: getComputedStyle(document.body).overflow,
+    focusGuards: document.querySelectorAll("[data-radix-focus-guard]").length,
+  }));
+
+const released = {
+  mainHidden: false,
+  footerHidden: false,
+  headerInert: false,
+  overflow: "visible",
+  focusGuards: 0,
+};
+
+const primaryLabels = primaryNav.map((item) => item.label);
+const platformLabels = platformNav.map((item) => item.label);
+
+test.describe("the mobile navigation dialog", () => {
+  const opener = (page: Page) => page.getByRole("button", { name: "Menü" });
+  const dialog = (page: Page) => page.getByRole("dialog", { name: "Menü" });
+  const closeControl = (page: Page) =>
+    dialog(page).getByRole("button", { name: "Menü" });
+
+  test.beforeEach(async ({ page }) => {
+    await recordMenuState(page);
+  });
+
+  for (const width of [390, 1079]) {
+    test.describe(`at ${width}px`, () => {
+      test.use({ viewport: { width, height: 800 } });
+
+      test("is a named modal holding the whole header; the page behind is unreachable", async ({
+        page,
+      }) => {
+        await page.goto("/preise");
+        await opener(page).click();
+        await expect(dialog(page)).toBeVisible();
+        await expect(dialog(page)).toHaveAttribute("aria-modal", "true");
+        // One banner, one logo link and one menu control remain for AT: the dialog's.
+        await expect(page.getByRole("banner")).toHaveCount(1);
+        const banner = dialog(page).getByRole("banner");
+        await expect(banner).toBeVisible();
+        await expect(
+          page.getByRole("link", { name: "Startseite" }),
+        ).toHaveCount(1);
+        await expect(
+          banner.getByRole("link", { name: "Startseite" }),
+        ).toBeVisible();
+        await expect(page.getByRole("button", { name: "Menü" })).toHaveCount(1);
+        await expect(closeControl(page)).toHaveAttribute(
+          "aria-expanded",
+          "true",
+        );
+        await expect(
+          banner.getByRole("link", { name: "Preise" }),
+        ).toHaveAttribute("aria-current", "page");
+        await expect(
+          banner.getByRole("link", { name: primaryCta.label }),
+        ).toBeVisible();
+        expect(await background(page)).toMatchObject({
+          mainHidden: true,
+          footerHidden: true,
+          headerInert: true,
+          overflow: "hidden",
+        });
+      });
+
+      test("Tab and Shift+Tab cycle through the header and menu controls only", async ({
+        page,
+      }) => {
+        await page.goto("/");
+        await opener(page).focus();
+        await page.keyboard.press("Enter");
+        await expect(opener(page)).toHaveAttribute("aria-expanded", "true");
+        // As on main, the menu control (in the dialog now) keeps focus where it was.
+        await expect(page.getByRole("button", { name: "Menü" })).toBeFocused();
+        const cycle = [
+          ...primaryLabels,
+          "Online lernen",
+          primaryCta.label,
+          "Startseite",
+          "Menü",
+        ];
+        expect(await focusStops(page, "Tab", cycle.length * 2)).toEqual([
+          ...cycle,
+          ...cycle,
+        ]);
+        expect(await focusStops(page, "Shift+Tab", cycle.length * 2)).toEqual([
+          ...cycle.slice(0, -1).reverse(),
+          "Menü",
+          ...cycle.slice(0, -1).reverse(),
+          "Menü",
+        ]);
+
+        // The expanded platform list joins the cycle; collapsed, it was skipped above.
+        await dialog(page)
+          .getByRole("button", { name: "Online lernen" })
+          .click();
+        await expect(
+          dialog(page).getByRole("button", { name: "Online lernen" }),
+        ).toHaveAttribute("aria-expanded", "true");
+        const expanded = [
+          ...platformLabels.map((label) => expect.stringMatching(`^${label}`)),
+          primaryCta.label,
+          "Startseite",
+          "Menü",
+          ...primaryLabels,
+          "Online lernen",
+        ];
+        expect(await focusStops(page, "Tab", expanded.length)).toEqual(
+          expanded,
+        );
+      });
+    });
+  }
+
+  test.describe("at phone width", () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test("Escape closes it once and returns focus to the opener", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await opener(page).focus();
+      await page.keyboard.press("Enter");
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Escape");
+      await expect(dialog(page)).toHaveCount(0);
+      await expect(opener(page)).toBeFocused();
+      await expect(opener(page)).toHaveAttribute("aria-expanded", "false");
+      await page.keyboard.press("Escape");
+      await expect(opener(page)).toBeFocused();
+      expect(await menuStateEvents(page)).toEqual([true, false]);
+      expect(await background(page)).toMatchObject(released);
+    });
+
+    test("the close control closes it and returns focus to the opener", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await opener(page).click();
+      await closeControl(page).click();
+      await expect(dialog(page)).toHaveCount(0);
+      await expect(opener(page)).toBeFocused();
+      expect(await menuStateEvents(page)).toEqual([true, false]);
+      expect(await background(page)).toMatchObject(released);
+    });
+
+    // Where a menu link leaves focus: on <body>, with the sequential focus start
+    // point at the removed link in the dialog (end of <body>), so the next Tab
+    // reaches the skip link - or, for a fragment, the target's next control.
+    for (const { from, target, to, nextTab } of [
+      {
+        from: "/",
+        target: "Preise",
+        to: /\/preise$/,
+        nextTab: "Zum Inhalt springen",
+      },
+      {
+        from: "/preise",
+        target: "Startseite",
+        to: /\/$/,
+        nextTab: "Zum Inhalt springen",
+      },
+      {
+        from: "/",
+        target: primaryCta.label,
+        to: /\/kontakt#kennenlernen$/,
+        nextTab: "Direkt anfragen",
+      },
+      {
+        from: "/",
+        target: "Discord",
+        to: /\/online-lernen$/,
+        nextTab: "Zum Inhalt springen",
+      },
+      {
+        from: "/preise",
+        target: "Preise",
+        to: /\/preise$/,
+        nextTab: "Zum Inhalt springen",
+      },
+    ]) {
+      test(`the ${target} link from ${from} navigates on the client, closes it and leaves focus to the destination`, async ({
+        page,
+      }) => {
+        await page.goto(from);
+        await page.evaluate(() =>
+          Object.assign(window, { navigationMarker: true }),
+        );
+        await opener(page).click();
+        if (target === "Discord")
+          await dialog(page)
+            .getByRole("button", { name: "Online lernen" })
+            .click();
+        await dialog(page)
+          .getByRole("link", { name: new RegExp(`^${target}`) })
+          .click();
+        await expect(page).toHaveURL(to);
+        await expect(dialog(page)).toHaveCount(0);
+        expect(await page.evaluate(() => "navigationMarker" in window)).toBe(
+          true,
+        );
+        // Settle two frames: no late focus return pulls focus to the old opener.
+        await page.evaluate(
+          () =>
+            new Promise((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(resolve)),
+            ),
+        );
+        await expect(opener(page)).not.toBeFocused();
+        expect(await page.evaluate(() => document.activeElement?.tagName)).toBe(
+          "BODY",
+        );
+        await page.keyboard.press("Tab");
+        await expect(page.locator(":focus")).toHaveAccessibleName(nextTab);
+        await expect(page.locator(":focus")).toBeVisible();
+        expect(await menuStateEvents(page)).toEqual([true, false]);
+        expect(await background(page)).toMatchObject(released);
+      });
+    }
+
+    for (const key of ["Enter", "click"]) {
+      test(`the home link on the home page (${key}) closes it and keeps focus on the header's home link, as on main`, async ({
+        page,
+      }) => {
+        await page.goto("/");
+        await opener(page).click();
+        const menuHome = dialog(page).getByRole("link", { name: "Startseite" });
+        if (key === "Enter") {
+          await menuHome.focus();
+          await page.keyboard.press("Enter");
+        } else await menuHome.click();
+        await expect(dialog(page)).toHaveCount(0);
+        const home = page
+          .getByRole("banner")
+          .getByRole("link", { name: "Startseite" });
+        await expect(home).toBeFocused();
+        await expect(home).toBeVisible();
+        await page.keyboard.press("Tab");
+        await expect(opener(page)).toBeFocused();
+        expect(await menuStateEvents(page)).toEqual([true, false]);
+        expect(await background(page)).toMatchObject(released);
+      });
+    }
+
+    test("a route change while it is open disposes of it and clears the tint state", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page
+        .locator("footer")
+        .getByRole("link", { name: "Preise" })
+        .click();
+      await expect(page).toHaveURL(/\/preise$/);
+      await opener(page).click();
+      await expect(opener(page)).toHaveAttribute("aria-expanded", "true");
+      await page.goBack();
+      await expect(page).toHaveURL(/\/$/);
+      await expect(dialog(page)).toHaveCount(0);
+      expect(await menuStateEvents(page)).toEqual([true, false]);
+      expect(await background(page)).toMatchObject(released);
+      // The tint is back at rest: navy once the footer is in view.
+      await page.locator("footer").scrollIntoViewIfNeeded();
+      await expect(page.locator("#ios-toolbar-tint")).toHaveClass("is-active");
+    });
+
+    test("the menu state event fires only on real changes", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.setViewportSize({ width: 1280, height: 844 });
+      await page.setViewportSize({ width: 390, height: 844 });
+      expect(await menuStateEvents(page)).toEqual([]);
+      await opener(page).click();
+      await dialog(page).getByRole("button", { name: "Online lernen" }).click();
+      await dialog(page).getByRole("button", { name: "Online lernen" }).click();
+      expect(await menuStateEvents(page)).toEqual([true]);
+      await closeControl(page).click();
+      await expect(dialog(page)).toHaveCount(0);
+      expect(await menuStateEvents(page)).toEqual([true, false]);
+    });
+
+    test("repeated opening and closing leaves no lock, hidden page or ghost tab stop", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      const tabbables = () =>
+        page
+          .locator(
+            "a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])",
+          )
+          .count();
+      const before = {
+        ...(await background(page)),
+        tabbables: await tabbables(),
+      };
+      for (let i = 0; i < 4; i++) {
+        await opener(page).click();
+        await expect(dialog(page)).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(dialog(page)).toHaveCount(0);
+        await opener(page).click();
+        await closeControl(page).click();
+        await expect(dialog(page)).toHaveCount(0);
+      }
+      await expect(opener(page)).toBeFocused();
+      expect({
+        ...(await background(page)),
+        tabbables: await tabbables(),
+      }).toEqual(before);
+      await expect(page.locator("body")).not.toHaveAttribute(
+        "data-scroll-locked",
+      );
+      expect(await menuStateEvents(page)).toEqual(
+        Array.from({ length: 16 }, (_, i) => i % 2 === 0),
+      );
+    });
+  });
+
+  test("crossing to the desktop breakpoint closes it and keeps focus on a visible header control", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1079, height: 800 });
+    await page.goto("/");
+    await opener(page).focus();
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Tab");
+    await expect(page.locator(":focus")).toHaveText(primaryLabels[0]!);
+
+    await page.setViewportSize({ width: 1080, height: 800 });
+    await expect(dialog(page)).toHaveCount(0);
+    const banner = page.getByRole("banner");
+    const home = banner.getByRole("link", { name: "Startseite" });
+    await expect(home).toBeFocused();
+    await expect(home).toBeVisible();
+    expect(await menuStateEvents(page)).toEqual([true, false]);
+    expect(await background(page)).toMatchObject(released);
+    // The desktop navigation is usable at once.
+    await page.keyboard.press("Tab");
+    await expect(
+      banner.getByRole("link", { name: primaryLabels[0] }),
+    ).toBeFocused();
+    await banner.getByRole("button", { name: "Online lernen" }).click();
+    await expect(
+      page.getByRole("dialog", { name: "Online lernen" }),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+    // Let the popover finish its exit before the resize hides its trigger.
+    await expect(page.locator("[role='dialog']")).toHaveCount(0);
+
+    // Back below the breakpoint the menu stays closed until it is opened again.
+    await page.setViewportSize({ width: 1079, height: 800 });
+    await expect(dialog(page)).toHaveCount(0);
+    await expect(opener(page)).toBeVisible();
+    expect(await background(page)).toMatchObject(released);
+    await opener(page).click();
+    await expect(dialog(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(opener(page)).toBeFocused();
+    expect(await menuStateEvents(page)).toEqual([true, false, true, false]);
   });
 });
 
