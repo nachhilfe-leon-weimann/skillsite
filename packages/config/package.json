@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "eslint-config-next": "16.4.2"
+    "eslint-config-next": "16.4.3"
   },
   "peerDependencies": {
     "eslint": "^9"
