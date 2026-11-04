@@ -10,11 +10,11 @@ Needs Node 26, `pnpm`, `just` and an `apps/marketing/.env` (see `.env.example` n
 `.env.local.example` documents what only local development needs). `just check`'s smoke test needs a
 one-time browser install: `pnpm --filter @skillsite/marketing exec playwright install chromium`.
 
-| Command                                 |                                                                             |
-| --------------------------------------- | --------------------------------------------------------------------------- |
-| `just dev`                              | run the site                                                                |
-| `just check`                            | everything that must be green before a push; CI's `check` job runs the same |
-| `just docker-build` / `just docker-run` | build and run the production image locally                                  |
+| Command                                 |                                                                                           |
+| --------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `just dev`                              | run the site                                                                              |
+| `just check`                            | the full suite, green before every push; CI scopes pull requests to the areas they change |
+| `just docker-build` / `just docker-run` | build and run the production image locally                                                |
 
 Everything else is in the [`justfile`](justfile). The image builds the marketing app by default;
 another app comes from `--build-arg APP=<name>`.
