@@ -327,6 +327,62 @@ test("a mouse opens and closes on release, not on press", async ({ page }) => {
   await expect(panel(page)).toHaveCount(0);
 });
 
+for (const pointer of ["mouse", "touch"] as const) {
+  test(`a ${pointer} press dragged off the open trigger keeps the list`, async ({
+    browser,
+    baseURL,
+  }) => {
+    const context = await browser.newContext({
+      baseURL,
+      hasTouch: pointer === "touch",
+    });
+    const page = await context.newPage();
+    await page.goto(story());
+    const trigger = await combobox(page);
+    const box = (await trigger.boundingBox())!;
+    const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+    const cdp = await context.newCDPSession(page);
+    // Press at (x, y), move 150px up off the trigger, release there.
+    const dragOff = async () => {
+      if (pointer === "mouse") {
+        await page.mouse.move(x, y);
+        await page.mouse.down();
+        await page.mouse.move(x, y - 150, { steps: 5 });
+        await page.mouse.up();
+        return;
+      }
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [{ x, y }],
+      });
+      for (let step = 1; step <= 5; step++)
+        await cdp.send("Input.dispatchTouchEvent", {
+          type: "touchMove",
+          touchPoints: [{ x, y: y - 30 * step }],
+        });
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchEnd",
+        touchPoints: [],
+      });
+    };
+    if (pointer === "mouse") await page.mouse.click(x, y);
+    else await page.touchscreen.tap(x, y);
+    await expect(listbox(page)).toBeVisible();
+    await expect(panel(page)).toHaveCSS("opacity", "1");
+    await dragOff();
+    await page.waitForTimeout(300);
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(listbox(page)).toBeVisible();
+    await expect(panel(page)).toHaveCSS("opacity", "1");
+    // The next click or tap on the trigger closes it, as before.
+    if (pointer === "mouse") await page.mouse.click(x, y);
+    else await page.touchscreen.tap(x, y);
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(panel(page)).toHaveCount(0);
+    await context.close();
+  });
+}
+
 test("an outside press closes without a change", async ({ page }) => {
   await page.goto(story());
   const trigger = await combobox(page);
