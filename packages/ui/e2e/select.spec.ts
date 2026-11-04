@@ -388,6 +388,8 @@ test("an outside press closes without a change", async ({ page }) => {
   const trigger = await combobox(page);
   await trigger.click();
   await expect(listbox(page)).toBeVisible();
+  // A visitor presses outside an open list, not mid-entrance: wait until it has settled.
+  await expect(panel(page)).toHaveCSS("opacity", "1");
   await page.mouse.click(5, 5);
   await expect(panel(page)).toHaveCount(0);
   await expect(trigger).toContainText("Online");
