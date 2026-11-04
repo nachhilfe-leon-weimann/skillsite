@@ -367,6 +367,10 @@
     var(--ease-flow) both;
   --animate-settle: settle var(--transition-duration-settle) var(--ease-flow)
     both;
+  /* No visible change: holds Radix presence open while an exit transition runs. */
+  --animate-presence-hold: presence-hold var(--transition-duration-base) linear;
+  --animate-presence-hold-quick: presence-hold var(--transition-duration-quick)
+    linear;
 
   --reveal-travel: 12px; /* lighter than the previous 18px fade-up */
   --reveal-stagger: 70ms;

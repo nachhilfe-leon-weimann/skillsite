@@ -423,12 +423,12 @@ manual pass on the chosen implementation.
 - _Acceptance criteria (see the plan for exact per-PR checks):_
   - [x] C8.1: built-Storybook browser fixture runs in the existing `check` path; C9 full coverage stays open.
   - [x] C8.2: Dialog focus containment, dismissal, focus return, cleanup and presence/motion are verified.
-  - [ ] C8.3: non-modal desktop Popover preserves ordinary navigation links and fixes Escape/focus return.
-  - [ ] C8.4: modal mobile navigation contains all active controls; route/breakpoint/tint cleanup is verified.
-  - [ ] C8.5: Select preserves typed values/tones and has verified Radix keyboard/focus behavior.
-  - [ ] C8.6: radio rows and single/multi chips preserve payloads and implement the documented keyboard model.
-  - [ ] C8.7: Switch behavior is tested in a real browser story despite having no live app consumer.
-  - [ ] C8.8: calendar grid/keyboard behavior, availability adapter and Berlin date/time-zone boundaries pass.
+  - [x] C8.3: non-modal desktop Popover preserves ordinary navigation links and fixes Escape/focus return.
+  - [x] C8.4: modal mobile navigation contains all active controls; route/breakpoint/tint cleanup is verified.
+  - [x] C8.5: Select preserves typed values/tones and has verified Radix keyboard/focus behavior.
+  - [x] C8.6: radio rows and single/multi chips preserve payloads and implement the documented keyboard model.
+  - [x] C8.7: Switch behavior is tested in a real browser story despite having no live app consumer.
+  - [x] C8.8: calendar grid/keyboard behavior, availability adapter and Berlin date/time-zone boundaries pass.
   - [ ] C8.9: integrated production/UI checks and human VoiceOver/Safari/look acceptance are recorded.
   - [ ] C8 complete: all slices are integrated and the C8.9 completion gate is satisfied; missing manual evidence
         leaves this box open.
