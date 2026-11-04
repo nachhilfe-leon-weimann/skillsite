@@ -441,15 +441,15 @@ function UnavailableNotice({
 }: {
   status: "unconfigured" | "error";
   onRetry: () => void;
-  /** Set when this notice replaced the calendar while it held focus. */
+  /** Set when this notice replaced the calendar while its grid held focus. */
   takeFocusRef: RefObject<boolean>;
 }) {
   const retryRef = useRef<HTMLButtonElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
 
-  // The calendar this notice replaced held focus, which its removal dropped:
-  // hand it to the Retry button, or else to the notice itself. Focus anywhere
-  // else stays where it is.
+  // The calendar grid this notice replaced held focus, which its removal
+  // dropped: hand it to the Retry button, or else to the notice itself. Focus
+  // anywhere else stays where it is.
   useLayoutEffect(() => {
     if (!takeFocusRef.current) return;
     takeFocusRef.current = false;
@@ -514,12 +514,15 @@ function SelectStep({
   onPickSlot,
   onChangeMonth,
 }: SelectStepProps) {
-  // Whether the calendar held focus when the unavailable notice replaced it.
-  const calendarHadFocus = useRef(false);
-  const trackCalendarFocus = useCallback((node: HTMLDivElement | null) => {
+  // Whether the calendar's grid held focus when the unavailable notice
+  // replaced it. Only the grid: a clicked month button keeps main's behaviour
+  // (focus falls to <body>, the page stays where it is).
+  const gridHadFocus = useRef(false);
+  const trackGridFocus = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
     return () => {
-      calendarHadFocus.current = node.contains(document.activeElement);
+      const grid = node.querySelector("[role=grid]");
+      gridHadFocus.current = grid?.contains(document.activeElement) ?? false;
     };
   }, []);
 
@@ -528,7 +531,7 @@ function SelectStep({
       <UnavailableNotice
         status={status}
         onRetry={onRetry}
-        takeFocusRef={calendarHadFocus}
+        takeFocusRef={gridHadFocus}
       />
     );
   }
@@ -539,7 +542,7 @@ function SelectStep({
   return (
     <div className="mx-auto flex w-full flex-1 flex-col justify-start motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
       <div className="grid gap-x-panel-booker-main gap-y-5 @4xl:grid-cols-[3fr_1fr]">
-        <div ref={trackCalendarFocus}>
+        <div ref={trackGridFocus}>
           <Calendar
             month={monthKey(shown)}
             {...bookingWindow(MAX_MONTH_OFFSET)}

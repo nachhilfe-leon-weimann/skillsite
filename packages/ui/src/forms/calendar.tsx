@@ -19,6 +19,8 @@ import {
   type DayProps,
   type MonthCaptionProps,
   type MonthGridProps,
+  type MonthProps,
+  type MonthsProps,
   type RootProps,
   type WeekProps,
   type WeekdayProps,
@@ -132,6 +134,14 @@ function omit<T extends object, K extends keyof T>(props: T, ...keys: K[]) {
 function Root(props: RootProps) {
   const { className } = useContext(CalendarContext);
   return <div {...omit(props, "rootRef", "className")} className={className} />;
+}
+
+function Months(props: MonthsProps) {
+  return <div {...omit(props, "className")} />;
+}
+
+function Month(props: MonthProps) {
+  return <div {...omit(props, "calendarMonth", "displayIndex", "className")} />;
 }
 
 function MonthCaption(props: MonthCaptionProps) {
@@ -291,6 +301,8 @@ function DayButton(props: DayButtonProps) {
 
 const components: Partial<CustomComponents> = {
   Root,
+  Months,
+  Month,
   MonthCaption,
   CaptionLabel,
   MonthGrid,

@@ -288,6 +288,37 @@ for (const [path, { duration }] of Object.entries(routes)) {
       ]);
     });
 
+    for (const answer of ["error", "unconfigured"] as const)
+      test(`a click on a month button into ${answer === "error" ? "an error" : "an unconfigured answer"} moves neither focus nor the page, on a phone`, async ({
+        page,
+      }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await open(page, path, {
+          "2026-11": ["2026-11-30"],
+          "2026-12": answer,
+        });
+        await expect(selectedDay(page)).toHaveAccessibleName(/30\. November/);
+        // The month button near the bottom of the viewport.
+        const box = (await next(page).boundingBox())!;
+        await page.evaluate(
+          (top) => window.scrollTo(0, top),
+          Math.round(box.y + (await page.evaluate(() => scrollY)) - 844 + 120),
+        );
+        await expect
+          .poll(() => page.evaluate(() => scrollY))
+          .toBeGreaterThan(0);
+        const before = await page.evaluate(() => scrollY);
+        await next(page).click();
+        await expect(page.getByRole("heading", { level: 3 })).toBeVisible();
+        await page.waitForTimeout(800);
+        // As on main: the page stays where it was, and focus left with the
+        // clicked button for <body>.
+        expect(await page.evaluate(() => scrollY)).toBe(before);
+        expect(await page.evaluate(() => document.activeElement?.tagName)).toBe(
+          "BODY",
+        );
+      });
+
     test("an error never takes focus from another control", async ({
       page,
     }) => {
