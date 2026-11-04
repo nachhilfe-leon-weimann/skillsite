@@ -1030,6 +1030,11 @@ test.describe("the booking choices", () => {
     await page.waitForLoadState("networkidle");
     expect(bodies).toEqual([]);
     await radio(page, "Physik").click();
+    // Under load, Radix may move a late arrow key's focus back to the platform rows and
+    // check another platform: set both choices before the draft is compared.
+    await radio(page, "Discord").click();
+    await expect(radio(page, "Discord")).toBeChecked();
+    await expect(radio(page, "Physik")).toBeChecked();
 
     // The submit button sends one draft (aborted before it leaves the browser).
     await submit.click();
