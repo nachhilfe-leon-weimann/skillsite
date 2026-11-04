@@ -133,7 +133,8 @@ export function Select<T extends string | number>({
     contentRef.current = node;
     setMountedContent(node);
   }, []);
-  // A press on the open trigger closes the panel; its click must not reopen it.
+  // A press began on the open trigger: its click closes the panel, as before,
+  // and must not reopen it.
   const pressClosedRef = useRef(false);
   // Enter on a row commits and refocuses the trigger during the keydown; the
   // browser then activates the trigger with a click, which must not reopen it.
@@ -185,9 +186,9 @@ export function Select<T extends string | number>({
     wasOpenRef.current = open;
   }, [open]);
 
-  // Radix opens on pointerdown without focusing the trigger, so Chrome would
-  // show focus rings on rows and on the refocused trigger after a pointer
-  // interaction. As before, rings show only after the keyboard was used.
+  // Radix focuses rows and the trigger programmatically around pointer
+  // interactions, so Chrome would show focus rings on them after a click or a
+  // tap. As before, rings show only after the keyboard was used.
   const setPointerModality = (pointer: boolean) =>
     rootRef.current?.toggleAttribute("data-select-pointer", pointer);
 
@@ -231,29 +232,26 @@ export function Select<T extends string | number>({
           aria-label={label}
           // Radix makes the page, the trigger included, ignore the pointer while
           // the panel is open or leaving. The trigger stays hit-testable, as
-          // before: it keeps its hover look, a press closes the open panel and a
-          // press during the exit reopens it.
-          // As before, a mouse opens the panel on release (click), not on press.
+          // before: it keeps its hover look, a click closes the open panel and a
+          // click during the exit reopens it. As before, the click decides: a
+          // held press opens or closes nothing until its release.
           onPointerDown={(event) => {
             pressClosedRef.current = open;
-            if (open) {
-              // Skip Radix's handler, which would keep the panel open.
-              event.preventDefault();
-              setOpen(false);
-            } else if (event.pointerType === "mouse") {
-              // Skip Radix's handler, which opens a mouse press at once.
-              event.preventDefault();
-            }
+            // Skip Radix's handler, which keeps an open panel open and opens a
+            // mouse press at once.
+            if (open || event.pointerType === "mouse") event.preventDefault();
           }}
           onClick={(event) => {
-            const suppress = pressClosedRef.current || enterCommitRef.current;
+            const close = pressClosedRef.current;
+            const suppress = close || enterCommitRef.current;
             pressClosedRef.current = false;
             enterCommitRef.current = false;
             // Skip Radix's handler, which would reopen the panel.
             if (suppress) event.preventDefault();
+            if (close) setOpen(false);
             // Radix opens on the click for touch and pen; open here for every
             // pointer, so a mouse release does not depend on its internals.
-            else if (!open) setOpen(true);
+            else if (!suppress && !open) setOpen(true);
           }}
           className={cn(
             "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors in-data-[select-pointer]:outline-none",

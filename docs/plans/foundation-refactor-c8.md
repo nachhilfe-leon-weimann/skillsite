@@ -350,7 +350,7 @@ value is the selected label; the listbox shares the name; hints describe their o
 the shown value or typeahead. It passes thirteen component tests and nineteen Select browser cases (both tones in
 light/dark with arrows, Home/End, Tab/Shift+Tab held in the list, Enter and Space commits, Escape, typeahead closed
 and open, typed values, hints, a hovering mouse that leaves the keyboard's ring and Enter target alone, a mouse
-opening on release, pointer toggling and outside presses, disabled, a bottom-edge flip, entrance and exit
+opening and closing on release, pointer toggling and outside presses, disabled, a bottom-edge flip, entrance and exit
 transitions with no lock left, rapid keyboard and pointer reopen, reduced motion, and the InDialog story in
 light/dark: selection, rendering inside the dialog over its backdrop, topmost-only Escape); they pass five times in
 a row. Six marketing cases cover the "Dauer" combobox, a keyboard choice of 90 minutes that the next availability
@@ -364,11 +364,10 @@ visible frame 60-67 ms after the key, against 17-34 ms). Sampled
 curves and panel geometry equal main's, apart from a top edge snapped to device pixels (0.02px here). Production
 screenshots of `/termin` at 390/1280px, light/dark, normal/reduced motion (rest, hover, click and keyboard opening,
 hovered and left rows, a hovering mouse after keyboard use, a pointer and a keyboard commit, Escape, disabled) are
-identical in 39 of 112 states; the
-others differ by at most 7/255 per channel in the open panel's antialiasing, or only where main differs from
-itself. To keep main's look and pointer behaviour, a mouse opens the list on release, the trigger stays
-hit-testable while the list is open (hover look, a press closes, a press during the exit reopens), the pointer only
-hovers rows while focus (ring and Enter target) stays with the keyboard, and rows show a focus ring only after
+identical in 39 of 112 states; the others differ by at most 7/255 per channel in the open panel's antialiasing,
+or only where main differs from itself. To keep main's look and pointer behaviour, a mouse opens and closes the
+list on release (a held press changes nothing until then), the trigger stays hit-testable while the list is open
+(hover look, a click closes, a click during the exit reopens), the pointer only hovers rows while focus (ring and Enter target) stays with the keyboard, and rows show a focus ring only after
 keyboard use. Radix's modal pointer model remains (`SelectContentImpl` hard-codes the scroll lock, outside pointer
 blocking, `hideOthers`, the focus trap and the close on window blur/resize): while the list is open, and until
 about 200 ms after it closes, the rest of the page takes no pointer input or scroll, an outside press only closes

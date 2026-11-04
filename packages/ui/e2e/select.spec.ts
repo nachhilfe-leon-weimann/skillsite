@@ -299,7 +299,7 @@ test("a hovering mouse leaves the keyboard's ring and Enter target alone", async
   await expect(status(page)).toHaveText("Wert: 90 (number), Änderungen: 1");
 });
 
-test("a mouse opens on release, not on press", async ({ page }) => {
+test("a mouse opens and closes on release, not on press", async ({ page }) => {
   await page.goto(story());
   const trigger = await combobox(page);
   const box = (await trigger.boundingBox())!;
@@ -311,9 +311,17 @@ test("a mouse opens on release, not on press", async ({ page }) => {
   await page.mouse.up();
   await expect(listbox(page)).toBeVisible();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
-  // A press on the open trigger closes it; a double-click ends closed.
-  await trigger.click();
+  await expect(panel(page)).toHaveCSS("opacity", "1");
+  // A held press on the open trigger keeps the list; the release closes it.
+  await page.mouse.down();
+  await page.waitForTimeout(150);
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(listbox(page)).toBeVisible();
+  await expect(panel(page)).toHaveCSS("opacity", "1");
+  await page.mouse.up();
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(panel(page)).toHaveCount(0);
+  // A double-click ends closed.
   await trigger.dblclick();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(panel(page)).toHaveCount(0);
