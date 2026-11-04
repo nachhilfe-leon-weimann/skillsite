@@ -389,6 +389,7 @@ export function Booker({
           {step === "select" ? (
             <SelectStep
               shown={shown}
+              monthOffset={monthOffset}
               loading={loading}
               status={status}
               onRetry={retry}
@@ -491,6 +492,7 @@ function UnavailableNotice({
 
 type SelectStepProps = {
   shown: { year: number; month: number };
+  monthOffset: number;
   loading: boolean;
   status: AvailabilityStatus;
   onRetry: () => void;
@@ -504,6 +506,7 @@ type SelectStepProps = {
 
 function SelectStep({
   shown,
+  monthOffset,
   loading,
   status,
   onRetry,
@@ -545,7 +548,7 @@ function SelectStep({
         <div ref={trackGridFocus}>
           <Calendar
             month={monthKey(shown)}
-            {...bookingWindow(MAX_MONTH_OFFSET)}
+            {...bookingWindow(shown, monthOffset, MAX_MONTH_OFFSET)}
             // Every month change - the buttons and the keys that leave the
             // month - takes the manual path: reset, no auto-advance.
             onMonthChange={(month) => {

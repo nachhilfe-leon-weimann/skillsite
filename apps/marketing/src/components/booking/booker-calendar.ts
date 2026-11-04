@@ -1,4 +1,4 @@
-import { pad, shownMonth } from "@/lib/booking/dates";
+import { pad } from "@/lib/booking/dates";
 
 /**
  * The Booker's side of the calendar: its months as the calendar's "YYYY-MM"
@@ -17,10 +17,25 @@ export function monthsBetween(from: YearMonth, to: string) {
   return (year - from.year) * 12 + (month - from.month);
 }
 
-/** The first and last month the calendar may show: offsets 0..`maxOffset`. */
-export function bookingWindow(maxOffset: number) {
+/** The month `delta` months after `from` (before, when negative). */
+function addMonths({ year, month }: YearMonth, delta: number): YearMonth {
+  const index = year * 12 + (month - 1) + delta;
+  return { year: Math.floor(index / 12), month: (index % 12) + 1 };
+}
+
+/**
+ * The first and last month the calendar may show: offsets 0..`maxOffset`,
+ * counted back and forth from the month Booker shows at `monthOffset`. It
+ * derives from `shown`, never from the clock, so a Berlin month boundary
+ * passing with the page open cannot move the window off the shown month.
+ */
+export function bookingWindow(
+  shown: YearMonth,
+  monthOffset: number,
+  maxOffset: number,
+) {
   return {
-    startMonth: monthKey(shownMonth(0)),
-    endMonth: monthKey(shownMonth(maxOffset)),
+    startMonth: monthKey(addMonths(shown, -monthOffset)),
+    endMonth: monthKey(addMonths(shown, maxOffset - monthOffset)),
   };
 }

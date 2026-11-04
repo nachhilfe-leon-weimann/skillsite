@@ -532,35 +532,41 @@ months "YYYY-MM", an IANA `timeZone` and a supported locale tag ("de-DE"). The w
 dates through its documented time-zone support (`TZDate` at noon of the day in the zone, the `timeZone` prop)
 and back through the same zone; no key passes through host-local midnight or `toISOString().slice(0, 10)`. It
 lives in the wrapper, not the app, because the app imports only `@skillsite/ui` paths. Booker's adapter
-(`booker-calendar.ts`) names its month offsets as month keys and turns every requested month into the existing
-manual `changeMonth(delta)`; Booker keeps fetching, auto-advance, slots and results. Availability is a custom
+(`booker-calendar.ts`) names its month offsets as month keys, derives the navigation bounds from the shown
+month and its offset (never from the clock, so a Berlin month boundary passing with the page open cannot make
+the grid show a month Booker did not fetch) and turns every requested month into the existing manual
+`changeMonth(delta)`; Booker keeps fetching, auto-advance, slots and results. Availability is a custom
 `unavailable` modifier, not a `disabled` matcher: unavailable and not-yet-loaded days stay in DayPicker's
 roving focus with `aria-disabled` and select nothing (one guard in `onSelect`); as on `main`, they let pointer
 hits through to their cell. The navigation bounds are DayPicker's `startMonth`/`endMonth`. If an error or
-unconfigured answer replaces the calendar while it holds focus (the month buttons or the grid), Retry or the
-notice (`CenteredState`, new optional `ref`/`tabIndex={-1}`) takes it; focus elsewhere stays. The days fade in
+unconfigured answer replaces the calendar while its grid holds focus, Retry or the notice (`CenteredState`, new
+optional `ref`/`tabIndex={-1}`) takes it and scrolls into view; focus elsewhere stays. A clicked month button
+keeps `main`'s behaviour: focus falls to `<body>` and the page does not move. The days fade in
 per month as before (the day rows, not the whole calendar, are keyed by month); the caption stays plain text,
 not DayPicker's live region. Forty-six component tests (names, weekday headers, labels, `aria-disabled`, busy,
 one tab stop in sparse/empty/loading/later months, arrows/Home/End/PageUp/PageDown/Shift+PageUp, bounds,
 selection guards, focus kept across a load and an answer, 2026-03-29, 2026-10-25, 2028-02-29 and the year's end
 under host zones Berlin/Los Angeles/Auckland/UTC), twelve widget cases (Forms/Calendar: Default,
 NoAvailableDays, Loading, LoadOnMonthChange; light/dark ring on selected, free and unavailable days) and
-forty-one marketing cases pass, the latter on `/termin` and `/kontakt`: auto-advance without focus, a manual
+forty-five marketing cases pass, the latter on `/termin` and `/kontakt`: auto-advance without focus, a manual
 empty month without bounce, keyboard and button month changes through the manual path, focus waiting on the
 requested day through loading and its answer, both bounds without a request, a stale answer ignored,
-Retry/error/unconfigured focus, the duration reset on `/termin` and the fixed duration on `/kontakt`, the DST
+Retry/error/unconfigured focus after a keyboard month change, a click on "Nächster Monat" into an error or
+unconfigured answer on a 390x844 phone without a scroll or focus move, the duration reset on `/termin` and the fixed duration on `/kontakt`, the DST
 days and the year's end in browser contexts in Berlin, Los Angeles and Auckland, the slot instant sent
 unchanged, and the month fade with and without reduced motion. The e2e helper now gives slot starts their
 Berlin offset (`+01:00` in winter) and freezes time with a `Date` proxy: Playwright's `page.clock` drops the
 prototype of `Date` subclasses, so `TZDate` falls back to the host zone (in Auckland, Berlin noon is the next
-day's midnight). On `main`, 38 of the 41 marketing cases fail (the three passing ones send the slot instant
-unchanged there too). Eight mutation probes fail the expected tests; day keys from `toISOString().slice(0, 10)`
+day's midnight). On `main`, 38 of the first 41 marketing cases fail (the three passing ones send the slot
+instant unchanged there too); on the first review head, the four phone click cases failed (the page jumped by up
+to 550px). Nine node tests cover the booking window, red on that head. Eight mutation probes fail the expected tests; day keys from `toISOString().slice(0, 10)`
 survive as an equivalent mutant, because `TZDate` prints its zone's wall-clock time. Against `main`, production
-builds give 47 of 56 identical calendar screenshots (eleven states, light/dark, 390/1280px, normal/reduced
-motion); the others are focus-ring and reduced-motion states within 6/255, as two runs of `main` differ from each
-other (6 of 56, within 5/255). Geometry and computed styles are equal except the computed cursor of unavailable
-days, which take no pointer hits. The pointer matrix is equal; the keyboard now has one grid tab stop, and arrows/PageUp/PageDown move
-within the grid instead of scrolling the page. A focused unavailable day shows the focus ring (it could not take
+builds give 53 of 56 identical calendar screenshots (eleven states, light/dark, 390/1280px, normal/reduced
+motion); the others are focus-ring states within 4/255, as two runs of `main` differ from each other (6 of 56,
+within 5/255). No `rdp-*` class name remains in the DOM. Geometry and computed styles are equal except the computed cursor of unavailable
+days, which take no pointer hits. The pointer and touch matrix is equal, including the month-button click into
+an error or unconfigured answer at 390x844; the keyboard now has one grid tab stop, and arrows/PageUp/PageDown
+move within the grid instead of scrolling the page. A focused unavailable day shows the focus ring (it could not take
 focus before). Booking-route first-load JS grows by 22.6 kB gzip over C8.7. No human VoiceOver/Safari or
 maintainer look acceptance is claimed.
 
