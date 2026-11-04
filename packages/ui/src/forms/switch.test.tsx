@@ -8,7 +8,8 @@ import { Switch } from "./switch";
 afterEach(cleanup);
 
 beforeAll(() => {
-  // Radix measures the switch for its native input; jsdom has no observer.
+  // Radix's `Root` measures the switch for its native input (only `Root`,
+  // used as the red probe, does); jsdom has no observer.
   globalThis.ResizeObserver ??= class {
     observe() {}
     unobserve() {}
@@ -23,12 +24,15 @@ function Controlled({
   onChange,
   onSubmit,
   onFormClick,
+  preventSwitchClicks,
 }: {
   initial?: boolean;
   disabled?: boolean;
   onChange?: (checked: boolean) => void;
   onSubmit?: () => void;
   onFormClick?: (target: EventTarget) => void;
+  /** An ancestor that prevents the default of clicks on the switch. */
+  preventSwitchClicks?: boolean;
 }) {
   const [checked, setChecked] = useState(initial);
   return (
@@ -38,6 +42,13 @@ function Controlled({
         onSubmit?.();
       }}
       onClick={(event) => onFormClick?.(event.target)}
+      onClickCapture={(event) => {
+        if (
+          preventSwitchClicks &&
+          (event.target as Element).closest("[role=switch]")
+        )
+          event.preventDefault();
+      }}
     >
       <Switch
         id="reminder"
@@ -170,6 +181,21 @@ test("a form reset leaves the switch to its parent", () => {
   // The next click still asks for a change.
   fireEvent.click(theSwitch());
   expect(onChange.mock.calls).toEqual([[true], [false]]);
+});
+
+test("a click whose default an ancestor prevented toggles once; a reset then changes nothing", () => {
+  const onChange = vi.fn();
+  render(<Controlled preventSwitchClicks onChange={onChange} />);
+  // An outside change, so a reset to the first rendered state would show.
+  fireEvent.click(screen.getByRole("button", { name: "Von außen" }));
+  fireEvent.click(theSwitch());
+  // As before, the switch's click asks for the other state.
+  expect(onChange.mock.calls).toEqual([[false]]);
+  fireEvent.click(screen.getByRole("button", { name: "Von außen" }));
+  expect(theSwitch().getAttribute("aria-checked")).toBe("true");
+  fireEvent.click(screen.getByRole("button", { name: "Zurücksetzen" }));
+  expect(onChange.mock.calls).toEqual([[false]]);
+  expect(theSwitch().getAttribute("aria-checked")).toBe("true");
 });
 
 test("passes its id to the button and hides the thumb", () => {

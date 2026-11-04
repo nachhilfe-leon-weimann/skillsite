@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 
 import { cn } from "../utils/cn";
@@ -28,27 +27,16 @@ export function Switch({
   disabled,
   ...props
 }: SwitchProps) {
-  // Radix also restores the first rendered state through `onCheckedChange`
-  // when the surrounding form resets; only the switch's own click asks for a
-  // change. Radix calls `onCheckedChange` synchronously within that click.
-  const clicked = useRef(false);
   return (
     // Radix's `Root` adds a hidden native checkbox after the button inside a
-    // form and re-sends the click from it. Built from its provider and trigger
-    // (exact version pin), the switch stays a single button, as before.
-    <SwitchPrimitive.unstable_Provider
-      checked={checked}
-      disabled={disabled}
-      onCheckedChange={(next) => {
-        if (!clicked.current) return;
-        clicked.current = false;
-        onCheckedChange?.(next);
-      }}
-    >
+    // form and re-sends the click from it. Built from its provider and trigger,
+    // the switch stays a single button, as before. The provider gets no
+    // `onCheckedChange`: Radix's own toggle and its form reset listener reach
+    // its no-op default, and only the switch's click asks for the other state,
+    // also when an ancestor prevented that click's default.
+    <SwitchPrimitive.unstable_Provider checked={checked} disabled={disabled}>
       <SwitchPrimitive.unstable_Trigger
-        onClick={() => {
-          clicked.current = true;
-        }}
+        onClick={() => onCheckedChange?.(!checked)}
         className={cn(
           "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-quick ease-soft",
           checked ? "bg-coral" : "bg-line",
