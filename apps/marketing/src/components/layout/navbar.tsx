@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 
 import { cn } from "@skillsite/ui/utils/cn";
@@ -12,17 +12,19 @@ import { Logo } from "@skillsite/ui/shell/logo";
 import { Button } from "@skillsite/ui/primitives/button";
 import { NavLink } from "@skillsite/ui/primitives/link";
 import { IconButton } from "@skillsite/ui/primitives/icon-button";
+import { Dialog } from "@skillsite/ui/overlays/dialog";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@skillsite/ui/overlays/popover";
 import { brand, primaryCta, primaryNav, platformNav } from "@/content/site";
-import { useBodyScrollLock } from "@skillsite/ui/hooks/use-body-scroll-lock";
-import { useMediaQuery } from "@skillsite/ui/hooks/use-media-query";
 import { DESKTOP_NAV_QUERY } from "@/lib/breakpoints";
 import { routes } from "@/lib/routes";
-import { MENU_STATE_EVENT } from "@/components/layout/ios-toolbar-tint";
+import {
+  MENU_STATE_EVENT,
+  type MenuStateDetail,
+} from "@/components/layout/ios-toolbar-tint";
 
 /** The media query behind CSS `hover:` styles: a primary pointer that can hover. */
 const HOVER_QUERY = "(hover: hover)";
@@ -54,40 +56,33 @@ export function Navbar() {
 }
 
 function NavbarContent({ pathname }: { pathname: string }) {
-  const isDesktopNav = useMediaQuery(DESKTOP_NAV_QUERY);
   const [open, setOpen] = useState(false);
   const isPlatformActive = isPlatformNavActive(pathname);
 
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const homeLinkRef = useRef<HTMLAnchorElement>(null);
 
+  const openMobileMenu = () => setOpen(true);
   const closeMobileMenu = () => setOpen(false);
-  const toggleMobileMenu = () => setOpen((value) => !value);
-
-  useBodyScrollLock(open && !isDesktopNav);
-
-  // Escape closes the mobile menu and hands focus back to its button.
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setOpen(false);
-      menuButtonRef.current?.focus();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
 
   // Tell the iOS toolbar tint about the menu state: it hides itself while the
   // menu is open (so Safari samples the menu, not a stale navy strip) and forces
-  // a re-sample on close. Skip the initial mount (menu starts closed).
-  const prevOpen = useRef(false);
+  // a re-sample on close. Skip the initial mount (menu starts closed); an open
+  // menu that unmounts (a route change re-keys this component) reports closed.
+  const announcedOpen = useRef(false);
   useEffect(() => {
-    if (open === prevOpen.current) return;
-    prevOpen.current = open;
-    window.dispatchEvent(
-      new CustomEvent(MENU_STATE_EVENT, { detail: { open } }),
-    );
+    if (open === announcedOpen.current) return;
+    announcedOpen.current = open;
+    announceMenuState(open);
   }, [open]);
+  useEffect(
+    () => () => {
+      if (!announcedOpen.current) return;
+      announcedOpen.current = false;
+      announceMenuState(false);
+    },
+    [],
+  );
 
   useEffect(() => {
     const mediaQueryList = window.matchMedia(DESKTOP_NAV_QUERY);
@@ -102,59 +97,85 @@ function NavbarContent({ pathname }: { pathname: string }) {
   }, []);
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-sticky border-b border-line bg-glass backdrop-blur-lg",
-        open &&
-          "max-nav:fixed max-nav:inset-0 max-nav:flex max-nav:flex-col max-nav:border-b-0 max-nav:bg-bg",
-      )}
+    <>
+      {/* While the menu is open, its dialog carries the header; this one stays
+          in place, out of focus and the accessibility tree, so nothing exists
+          twice and the page beneath does not move. */}
+      <header
+        inert={open}
+        className="sticky top-0 z-sticky border-b border-line bg-glass backdrop-blur-lg"
+      >
+        <Container className="flex items-center gap-2.5 py-3 nav-wide:gap-4">
+          <HomeLink ref={homeLinkRef} />
+
+          <DesktopNav pathname={pathname} platformActive={isPlatformActive} />
+
+          <div className="ml-auto flex items-center gap-2 nav:ml-0 nav-wide:gap-2.5">
+            <Button
+              asChild
+              variant="primary"
+              size="md"
+              className="hidden px-4 nav:inline-flex nav-wide:px-5"
+            >
+              <Link href={primaryCta.href}>
+                {/* Short label in the compact range, full label once there is room. */}
+                <span className="nav-wide:hidden">{primaryCta.shortLabel}</span>
+                <span className="hidden nav-wide:inline">
+                  {primaryCta.label}
+                </span>
+              </Link>
+            </Button>
+            <IconButton
+              ref={menuButtonRef}
+              hover="none"
+              aria-label="Menü"
+              aria-expanded={open}
+              onClick={openMobileMenu}
+              className="inline-flex nav:hidden"
+            >
+              <Menu className="size-5" />
+            </IconButton>
+          </div>
+        </Container>
+      </header>
+
+      <MobileMenu
+        open={open}
+        onClose={closeMobileMenu}
+        pathname={pathname}
+        platformActive={isPlatformActive}
+        // Escape and the close control return to the menu button; past the
+        // desktop breakpoint, where it is hidden, the visible home link.
+        returnFocusRef={menuButtonRef}
+        fallbackFocusRef={homeLinkRef}
+      />
+    </>
+  );
+}
+
+function announceMenuState(open: boolean) {
+  window.dispatchEvent(
+    new CustomEvent<MenuStateDetail>(MENU_STATE_EVENT, { detail: { open } }),
+  );
+}
+
+function HomeLink({
+  ref,
+  onClick,
+}: {
+  ref?: React.Ref<HTMLAnchorElement>;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      ref={ref}
+      href={routes.home}
+      aria-label="Startseite"
+      onClick={onClick}
+      className="shrink-0"
     >
-      <Container className="flex items-center gap-2.5 py-3 nav-wide:gap-4">
-        <Link
-          href={routes.home}
-          aria-label="Startseite"
-          onClick={closeMobileMenu}
-          className="shrink-0"
-        >
-          <Logo name={brand.name} tagline={brand.tagline} src={brand.logo} />
-        </Link>
-
-        <DesktopNav pathname={pathname} platformActive={isPlatformActive} />
-
-        <div className="ml-auto flex items-center gap-2 nav:ml-0 nav-wide:gap-2.5">
-          <Button
-            asChild
-            variant="primary"
-            size="md"
-            className="hidden px-4 nav:inline-flex nav-wide:px-5"
-          >
-            <Link href={primaryCta.href}>
-              {/* Short label in the compact range, full label once there is room. */}
-              <span className="nav-wide:hidden">{primaryCta.shortLabel}</span>
-              <span className="hidden nav-wide:inline">{primaryCta.label}</span>
-            </Link>
-          </Button>
-          <IconButton
-            ref={menuButtonRef}
-            hover="none"
-            aria-label="Menü"
-            aria-expanded={open}
-            onClick={toggleMobileMenu}
-            className="inline-flex nav:hidden"
-          >
-            {open ? <X className="size-5" /> : <Menu className="size-5" />}
-          </IconButton>
-        </div>
-      </Container>
-
-      {open ? (
-        <MobileMenu
-          pathname={pathname}
-          platformActive={isPlatformActive}
-          onNavigate={closeMobileMenu}
-        />
-      ) : null}
-    </header>
+      <Logo name={brand.name} tagline={brand.tagline} src={brand.logo} />
+    </Link>
   );
 }
 
@@ -295,7 +316,79 @@ function PlatformDropdown({
   );
 }
 
+/**
+ * The full-screen mobile menu: a modal dialog that repeats the header row (home
+ * link and close control) above the links, so all of it is one focus scope.
+ */
 function MobileMenu({
+  open,
+  onClose,
+  pathname,
+  platformActive,
+  returnFocusRef,
+  fallbackFocusRef,
+}: {
+  open: boolean;
+  onClose: () => void;
+  pathname: string;
+  platformActive: boolean;
+  returnFocusRef: RefObject<HTMLElement | null>;
+  fallbackFocusRef: RefObject<HTMLElement | null>;
+}) {
+  const closeId = useId();
+  const navigatingRef = useRef(false);
+
+  // A link navigates: the destination owns focus, not the menu button.
+  const navigate = () => {
+    navigatingRef.current = true;
+    onClose();
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      layout="custom"
+      labelledBy={closeId}
+      returnFocusRef={returnFocusRef}
+      fallbackFocusRef={fallbackFocusRef}
+      onCloseAutoFocus={(event) => {
+        if (navigatingRef.current) event.preventDefault();
+        navigatingRef.current = false;
+      }}
+      // The open header's look: page background, and the same backdrop blur,
+      // which also keeps its text rendering.
+      className="flex flex-col bg-bg backdrop-blur-lg nav:hidden"
+    >
+      <header className="flex min-h-0 flex-1 flex-col">
+        <Container className="flex items-center gap-2.5 py-3 nav-wide:gap-4">
+          <HomeLink onClick={navigate} />
+
+          <div className="ml-auto flex items-center gap-2 nav:ml-0 nav-wide:gap-2.5">
+            <IconButton
+              id={closeId}
+              hover="none"
+              aria-label="Menü"
+              aria-expanded
+              onClick={onClose}
+              className="inline-flex nav:hidden"
+            >
+              <X className="size-5" />
+            </IconButton>
+          </div>
+        </Container>
+
+        <MobileMenuLinks
+          pathname={pathname}
+          platformActive={platformActive}
+          onNavigate={navigate}
+        />
+      </header>
+    </Dialog>
+  );
+}
+
+function MobileMenuLinks({
   pathname,
   platformActive,
   onNavigate,
@@ -304,6 +397,7 @@ function MobileMenu({
   platformActive: boolean;
   onNavigate: () => void;
 }) {
+  // Unmounts with the dialog's content, so every opening starts collapsed.
   const [platformOpen, setPlatformOpen] = useState(false);
 
   return (

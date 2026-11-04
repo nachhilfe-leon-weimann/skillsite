@@ -264,15 +264,40 @@ contract tests and marketing browser tests. Use C8.2's Dialog; do not add anothe
 
 **Acceptance**
 
-- [ ] At 390px and 1079px the full-screen layout/scroll behavior remains; Tab/Shift+Tab stay within all active
+- [x] At 390px and 1079px the full-screen layout/scroll behavior remains; Tab/Shift+Tab stay within all active
       header/menu controls, including logo/close. Background content cannot receive focus or AT navigation.
-- [ ] Escape closes once and returns focus; nested platform links work and hidden links are untabbable.
-- [ ] Crossing 1079/1080px in both directions, SPA navigation, unmount and repeated open/close clear the modal,
+- [x] Escape closes once and returns focus; nested platform links work and hidden links are untabbable.
+- [x] Crossing 1079/1080px in both directions, SPA navigation, unmount and repeated open/close clear the modal,
       lock and tint state. Focus is on a visible connected element; desktop navigation is usable immediately.
 - [ ] Existing iOS tint event fires only on actual menu state changes; preserve the single footer and existing
       toolbar-tint mechanism. Include a manual Safari mobile check; emulated Chromium alone is not iOS evidence.
-- [ ] Existing banner/nav assertions are adapted only where portalling requires it, keeping semantic landmarks,
+- [x] Existing banner/nav assertions are adapted only where portalling requires it, keeping semantic landmarks,
       accessible control names, active links and actual focus containment explicitly checked.
+
+C8.4 verification on 2026-11-04: the previous navbar failed seventeen of the eighteen new or adapted marketing
+cases. Tab ran from the menu into the page and on to the footer, the page behind stayed in the accessibility tree,
+crossing to 1080px dropped focus to `<body>`, and history back with the menu open never announced the closed
+state, so the toolbar tint stayed in its menu state. The menu is now C8.2's modal Dialog (`layout="custom"`, named
+"Menü" by its close control). Its content repeats the header row (home link, close control) above the links, the
+"Online lernen" Collapsible and the CTA, all inside one `<header>`; the page header stays in place, `inert`, and
+Radix hides the page from AT, so one banner, home link and menu control exist for keyboard and AT. Radix owns
+Escape, focus containment and the scroll lock; the document Escape listener and the `useBodyScrollLock` call are
+gone. Opening keeps focus on the menu control, now the dialog's close control at the same place; Escape and the
+close control return focus to the menu button, past 1080px to the visible home link; a link leaves focus to the
+destination. The tint event fires on real state changes and once more when an open menu unmounts. Fourteen a11y
+cases at 390/1079px (containment over logo, close, links, nested platform links and CTA in both directions,
+names, landmark, `aria-current`, `aria-hidden`/inert background, Escape once, close control, four client
+navigations, history back, the event contract, repeated cycles without locks, focus guards or ghost tab stops, the
+1079/1080 crossing both ways with the desktop popover usable at once), two layout and two motion cases pass five
+times in a row; the thirty-three C8.3 navbar cases pass five times in a row. The custom-layout Dialog's backdrop
+no longer draws a scrim or fades out over the page on close (it still holds the scroll lock); a widget case covers
+it and failed before. Production screenshots against `main` at 390/1079px, light/dark, normal/reduced motion
+(click, keyboard and touch opening, frames during the fade-down and the disclosure, closing, scrolled pages) match
+in 70 of 76 states pixel for pixel; the dialog keeps the open header's backdrop blur, which keeps its text
+rendering. The six others differ in one check icon on `/preise` at 390px: on main, the header leaving the flow
+behind the menu shifts the page, which reveals it early; here the page beneath does not move. The plan's "existing
+`ios-toolbar-tint.tsx` contract tests" did not exist; the contract is checked in the marketing browser tests. No
+human VoiceOver/Safari or maintainer look acceptance is claimed; the manual Safari mobile check stays open.
 
 ## C8.5 - Select
 

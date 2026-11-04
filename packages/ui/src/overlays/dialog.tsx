@@ -14,7 +14,10 @@ type DialogProps = {
   id?: string;
   labelledBy?: string;
   describedBy?: string;
-  /** `custom` fills the viewport; the consumer supplies its panel look/layout. */
+  /**
+   * `custom` fills the viewport over an invisible, motionless backdrop; the
+   * consumer supplies its panel look, layout and inner motion.
+   */
   layout?: "panel" | "custom";
   /** Prefer this target to the control focused when the dialog opened. */
   returnFocusRef?: RefObject<HTMLElement | null>;
@@ -64,7 +67,12 @@ export function Dialog({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
           aria-hidden
-          className="fixed inset-0 z-overlay bg-black/45 backdrop-blur-sm motion-safe:data-[state=open]:animate-fade motion-safe:data-[state=closed]:animate-fade-out"
+          className={cn(
+            "fixed inset-0 z-overlay",
+            // Radix keeps the scroll lock here; a custom layout draws no scrim.
+            layout === "panel" &&
+              "bg-black/45 backdrop-blur-sm motion-safe:data-[state=open]:animate-fade motion-safe:data-[state=closed]:animate-fade-out",
+          )}
           style={open ? undefined : { pointerEvents: "none" }}
         />
         <DialogPrimitive.Content

@@ -27,16 +27,33 @@ for (const width of [390, 1280]) {
   });
 }
 
-test("the open mobile menu covers the screen at 1079px", async ({ page }) => {
-  await page.setViewportSize({ width: 1079, height: 800 });
-  await page.goto("/");
-  await page.getByRole("button", { name: "Menü" }).click();
-  expect(
-    await page
-      .getByRole("banner")
-      .evaluate((node) => getComputedStyle(node).position),
-  ).toBe("fixed");
-});
+for (const width of [390, 1079]) {
+  test(`the open mobile menu covers the screen at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "Menü" }).click();
+    // The menu is a portalled dialog now; its header row and links fill it.
+    const menu = page.getByRole("dialog", { name: "Menü" });
+    expect(await menu.evaluate((node) => getComputedStyle(node).position)).toBe(
+      "fixed",
+    );
+    expect(await menu.boundingBox()).toEqual({
+      x: 0,
+      y: 0,
+      width,
+      height: 800,
+    });
+    const banner = menu.getByRole("banner");
+    expect(await banner.boundingBox()).toEqual({
+      x: 0,
+      y: 0,
+      width,
+      height: 800,
+    });
+  });
+}
 
 test("the desktop navigation takes over at 1080px", async ({ page }) => {
   await page.setViewportSize({ width: 1080, height: 800 });
