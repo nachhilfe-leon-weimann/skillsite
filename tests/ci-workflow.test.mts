@@ -6,7 +6,7 @@
  * dorny/paths-filter does (picomatch with `dot: true`), so a slip turns `check` red.
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { globSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { load } from "js-yaml";
@@ -217,5 +217,61 @@ test("the runtime image holds only build output, so tests and stories stay out o
       copy,
       /^COPY --from=build \S+ \/app\/apps\/\$\{APP\}\/(\.next\/standalone|\.next\/static|public) /,
     );
+  }
+});
+
+test("every action is pinned to a commit SHA with its version", () => {
+  const uses = read(".github/workflows/ci.yml").match(/^\s+uses: .*$/gm) ?? [];
+
+  assert.ok(uses.length > 0);
+  for (const line of uses) {
+    assert.match(line, /uses: [\w-]+\/[\w-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/);
+  }
+});
+
+test("the browser comes from a cache keyed on the Playwright version, without apt", () => {
+  const at = [
+    "Resolve the Playwright version",
+    "Cache the Playwright browser",
+    "Install the Playwright browser",
+  ].map((name) => suite.steps.findIndex((step) => step.name === name));
+  const [version, cache, install] = at.map((i) => suite.steps[i]);
+
+  assert.ok(at[0] >= 0);
+  assert.deepEqual(at, [at[0], at[0] + 1, at[0] + 2]);
+  assert.equal(new Set([version.if, cache.if, install.if]).size, 1);
+  assert.match(version.run!, /playwright --version/);
+  assert.match(cache.uses!, /^actions\/cache@/);
+  assert.equal(cache.with!.path, "~/.cache/ms-playwright");
+  assert.match(
+    cache.with!.key,
+    /\$\{\{ steps\.playwright\.outputs\.version \}\}/,
+  );
+
+  // The headless shell, no `--with-deps`; apt only when Chromium cannot launch.
+  const script = install.run!;
+  assert.match(script, /playwright install --only-shell chromium/);
+  assert.doesNotMatch(script, /--with-deps/);
+  assert.match(
+    script,
+    /if ! .*chromium\.launch\(\).*; then\n(?:.*\n)*?\s+.*playwright install-deps chromium\n\s*fi/,
+  );
+});
+
+test("every browser suite runs headless on one Playwright version", () => {
+  // The cache holds one version's headless shell: a second version or a headed launch would miss it.
+  // The lockfile lists a package under `packages:` and `snapshots:`.
+  const locked = read("pnpm-lock.yaml").match(/^ {2}playwright@[\d.]+:$/gm);
+  assert.equal(new Set(locked).size, 1);
+  const sources = globSync(
+    [
+      "{apps/marketing,packages/ui}/playwright.config.ts",
+      "{apps/marketing,packages/ui}/e2e/**/*.ts",
+    ],
+    { cwd: root },
+  );
+  assert.ok(sources.length > 2);
+  for (const file of sources) {
+    assert.doesNotMatch(read(file), /headless|channel:/, file);
   }
 });

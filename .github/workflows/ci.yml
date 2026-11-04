@@ -110,9 +110,29 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Both suites share one Playwright version (the lockfile resolves one) and run headless, so the headless
+      # shell is all they need. The runner image ships Chrome's system libraries: apt (`install-deps`, minutes on a
+      # slow mirror) runs only when a launch check shows they are missing.
+      - name: Resolve the Playwright version
+        id: playwright
+        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.UI == 'true'
+        run: echo "version=$(pnpm --filter @skillsite/marketing exec playwright --version | awk '{print $2}')" >> "${GITHUB_OUTPUT}"
+
+      - name: Cache the Playwright browser
+        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.UI == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}-chromium-headless-shell
+
       - name: Install the Playwright browser
         if: env.FULL == 'true' || env.WEBSITE == 'true' || env.UI == 'true'
-        run: pnpm --filter @skillsite/marketing exec playwright install --with-deps chromium
+        run: |
+          pnpm --filter @skillsite/marketing exec playwright install --only-shell chromium
+          if ! pnpm --filter @skillsite/marketing exec node -e "require('@playwright/test').chromium.launch().then((browser) => browser.close())"; then
+            echo "::warning::Chromium does not launch; installing its system libraries."
+            pnpm --filter @skillsite/marketing exec playwright install-deps chromium
+          fi
 
       # Full run.
       - name: Run the full suite
