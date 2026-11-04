@@ -162,30 +162,39 @@ test("an empty-string option is a valid, selectable value", async () => {
   expect(focusedOption().getAttribute("aria-selected")).toBe("true");
 });
 
-test("hints describe an option without joining its name, value or typeahead", async () => {
+test("hints describe an option without joining its name or value", async () => {
   const onChange = vi.fn();
   const options: SelectOption<string>[] = [
     { value: "mo", label: "Montag", hint: "Mittags frei" },
-    { value: "di", label: "Dienstag", hint: "Mittwochs frei" },
-    { value: "mi", label: "Mittwoch" },
+    { value: "di", label: "Dienstag" },
   ];
   render(<Controlled options={options} initial="mo" onChange={onChange} />);
   expect(trigger().textContent).toBe("Montag");
-  const listbox = await openByKeyboard();
+  await openByKeyboard();
   const monday = screen.getByRole("option", { name: "Montag" });
   expect(monday.getAttribute("aria-describedby")).toBeTruthy();
   expect(
     document.getElementById(monday.getAttribute("aria-describedby")!)
       ?.textContent,
   ).toBe("Mittags frei");
-  expect(listbox.textContent).toContain("Mittwochs frei");
-  // Typeahead on "mi" reaches the label "Mittwoch", not a hint.
-  fireEvent.keyDown(focusedOption(), { key: "m" });
-  fireEvent.keyDown(focusedOption(), { key: "i" });
-  await waitFor(() => expect(focusedOption().textContent).toBe("Mittwoch"));
+});
+
+test("typeahead matches main labels only, never a label run on into its hint", async () => {
+  const onChange = vi.fn();
+  // "Ab" followed by its hint reads "Abends frei"; only "Abends" is a label match.
+  const options: SelectOption<string>[] = [
+    { value: "z", label: "Zuletzt" },
+    { value: "ab", label: "Ab", hint: "ends frei" },
+    { value: "abends", label: "Abends" },
+  ];
+  render(<Controlled options={options} initial="z" onChange={onChange} />);
+  await openByKeyboard();
+  for (const key of ["a", "b", "e"])
+    fireEvent.keyDown(focusedOption(), { key });
+  await waitFor(() => expect(focusedOption().textContent).toBe("Abends"));
   fireEvent.keyDown(focusedOption(), { key: "Enter" });
-  expect(onChange).toHaveBeenCalledWith("mi");
-  expect(trigger().textContent).toBe("Mittwoch");
+  expect(onChange).toHaveBeenCalledWith("abends");
+  expect(trigger().textContent).toBe("Abends");
 });
 
 test("typeahead on the closed trigger commits the matching label", async () => {
@@ -267,15 +276,11 @@ test("a disabled select neither opens nor changes", async () => {
   expect(onChange).not.toHaveBeenCalled();
 });
 
-test("a closing panel is inert at once and leaves the accessibility tree", async () => {
+// Inertness during the exit transition is checked in the browser (select.spec.ts).
+test("a closed panel leaves the accessibility tree and returns focus", async () => {
   render(<Controlled options={durations} initial={60} />);
-  const listbox = await openByKeyboard();
+  await openByKeyboard();
   fireEvent.keyDown(focusedOption(), { key: "Escape" });
-  // The exit transition may keep the node; it is no longer interactive.
   await waitFor(() => expect(document.activeElement).toBe(trigger()));
-  if (listbox.isConnected) {
-    expect(listbox.closest("[inert]")).not.toBeNull();
-    expect(listbox.style.pointerEvents).toBe("none");
-  }
   expect(screen.queryByRole("listbox")).toBeNull();
 });
