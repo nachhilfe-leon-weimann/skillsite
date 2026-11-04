@@ -145,6 +145,7 @@ test.describe("the mobile navigation dialog", () => {
       ).toHaveAttribute("aria-current", "page");
       await expect(
         banner.getByRole("link", { name: "Ablauf" }),
+        "current page: Ablauf",
       ).not.toHaveAttribute("aria-current");
       await expect(
         banner.getByRole("link", { name: primaryCta.label }),
@@ -696,7 +697,10 @@ test.describe("the duration select", () => {
     expect(durations).toEqual(["60"]);
     const select = page.getByRole("combobox", { name: "Dauer", exact: true });
     await expect(select, "the initial value").toHaveText("60 Minuten");
-    await expect(select).toHaveAttribute("aria-expanded", "false");
+    await expect(select, "collapsed at rest").toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
     await select.focus();
     await page.keyboard.press("Enter");
     const list = page.getByRole("listbox", { name: "Dauer", exact: true });
@@ -890,15 +894,14 @@ test.describe("the integrated keyboard paths", () => {
           "aria-required",
           "true",
         );
-        await expect(platform.getByRole("radio")).toHaveText([
-          "Microsoft Teams",
-          "Discord",
-        ]);
-        await expect(subject.getByRole("radio")).toHaveText([
-          "Mathematik",
-          "Informatik",
-          "Physik",
-        ]);
+        await expect(
+          platform.getByRole("radio"),
+          "platform options in order",
+        ).toHaveText(["Microsoft Teams", "Discord"]);
+        await expect(
+          subject.getByRole("radio"),
+          "subject options in order",
+        ).toHaveText(["Mathematik", "Informatik", "Physik"]);
 
         // The form, in order; the open items follow every field.
         const submit = page.getByRole("button", {

@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { isolate, stubAvailability } from "./helpers";
+import { isolate, settledAnimations, stubAvailability } from "./helpers";
 
 type TransitionRun = { property: string; state: string | null };
 
@@ -34,14 +34,6 @@ async function recordTransitions(page: Page, selector: string) {
           .transitionRuns,
     );
 }
-
-/** Resolves once every animation and transition running on the element has ended. */
-const settled = (element: Locator) =>
-  element.evaluate(async (node) => {
-    await Promise.allSettled(
-      node.getAnimations().map((animation) => animation.finished),
-    );
-  });
 
 /** The y component of a computed `translate` value ("0px -1.37px" -> -1.37, "none" -> 0). */
 function translateY(value: string) {
@@ -91,7 +83,7 @@ test("the duration select panel slides and scales in, then out", async ({
       { property: "scale", state: "open" },
     ]),
   );
-  await settled(list);
+  await settledAnimations(list);
   const rest = await restingStyle(list);
   expect(rest.opacity, "opacity at rest").toBe("1");
   expect(translateY(rest.translate), "translate at rest").toBe(0);
@@ -121,7 +113,7 @@ test("an FAQ answer slides in", async ({ page }) => {
     .poll(runs, { message: "translate transition" })
     .toEqual(expect.arrayContaining([{ property: "translate", state: null }]));
   const answer = page.locator(selector);
-  await settled(answer);
+  await settledAnimations(answer);
   const rest = await restingStyle(answer);
   expect(rest.opacity, "opacity at rest").toBe("1");
   expect(translateY(rest.translate), "translate at rest").toBe(0);
@@ -168,7 +160,7 @@ test.describe("the navbar popover", () => {
       .toEqual(
         expect.arrayContaining([{ property: "translate", state: "open" }]),
       );
-    await settled(panel);
+    await settledAnimations(panel);
     const rest = await restingStyle(panel);
     expect(rest.opacity, "opacity at rest").toBe("1");
     expect(translateY(rest.translate), "translate at rest").toBe(0);
@@ -239,7 +231,7 @@ test.describe("the navbar popover", () => {
     await expect(panel).toHaveAttribute("data-state", "open");
     await expect(panel.locator("> div")).not.toHaveAttribute("inert");
     // Once the entrance has ended, no earlier exit can still move focus.
-    await settled(panel);
+    await settledAnimations(panel);
     await expect(trigger).toBeFocused();
     await expect(panel).toHaveCSS("opacity", "1");
   });
@@ -294,9 +286,34 @@ test.describe("the mobile menu", () => {
 
   test("fades its links in and closes at once", async ({ page }) => {
     await page.goto("/");
+    // Record the animations that start on the dialog's link container.
+    await page.evaluate(() => {
+      const starts: string[] = [];
+      Object.assign(window, { menuStarts: starts });
+      document.addEventListener("animationstart", (event) => {
+        const target = event.target as Element;
+        if (
+          target.closest("[role=dialog]") &&
+          target.getAttribute("role") !== "dialog" &&
+          [...target.querySelectorAll("a")].some(
+            (link) => link.textContent?.trim() === "Preise",
+          )
+        )
+          starts.push(event.animationName);
+      });
+    });
     await page.getByRole("button", { name: "Menü" }).click();
     const menu = page.getByRole("dialog", { name: "Menü" });
     await expect(menu).toBeVisible();
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () => (window as unknown as { menuStarts: string[] }).menuStarts,
+          ),
+        { message: "the links' animation started" },
+      )
+      .toHaveLength(1);
     expect(await mobileMenuMotion(page)).toEqual({
       running: 0,
       opacity: "1",

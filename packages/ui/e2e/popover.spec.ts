@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 
-import { animationsSettled, expect, test } from "./fixtures";
+import { animationsSettled, expect, holdExit, test } from "./fixtures";
 
 const story = (name = "default") =>
   `/iframe.html?id=overlays-popover--${name}&viewMode=story&globals=theme:light`;
@@ -240,4 +240,39 @@ test("with hitTestableExit a panel faded out after a short hover takes no hits",
   expect(await hitsPanel(page, area)).toBe(false);
   await page.mouse.move(area.x, area.y);
   await expect(panel).toHaveCount(0, { timeout: 10_000 });
+});
+
+test("a hover close with focus inside returns focus to the trigger, also across a reopen during the exit", async ({
+  page,
+}) => {
+  await page.goto(story("hover-exit"));
+  const box = (await trigger(page).boundingBox())!;
+  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await page.mouse.move(centre.x, centre.y);
+  await expect(popover(page)).toBeVisible();
+  await trigger(page).focus();
+  await page.keyboard.press("Tab");
+  await expect(popover(page).getByRole("link").first()).toBeFocused();
+
+  // The pointer leaves with focus inside; the closed panel drops that focus.
+  const release = await holdExit(page);
+  await page.mouse.move(10, 10);
+  const panel = page.locator("[role='dialog']");
+  await expect(panel).toHaveAttribute("data-state", "closed");
+  await expect
+    .poll(() => page.evaluate(() => document.activeElement === document.body))
+    .toBe(true);
+  // Back onto the trigger while the exit is held: it reopens, moving no focus.
+  await page.mouse.move(centre.x, centre.y);
+  await expect(panel).toHaveAttribute("data-state", "open");
+  await release();
+  expect(
+    await page.evaluate(() => document.activeElement === document.body),
+    "a reopen moves no focus",
+  ).toBe(true);
+
+  // The next leave closes it; after the exit, focus is back on the trigger.
+  await page.mouse.move(10, 10);
+  await expect(panel).toHaveCount(0);
+  await expect(trigger(page)).toBeFocused();
 });

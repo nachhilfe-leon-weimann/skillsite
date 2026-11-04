@@ -1,6 +1,6 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
-import { expect, test } from "./fixtures";
+import { expect, expectRing, test } from "./fixtures";
 
 const story = (name: string, theme = "light") =>
   `/iframe.html?id=forms-calendar--${name}&viewMode=story&globals=theme:${theme}`;
@@ -15,19 +15,6 @@ const next = (page: Page) =>
   page.getByRole("button", { name: "Nächster Monat" });
 const previous = (page: Page) =>
   page.getByRole("button", { name: "Vorheriger Monat" });
-
-/** A visible keyboard focus ring: the element matches :focus-visible and draws an outline. */
-async function expectRing(element: Locator, kind: string) {
-  await expect(element).toBeFocused();
-  expect(
-    await element.evaluate((node) => node.matches(":focus-visible")),
-    `${kind}: focus-visible`,
-  ).toBe(true);
-  await expect(element, `${kind}: outline`).not.toHaveCSS(
-    "outline-style",
-    "none",
-  );
-}
 
 for (const theme of ["light", "dark"]) {
   test(`${theme}: one tab stop on the selected day; the ring shows on every kind of day`, async ({

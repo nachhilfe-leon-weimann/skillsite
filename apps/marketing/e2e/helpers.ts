@@ -1,4 +1,4 @@
-import { expect, type Page, type Route } from "@playwright/test";
+import { expect, type Locator, type Page, type Route } from "@playwright/test";
 
 /** Answer every non-local request locally: the smoke test must not depend on the network (e.g. Umami). */
 export async function isolate(page: Page) {
@@ -209,4 +209,19 @@ export async function settledScroll(page: Page) {
     })
     .toBe(true);
   return last;
+}
+
+/**
+ * Resolves once every animation and transition running on the element has
+ * ended; with `subtree`, also those of its descendants.
+ */
+export function settledAnimations(
+  element: Locator,
+  { subtree = false }: { subtree?: boolean } = {},
+) {
+  return element.evaluate(async (node, subtree) => {
+    await Promise.allSettled(
+      node.getAnimations({ subtree }).map((animation) => animation.finished),
+    );
+  }, subtree);
 }

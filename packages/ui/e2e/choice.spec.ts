@@ -1,6 +1,6 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
-import { expect, test } from "./fixtures";
+import { expect, expectRing, settledScroll, test } from "./fixtures";
 
 const story = (id: string, name: string, theme = "light") =>
   `/iframe.html?id=forms-${id}--${name}&viewMode=story&globals=theme:${theme}`;
@@ -12,19 +12,6 @@ const chip = (page: Page, name: string) =>
 const status = (page: Page) => page.getByRole("status");
 const before = (page: Page) => page.getByRole("button", { name: "Davor" });
 const after = (page: Page) => page.getByRole("button", { name: "Danach" });
-
-/** A visible keyboard focus ring: the element matches :focus-visible and draws an outline. */
-async function expectRing(element: Locator, surface: string) {
-  await expect(element).toBeFocused();
-  expect(
-    await element.evaluate((node) => node.matches(":focus-visible")),
-    `${surface}: focus-visible`,
-  ).toBe(true);
-  await expect(element, `${surface}: outline`).not.toHaveCSS(
-    "outline-style",
-    "none",
-  );
-}
 
 /** The focused radio is the checked one, and the only one. */
 async function expectFocusedAndChecked(page: Page, name: string) {
@@ -57,7 +44,21 @@ test("radio rows: one tab stop, arrows move focus and choice, a visible ring", a
   await expect(before(page)).toBeFocused();
   await page.keyboard.press("Tab");
 
-  const scroll = await page.evaluate(() => scrollY);
+  // The keys must not scroll the page. Give the story room to scroll, and show
+  // first that the same key on a plain button does.
+  await page.evaluate(() => {
+    document.body.style.minHeight = "300vh";
+  });
+  await before(page).focus();
+  await page.keyboard.press("ArrowDown");
+  expect(await settledScroll(page), "a plain button scrolls").toBeGreaterThan(
+    0,
+  );
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  expect(await settledScroll(page)).toBe(0);
+  await page.keyboard.press("Tab");
+  await expectFocusedAndChecked(page, "Microsoft Teams");
+
   for (const [key, name] of [
     ["ArrowDown", "Discord"],
     ["ArrowRight", "Telefon"],
@@ -70,7 +71,7 @@ test("radio rows: one tab stop, arrows move focus and choice, a visible ring", a
     await page.keyboard.press(key);
     await expectFocusedAndChecked(page, name);
   }
-  expect(await page.evaluate(() => scrollY)).toBe(scroll);
+  expect(await settledScroll(page), "the radio keys scroll nothing").toBe(0);
   await expect(status(page)).toHaveText(
     'Wert: "telefon", Änderungen: 7, Absendungen: 0',
   );
