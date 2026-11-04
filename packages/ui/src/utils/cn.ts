@@ -89,6 +89,7 @@ const twMerge = extendTailwindMerge({
         "rise-soft",
         "settle",
         "presence-hold",
+        "presence-hold-quick",
       ],
       container: [
         "page",

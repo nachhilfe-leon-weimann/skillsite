@@ -40,18 +40,83 @@ test.beforeEach(async ({ page }) => {
   await stubAvailability(page);
 });
 
+/** The duration select's trigger on /termin (hidden from AT while its list is open). */
+async function durationSelect(page: Page) {
+  await expect(
+    page.getByRole("combobox", { name: "Dauer", exact: true }),
+  ).toBeVisible();
+  return page.locator("[role=combobox]");
+}
+
 test("the duration select panel slides and scales in", async ({ page }) => {
   await page.goto("/termin");
-  await page.locator('button[aria-haspopup="listbox"]').click();
-  const panel = page.getByRole("listbox");
+  await (await durationSelect(page)).click();
+  const panel = page.getByRole("listbox", { name: "Dauer" });
+  // The entrance starts on the frame the panel is placed: wait for it.
+  await expect.poll(() => midpoint(panel, "translate")).not.toBeNull();
   const y = await midpoint(panel, "translate");
   const scale = await midpoint(panel, "scale");
-  expect(y, "translate transition").not.toBeNull();
   expect(translateY(y!)).toBeGreaterThan(-4);
   expect(translateY(y!)).toBeLessThan(0);
   expect(scale, "scale transition").not.toBeNull();
   expect(Number(scale)).toBeGreaterThan(0.97);
   expect(Number(scale)).toBeLessThan(1);
+});
+
+test("the duration select panel slides and scales out", async ({ page }) => {
+  await page.goto("/termin");
+  const trigger = await durationSelect(page);
+  await trigger.click();
+  const list = page.getByRole("listbox", { name: "Dauer" });
+  await expect(list).toHaveCSS("opacity", "1");
+  // The closing panel unmounts once its exit ends, so sample its midpoint in
+  // the page, on the first frame its exit transitions run.
+  await page.evaluate(() => {
+    const tick = () => {
+      const node = document.querySelector<HTMLElement>(
+        "[data-radix-popper-content-wrapper] > [data-state=closed]",
+      );
+      const running = (node?.getAnimations() ?? []).filter(
+        (animation): animation is CSSTransition =>
+          animation instanceof CSSTransition,
+      );
+      const names = running.map((animation) => animation.transitionProperty);
+      if (!node || !names.includes("translate") || !names.includes("scale")) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      for (const animation of running) {
+        animation.pause();
+        animation.currentTime =
+          Number(animation.effect!.getTiming().duration) / 2;
+      }
+      const style = getComputedStyle(node);
+      Object.assign(window, {
+        exitMidpoint: { translate: style.translate, scale: style.scale },
+      });
+    };
+    requestAnimationFrame(tick);
+  });
+  await page.keyboard.press("Escape");
+  const sample = () =>
+    page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            exitMidpoint?: { translate: string; scale: string };
+          }
+        ).exitMidpoint ?? null,
+    );
+  await expect.poll(sample).not.toBeNull();
+  const { translate, scale } = (await sample())!;
+  expect(translateY(translate)).toBeGreaterThan(-4);
+  expect(translateY(translate)).toBeLessThan(0);
+  expect(Number(scale)).toBeGreaterThan(0.97);
+  expect(Number(scale)).toBeLessThan(1);
+  await expect(trigger).toBeFocused();
+  await expect(page.locator("[data-radix-popper-content-wrapper]")).toHaveCount(
+    0,
+  );
 });
 
 test("an FAQ answer slides in", async ({ page }) => {
@@ -580,19 +645,20 @@ test.describe("with reduced motion", () => {
 
   test("the select panel is at its end state at once", async ({ page }) => {
     await page.goto("/termin");
-    await page.locator('button[aria-haspopup="listbox"]').click();
-    const panel = page.getByRole("listbox");
-    await page.evaluate(
-      () => new Promise((resolve) => requestAnimationFrame(resolve)),
-    );
-    expect(await panel.evaluate((node) => getComputedStyle(node).opacity)).toBe(
-      "1",
-    );
+    const trigger = await durationSelect(page);
+    await trigger.click();
+    const panel = page.getByRole("listbox", { name: "Dauer" });
+    await expect(panel).toHaveCSS("opacity", "1", { timeout: 500 });
     expect(
       translateY(
         await panel.evaluate((node) => getComputedStyle(node).translate),
       ),
     ).toBe(0);
+    await page.keyboard.press("Escape");
+    await expect(
+      page.locator("[data-radix-popper-content-wrapper]"),
+    ).toHaveCount(0, { timeout: 500 });
+    await expect(trigger).toBeFocused();
   });
 
   test("the mobile menu appears and goes at once", async ({ page }) => {

@@ -793,12 +793,85 @@ test.describe("the desktop platform popover", () => {
   });
 });
 
-test("the duration select is named", async ({ page }) => {
-  await stubAvailability(page);
-  await page.goto("/termin");
-  await expect(
-    page.getByRole("button", { name: /^Dauer: \d+ Minuten$/ }),
-  ).toBeVisible();
+test.describe("the duration select", () => {
+  /** The `duration` of every availability request, in order. */
+  function recordDurations(page: Page) {
+    const durations: string[] = [];
+    page.on("request", (request) => {
+      const url = new URL(request.url());
+      if (url.pathname === "/api/booking/availability")
+        durations.push(url.searchParams.get("duration") ?? "");
+    });
+    return durations;
+  }
+
+  test("is a combobox named Dauer that shows its value", async ({ page }) => {
+    await stubAvailability(page);
+    await page.goto("/termin");
+    const select = page.getByRole("combobox", { name: "Dauer", exact: true });
+    await expect(select).toBeVisible();
+    await expect(select).toHaveText("60 Minuten");
+    await expect(select).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("the keyboard picks a duration that the next availability request carries", async ({
+    page,
+  }) => {
+    await stubAvailability(page);
+    const durations = recordDurations(page);
+    await page.goto("/termin");
+    await expect(page.getByRole("button", { name: "10:00" })).toBeVisible();
+    expect(durations).toEqual(["60"]);
+    const select = page.getByRole("combobox", { name: "Dauer", exact: true });
+    await select.focus();
+    await page.keyboard.press("Enter");
+    const list = page.getByRole("listbox", { name: "Dauer", exact: true });
+    await expect(
+      list.getByRole("option", { name: "60 Minuten", selected: true }),
+    ).toBeFocused();
+    await expect(list.getByRole("option")).toHaveText([
+      "45 Minuten",
+      "60 Minuten",
+      "90 Minuten",
+    ]);
+    // While open, Tab stays in the list.
+    await page.keyboard.press("Tab");
+    await expect(
+      list.getByRole("option", { name: "60 Minuten" }),
+    ).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(
+      list.getByRole("option", { name: "90 Minuten" }),
+    ).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(list).toHaveCount(0);
+    await expect(select).toBeFocused();
+    await expect(select).toHaveText("90 Minuten");
+    await expect.poll(() => durations).toEqual(["60", "90"]);
+    // Escape keeps the value and asks for nothing.
+    await page.keyboard.press("ArrowDown");
+    await expect(
+      list.getByRole("option", { name: "90 Minuten" }),
+    ).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await expect(
+      list.getByRole("option", { name: "60 Minuten" }),
+    ).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(select).toBeFocused();
+    await expect(select).toHaveText("90 Minuten");
+    await page.waitForLoadState("networkidle");
+    expect(durations).toEqual(["60", "90"]);
+  });
+
+  test("is disabled once a slot is chosen", async ({ page }) => {
+    await stubAvailability(page);
+    await page.goto("/termin");
+    await page.getByRole("button", { name: "10:00" }).click();
+    await expect(
+      page.getByRole("combobox", { name: "Dauer", exact: true }),
+    ).toBeDisabled();
+  });
 });
 
 test("the Discord buttons are named by their text only", async ({ page }) => {
