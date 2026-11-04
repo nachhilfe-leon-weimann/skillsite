@@ -26,6 +26,7 @@
     "./typography/lead": "./src/typography/lead.tsx",
     "./typography/prose": "./src/typography/prose.tsx",
     "./typography/text": "./src/typography/text.tsx",
+    "./forms/calendar": "./src/forms/calendar.tsx",
     "./forms/choice-chips": "./src/forms/choice-chips.tsx",
     "./forms/field": "./src/forms/field.tsx",
     "./forms/radio-group": "./src/forms/radio-group.tsx",
@@ -70,6 +71,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "next-themes": "^0.4.6",
+    "react-day-picker": "10.0.2",
     "tailwind-merge": "^3.7.0"
   },
   "peerDependencies": {

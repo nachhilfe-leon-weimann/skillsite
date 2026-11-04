@@ -1,14 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import {
   BadgeEuro,
   CalendarClock,
   CalendarX2,
   Check,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Phone,
   Video,
@@ -16,15 +22,19 @@ import {
 
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
-import { IconButton } from "@skillsite/ui/primitives/icon-button";
 import { InfoRow } from "@skillsite/ui/primitives/info-row";
+import { Calendar } from "@skillsite/ui/forms/calendar";
 import { Select } from "@skillsite/ui/forms/select";
 import { CenteredState } from "@skillsite/ui/layout/centered-state";
 import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
-import { cn } from "@skillsite/ui/utils/cn";
+import {
+  bookingWindow,
+  monthKey,
+  monthsBetween,
+} from "@/components/booking/booker-calendar";
 import { BookingForm } from "@/components/booking/booking-form";
 import { bookerText } from "@/content/booking";
 import { requestBooking } from "@/lib/booking/actions";
@@ -39,40 +49,16 @@ import {
   type BookingSlot,
   type SubmitFailureReason,
 } from "@/lib/booking/config";
-import {
-  bookingToday,
-  daysInMonth,
-  pad,
-  shownMonth,
-} from "@/lib/booking/dates";
+import { bookingToday, shownMonth } from "@/lib/booking/dates";
 import { routes } from "@/lib/routes";
 import { trackEvent } from "@/lib/analytics";
 
-const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-const MONTHS = [
-  "Januar",
-  "Februar",
-  "März",
-  "April",
-  "Mai",
-  "Juni",
-  "Juli",
-  "August",
-  "September",
-  "Oktober",
-  "November",
-  "Dezember",
-];
 const MAX_MONTH_OFFSET = 3;
 
 const EUR = new Intl.NumberFormat("de-DE", {
   style: "currency",
   currency: "EUR",
 });
-
-/** 0 = Mon ... 6 = Sun. */
-const firstWeekdayIndex = (year: number, month: number) =>
-  (new Date(Date.UTC(year, month - 1, 1)).getUTCDay() + 6) % 7;
 
 function dateLabel(dateStr: string) {
   const [year = NaN, month = NaN, day = NaN] = dateStr.split("-").map(Number);
@@ -402,7 +388,6 @@ export function Booker({
         <AnimatedHeight className="flex min-h-96 flex-col p-panel-booker-main">
           {step === "select" ? (
             <SelectStep
-              monthOffset={monthOffset}
               shown={shown}
               loading={loading}
               status={status}
@@ -452,10 +437,25 @@ export function Booker({
 function UnavailableNotice({
   status,
   onRetry,
+  takeFocusRef,
 }: {
   status: "unconfigured" | "error";
   onRetry: () => void;
+  /** Set when this notice replaced the calendar while it held focus. */
+  takeFocusRef: RefObject<boolean>;
 }) {
+  const retryRef = useRef<HTMLButtonElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
+
+  // The calendar this notice replaced held focus, which its removal dropped:
+  // hand it to the Retry button, or else to the notice itself. Focus anywhere
+  // else stays where it is.
+  useLayoutEffect(() => {
+    if (!takeFocusRef.current) return;
+    takeFocusRef.current = false;
+    (retryRef.current ?? statusRef.current)?.focus();
+  }, [takeFocusRef]);
+
   if (status === "error") {
     return (
       <CenteredState
@@ -465,7 +465,7 @@ function UnavailableNotice({
         <Text tone="muted" className="mb-5">
           Das hat gerade nicht geklappt. Bitte versuch es noch einmal.
         </Text>
-        <Button variant="outline" onClick={onRetry}>
+        <Button ref={retryRef} variant="outline" onClick={onRetry}>
           Erneut versuchen
         </Button>
       </CenteredState>
@@ -474,6 +474,8 @@ function UnavailableNotice({
 
   return (
     <CenteredState
+      ref={statusRef}
+      tabIndex={-1}
       icon={<CalendarClock className="size-7 text-coral" aria-hidden />}
       title="Online-Terminwahl gerade nicht verfügbar"
     >
@@ -488,7 +490,6 @@ function UnavailableNotice({
 }
 
 type SelectStepProps = {
-  monthOffset: number;
   shown: { year: number; month: number };
   loading: boolean;
   status: AvailabilityStatus;
@@ -502,7 +503,6 @@ type SelectStepProps = {
 };
 
 function SelectStep({
-  monthOffset,
   shown,
   loading,
   status,
@@ -514,103 +514,52 @@ function SelectStep({
   onPickSlot,
   onChangeMonth,
 }: SelectStepProps) {
+  // Whether the calendar held focus when the unavailable notice replaced it.
+  const calendarHadFocus = useRef(false);
+  const trackCalendarFocus = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    return () => {
+      calendarHadFocus.current = node.contains(document.activeElement);
+    };
+  }, []);
+
   if (!loading && status !== "ok") {
-    return <UnavailableNotice status={status} onRetry={onRetry} />;
+    return (
+      <UnavailableNotice
+        status={status}
+        onRetry={onRetry}
+        takeFocusRef={calendarHadFocus}
+      />
+    );
   }
 
-  const leading = firstWeekdayIndex(shown.year, shown.month);
-  const total = daysInMonth(shown.year, shown.month);
-  const todayStr = bookingToday();
   const noneThisMonth =
     !loading && status === "ok" && availableDates.size === 0;
 
   return (
     <div className="mx-auto flex w-full flex-1 flex-col justify-start motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
       <div className="grid gap-x-panel-booker-main gap-y-5 @4xl:grid-cols-[3fr_1fr]">
-        <div>
-          <div className="mb-4 flex">
-            <div className="m-auto">
-              <strong className="font-heading text-month text-ink">
-                {MONTHS[shown.month - 1]} {shown.year}
-              </strong>
-            </div>
-            <div className="flex flex-row gap-3">
-              <IconButton
-                size="sm"
-                onClick={() => onChangeMonth(-1)}
-                disabled={monthOffset === 0}
-                aria-label="Vorheriger Monat"
-              >
-                <ChevronLeft className="size-4" aria-hidden />
-              </IconButton>
-              <IconButton
-                size="sm"
-                onClick={() => onChangeMonth(1)}
-                disabled={monthOffset >= MAX_MONTH_OFFSET}
-                aria-label="Nächster Monat"
-              >
-                <ChevronRight className="size-4" aria-hidden />
-              </IconButton>
-            </div>
-          </div>
-
-          <div className="mb-2 grid grid-cols-7 gap-1.5">
-            {WEEKDAYS.map((day) => (
-              <div
-                key={day}
-                className="text-center text-caption font-semibold text-ink-soft"
-              >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          <div
-            key={`${shown.year}-${shown.month}`}
-            className="grid grid-cols-7 gap-1.5 motion-safe:animate-fade"
-            aria-busy={loading}
-          >
-            {Array.from({ length: leading }).map((_, index) => (
-              <div key={`blank-${index}`} />
-            ))}
-            {Array.from({ length: total }).map((_, index) => {
-              const day = index + 1;
-              const date = `${shown.year}-${pad(shown.month)}-${pad(day)}`;
-              const available = !loading && availableDates.has(date);
-              const selected = selectedDate === date;
-              const isToday = date === todayStr;
-
-              return (
-                <button
-                  key={date}
-                  type="button"
-                  disabled={!available}
-                  onClick={() => onSelectDate(date)}
-                  className={cn(
-                    "relative flex aspect-square items-center justify-center rounded-lg border text-small transition-colors",
-                    selected && "border-coral bg-coral font-bold text-white",
-                    !selected &&
-                      available &&
-                      "border-accent-tint-45 bg-accent-tint-11 font-semibold text-coral hover:bg-coral hover:text-white",
-                    !available &&
-                      "border-line bg-bg text-ink-soft/50 disabled:pointer-events-none",
-                    loading && "animate-pulse",
-                  )}
-                >
-                  {day}
-                  {isToday ? (
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "absolute bottom-1.5 left-1/2 size-1.5 -translate-x-1/2 rounded-full",
-                        selected ? "bg-white" : "bg-coral",
-                      )}
-                    />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
+        <div ref={trackCalendarFocus}>
+          <Calendar
+            month={monthKey(shown)}
+            {...bookingWindow(MAX_MONTH_OFFSET)}
+            // Every month change - the buttons and the keys that leave the
+            // month - takes the manual path: reset, no auto-advance.
+            onMonthChange={(month) => {
+              const delta = monthsBetween(shown, month);
+              if (delta !== 0) onChangeMonth(delta);
+            }}
+            selected={selectedDate}
+            onSelect={onSelectDate}
+            isSelectable={(date) => availableDates.has(date)}
+            busy={loading}
+            today={bookingToday()}
+            timeZone={BOOKING_TIMEZONE}
+            locale="de-DE"
+            weekStartsOn={1}
+            previousMonthLabel="Vorheriger Monat"
+            nextMonthLabel="Nächster Monat"
+          />
         </div>
 
         <div>

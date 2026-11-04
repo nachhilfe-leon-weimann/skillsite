@@ -428,7 +428,7 @@ manual pass on the chosen implementation.
   - [x] C8.5: Select preserves typed values/tones and has verified Radix keyboard/focus behavior.
   - [x] C8.6: radio rows and single/multi chips preserve payloads and implement the documented keyboard model.
   - [x] C8.7: Switch behavior is tested in a real browser story despite having no live app consumer.
-  - [ ] C8.8: calendar grid/keyboard behavior, availability adapter and Berlin date/time-zone boundaries pass.
+  - [x] C8.8: calendar grid/keyboard behavior, availability adapter and Berlin date/time-zone boundaries pass.
   - [ ] C8.9: integrated production/UI checks and human VoiceOver/Safari/look acceptance are recorded.
   - [ ] C8 complete: all slices are integrated and the C8.9 completion gate is satisfied; missing manual evidence
         leaves this box open.
