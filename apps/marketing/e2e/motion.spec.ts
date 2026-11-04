@@ -400,8 +400,12 @@ test.describe("the navbar popover", () => {
         }
         await panelGone(page);
       });
+      // Two frames after the unmount, the close's focus handling has settled.
       await page.evaluate(
-        () => new Promise((resolve) => setTimeout(resolve, 100)),
+        () =>
+          new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          ),
       );
       expect(
         await page.evaluate(() => document.activeElement === document.body),

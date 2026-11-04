@@ -234,15 +234,18 @@ evidence. Deviation from "CSS keyframes" above, by maintainer decision (the pane
 `ease-flow`; the entrance starts from the closed, invisible look after one style flush), and a no-op
 `presence-hold` keyframe (`animate-presence-hold`, animating an unread registered property) holds Radix presence
 for the exit. As on main, the fading panel takes pointer hits until it has faded out, so the pointer coming back
-reopens it, after a hover leave, an outside click or Tab; when Escape or a click closes it under a hovering
-pointer, it lets hits through, so it does not reopen under that pointer. It stops taking hits on the frame its
-opacity transition ends, where main's visibility turns hidden: its exit starts between frames, and Chrome then
-starts the visibility transition a frame after opacity. A keyframe version snapped on interrupted sweeps; the
-sweep regressions fail on it and pass now. The panel keeps its size, alignment and 6px corridor; Floating UI snaps
-its position to device pixels (under 0.5px at 1x), which Radix does not expose to configure. As on main, the links
-become focusable with the entrance's first frame; a Tab within that frame passes them. `@radix-ui/react-popover`
-1.3.1 resolves to the pinned DismissableLayer 1.2.1 and FocusScope 1.3.1. No human VoiceOver/Safari or maintainer
-look acceptance is claimed.
+reopens it, after a hover leave, an outside click or Tab; when Escape, a click or Tab out closes it under a
+hovering pointer, it lets hits through, so it does not reopen under that pointer and stays closed until the pointer
+leaves. It stops taking hits on the frame its opacity transition ends, where main's visibility turns hidden: its
+exit starts between frames, and Chrome then starts the visibility transition a frame after opacity. A keyframe
+version snapped on interrupted sweeps; the sweep regressions fail on it and pass now. The panel keeps its size,
+alignment and 6px corridor; Floating UI snaps its position to device pixels (under 0.5px at 1x), which Radix does
+not expose to configure. As on main, the links become focusable with the entrance's first frame; a Tab within that
+frame passes them. Every entrance starts one frame (about 17 ms) later than on main, because the panel mounts a
+render after the event: on main's curve, a hover shorter than the transition peaks one frame lower, and a pointer
+crossing the trigger in a single move shows nothing where main flashes to 0.27. `@radix-ui/react-popover` 1.3.1
+resolves to the pinned DismissableLayer 1.2.1 and FocusScope 1.3.1. No human VoiceOver/Safari or maintainer look
+acceptance is claimed.
 
 ## C8.4 - Mobile navigation focus
 
