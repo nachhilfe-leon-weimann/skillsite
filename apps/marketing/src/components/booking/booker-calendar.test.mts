@@ -5,7 +5,7 @@ import {
   monthKey,
   monthsBetween,
 } from "@/components/booking/booker-calendar";
-import { shownMonth } from "@/lib/booking/dates";
+import { bookingToday, shownMonth } from "@/lib/booking/dates";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -39,7 +39,7 @@ describe("the booking window", () => {
   ])("opened at %s spans %s to %s", (now, startMonth, endMonth) => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(now));
-    expect(bookingWindow(shownMonth(0), 0, 3)).toEqual({
+    expect(bookingWindow(shownMonth(bookingToday(), 0), 0, 3)).toEqual({
       startMonth,
       endMonth,
     });
@@ -65,7 +65,7 @@ describe("the booking window", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     // 30 November 23:50 in Berlin: Booker shows (and fetched) November.
     vi.setSystemTime(new Date("2026-11-30T22:50:00Z"));
-    const shown = shownMonth(0);
+    const shown = shownMonth(bookingToday(), 0);
     // 1 December 00:10 in Berlin, the page still open.
     vi.setSystemTime(new Date("2026-11-30T23:10:00Z"));
     const window = bookingWindow(shown, 0, 3);

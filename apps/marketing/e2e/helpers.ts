@@ -25,18 +25,29 @@ export function collectErrors(page: Page): string[] {
  * arguments return it; timers keep running. Unlike `page.clock`, whose `Date`
  * replacement drops the prototype of `Date` subclasses (`TZDate`, which the
  * calendar's time-zone support rests on, then falls back to the host zone),
- * this keeps subclasses intact.
+ * this keeps subclasses intact. `moveTime` sets it to another instant.
  */
 export async function freezeTime(page: Page, instant: Date) {
   await page.addInitScript((time) => {
     const NativeDate = Date;
+    const clock = { time };
+    Object.assign(globalThis, { frozenClock: clock });
     globalThis.Date = new Proxy(NativeDate, {
       construct: (target, args, newTarget) =>
-        Reflect.construct(target, args.length ? args : [time], newTarget),
-      apply: () => new NativeDate(time).toString(),
+        Reflect.construct(target, args.length ? args : [clock.time], newTarget),
+      apply: () => new NativeDate(clock.time).toString(),
       get: (target, key, receiver) =>
-        key === "now" ? () => time : Reflect.get(target, key, receiver),
+        key === "now" ? () => clock.time : Reflect.get(target, key, receiver),
     });
+  }, instant.getTime());
+}
+
+/** Move a clock frozen by `freezeTime` to `instant`, the page staying open. */
+export async function moveTime(page: Page, instant: Date) {
+  await page.evaluate((time) => {
+    (
+      globalThis as unknown as { frozenClock: { time: number } }
+    ).frozenClock.time = time;
   }, instant.getTime());
 }
 

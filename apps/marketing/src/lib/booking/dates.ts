@@ -16,12 +16,12 @@ export function bookingToday(): string {
 }
 
 /**
- * Year/month to show for an offset from the current booking-timezone month.
- * Anchored to the booking timezone so the calendar matches availability even
- * for viewers in other timezones (and stays SSR/CSR consistent).
+ * Year/month to show for an offset from the month of `today`, a booking-timezone
+ * day from `bookingToday`. Anchored to the booking timezone so the calendar
+ * matches availability even for viewers in other timezones.
  */
-export function shownMonth(offset: number) {
-  const [year = NaN, month = NaN] = bookingToday().split("-").map(Number);
+export function shownMonth(today: string, offset: number) {
+  const [year = NaN, month = NaN] = today.split("-").map(Number);
   const target = new Date(Date.UTC(year, month - 1 + offset, 1));
   return { year: target.getUTCFullYear(), month: target.getUTCMonth() + 1 };
 }
