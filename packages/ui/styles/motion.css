@@ -63,6 +63,22 @@
   }
 }
 
+/* Presence hold: Radix presence unmounts closing content when no animation
+   runs. This keyframe keeps it mounted while a reversible exit transition
+   plays (animate-presence-hold lasts as long as duration-base). It animates a
+   registered property nothing reads, so it has no visible effect. */
+@property --presence-hold {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@keyframes presence-hold {
+  to {
+    --presence-hold: 1;
+  }
+}
+
 /* Token-driven entrance: travel reads --reveal-travel, so any element can
    soften/intensify the rise locally with e.g. [--reveal-travel:6px]. */
 @keyframes rise {

@@ -47,6 +47,38 @@ test("the desktop navigation takes over at 1080px", async ({ page }) => {
   ).toBeVisible();
 });
 
+for (const width of [1080, 1280]) {
+  test(`the platform popover hangs right-aligned below its trigger at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/");
+    const trigger = page
+      .getByRole("banner")
+      .getByRole("button", { name: "Online lernen" });
+    await trigger.click();
+    const panel = page.getByRole("dialog", { name: "Online lernen" });
+    await expect(panel).toBeVisible();
+    await panel.evaluate((node) =>
+      Promise.all(node.getAnimations().map((animation) => animation.finished)),
+    );
+    const anchor = (await trigger.boundingBox())!;
+    const box = (await panel.boundingBox())!;
+    // The previous absolute panel: right edge on the trigger's, top on its bottom,
+    // 16rem wide, with a 6px hover corridor above the card.
+    expect(box.width).toBe(256);
+    expect(box.x + box.width).toBeCloseTo(anchor.x + anchor.width, 0);
+    // Floating UI rounds the position to device pixels (under 0.5px here).
+    expect(box.y).toBeCloseTo(anchor.y + anchor.height, 0);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+    const card = (await panel.locator("> div").boundingBox())!;
+    expect(card.y - box.y).toBeCloseTo(6, 1);
+    await expect(panel.locator("> div")).toHaveCSS("border-radius", "20px");
+    await expect(panel.locator("> div")).toHaveCSS("padding", "8px");
+  });
+}
+
 test("enabled buttons show the pointer", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto("/");

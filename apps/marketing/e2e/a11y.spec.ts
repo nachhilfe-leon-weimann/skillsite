@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { isolate, stubAvailability } from "./helpers";
 import { indexablePaths } from "../src/lib/routes";
@@ -70,20 +70,314 @@ test("the desktop navigation marks the current page", async ({ page }) => {
   );
 });
 
-test("the platform disclosure is a disclosure, not a menu", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto("/");
-  const trigger = page
-    .getByRole("banner")
-    .getByRole("button", { name: "Online lernen" });
-  await expect(trigger).not.toHaveAttribute("aria-haspopup");
-  const panelId = await trigger.getAttribute("aria-controls");
-  expect(panelId).toBeTruthy();
-  await expect(page.locator(`[id="${panelId}"]`)).toHaveCount(1);
-  await trigger.click();
-  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+test.describe("the desktop platform popover", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  const trigger = (page: Page) =>
+    page.getByRole("banner").getByRole("button", { name: "Online lernen" });
+  const popover = (page: Page) =>
+    page.getByRole("dialog", { name: "Online lernen" });
+
+  test("is a named, non-modal dialog of ordinary links", async ({ page }) => {
+    await page.goto("/");
+    // Radix's modal mode would hide every other child of <body>.
+    const hiddenRoots = () =>
+      page
+        .locator("body > [aria-hidden='true']")
+        .evaluateAll((nodes) => nodes.map((node) => node.outerHTML));
+    const hiddenBefore = await hiddenRoots();
+    await expect(trigger(page)).toHaveAttribute("aria-haspopup", "dialog");
+    await expect(trigger(page)).toHaveAttribute("aria-expanded", "false");
+    await trigger(page).click();
+    await expect(trigger(page)).toHaveAttribute("aria-expanded", "true");
+    const panelId = await trigger(page).getAttribute("aria-controls");
+    await expect(popover(page)).toHaveAttribute("id", panelId!);
+    await expect(popover(page)).not.toHaveAttribute("aria-modal");
+    await expect(popover(page).getByRole("link")).toHaveText([
+      /^Discord/,
+      /^Microsoft Teams/,
+      /^Termin buchen/,
+    ]);
+    await expect(popover(page).getByRole("menuitem")).toHaveCount(0);
+    // Non-modal: the page stays reachable, nothing is hidden, locked or inert.
+    expect(await hiddenRoots()).toEqual(hiddenBefore);
+    await expect(page.locator("[inert]")).toHaveCount(0);
+    await expect(page.locator("body")).not.toHaveAttribute(
+      "data-scroll-locked",
+    );
+    await expect(page.locator("body")).toHaveCSS("overflow", "visible");
+    await expect(page.locator("body")).toHaveCSS("pointer-events", "auto");
+    await expect(page.getByRole("main")).toBeVisible();
+  });
+
+  for (const key of ["Enter", "Space"]) {
+    test(`${key} opens it; Tab passes through and leaves without a trap`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await trigger(page).focus();
+      await page.keyboard.press(key);
+      await expect(popover(page)).toBeVisible();
+      await expect(trigger(page)).toBeFocused();
+      const links = popover(page).getByRole("link");
+      for (let i = 0; i < 3; i++) {
+        await page.keyboard.press("Tab");
+        await expect(links.nth(i)).toBeFocused();
+      }
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Shift+Tab");
+      await expect(trigger(page)).toBeFocused();
+      await expect(popover(page)).toBeVisible();
+      for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
+      await expect(
+        page.getByRole("banner").getByRole("link", { name: /Erstgespräch/ }),
+      ).toBeFocused();
+      await expect(popover(page)).toHaveCount(0);
+      await expect(trigger(page)).toHaveAttribute("aria-expanded", "false");
+    });
+  }
+
+  test("Shift+Tab from the trigger leaves and closes it", async ({ page }) => {
+    await page.goto("/");
+    await trigger(page).focus();
+    await page.keyboard.press("Enter");
+    await expect(popover(page)).toBeVisible();
+    await page.keyboard.press("Shift+Tab");
+    await expect(
+      page.getByRole("banner").getByRole("link", { name: "Kontakt" }),
+    ).toBeFocused();
+    await expect(popover(page)).toHaveCount(0);
+  });
+
+  test("Escape closes it and focuses its trigger", async ({ page }) => {
+    await page.goto("/");
+    await trigger(page).focus();
+    await page.keyboard.press("Enter");
+    // As on main, the links become focusable once the entrance has begun.
+    await expect(popover(page)).toBeVisible();
+    await page.keyboard.press("Tab");
+    await expect(popover(page).getByRole("link").first()).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(trigger(page)).toBeFocused();
+    await expect(popover(page)).toHaveCount(0);
+    await expect(trigger(page)).toHaveAttribute("aria-expanded", "false");
+    // Escape with focus on the trigger closes it as well.
+    await page.keyboard.press("Enter");
+    await expect(popover(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(popover(page)).toHaveCount(0);
+    await expect(trigger(page)).toBeFocused();
+  });
+
+  test("an outside click closes it and keeps the clicked target's focus", async ({
+    page,
+  }) => {
+    await page.goto("/preise");
+    await trigger(page).click();
+    // A click pins it open after the pointer leaves.
+    await page.mouse.move(640, 600);
+    await expect(popover(page)).toBeVisible();
+    const outside = page.locator("main h3 > button[aria-controls]").first();
+    await outside.click();
+    await expect(popover(page)).toHaveCount(0);
+    await expect(outside).toBeFocused();
+    await expect(outside).toHaveAttribute("aria-expanded", "true");
+  });
+
+  test("a click on the panel's padding keeps it open and moves no focus there", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await trigger(page).click();
+    await expect(trigger(page)).toBeFocused();
+    const card = (await popover(page).locator("> div").boundingBox())!;
+    // The card's 8px padding, beside the links.
+    await page.mouse.click(card.x + 4, card.y + card.height / 2);
+    await expect(popover(page)).toBeVisible();
+    await expect(popover(page)).toHaveAttribute("data-state", "open");
+    // As on main, a click on a non-focusable panel only blurs the trigger.
+    expect(
+      await page.evaluate(() => document.activeElement === document.body),
+    ).toBe(true);
+  });
+
+  for (const opening of ["keyboard", "hover"]) {
+    test(`a click on plain text outside a ${opening}-opened panel never refocuses the trigger`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      if (opening === "hover") {
+        const box = (await trigger(page).boundingBox())!;
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await expect(popover(page)).toBeVisible();
+        await trigger(page).focus();
+      } else {
+        await trigger(page).focus();
+        await page.keyboard.press("Enter");
+        await expect(popover(page)).toBeVisible();
+      }
+      await page.keyboard.press("Tab");
+      await expect(popover(page).getByRole("link").first()).toBeFocused();
+      // The pointer leaves the panel on its way (a hover close), then clicks text.
+      const text = page.getByRole("main").locator("p").first();
+      await text.click({ position: { x: 2, y: 2 } });
+      await expect(page.locator("[role='dialog']")).toHaveCount(0);
+      await page.waitForTimeout(100);
+      expect(
+        await page.evaluate(() => document.activeElement === document.body),
+      ).toBe(true);
+      await expect(trigger(page)).not.toBeFocused();
+    });
+  }
+
+  // Like CSS :hover under (hover: hover) on main: a pen hovers, a touch does not.
+  for (const [pointerType, opens] of [
+    ["pen", true],
+    ["touch", false],
+  ] as const) {
+    test(`a ${pointerType} hover ${opens ? "opens" : "does not open"} it`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      // React derives enter/leave from `pointerout`: from "Kontakt" onto the trigger.
+      const kontakt = page
+        .getByRole("banner")
+        .getByRole("link", { name: "Kontakt" });
+      await kontakt.evaluate(
+        (node, [type, target]) => {
+          node.dispatchEvent(
+            new PointerEvent("pointerout", {
+              bubbles: true,
+              pointerType: type,
+              relatedTarget: target,
+            }),
+          );
+        },
+        [pointerType, await trigger(page).elementHandle()] as const,
+      );
+      if (opens) await expect(popover(page)).toBeVisible();
+      else {
+        await page.waitForTimeout(300);
+        await expect(page.locator("[role='dialog']")).toHaveCount(0);
+      }
+    });
+  }
+
+  test("hover opens it without moving focus; the pointer crosses to the panel", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const home = page
+      .getByRole("banner")
+      .getByRole("link", { name: "Startseite" });
+    await home.focus();
+    const box = (await trigger(page).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(popover(page)).toBeVisible();
+    await expect(home).toBeFocused();
+    // Down through the gap below the trigger onto the last link.
+    const last = (await popover(page).getByRole("link").last().boundingBox())!;
+    await page.mouse.move(last.x + last.width / 2, last.y + last.height / 2, {
+      steps: 12,
+    });
+    await expect(popover(page)).toBeVisible();
+    await expect(home).toBeFocused();
+    await page.mouse.move(box.x - 200, 600, { steps: 4 });
+    await expect(popover(page)).toHaveCount(0);
+    await expect(home).toBeFocused();
+  });
+
+  test("after Escape a hovered trigger stays closed until the pointer leaves or the trigger is used", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const box = (await trigger(page).boundingBox())!;
+    const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await page.mouse.move(centre.x, centre.y);
+    await expect(popover(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(popover(page)).toHaveCount(0);
+    await page.mouse.move(centre.x + 6, centre.y + 2, { steps: 3 });
+    await page.waitForTimeout(400);
+    await expect(popover(page)).toHaveCount(0);
+    // A click is a deliberate reopen.
+    await page.mouse.click(centre.x, centre.y);
+    await expect(popover(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(popover(page)).toHaveCount(0);
+    // So is a fresh hover after the pointer left.
+    await page.mouse.move(centre.x, 400, { steps: 3 });
+    await page.mouse.move(centre.x, centre.y, { steps: 3 });
+    await expect(popover(page)).toBeVisible();
+  });
+
+  test("a click on the open trigger closes it, and hover does not reopen it", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await trigger(page).click();
+    await expect(popover(page)).toBeVisible();
+    await trigger(page).click();
+    await expect(popover(page)).toHaveCount(0);
+    await expect(trigger(page)).toBeFocused();
+    await page.waitForTimeout(400);
+    await expect(popover(page)).toHaveCount(0);
+  });
+
+  test("rapid toggling settles on one consistent panel", async ({ page }) => {
+    await page.goto("/");
+    await trigger(page).focus();
+    for (let i = 0; i < 5; i++) {
+      await page.keyboard.press("Enter");
+      await page.keyboard.press("Escape");
+    }
+    await page.keyboard.press("Enter");
+    await expect(popover(page)).toBeVisible();
+    await expect(page.locator("[role='dialog']")).toHaveCount(1);
+    await expect(page.locator("[inert]")).toHaveCount(0);
+    await expect(trigger(page)).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("[role='dialog']")).toHaveCount(0);
+    await expect(trigger(page)).toBeFocused();
+  });
+
+  test("a link navigates on the client and closes it", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() =>
+      Object.assign(window, { navigationMarker: true }),
+    );
+    await trigger(page).click();
+    await popover(page)
+      .getByRole("link", { name: /^Termin buchen/ })
+      .click();
+    await expect(page).toHaveURL(/\/termin$/);
+    await expect(popover(page)).toHaveCount(0);
+    expect(await page.evaluate(() => "navigationMarker" in window)).toBe(true);
+    await trigger(page).click();
+    await expect(
+      popover(page).getByRole("link", { name: /^Termin buchen/ }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  test("a section link jumps on the page, closes it and is never current", async ({
+    page,
+  }) => {
+    await page.goto("/online-lernen");
+    await page.evaluate(() =>
+      Object.assign(window, { navigationMarker: true }),
+    );
+    await trigger(page).click();
+    const links = popover(page).getByRole("link");
+    await expect(links.first()).toHaveAttribute("aria-current", "page");
+    await expect(links.nth(1)).not.toHaveAttribute("aria-current");
+    await links.nth(1).click();
+    await expect(page).toHaveURL(/\/online-lernen#ms-teams$/);
+    await expect(popover(page)).toHaveCount(0);
+    expect(await page.evaluate(() => "navigationMarker" in window)).toBe(true);
+  });
 });
 
 test("the duration select is named", async ({ page }) => {
