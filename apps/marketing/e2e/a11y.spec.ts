@@ -4,6 +4,7 @@ import {
   freezeTime,
   interceptSubmissions,
   isolate,
+  settledRequests,
   stubAvailability,
   stubMonths,
 } from "./helpers";
@@ -1304,12 +1305,6 @@ test.describe("the integrated keyboard paths", () => {
     await expect(duration(page)).toHaveText(label);
   }
 
-  /** The requests after the network has settled. */
-  async function settled(page: Page, requests: string[]) {
-    await page.waitForLoadState("networkidle");
-    return [...requests];
-  }
-
   for (const width of [390, 1280]) {
     test.describe(`at ${width}px`, () => {
       test.use({ viewport: { width, height: 844 } });
@@ -1347,7 +1342,7 @@ test.describe("the integrated keyboard paths", () => {
         await press(page, "Shift+Tab");
         await expect(gridStop(page)).toBeFocused();
 
-        // A week down, then Enter picks the 19th and shows its slot.
+        // A week down, then Enter picks the 12th and shows its slot.
         await press(page, "ArrowDown");
         await expect(focused(page)).toHaveAccessibleName(
           "Donnerstag, 12. November 2026",
@@ -1451,7 +1446,7 @@ test.describe("the integrated keyboard paths", () => {
         await press(page, "Tab");
         await expect(nextMonth(page)).toBeFocused();
 
-        expect(await settled(page, stub.requests)).toEqual([
+        expect(await settledRequests(page, stub.requests)).toEqual([
           "2026-11@60",
           "2026-11@90",
         ]);
@@ -1538,7 +1533,9 @@ test.describe("the integrated keyboard paths", () => {
         await press(page, "Tab");
         await expect(submit).toBeFocused();
 
-        expect(await settled(page, stub.requests)).toEqual(["2026-11@15"]);
+        expect(await settledRequests(page, stub.requests)).toEqual([
+          "2026-11@15",
+        ]);
         expect(submissions.bodies).toEqual([]);
       });
     });
@@ -1621,7 +1618,7 @@ test.describe("the integrated keyboard paths", () => {
       );
       await expect(duration(page)).toBeEnabled();
       await expect(duration(page)).toHaveText("90 Minuten");
-      expect(await settled(page, stub.requests)).toEqual([
+      expect(await settledRequests(page, stub.requests)).toEqual([
         "2026-11@60",
         "2026-11@90",
         "2026-11@90",
@@ -1770,7 +1767,7 @@ test.describe("the integrated keyboard paths", () => {
       expect(await page.evaluate(() => "navigationMarker" in window)).toBe(
         true,
       );
-      expect(await settled(page, stub.requests)).toEqual([
+      expect(await settledRequests(page, stub.requests)).toEqual([
         "2026-11@60",
         "2026-11@90",
         "2026-11@15",

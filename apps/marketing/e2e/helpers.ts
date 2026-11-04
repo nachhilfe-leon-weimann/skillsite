@@ -166,3 +166,9 @@ export async function interceptSubmissions(page: Page) {
     },
   };
 }
+
+/** The requests a stub logged, once the network has settled. */
+export async function settledRequests(page: Page, requests: string[]) {
+  await page.waitForLoadState("networkidle");
+  return [...requests];
+}
