@@ -139,3 +139,30 @@ export async function stubMonths(
     },
   };
 }
+
+/**
+ * Hold every request that is not a GET (the booking server action is a POST)
+ * in the browser: none reaches a server. `abort` fails the oldest held one,
+ * which the booker reports as a failed request; nothing is ever answered.
+ */
+export async function interceptSubmissions(page: Page) {
+  const held: Route[] = [];
+  const bodies: string[] = [];
+  const actions: boolean[] = [];
+  await page.route("**/*", (route) => {
+    const request = route.request();
+    if (request.method() === "GET") return route.fallback();
+    bodies.push(request.postData() ?? "");
+    actions.push(Boolean(request.headers()["next-action"]));
+    held.push(route);
+  });
+  return {
+    bodies,
+    /** Whether each request carried a server action's header. */
+    actions,
+    held: () => held.length,
+    async abort() {
+      await held.shift()?.abort();
+    },
+  };
+}
