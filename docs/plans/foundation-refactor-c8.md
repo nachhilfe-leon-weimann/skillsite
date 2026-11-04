@@ -389,14 +389,42 @@ mirrored. No human VoiceOver/Safari or maintainer look acceptance is claimed.
 
 **Acceptance**
 
-- [ ] Group/item accessible names and required/checked/pressed states are correct. Disabled items cannot change.
-- [ ] Tab enters/leaves a radio group once; arrows move focus and selection over enabled options; Space selects.
+- [x] Group/item accessible names and required/checked/pressed states are correct. Disabled items cannot change.
+- [x] Tab enters/leaves a radio group once; arrows move focus and selection over enabled options; Space selects.
       Empty-initial and preselected groups work. Repeated activation retains a single selection.
-- [ ] Multiple chips can select and deselect independently, preserving the existing array order/shape and error
+- [x] Multiple chips can select and deselect independently, preserving the existing array order/shape and error
       behavior. Single-choice payloads remain strings. No interaction submits the booking form accidentally.
-- [ ] Component and actual booking-form browser tests cover row/single/multi variants, labels/hints, validation
+- [x] Component and actual booking-form browser tests cover row/single/multi variants, labels/hints, validation
       and keyboard movement. Fast and realistic held key events do not leave focus and checked state divergent
       (the spike exposed a synthetic-key timing sensitivity).
+
+C8.6 verification on 2026-11-04: on `main` the single-choice groups had one tab stop per option, arrows only
+scrolled the page, and Space or Enter on the checked chip cleared the subject; four of the six new booking-form
+cases fail there, the two `/kontakt` cases pass unchanged. `RadioGroup` (rows) and single `ChoiceChips` build on
+`@radix-ui/react-radio-group` 1.5.1, multiple `ChoiceChips` on `@radix-ui/react-toggle-group` 1.2.1 with
+`rovingFocus={false}` and `role="group"`, so each chip stays an independent pressed toggle and tab stop and the
+value lists the chips in pressing order; neither package uses DismissableLayer or FocusScope. The app adapters keep
+the field declarations, the first-option preselection of the platform and the open-items validation. A
+single-choice group is one tab stop, entered at its checked radio or, empty, at the first without checking it;
+arrows, Home/End and PageUp/PageDown move focus and selection together over the enabled radios and no longer
+scroll; Space and Enter (kept from `main`; Radix ignores it) check the focused radio, and activating the checked
+one keeps it. Radix moves focus a task after the key and checks only while an arrow key is still down, so a quick
+press, a second key before the first focus or Home/End left focus on an unchecked radio (Playwright's own presses
+diverge without the fix); the group checks a radio focused while a key is pending and, after Radix's timer, the
+focused one, skipping a radio Radix's click checked. Hints describe a row without joining its name. Pointer
+behaviour equals `main` (checks on release, a press dragged off changes nothing, a press in the gap between options
+focuses nothing and Tab then enters the group): the group lets the pointer through to its radios. Radix's hidden
+native radios inside the form are not rendered; drawn, they shifted the antialiasing of the rows' corners.
+Twenty-four component tests pass; eleven Storybook cases (light/dark rings on checked and unchecked surfaces in the
+focus-ring token, quick, paired, rapid and held keys, pointer, empty and disabled groups) and six booking-form
+cases on `/termin` and `/kontakt` (names, required, tab stops, arrows, the kept chip, open items, quick and held
+keys, no submission by any choice key with a complete form, and the intercepted, unsent drafts carrying the subject
+`"Physik"` and the subjects `["Physik","Mathematik"]`) pass five times in a row. Production screenshots of the
+booking forms against `main` at 390/1280px, light/dark, normal/reduced motion (rest, hover, keyboard focus on
+checked and unchecked options, clicked rows and chips, pressed chips) are identical in all 56 states (one hover
+state differs by 1/255 in some runs, as this head does from itself). The multiple group no longer carries
+`aria-required`, which ARIA does not define for a group and Chrome did not expose. No human VoiceOver/Safari or
+maintainer look acceptance is claimed.
 
 ## C8.7 - Switch
 

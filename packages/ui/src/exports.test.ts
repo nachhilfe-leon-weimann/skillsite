@@ -39,6 +39,14 @@ test("an exported module resolves", () => {
   );
 });
 
+test("the choice controls resolve by their group path", () => {
+  for (const name of ["radio-group", "choice-chips"]) {
+    expect(require.resolve(`@skillsite/ui/forms/${name}`)).toMatch(
+      new RegExp(`src/forms/${name}\\.tsx$`),
+    );
+  }
+});
+
 test("stories, tests and ungrouped paths do not resolve", () => {
   for (const specifier of [
     "@skillsite/ui/primitives/button.stories",
