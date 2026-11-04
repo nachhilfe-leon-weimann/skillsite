@@ -793,6 +793,321 @@ test.describe("the desktop platform popover", () => {
   });
 });
 
+test.describe("the booking choices", () => {
+  /**
+   * Abort every request that is not a GET (the booking server action is a
+   * POST) before it leaves the browser, and record its body. No booking is sent.
+   */
+  async function holdSubmissions(page: Page) {
+    const bodies: string[] = [];
+    await page.route("**/*", (route) => {
+      if (route.request().method() === "GET") return route.fallback();
+      bodies.push(route.request().postData() ?? "");
+      return route.abort();
+    });
+    return bodies;
+  }
+
+  async function openForm(page: Page, path: string) {
+    await stubAvailability(page);
+    const bodies = await holdSubmissions(page);
+    await page.goto(path);
+    await page.getByRole("button", { name: "10:00" }).click();
+    await expect(page.getByText("Deine Daten")).toBeVisible();
+    return bodies;
+  }
+
+  const radio = (page: Page, name: string) =>
+    page.getByRole("radio", { name, exact: true });
+  const chip = (page: Page, name: string) =>
+    page.getByRole("button", { name, exact: true });
+  const openItems = (page: Page) =>
+    page.getByText("Bitte noch ausfüllen oder bestätigen:");
+
+  /** The focused radio is the checked one, and the only one in its group. */
+  async function expectFocusedAndChecked(page: Page, name: string) {
+    const element = radio(page, name);
+    await expect(element).toBeFocused();
+    await expect(element).toHaveAttribute("aria-checked", "true");
+    expect(
+      await element.evaluate(
+        (node) =>
+          node
+            .closest("[role=radiogroup]")!
+            .querySelectorAll("[role=radio][aria-checked=true]").length,
+      ),
+    ).toBe(1);
+  }
+
+  /** The scroll position once a smooth scroll has come to rest. */
+  async function settledScroll(page: Page) {
+    let last = -1;
+    await expect
+      .poll(async () => {
+        const now = await page.evaluate(() => scrollY);
+        const settled = now === last;
+        last = now;
+        return settled;
+      })
+      .toBe(true);
+    return last;
+  }
+
+  /** Synthetic data only. */
+  async function fillContact(page: Page) {
+    await page.getByRole("textbox", { name: "Vorname" }).fill("Erika");
+    await page.getByRole("textbox", { name: "Nachname" }).fill("Beispiel");
+    await page
+      .getByRole("textbox", { name: "E-Mail" })
+      .fill("erika@example.com");
+  }
+
+  /** The draft the aborted server action carried. */
+  function draftValues(body: string) {
+    const draft = (
+      JSON.parse(body) as { values: Record<string, unknown> }[]
+    )[0]!;
+    return draft.values;
+  }
+
+  test("/termin: platform rows and subject chips are named radio groups with one tab stop each", async ({
+    page,
+  }) => {
+    const bodies = await openForm(page, "/termin");
+    const platform = page.getByRole("radiogroup", { name: "Plattform" });
+    const subject = page.getByRole("radiogroup", {
+      name: "In welchem Fach kann ich dir helfen?",
+    });
+    await expect(platform).toHaveAttribute("aria-required", "true");
+    await expect(subject).toHaveAttribute("aria-required", "true");
+    await expect(platform.getByRole("radio")).toHaveText([
+      "Microsoft Teams",
+      "Discord",
+    ]);
+    await expect(subject.getByRole("radio")).toHaveText([
+      "Mathematik",
+      "Informatik",
+      "Physik",
+    ]);
+    // The platform is preselected by the form; the subject starts empty.
+    await expect(radio(page, "Microsoft Teams")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(subject.locator("[aria-checked=true]")).toHaveCount(0);
+
+    const email = page.getByRole("textbox", { name: "E-Mail" });
+    const note = page.getByRole("textbox", { name: "Zusätzliche Notizen" });
+    await email.focus();
+    await page.keyboard.press("Tab");
+    await expectFocusedAndChecked(page, "Microsoft Teams");
+    await page.keyboard.press("Tab");
+    await expect(radio(page, "Mathematik")).toBeFocused();
+    await expect(radio(page, "Mathematik")).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    await page.keyboard.press("Tab");
+    await expect(note).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(radio(page, "Mathematik")).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(radio(page, "Microsoft Teams")).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(email).toBeFocused();
+    expect(bodies).toEqual([]);
+  });
+
+  test("/termin: arrows move focus and choice together; the checked chip stays; the open items follow", async ({
+    page,
+  }) => {
+    const bodies = await openForm(page, "/termin");
+    await expect(openItems(page)).toContainText("Fach");
+
+    await radio(page, "Microsoft Teams").focus();
+    const scroll = await settledScroll(page);
+    await page.keyboard.press("ArrowDown");
+    await expectFocusedAndChecked(page, "Discord");
+    await page.keyboard.press("ArrowDown");
+    await expectFocusedAndChecked(page, "Microsoft Teams");
+    await page.keyboard.press("ArrowUp");
+    await expectFocusedAndChecked(page, "Discord");
+    expect(await settledScroll(page)).toBe(scroll);
+
+    await page.keyboard.press("Tab");
+    await expect(radio(page, "Mathematik")).toBeFocused();
+    await page.keyboard.press("Space");
+    await expectFocusedAndChecked(page, "Mathematik");
+    await expect(openItems(page)).not.toContainText("Fach");
+    // Before, Space or Enter on the checked chip cleared the subject again.
+    await page.keyboard.press("Space");
+    await page.keyboard.press("Enter");
+    await expectFocusedAndChecked(page, "Mathematik");
+    await expect(openItems(page)).not.toContainText("Fach");
+    await page.keyboard.press("ArrowRight");
+    await expectFocusedAndChecked(page, "Informatik");
+    await page.keyboard.press("End");
+    await expectFocusedAndChecked(page, "Physik");
+    await page.keyboard.press("Home");
+    await expectFocusedAndChecked(page, "Mathematik");
+    // A click on the checked chip keeps it, too.
+    await radio(page, "Mathematik").click();
+    await expect(radio(page, "Mathematik")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(bodies).toEqual([]);
+  });
+
+  test("/termin: quick and held keys keep focus and the checked chip in sync", async ({
+    page,
+  }) => {
+    await openForm(page, "/termin");
+    await radio(page, "Mathematik").focus();
+    await page.keyboard.press("Space");
+    // Pressed and released in one task, before Radix's deferred focus runs.
+    for (const name of ["Informatik", "Physik", "Mathematik"]) {
+      await page.evaluate(() => {
+        const target = document.activeElement!;
+        for (const type of ["keydown", "keyup"])
+          target.dispatchEvent(
+            new KeyboardEvent(type, {
+              key: "ArrowRight",
+              bubbles: true,
+              cancelable: true,
+            }),
+          );
+      });
+      await expectFocusedAndChecked(page, name);
+    }
+    // Held: repeated keydowns, one keyup.
+    for (const name of ["Informatik", "Physik", "Mathematik"]) {
+      await page.keyboard.down("ArrowRight");
+      await expectFocusedAndChecked(page, name);
+    }
+    await page.keyboard.up("ArrowRight");
+    await expectFocusedAndChecked(page, "Mathematik");
+  });
+
+  test("/termin: no choice submits the form; the draft carries strings", async ({
+    page,
+  }) => {
+    const bodies = await openForm(page, "/termin");
+    await fillContact(page);
+    await radio(page, "Physik").click();
+    const submit = page.getByRole("button", {
+      name: "Zahlungspflichtig buchen",
+    });
+    await expect(submit).toBeEnabled();
+    // Every key on a choice, with the form complete: nothing is sent.
+    await radio(page, "Microsoft Teams").focus();
+    for (const key of ["Enter", "Space", "ArrowDown", "Enter"])
+      await page.keyboard.press(key);
+    await radio(page, "Physik").focus();
+    for (const key of ["Enter", "Space", "ArrowLeft", "ArrowRight", "Enter"])
+      await page.keyboard.press(key);
+    // Keys pressed this fast may start from the same radio, and Radix's
+    // deferred focus may even return to the platform rows; wherever focus
+    // lands, it is on the checked radio.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const focused = document.activeElement!;
+          return (
+            focused.getAttribute("role") === "radio" &&
+            focused.getAttribute("aria-checked") === "true"
+          );
+        }),
+      )
+      .toBe(true);
+    await page.waitForLoadState("networkidle");
+    expect(bodies).toEqual([]);
+    await radio(page, "Physik").click();
+
+    // The submit button sends one draft (aborted before it leaves the browser).
+    await submit.click();
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(draftValues(bodies[0]!)).toMatchObject({
+      location: "discord-video",
+      subject: "Physik",
+    });
+  });
+
+  test("/kontakt: subject chips are independent pressed toggles; the open items follow; the draft keeps their order", async ({
+    page,
+  }) => {
+    const bodies = await openForm(page, "/kontakt");
+    const group = page.getByRole("group", { name: "Fächer" });
+    await expect(group.getByRole("button")).toHaveText([
+      "Mathematik",
+      "Informatik",
+      "Physik",
+    ]);
+    for (const button of await group.getByRole("button").all())
+      await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(openItems(page)).toContainText("Fächer");
+
+    // Each chip is a tab stop, as before.
+    await page.getByRole("textbox", { name: "Telefonnummer" }).focus();
+    for (const name of ["Mathematik", "Informatik", "Physik"]) {
+      await page.keyboard.press("Tab");
+      await expect(chip(page, name)).toBeFocused();
+    }
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("textbox", { name: "Worum geht’s?" }),
+    ).toBeFocused();
+
+    await chip(page, "Physik").focus();
+    await page.keyboard.press("Space");
+    await expect(chip(page, "Physik")).toHaveAttribute("aria-pressed", "true");
+    await expect(openItems(page)).not.toContainText("Fächer");
+    // Arrow keys do not move between toggles.
+    await page.keyboard.press("ArrowLeft");
+    await expect(chip(page, "Physik")).toBeFocused();
+    await chip(page, "Mathematik").focus();
+    await page.keyboard.press("Enter");
+    await expect(chip(page, "Mathematik")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await page.keyboard.press("Space");
+    await expect(chip(page, "Mathematik")).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    await chip(page, "Physik").click();
+    await expect(chip(page, "Physik")).toHaveAttribute("aria-pressed", "false");
+    await expect(openItems(page)).toContainText("Fächer");
+
+    await fillContact(page);
+    await page
+      .getByRole("textbox", { name: "Telefonnummer" })
+      .fill("+49 30 1234567");
+    await chip(page, "Physik").click();
+    await chip(page, "Mathematik").click();
+    await page.waitForLoadState("networkidle");
+    expect(bodies).toEqual([]);
+    await page.getByRole("button", { name: "Erstgespräch buchen" }).click();
+    await expect.poll(() => bodies.length).toBe(1);
+    expect(draftValues(bodies[0]!)).toMatchObject({
+      subjects: ["Physik", "Mathematik"],
+    });
+  });
+
+  test("/kontakt?fach= preselects its subject chip", async ({ page }) => {
+    await openForm(page, "/kontakt?fach=informatik");
+    await expect(chip(page, "Informatik")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(chip(page, "Mathematik")).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+});
+
 test.describe("the duration select", () => {
   /** The `duration` of every availability request, in order. */
   function recordDurations(page: Page) {
