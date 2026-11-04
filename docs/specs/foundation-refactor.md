@@ -542,6 +542,8 @@ an unmerged one.
 - **Bugs get their own `fix:` PR** with the visible change described; unclear bug-or-design cases go to the maintainer.
 - **Never edit visible text** except moving it byte-identically into `content/*.ts`; bulk edits over German
   files only with UTF-8-safe tools.
+- Tests guard the contract in [`docs/testing.md`](../testing.md), not `main`'s former behaviour; a refactor's
+  "nothing changed" evidence belongs in its PR.
 - Every new theme utility is registered in the `cn` configuration with a test; never add a pattern the ratchet
   counts - lower the count instead.
 - One PR per slice; `just check` green before every push; the PR body carries _How to check_. Push the branch
