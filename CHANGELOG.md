@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.2](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.1...v1.2.2) (2026-11-04)
+
+
+### Bug Fixes
+
+* **a11y:** build select on radix ([#206](https://github.com/nachhilfe-leon-weimann/skillsite/issues/206)) ([249bb43](https://github.com/nachhilfe-leon-weimann/skillsite/commit/249bb43f2fb0bea748f3f54928940168efccf379))
+* **a11y:** contain focus in the mobile navigation ([#205](https://github.com/nachhilfe-leon-weimann/skillsite/issues/205)) ([3b6bbf5](https://github.com/nachhilfe-leon-weimann/skillsite/commit/3b6bbf5574e9e4535b38856715999d2a3e864516))
+* **a11y:** dismiss the desktop navigation with radix ([#204](https://github.com/nachhilfe-leon-weimann/skillsite/issues/204)) ([21cab37](https://github.com/nachhilfe-leon-weimann/skillsite/commit/21cab37b901f56871bf649f515c3fe325e221703))
+* **a11y:** give booking choices a radio keyboard model ([#207](https://github.com/nachhilfe-leon-weimann/skillsite/issues/207)) ([7b4743f](https://github.com/nachhilfe-leon-weimann/skillsite/commit/7b4743f0124c4dce249fb3400dda0c69a5a49375))
+* **a11y:** navigate the booking calendar by keyboard ([#209](https://github.com/nachhilfe-leon-weimann/skillsite/issues/209)) ([a773979](https://github.com/nachhilfe-leon-weimann/skillsite/commit/a77397925ccea41a2b723c3daf295785b2bd9505))
+* **booking:** hydrate the calendar with the server's day ([#217](https://github.com/nachhilfe-leon-weimann/skillsite/issues/217)) ([7b48f0f](https://github.com/nachhilfe-leon-weimann/skillsite/commit/7b48f0fe4cf3569d62b4a4892cce1a9ac07d8c45))
+
 ## [1.2.1](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.0...v1.2.1) (2026-11-03)
 
 
