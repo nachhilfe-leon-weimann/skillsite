@@ -438,11 +438,34 @@ maintainer look acceptance is claimed.
 
 **Acceptance**
 
-- [ ] The accessible switch is named and announces checked state. Pointer and Space toggle exactly once;
+- [x] The accessible switch is named and announces checked state. Pointer and Space toggle exactly once;
       disabled blocks both; it does not submit its surrounding form.
-- [ ] External controlled changes update correctly; label activation and supported form behavior follow the
+- [x] External controlled changes update correctly; label activation and supported form behavior follow the
       wrapper's documented API. Checked/unchecked appearance and reduced motion remain correct.
-- [ ] Story, component and browser checks exercise this exported component despite its lack of app consumers.
+- [x] Story, component and browser checks exercise this exported component despite its lack of app consumers.
+
+C8.7 verification on 2026-11-04: `main`'s switch was already a native `button` with `role="switch"` and
+`aria-checked`, so the new checks pass on it as well (ten component tests; nine browser cases in a Storybook
+build of `main` with the new stories, 27 of 27 in three repetitions). The slice moves it onto
+`@radix-ui/react-switch` 1.4.1 without changing its behaviour. Radix's `Root` adds a hidden native checkbox after
+the button inside a form, re-sends the click to the form from it, and on a form reset restores the first
+rendered state through `onCheckedChange`; with it, two component tests and one browser case fail. The wrapper is
+built from Radix's provider, trigger and thumb (exported as `unstable_Provider`/`unstable_Trigger`, so the
+version is pinned exactly) and stays a single button; it forwards `onCheckedChange` only for the switch's own
+click, and without that guard the reset checks fail in jsdom and in the browser. The public API is unchanged
+(`checked`, `onCheckedChange`, `disabled`, `id`, `aria-label`, `aria-labelledby`; no ref or event props, so
+there is nothing to compose); the wrapper documents that it is not a form field: no value, no submission, no
+reset. Forms/Switch stories (Default named by a `<label>`, with an outside toggle and a reset button; Checked by
+`aria-labelledby`; Unchecked by `aria-label`; Disabled; DisabledChecked) and nine browser cases cover names and
+states, the focus ring on both tracks in light/dark, Space (also held) and Enter toggling once, pointer release,
+drag-off and double click, label activation, outside changes, the reset, disabled blocking, the 44x24 track and
+20x20 thumb at 2/22px in the line/coral tokens, the 160ms soft thumb travel and the jump under reduced motion;
+they pass five times in a row. Against `main`, a pointer/keyboard/touch matrix and the accessibility tree are
+equal, the thumb passes through the same offsets frame by frame, and 170 of 176 screenshots (five stories,
+light/dark, 390/1280px, normal/reduced motion, rest/hover/focus/Space/click/press) are identical; the six others
+differ by at most 4/255 in a few antialiased pixels of the focus ring or a button label, as `main` does from
+itself (7 of 176). The button now carries Radix's `data-state`, `data-disabled` and `value="on"` attributes.
+No human VoiceOver/Safari or maintainer look acceptance is claimed.
 
 ## C8.8 - Calendar grid and narrow Booker adapter
 
