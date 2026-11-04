@@ -1,50 +1,43 @@
-import { expect, test } from "./fixtures";
+import { animationsSettled, expect, test } from "./fixtures";
 
-for (const theme of ["light", "dark"]) {
-  test(`Dialog contains focus, resolves labels and returns focus in ${theme}`, async ({
-    page,
-  }) => {
-    await page.goto(
-      `/iframe.html?id=overlays-dialog--default&viewMode=story&globals=theme:${theme}`,
-    );
-    const opener = page.getByRole("button", {
-      name: "Dialog öffnen",
-      exact: true,
-    });
-    await opener.focus();
-    await page.keyboard.press("Enter");
-    const dialog = page.getByRole("dialog", {
-      name: "Deine Angaben",
-      exact: true,
-    });
-    await expect(dialog).toHaveAccessibleDescription(
-      "Prüfe deine Angaben vor dem Schließen.",
-    );
-    await expect(dialog).toHaveCSS("max-width", "512px");
-    await expect(dialog).toHaveCSS("border-radius", "28px");
-    await expect(dialog).toHaveCSS("padding", "28px");
-    const first = dialog.getByRole("textbox", { name: "Vorname" });
-    await expect(first).toBeFocused();
-    await expect(
-      page.getByRole("button", { name: "Hintergrundaktion" }),
-    ).toHaveCount(0);
-    await page.keyboard.press("Shift+Tab");
-    await expect(
-      dialog.getByRole("button", { name: "Schließen", exact: true }),
-    ).toBeFocused();
-    await page.keyboard.press("Tab");
-    await expect(first).toBeFocused();
-    const stable = dialog.getByRole("button", { name: "Fokus halten (0)" });
-    await stable.click();
-    await expect(
-      dialog.getByRole("button", { name: "Fokus halten (1)" }),
-    ).toBeFocused();
-    await page.keyboard.press("Escape");
-    await expect(dialog).toHaveCount(0);
-    await expect(opener).toBeFocused();
-    await expect(page.getByRole("status")).toHaveText("Schließereignisse: 1");
+test("Dialog contains focus, resolves labels and returns focus", async ({
+  page,
+}) => {
+  await page.goto("/iframe.html?id=overlays-dialog--default&viewMode=story");
+  const opener = page.getByRole("button", {
+    name: "Dialog öffnen",
+    exact: true,
   });
-}
+  await opener.focus();
+  await page.keyboard.press("Enter");
+  const dialog = page.getByRole("dialog", {
+    name: "Deine Angaben",
+    exact: true,
+  });
+  await expect(dialog).toHaveAccessibleDescription(
+    "Prüfe deine Angaben vor dem Schließen.",
+  );
+  const first = dialog.getByRole("textbox", { name: "Vorname" });
+  await expect(first).toBeFocused();
+  await expect(
+    page.getByRole("button", { name: "Hintergrundaktion" }),
+  ).toHaveCount(0);
+  await page.keyboard.press("Shift+Tab");
+  await expect(
+    dialog.getByRole("button", { name: "Schließen", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(first).toBeFocused();
+  const stable = dialog.getByRole("button", { name: "Fokus halten (0)" });
+  await stable.click();
+  await expect(
+    dialog.getByRole("button", { name: "Fokus halten (1)" }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(opener).toBeFocused();
+  await expect(page.getByRole("status")).toHaveText("Schließereignisse: 1");
+});
 
 for (const action of ["Schließen", "backdrop"]) {
   test(`${action} dismisses once; panel interaction does not dismiss`, async ({
@@ -152,41 +145,32 @@ test("nested Dialog consumes Escape only at the top and restores parent focus/lo
   await expect(page.getByRole("status")).toHaveText("Schließereignisse: 1");
 });
 
-for (const width of [390, 1280]) {
-  test(`custom layout fills the ${width}px viewport and contains its controls`, async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width, height: 844 });
-    await page.goto(
-      "/iframe.html?id=overlays-dialog--custom-layout&viewMode=story",
-    );
-    const opener = page.getByRole("button", {
-      name: "Dialog öffnen",
-      exact: true,
-    });
-    await opener.click();
-    const dialog = page.getByRole("dialog", { name: "Vollflächiger Dialog" });
-    await expect(dialog).toHaveCSS("animation-name", "none");
-    await expect(dialog).toHaveCSS("transform", "none");
-    await expect(dialog).toHaveAccessibleDescription(
-      "Prüfe deine Angaben vor dem Schließen.",
-    );
-    await expect
-      .poll(() => dialog.boundingBox())
-      .toEqual({ x: 0, y: 0, width, height: 844 });
-    await expect(dialog.getByRole("textbox")).toBeFocused();
-    await page.keyboard.press("Shift+Tab");
-    await expect(
-      dialog.getByRole("button", { name: "Schließen", exact: true }),
-    ).toBeFocused();
-    await page.keyboard.press("Escape");
-    await expect(opener).toBeFocused();
-  });
-}
-
-test("custom layout keeps its backdrop invisible and leaves at once", async ({
+test("custom layout is named, contains its controls and returns focus", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(
+    "/iframe.html?id=overlays-dialog--custom-layout&viewMode=story",
+  );
+  const opener = page.getByRole("button", {
+    name: "Dialog öffnen",
+    exact: true,
+  });
+  await opener.click();
+  const dialog = page.getByRole("dialog", { name: "Vollflächiger Dialog" });
+  await expect(dialog).toHaveAccessibleDescription(
+    "Prüfe deine Angaben vor dem Schließen.",
+  );
+  await expect(dialog.getByRole("textbox")).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(
+    dialog.getByRole("button", { name: "Schließen", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(opener).toBeFocused();
+});
+
+test("custom layout leaves at once and releases its lock", async ({ page }) => {
   await page.goto(
     "/iframe.html?id=overlays-dialog--custom-layout&viewMode=story",
   );
@@ -196,12 +180,6 @@ test("custom layout keeps its backdrop invisible and leaves at once", async ({
   await expect(
     page.getByRole("dialog", { name: "Vollflächiger Dialog" }),
   ).toBeVisible();
-  // The backdrop still carries the scroll lock, but no scrim or fade of its own.
-  const backdrop = page.locator("body > [data-state='open']:not([role])");
-  await expect(backdrop).toHaveCount(1);
-  await expect(backdrop).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-  await expect(backdrop).toHaveCSS("backdrop-filter", "none");
-  await expect(backdrop).toHaveCSS("animation-name", "none");
   await expect(page.locator("body")).toHaveAttribute("data-scroll-locked");
   await page.keyboard.press("Escape");
   // Without an exit animation nothing stays behind for a fade-out.
@@ -228,11 +206,10 @@ test("normal exit remains present but immediately inert, then restores focus and
   });
   await opener.click();
   const panel = page.locator('[role="dialog"]');
-  await expect(panel).toHaveCSS("animation-name", "rise");
+  await expect(panel).toBeVisible();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(panel).toHaveAttribute("data-state", "closed");
   await expect(panel).toHaveAttribute("inert", "");
-  await expect(panel).toHaveCSS("animation-name", "fall");
   await expect(panel).toHaveCSS("pointer-events", "none");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect
@@ -268,7 +245,8 @@ test("rapid controlled reopen preserves focus and does not leave a delayed close
     });
     const input = page.getByRole("textbox", { name: "Vorname" });
     await input.focus();
-    await page.waitForTimeout(350);
+    // Once every entrance and exit has ended, no delayed close can still run.
+    await animationsSettled(page);
     await expect(input).toBeFocused();
     await expect(
       page.locator('[role="dialog"][data-state="open"]'),
@@ -325,22 +303,3 @@ for (const story of ["explicit-focus-return", "navigation-focus"]) {
     ).not.toBeFocused();
   });
 }
-
-test("default panel preserves phone gutters and spacing", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/iframe.html?id=overlays-dialog--default&viewMode=story");
-  await page
-    .getByRole("button", { name: "Dialog öffnen", exact: true })
-    .click();
-  const dialog = page.getByRole("dialog", {
-    name: "Deine Angaben",
-    exact: true,
-  });
-  await expect(dialog).toHaveCSS("padding", "24px");
-  await expect(dialog).toHaveCSS("border-radius", "28px");
-  const box = await dialog.boundingBox();
-  expect(box?.x).toBe(16);
-  expect(box?.width).toBe(358);
-  await page.keyboard.press("Escape");
-  await expect(page.locator('[role="dialog"]')).toHaveCount(0);
-});

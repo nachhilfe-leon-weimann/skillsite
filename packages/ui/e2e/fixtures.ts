@@ -1,4 +1,4 @@
-import { expect, test as base } from "@playwright/test";
+import { expect, test as base, type Page } from "@playwright/test";
 
 export const test = base.extend<{ browserErrors: string[] }>({
   browserErrors: [
@@ -31,3 +31,11 @@ export const test = base.extend<{ browserErrors: string[] }>({
 });
 
 export { expect };
+
+/** Resolves once every animation and transition in the document has ended. */
+export const animationsSettled = (page: Page) =>
+  page.evaluate(async () => {
+    await Promise.allSettled(
+      document.getAnimations().map((animation) => animation.finished),
+    );
+  });

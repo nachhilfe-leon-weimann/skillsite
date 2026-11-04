@@ -1,4 +1,4 @@
-import type { Page, Route } from "@playwright/test";
+import { expect, type Page, type Route } from "@playwright/test";
 
 /** Answer every non-local request locally: the smoke test must not depend on the network (e.g. Umami). */
 export async function isolate(page: Page) {
@@ -182,4 +182,31 @@ export async function interceptSubmissions(page: Page) {
 export async function settledRequests(page: Page, requests: string[]) {
   await page.waitForLoadState("networkidle");
   return [...requests];
+}
+
+/**
+ * Resolves after two animation frames: by then a render the last input
+ * triggered has happened, so its absence can be asserted without a fixed wait.
+ */
+export function afterTwoFrames(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+}
+
+/** The scroll position once any scroll has come to rest: two equal reads in a row. */
+export async function settledScroll(page: Page) {
+  let last = -1;
+  await expect
+    .poll(async () => {
+      const now = await page.evaluate(() => scrollY);
+      const settled = now === last;
+      last = now;
+      return settled;
+    })
+    .toBe(true);
+  return last;
 }

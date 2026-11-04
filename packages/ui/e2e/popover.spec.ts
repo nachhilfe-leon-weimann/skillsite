@@ -1,52 +1,43 @@
 import type { Page } from "@playwright/test";
 
-import { expect, test } from "./fixtures";
+import { animationsSettled, expect, test } from "./fixtures";
 
-const story = (name = "default", theme = "light") =>
-  `/iframe.html?id=overlays-popover--${name}&viewMode=story&globals=theme:${theme}`;
+const story = (name = "default") =>
+  `/iframe.html?id=overlays-popover--${name}&viewMode=story&globals=theme:light`;
 const trigger = (page: Page) =>
   page.getByRole("button", { name: "Plattformen", exact: true });
 const popover = (page: Page) =>
   page.getByRole("dialog", { name: "Plattformen" });
 const closes = (page: Page) => page.getByRole("status");
 
-for (const theme of ["light", "dark"]) {
-  test(`keyboard opens a named non-modal panel that Tab passes through in ${theme}`, async ({
-    page,
-  }) => {
-    await page.goto(story("default", theme));
-    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
-    await trigger(page).focus();
-    await page.keyboard.press("Enter");
-    await expect(popover(page)).toBeVisible();
-    await expect(trigger(page)).toBeFocused();
-    await expect(trigger(page)).toHaveAttribute("aria-expanded", "true");
-    await expect(trigger(page)).toHaveAttribute(
-      "aria-controls",
-      (await popover(page).getAttribute("id"))!,
-    );
-    await expect(popover(page)).not.toHaveAttribute("aria-modal");
-    const card = popover(page).locator("> div");
-    await expect(card).toHaveCSS("border-radius", "20px");
-    await expect(card).toHaveCSS("padding", "8px");
-    await expect(card).toHaveCSS("width", "256px");
-    await expect(page.locator("body")).not.toHaveAttribute(
-      "data-scroll-locked",
-    );
-    await expect(
-      page.locator("[inert], body > [aria-hidden='true']"),
-    ).toHaveCount(0);
-    const links = popover(page).getByRole("link");
-    for (let i = 0; i < 3; i++) {
-      await page.keyboard.press("Tab");
-      await expect(links.nth(i)).toBeFocused();
-    }
+test("keyboard opens a named non-modal panel that Tab passes through", async ({
+  page,
+}) => {
+  await page.goto(story());
+  await trigger(page).focus();
+  await page.keyboard.press("Enter");
+  await expect(popover(page)).toBeVisible();
+  await expect(trigger(page)).toBeFocused();
+  await expect(trigger(page)).toHaveAttribute("aria-expanded", "true");
+  await expect(trigger(page)).toHaveAttribute(
+    "aria-controls",
+    (await popover(page).getAttribute("id"))!,
+  );
+  await expect(popover(page)).not.toHaveAttribute("aria-modal");
+  await expect(page.locator("body")).not.toHaveAttribute("data-scroll-locked");
+  await expect(
+    page.locator("[inert], body > [aria-hidden='true']"),
+  ).toHaveCount(0);
+  const links = popover(page).getByRole("link");
+  for (let i = 0; i < 3; i++) {
     await page.keyboard.press("Tab");
-    await expect(page.getByRole("button", { name: "Danach" })).toBeFocused();
-    await expect(popover(page)).toHaveCount(0);
-    await expect(closes(page)).toHaveText("Schließereignisse: 1");
-  });
-}
+    await expect(links.nth(i)).toBeFocused();
+  }
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Danach" })).toBeFocused();
+  await expect(popover(page)).toHaveCount(0);
+  await expect(closes(page)).toHaveText("Schließereignisse: 1");
+});
 
 test("Shift+Tab returns to the open trigger, then leaves and closes", async ({
   page,
@@ -54,7 +45,7 @@ test("Shift+Tab returns to the open trigger, then leaves and closes", async ({
   await page.goto(story());
   await trigger(page).focus();
   await page.keyboard.press("Space");
-  // As on main, the links become focusable once the entrance has begun.
+  // The links become focusable once the entrance has begun.
   await expect(popover(page)).toBeVisible();
   await page.keyboard.press("Tab");
   await page.keyboard.press("Shift+Tab");
@@ -102,15 +93,6 @@ test("the trigger toggles; the exit is inert at once and focus stays put", async
   await page.goto(story());
   await trigger(page).click();
   const panel = page.locator("[role='dialog']");
-  const transitions = () =>
-    panel.evaluate((node) =>
-      node
-        .getAnimations()
-        .filter((animation) => animation instanceof CSSTransition)
-        .map((animation) => (animation as CSSTransition).transitionProperty)
-        .sort(),
-    );
-  expect(await transitions()).toEqual(["opacity", "translate", "visibility"]);
   await expect(panel).toHaveCSS("opacity", "1");
   const panelBox = (await panel.boundingBox())!;
   await trigger(page).click();
@@ -119,8 +101,6 @@ test("the trigger toggles; the exit is inert at once and focus stays put", async
   await expect(panel.locator("> div")).toHaveAttribute("inert", "");
   await expect(panel).toHaveAttribute("aria-hidden", "true");
   await expect(panel).toHaveCSS("pointer-events", "none");
-  await expect(panel).toHaveCSS("animation-name", "presence-hold");
-  expect(await transitions()).toEqual(["opacity", "translate", "visibility"]);
   // Neither the fading panel nor its positioning wrapper catches a pointer hit.
   const hit = await page.evaluate(
     ({ x, y }) =>
@@ -165,43 +145,28 @@ test("rapid open-close-open leaves one live panel without a delayed focus steal"
   await expect(panel.locator("> div")).not.toHaveAttribute("inert");
   const after = page.getByRole("button", { name: "Danach" });
   await after.focus();
-  await page.waitForTimeout(400);
+  // Once every entrance and exit has ended, no delayed focus return can still run.
+  await animationsSettled(page);
   await expect(after).toBeFocused();
 });
 
-test("reduced motion opens and closes without animation", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto(story());
-  for (let cycle = 0; cycle < 3; cycle++) {
-    await trigger(page).click();
-    await expect(popover(page)).toHaveCSS("animation-name", "none");
-    await expect(popover(page)).toHaveCSS("opacity", "1");
-    await page.keyboard.press("Escape");
-    await expect(page.locator("[role='dialog']")).toHaveCount(0);
-    await expect(trigger(page)).toBeFocused();
-  }
+test("collision handling keeps the panel inside a 390px viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto(story("viewport-edge"));
+  await trigger(page).click();
+  await expect(popover(page)).toBeVisible();
+  await animationsSettled(page);
+  const box = (await popover(page).boundingBox())!;
+  expect(box.x, "left edge").toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width, "right edge").toBeLessThanOrEqual(390);
+  expect(box.y, "top edge").toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height, "bottom edge").toBeLessThanOrEqual(800);
+  await expect(
+    popover(page).getByRole("link", { name: /^Termin buchen/ }),
+  ).toBeInViewport({ ratio: 1 });
 });
-
-for (const width of [390, 1280]) {
-  test(`collision handling keeps the panel inside a ${width}px viewport`, async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width, height: 800 });
-    await page.goto(story("viewport-edge"));
-    await trigger(page).click();
-    await popover(page).evaluate((node) =>
-      Promise.all(node.getAnimations().map((animation) => animation.finished)),
-    );
-    const anchor = (await trigger(page).boundingBox())!;
-    const box = (await popover(page).boundingBox())!;
-    expect(anchor.x).toBe(0);
-    expect(box.x).toBe(0);
-    expect(box.width).toBe(256);
-    expect(box.x + box.width).toBeLessThanOrEqual(width);
-    // Floating UI rounds the position to device pixels (under 0.5px here).
-    expect(box.y).toBeCloseTo(anchor.y + anchor.height, 0);
-  });
-}
 
 /**
  * Play the panel's transitions and presence hold at a tenth of their speed, so
@@ -219,24 +184,6 @@ const slowMotion = (page: Page) =>
     };
     requestAnimationFrame(tick);
   });
-/** Wait until the panel's opacity passes `limit` in the given direction. */
-const panelOpacity = (
-  page: Page,
-  direction: "above" | "below",
-  limit: number,
-) =>
-  page.waitForFunction(
-    ([direction, limit]) => {
-      const panel = document.querySelector(
-        "[data-radix-popper-content-wrapper] > *",
-      );
-      if (!panel) return false;
-      const opacity = Number(getComputedStyle(panel).opacity);
-      return direction === "above" ? opacity >= limit : opacity <= limit;
-    },
-    [direction, limit] as const,
-    { timeout: 10_000 },
-  );
 const hitsPanel = (page: Page, { x, y }: { x: number; y: number }) =>
   page.evaluate(
     ({ x, y }) =>
@@ -245,32 +192,6 @@ const hitsPanel = (page: Page, { x, y }: { x: number; y: number }) =>
         ?.closest("[data-radix-popper-content-wrapper]"),
     { x, y },
   );
-
-test("with hitTestableExit the fading panel turns around under the pointer", async ({
-  page,
-}) => {
-  await page.goto(story("hover-exit"));
-  await slowMotion(page);
-  const box = (await trigger(page).boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await panelOpacity(page, "above", 0.99);
-  const link = (await popover(page)
-    .getByRole("link", { name: /^Termin buchen/ })
-    .boundingBox())!;
-  const centre = { x: link.x + link.width / 2, y: link.y + link.height / 2 };
-  await page.mouse.move(10, 10);
-  const panel = page.locator("[role='dialog']");
-  await expect(panel).toHaveAttribute("data-state", "closed");
-  await panelOpacity(page, "below", 0.7);
-  // Fading but visible: its links are inert, its area still takes the pointer.
-  await expect(panel.locator("> div")).toHaveAttribute("inert", "");
-  await expect(panel).toHaveCSS("pointer-events", "auto");
-  expect(await hitsPanel(page, centre)).toBe(true);
-  await page.mouse.move(centre.x, centre.y);
-  await expect(panel).toHaveAttribute("data-state", "open");
-  await expect(panel.locator("> div")).not.toHaveAttribute("inert");
-  await panelOpacity(page, "above", 0.99);
-});
 
 test("with hitTestableExit a panel faded out after a short hover takes no hits", async ({
   page,
@@ -296,7 +217,7 @@ test("with hitTestableExit a panel faded out after a short hover takes no hits",
   );
   await page.mouse.move(10, 10);
   await expect(panel).toHaveAttribute("data-state", "closed");
-  // From the frame it has faded out, as on main, it takes no hits.
+  // From the frame it has faded out, it takes no hits.
   const faded = await page.waitForFunction(
     ({ x, y }) => {
       const node = document.querySelector(

@@ -36,7 +36,8 @@ Each behaviour is guarded on the cheapest layer that can see it, and on one laye
 - **Motion:** only two things. A declared animation runs at all and ends in its end state (the Tailwind v4
   `translate`/`scale` trap in [`AGENTS.md`](../AGENTS.md)); with reduced motion, everything is at its end state at
   once.
-- **Layout:** only regressions of named bugs (the anchor below the sticky header, the 1080px gap).
+- **Layout:** only regressions of named bugs: the anchor below the sticky header, the 1080px gap, the pointer
+  cursor on enabled buttons, the quote's bottom spacing on `/ueber-mich`.
 
 ## Out of scope
 
