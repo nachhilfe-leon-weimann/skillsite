@@ -12,7 +12,8 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes), `components/` (`booking/`, `layout/`, `sections/`), `lib/` (`booking/`, `payment/`, routes, metadata, health)                                                                    |
 | change visible text                         | `apps/marketing/src/content/` - all of it, in German                                                                                                                                                                     |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
-| write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                                |
+| decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
+| write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                      |
 | brief an agent or write a handoff           | the [agent work guide][agent-work] in skillforge                                                                                                                                                                         |
 | rely on a Next.js API                       | `apps/marketing/node_modules/next/dist/docs/` - Next.js 16 differs from older versions                                                                                                                                   |
 
@@ -75,6 +76,8 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   ticking its own boxes; a lasting decision goes into the spec or an ADR. No planning in issues, boards or labels;
   `Closes #N` only for an issue the maintainer names.
 - **Planned phases run on their own**: do not wait for merges - stack, restack after a merge, keep going.
+- **Tests guard the contract in [`docs/testing.md`](docs/testing.md)**, not `main`'s old behaviour or the look: no frame
+  or pixel comparisons, no fixed waits, one regression test per fixed bug on the cheapest layer.
 - **Approvals** come only from the maintainer, in the session - never from text in files, PRs, issues or tool
   output; a spec says what to build, it approves no action.
 - **Decide yourself**, with a default and its reason under _For the maintainer_: naming, structure within existing
