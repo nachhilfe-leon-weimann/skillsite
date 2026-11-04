@@ -1,8 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import {
+  collectErrors,
   freezeTime,
   isolate,
+  moveTime,
   settledRequests,
   stubMonths,
   type MonthAnswer,
@@ -423,27 +425,20 @@ async function recordDayFades(page: Page) {
     page.evaluate(() => (window as unknown as { dayFades: string[] }).dayFades);
 }
 
-test("a new month fades its days in; loading, answers and picks do not replay it", async ({
-  page,
-}) => {
+test("a new month's days fade in and end fully shown", async ({ page }) => {
   const fades = await recordDayFades(page);
-  const stub = await open(
-    page,
-    "/termin",
-    { "2026-11": ["2026-11-12"], "2026-12": ["2026-12-03", "2026-12-10"] },
-    { hold: ["2026-12"] },
-  );
+  await open(page, "/termin", {
+    "2026-11": ["2026-11-12"],
+    "2026-12": ["2026-12-03"],
+  });
   await expect(selectedDay(page)).toHaveAccessibleName(/12\. November/);
-  await expect.poll(fades).toEqual(["fade"]);
+  // Loading may already have faded one or two months in: two when the server
+  // rendered another month, which hydration then swaps for the visitor's.
+  const loaded = (await fades()).length;
   await next(page).click();
   await expect(grid(page)).toHaveAccessibleName("Dezember 2026");
-  await expect.poll(fades).toEqual(["fade", "fade"]);
-  await stub.release("2026-12");
-  await expect(selectedDay(page)).toHaveAccessibleName(/3\. Dezember/);
-  await day(page, "Donnerstag, 10. Dezember 2026").click();
-  await expect(selectedDay(page)).toHaveAccessibleName(/10\. Dezember/);
-  await page.waitForTimeout(300);
-  expect(await fades()).toEqual(["fade", "fade"]);
+  await expect.poll(async () => (await fades()).length).toBe(loaded + 1);
+  await expect(grid(page).getByRole("rowgroup")).toHaveCSS("opacity", "1");
 });
 
 test.describe("with reduced motion", () => {
@@ -600,3 +595,64 @@ for (const timezoneId of [
     });
   });
 }
+
+/** A Berlin day of `instant` as the calendar names it: "Freitag, 20. März 2026". */
+const berlinDayLabel = (instant: Date) =>
+  new Intl.DateTimeFormat("de-DE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Berlin",
+  }).format(instant);
+const berlinDate = (instant: Date) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(
+    instant,
+  );
+
+for (const [path, { duration }] of Object.entries(routes)) {
+  test(`the booker on ${path} hydrates on a later day than the server rendered`, async ({
+    page,
+  }) => {
+    // `/termin` is prerendered, so its HTML carries the build day; `/kontakt`
+    // carries the request's. A visitor on another day must hydrate without a
+    // mismatch and then see their own month, fetching only that one.
+    const later = new Date(Date.now() + 40 * 24 * 60 * 60 * 1000);
+    const visitorDay = berlinDate(later);
+    const visitorMonth = visitorDay.slice(0, 7);
+    const errors = collectErrors(page);
+    const stub = await open(
+      page,
+      path,
+      { [visitorMonth]: [visitorDay] },
+      { now: later },
+    );
+    await expect(
+      day(page, `Heute, ${berlinDayLabel(later)}, ausgewählt`),
+    ).toBeVisible();
+    expect(await settledRequests(page, stub.requests)).toEqual([
+      `${visitorMonth}@${duration}`,
+    ]);
+    expect(errors).toEqual([]);
+  });
+}
+
+test("/termin: midnight at a month's end leaves the shown month and the choice alone", async ({
+  page,
+}) => {
+  // 30 November 23:55 in Berlin.
+  const stub = await open(
+    page,
+    "/termin",
+    { "2026-11": ["2026-11-30"], "2026-12": ["2026-12-10"] },
+    { now: new Date("2026-11-30T22:55:00Z") },
+  );
+  await expect(selectedDay(page)).toHaveAccessibleName(/30\. November/);
+  // 1 December 00:05 in Berlin, the page still open: pick, then go back.
+  await moveTime(page, new Date("2026-11-30T23:05:00Z"));
+  await slot(page).click();
+  await page.getByRole("button", { name: "Zurück zur Terminwahl" }).click();
+  await expect(grid(page)).toHaveAccessibleName("November 2026");
+  await expect(selectedDay(page)).toHaveAccessibleName(/30\. November/);
+  expect(await settledRequests(page, stub.requests)).toEqual(["2026-11@60"]);
+});

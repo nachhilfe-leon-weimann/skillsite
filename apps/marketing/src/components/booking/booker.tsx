@@ -25,6 +25,7 @@ import { Card } from "@skillsite/ui/primitives/card";
 import { InfoRow } from "@skillsite/ui/primitives/info-row";
 import { Calendar } from "@skillsite/ui/forms/calendar";
 import { Select } from "@skillsite/ui/forms/select";
+import { useHydrated } from "@skillsite/ui/hooks/use-hydrated";
 import { CenteredState } from "@skillsite/ui/layout/centered-state";
 import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
@@ -75,7 +76,22 @@ type BookerProps = {
   title: string;
   subtitle: string;
   initialSubject?: string;
+  /** The booking day the server rendered for (`bookingToday()` in the page). */
+  renderedToday: string;
 };
+
+/**
+ * The booking day: the server's while hydrating, the visitor's from then on.
+ * `/termin` is prerendered, so its HTML carries the build day; reading the clock
+ * during hydration would mismatch on every later day and make React throw the
+ * server HTML away. The visitor's day is read once per mount, so the shown month
+ * and the booking window stay put when midnight passes with the page open.
+ */
+function useBookingToday(renderedToday: string) {
+  const hydrated = useHydrated();
+  const [visitorToday] = useState(bookingToday);
+  return { today: hydrated ? visitorToday : renderedToday, hydrated };
+}
 
 type Step = "select" | "form" | "result";
 
@@ -86,6 +102,7 @@ export function Booker({
   title,
   subtitle,
   initialSubject,
+  renderedToday,
 }: BookerProps) {
   const config = bookingEvents[event];
 
@@ -115,7 +132,11 @@ export function Booker({
   const autoAdvance = useRef(true);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const shown = useMemo(() => shownMonth(monthOffset), [monthOffset]);
+  const { today, hydrated } = useBookingToday(renderedToday);
+  const shown = useMemo(
+    () => shownMonth(today, monthOffset),
+    [today, monthOffset],
+  );
 
   // Funnel entry: the booking widget was opened. `event` distinguishes the
   // nachhilfe vs. kennenlernen flows and is stable, so this fires once.
@@ -124,6 +145,8 @@ export function Booker({
   }, [event]);
 
   useEffect(() => {
+    // The server's day may name another month: fetch only the visitor's.
+    if (!hydrated) return;
     const controller = new AbortController();
     const query = new URLSearchParams({
       event,
@@ -165,7 +188,15 @@ export function Booker({
         setLoading(false);
       });
     return () => controller.abort();
-  }, [event, duration, shown.year, shown.month, reloadKey, monthOffset]);
+  }, [
+    event,
+    duration,
+    shown.year,
+    shown.month,
+    reloadKey,
+    monthOffset,
+    hydrated,
+  ]);
 
   // Leaving the slot picker shrinks the card; if its top scrolled out of view
   // (e.g. a slot picked far down a long mobile list), bring it back so the next
@@ -388,6 +419,7 @@ export function Booker({
         <AnimatedHeight className="flex min-h-96 flex-col p-panel-booker-main">
           {step === "select" ? (
             <SelectStep
+              today={today}
               shown={shown}
               monthOffset={monthOffset}
               loading={loading}
@@ -491,6 +523,7 @@ function UnavailableNotice({
 }
 
 type SelectStepProps = {
+  today: string;
   shown: { year: number; month: number };
   monthOffset: number;
   loading: boolean;
@@ -505,6 +538,7 @@ type SelectStepProps = {
 };
 
 function SelectStep({
+  today,
   shown,
   monthOffset,
   loading,
@@ -559,7 +593,7 @@ function SelectStep({
             onSelect={onSelectDate}
             isSelectable={(date) => availableDates.has(date)}
             busy={loading}
-            today={bookingToday()}
+            today={today}
             timeZone={BOOKING_TIMEZONE}
             locale="de-DE"
             weekStartsOn={1}

@@ -5,6 +5,7 @@ import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Text } from "@skillsite/ui/typography/text";
 import { Booker } from "@/components/booking/booker";
 import { CtaSection } from "@/components/sections/cta-section";
+import { bookingToday } from "@/lib/booking/dates";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -27,6 +28,7 @@ export default function BookingPage() {
 
       <Container className="py-section-sm">
         <Booker
+          renderedToday={bookingToday()}
           event="nachhilfe"
           title="Nachhilfestunde buchen"
           subtitle="Such dir einen freien Termin aus – wöchentlich oder nach Bedarf."

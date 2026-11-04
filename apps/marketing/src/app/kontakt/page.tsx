@@ -16,6 +16,7 @@ import { WhatsappQr } from "@/components/sections/whatsapp-qr";
 import { CtaSection } from "@/components/sections/cta-section";
 import { contactDetails } from "@/content/contact";
 import { subjects } from "@/content/subjects";
+import { bookingToday } from "@/lib/booking/dates";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
 import { trustLine } from "@/content/site";
@@ -157,6 +158,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
           </Text>
         </Reveal>
         <Booker
+          renderedToday={bookingToday()}
           event="kennenlernen"
           title="Kostenloses Erstgespräch"
           subtitle="Kostenlos und unverbindlich – ich rufe dich an."
