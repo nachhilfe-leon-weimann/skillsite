@@ -153,7 +153,7 @@ human VoiceOver/Safari acceptance claim; C8 and the full C9 story audit remain o
       duplicate locks remain after repeated cycles. Verify focus restoration during and after exit.
 - [x] Component tests and browser stories cover default/custom layout, controlled close and disabled opener.
       Existing panel styling remains; the current nested-overlay regression uses a second Dialog.
-- [ ] C8.5 follow-up: verify nested Select-in-Dialog behavior when Select is migrated.
+- [x] C8.5 follow-up: verify nested Select-in-Dialog behavior when Select is migrated.
 
 C8.2 verification on 2026-10-21: the previous implementation failed the new focus/browser regressions. The
 Radix wrapper passes three component tests and 18 Dialog browser cases (20 widget cases including Button):
@@ -327,16 +327,48 @@ only where its duration selector needs migration; marketing Select A11y/Motion t
 
 **Acceptance**
 
-- [ ] Trigger and popup have a name; hidden "Dauer" remains accessible. Open/selection announcement works.
-- [ ] Arrows, Home/End, typeahead and Enter/Space follow the installed Radix Select pattern. While open,
+- [x] Trigger and popup have a name; hidden "Dauer" remains accessible. Open/selection announcement works.
+- [x] Arrows, Home/End, typeahead and Enter/Space follow the installed Radix Select pattern. While open,
       Tab/Shift+Tab do not navigate behind the popup; Escape or committing closes it and restores the trigger,
       after which Tab leaves normally. This is an intentional change from the old Tab-to-close handler.
       Committing changes calls `onChange` once; Escape preserves the value.
-- [ ] Component tests include numbers, strings, `1` versus `"1"`, empty-string options, hints, external value
+- [x] Component tests include numbers, strings, `1` versus `"1"`, empty-string options, hints, external value
       changes and disabled state. Duration remains numeric and produces the same availability request.
-- [ ] Browser tests cover both tones, duration disabled after slot choice, selection inside a Dialog, topmost-only
+- [x] Browser tests cover both tones, duration disabled after slot choice, selection inside a Dialog, topmost-only
       Escape, portalled theme/stacking, edge positioning, normal/reduced motion and rapid reopen.
-- [ ] No manual Select listeners/presence remain, and no booking domain logic is moved into the wrapper.
+- [x] No manual Select listeners/presence remain, and no booking domain logic is moved into the wrapper.
+
+C8.5 verification on 2026-11-04: the previous Select failed all twelve new component tests, seventeen Select
+browser cases and six marketing cases, all at the missing combobox; probed directly, Escape in a Select inside a
+Dialog closed the Dialog with the list still open, Tab closed the list and moved on, the closed trigger had no
+typeahead, committing the current value called `onChange` again, and option names included their hints. The
+wrapper on `@radix-ui/react-select` 2.4.1 (resolving to the pinned DismissableLayer 1.2.1 and FocusScope 1.3.1)
+keeps the `Select<T>` API. Values pass through a type-tagged key (`n:1`, `s:1`, `s:`), mapped back through the
+options, so `1`, `"1"` and `""` stay distinct and the original `T` is emitted; `onChange` fires once per committed
+change, not for a re-commit of the current value. The trigger is a combobox named by `label` (V12: "Dauer") whose
+value is the selected label; the listbox shares the name; hints describe their option and never join its name,
+the shown value or typeahead. It passes twelve component tests and seventeen Select browser cases (both tones in
+light/dark with arrows, Home/End, Tab/Shift+Tab held in the list, Enter and Space commits, Escape, typeahead closed
+and open, typed values, hints, pointer toggling and outside presses, disabled, a bottom-edge flip, entrance and exit
+transitions with no lock left, rapid keyboard and pointer reopen, reduced motion, and the InDialog story in
+light/dark: selection, rendering inside the dialog over its backdrop, topmost-only Escape); they pass five times in
+a row. Six marketing cases cover the "Dauer" combobox, a keyboard choice of 90 minutes that the next availability
+request carries as `duration=90` (Escape asks for nothing), the disabled state after a slot choice and the slide
+and scale in and out, also under reduced motion; they pass five times in a row. Look and motion stay as on main:
+the panel renders in place, not portalled, so it inherits theme, fonts and stacking (inside a Dialog too); it keeps
+main's reversible opacity/translate/scale transitions (in over `duration-base`, out over `duration-quick`,
+`ease-flow`, from 4px above at 0.97) with a new `presence-hold-quick` token holding Radix presence for the exit; its
+entrance starts on the frame Radix has placed it, one to two frames later than on main (mounting cost). Sampled
+curves and panel geometry equal main's, apart from a top edge snapped to device pixels (0.02px here). Production
+screenshots of `/termin` at 390/1280px, light/dark, normal/reduced motion (rest, hover, click and keyboard opening,
+hovered and left rows, a pointer and a keyboard commit, Escape, disabled) are identical in 37 of 96 states; the
+others differ by at most 7/255 per channel in the open panel's antialiasing, or only where main differs from
+itself. To keep main's look, the trigger stays hit-testable while the list is open (hover look, a press closes, a
+press during the exit reopens), rows show a focus ring only after keyboard use, and the keyboard's active row
+regains its background when the pointer leaves the list. Radix's modal pointer model remains: while the list is
+open or leaving (160 ms), the rest of the page takes no pointer input or scroll, an outside press only closes it
+and focus returns to the trigger; near a viewport edge the list opens above the trigger, mirrored. No human
+VoiceOver/Safari or maintainer look acceptance is claimed.
 
 ## C8.6 - Radio groups and choice chips
 
