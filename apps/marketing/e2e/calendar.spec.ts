@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { freezeTime, isolate, stubMonths, type MonthAnswer } from "./helpers";
+import {
+  freezeTime,
+  isolate,
+  settledRequests,
+  stubMonths,
+  type MonthAnswer,
+} from "./helpers";
 
 /*
  * The booking calendar on both booking routes, against stubbed availability
@@ -44,12 +50,6 @@ const next = (page: Page) =>
 const previous = (page: Page) =>
   page.getByRole("button", { name: "Vorheriger Monat" });
 const slot = (page: Page) => page.getByRole("button", { name: "10:00 Uhr" });
-
-/** The requests after the network has settled. */
-async function settledRequests(page: Page, requests: string[]) {
-  await page.waitForLoadState("networkidle");
-  return [...requests];
-}
 
 /** Focus the grid's tab stop from the month buttons, as a keyboard user does. */
 async function tabIntoGrid(page: Page) {

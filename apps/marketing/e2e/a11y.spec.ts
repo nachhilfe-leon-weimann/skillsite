@@ -1,6 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { isolate, stubAvailability } from "./helpers";
+import {
+  freezeTime,
+  interceptSubmissions,
+  isolate,
+  settledRequests,
+  stubAvailability,
+  stubMonths,
+} from "./helpers";
 import { indexablePaths } from "../src/lib/routes";
 import { platformNav, primaryCta, primaryNav } from "../src/content/site";
 import { MENU_STATE_EVENT } from "../src/components/layout/ios-toolbar-tint";
@@ -1216,3 +1223,624 @@ for (const path of indexablePaths) {
     });
   });
 }
+
+/*
+ * The C8 widgets together, by keyboard: navigation into the booking routes,
+ * duration, calendar, slots and form up to its validation, one overlay at a
+ * time, and client navigation between the booking routes. Availability and the
+ * clock are stubbed; every server action is held in the browser, so nothing
+ * is booked.
+ */
+test.describe("the integrated keyboard paths", () => {
+  /** 2026-11-04 12:00 in Berlin: a slot up to 18 November needs the withdrawal consent. */
+  const NOVEMBER = new Date("2026-11-04T11:00:00Z");
+  const FREE_DAYS = { "2026-11": ["2026-11-05", "2026-11-12"] };
+
+  async function openBooker(page: Page, path: string) {
+    await freezeTime(page, NOVEMBER);
+    const stub = await stubMonths(page, FREE_DAYS);
+    const submissions = await interceptSubmissions(page);
+    await page.goto(path);
+    await expect(page.getByRole("grid")).toHaveAccessibleName("November 2026");
+    return { stub, submissions };
+  }
+
+  const focused = (page: Page) => page.locator(":focus");
+  const duration = (page: Page) =>
+    page.getByRole("combobox", { name: "Dauer", exact: true });
+  const nextMonth = (page: Page) =>
+    page.getByRole("button", { name: "Nächster Monat" });
+  const previousMonth = (page: Page) =>
+    page.getByRole("button", { name: "Vorheriger Monat" });
+  const gridStop = (page: Page) =>
+    page.getByRole("grid").locator('button[tabindex="0"]');
+  const slot = (page: Page) => page.getByRole("button", { name: "10:00 Uhr" });
+  const back = (page: Page) =>
+    page.getByRole("button", { name: "Zurück zur Terminwahl" });
+  const openItems = (page: Page) =>
+    page.getByText("Bitte noch ausfüllen oder bestätigen:");
+  const textbox = (page: Page, name: string) =>
+    page.getByRole("textbox", { name, exact: true });
+  const radio = (page: Page, name: string) =>
+    page.getByRole("radio", { name, exact: true });
+  const navTrigger = (page: Page) =>
+    page.getByRole("banner").getByRole("button", { name: "Online lernen" });
+  const platformPopover = (page: Page) =>
+    page.getByRole("dialog", { name: "Online lernen" });
+
+  /** What an open overlay may leave on the page: guards, locks, hidden or inert content. */
+  const overlayLeftovers = (page: Page) =>
+    page.evaluate(() => ({
+      dialogs: document.querySelectorAll("[role=dialog]").length,
+      listboxes: document.querySelectorAll("[role=listbox]").length,
+      focusGuards: document.querySelectorAll("[data-radix-focus-guard]").length,
+      scrollLocked: document.body.hasAttribute("data-scroll-locked"),
+      bodyPointerEvents: document.body.style.pointerEvents,
+      hidden: document.querySelectorAll("[data-aria-hidden], [inert]").length,
+    }));
+  const noOverlay = {
+    dialogs: 0,
+    listboxes: 0,
+    focusGuards: 0,
+    scrollLocked: false,
+    bodyPointerEvents: "",
+    hidden: 0,
+  };
+
+  async function press(page: Page, key: string) {
+    await page.keyboard.press(key);
+  }
+
+  /** From the focused duration: open the list, move down to `label` and commit it. */
+  async function chooseDuration(page: Page, label: string) {
+    await expect(duration(page)).toBeFocused();
+    await press(page, "Enter");
+    const list = page.getByRole("listbox", { name: "Dauer", exact: true });
+    await expect(list.getByRole("option", { selected: true })).toBeFocused();
+    await press(page, "ArrowDown");
+    await expect(list.getByRole("option", { name: label })).toBeFocused();
+    await press(page, "Enter");
+    await expect(list).toHaveCount(0);
+    await expect(duration(page)).toBeFocused();
+    await expect(duration(page)).toHaveText(label);
+  }
+
+  for (const width of [390, 1280]) {
+    test.describe(`at ${width}px`, () => {
+      test.use({ viewport: { width, height: 844 } });
+
+      test("/termin: the keyboard runs from the duration through calendar, slot and form to a valid form; nothing is sent", async ({
+        page,
+      }) => {
+        const { stub, submissions } = await openBooker(page, "/termin");
+        await expect(gridStop(page)).toHaveAccessibleName(
+          "Donnerstag, 5. November 2026, ausgewählt",
+        );
+
+        // The skip link leads into the page; the booking card starts at the duration.
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName("Zum Inhalt springen");
+        await press(page, "Enter");
+        await press(page, "Tab");
+        await expect(duration(page)).toBeFocused();
+
+        // Duration: 90 minutes by keyboard, asked for once.
+        await chooseDuration(page, "90 Minuten");
+        await expect(gridStop(page)).toHaveAccessibleName(/5\. November/);
+
+        // Tab order: the next month (the previous one is disabled at the
+        // window's start), the grid's single stop, the day's slot, and back.
+        await expect(previousMonth(page)).toBeDisabled();
+        await press(page, "Tab");
+        await expect(nextMonth(page)).toBeFocused();
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName(
+          "Donnerstag, 5. November 2026, ausgewählt",
+        );
+        await press(page, "Tab");
+        await expect(slot(page)).toBeFocused();
+        await press(page, "Shift+Tab");
+        await expect(gridStop(page)).toBeFocused();
+
+        // A week down, then Enter picks the 12th and shows its slot.
+        await press(page, "ArrowDown");
+        await expect(focused(page)).toHaveAccessibleName(
+          "Donnerstag, 12. November 2026",
+        );
+        await press(page, "Enter");
+        await expect(focused(page)).toHaveAccessibleName(
+          "Donnerstag, 12. November 2026, ausgewählt",
+        );
+        await expect(page.getByText("Do., 12. November")).toBeVisible();
+        await press(page, "Tab");
+        await expect(slot(page)).toBeFocused();
+        await press(page, "Enter");
+        await expect(page.getByText("Deine Daten")).toBeVisible();
+        await expect(duration(page)).toBeDisabled();
+        await expect(
+          page.getByText("Do., 12. November – 10:00 Uhr").first(),
+        ).toBeVisible();
+
+        // The form, in order; the open items follow every field.
+        const submit = page.getByRole("button", {
+          name: "Zahlungspflichtig buchen",
+        });
+        await press(page, "Tab");
+        await expect(back(page)).toBeFocused();
+        await press(page, "Tab");
+        await expect(textbox(page, "Vorname")).toBeFocused();
+        await page.keyboard.type("Erika");
+        await press(page, "Tab");
+        await expect(textbox(page, "Nachname")).toBeFocused();
+        await press(page, "Tab");
+        await expect(textbox(page, "E-Mail")).toBeFocused();
+        // Left empty, the required field is marked invalid.
+        await expect(textbox(page, "Nachname")).toHaveAttribute(
+          "aria-invalid",
+          "true",
+        );
+        await page.keyboard.type("erika@example");
+        await expect(openItems(page)).toHaveText(
+          "Bitte noch ausfüllen oder bestätigen: Nachname, E-Mail, Fach, Widerrufshinweis",
+        );
+        await expect(submit).toBeDisabled();
+        await page.keyboard.type(".com");
+        await expect(openItems(page)).toHaveText(
+          "Bitte noch ausfüllen oder bestätigen: Nachname, Fach, Widerrufshinweis",
+        );
+        await press(page, "Shift+Tab");
+        await expect(textbox(page, "Nachname")).toBeFocused();
+        await page.keyboard.type("Beispiel");
+        await expect(textbox(page, "Nachname")).not.toHaveAttribute(
+          "aria-invalid",
+        );
+        await press(page, "Tab");
+        await press(page, "Tab");
+        await expect(radio(page, "Microsoft Teams")).toBeFocused();
+        await press(page, "ArrowDown");
+        await expect(radio(page, "Discord")).toBeFocused();
+        await expect(radio(page, "Discord")).toHaveAttribute(
+          "aria-checked",
+          "true",
+        );
+        await press(page, "Tab");
+        await expect(radio(page, "Mathematik")).toBeFocused();
+        await press(page, "Space");
+        await expect(radio(page, "Mathematik")).toHaveAttribute(
+          "aria-checked",
+          "true",
+        );
+        await expect(openItems(page)).toHaveText(
+          "Bitte noch ausfüllen oder bestätigen: Widerrufshinweis",
+        );
+        await press(page, "Tab");
+        await expect(
+          page.getByRole("textbox", { name: "Zusätzliche Notizen" }),
+        ).toBeFocused();
+        await page.keyboard.type("Synthetische Notiz");
+        await press(page, "Tab");
+        const consent = page.getByRole("checkbox", { name: /Widerrufsfrist/ });
+        await expect(consent).toBeFocused();
+        await expect(submit).toBeDisabled();
+        await press(page, "Space");
+        await expect(consent).toBeChecked();
+        await expect(openItems(page)).toHaveCount(0);
+        await expect(submit).toBeEnabled();
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName("AGB");
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName(
+          "Datenschutzerklärung",
+        );
+        await press(page, "Tab");
+        await expect(submit).toBeFocused();
+
+        // Back to the calendar: the day stays picked, the duration is free again.
+        await back(page).focus();
+        await press(page, "Enter");
+        await expect(gridStop(page)).toHaveAccessibleName(
+          "Donnerstag, 12. November 2026, ausgewählt",
+        );
+        await expect(duration(page)).toBeEnabled();
+        await expect(duration(page)).toHaveText("90 Minuten");
+        await press(page, "Tab");
+        await expect(nextMonth(page)).toBeFocused();
+
+        expect(await settledRequests(page, stub.requests)).toEqual([
+          "2026-11@60",
+          "2026-11@90",
+        ]);
+        expect(submissions.bodies).toEqual([]);
+      });
+
+      test("/kontakt: the keyboard runs through calendar, slot and form to a valid form; nothing is sent", async ({
+        page,
+      }) => {
+        const { stub, submissions } = await openBooker(page, "/kontakt");
+        // A fixed duration: no combobox, the duration is plain text.
+        await expect(page.getByRole("combobox")).toHaveCount(0);
+        await expect(page.getByText("15 Minuten")).toBeVisible();
+
+        // From the page start, Tab reaches the month buttons, then the grid.
+        let stops = 0;
+        while (
+          !(await nextMonth(page).evaluate((n) => n === document.activeElement))
+        ) {
+          await press(page, "Tab");
+          expect(++stops, "Tab stops before the calendar").toBeLessThan(60);
+        }
+        await expect(previousMonth(page)).toBeDisabled();
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName(
+          "Donnerstag, 5. November 2026, ausgewählt",
+        );
+        // Space picks a day as well.
+        await press(page, "ArrowDown");
+        await press(page, "Space");
+        await expect(focused(page)).toHaveAccessibleName(
+          "Donnerstag, 12. November 2026, ausgewählt",
+        );
+        await press(page, "Tab");
+        await expect(slot(page)).toBeFocused();
+        await press(page, "Enter");
+        await expect(page.getByText("Deine Daten")).toBeVisible();
+
+        const submit = page.getByRole("button", {
+          name: "Erstgespräch buchen",
+        });
+        await press(page, "Tab");
+        await expect(back(page)).toBeFocused();
+        for (const [name, text] of [
+          ["Vorname", "Erika"],
+          ["Nachname", "Beispiel"],
+          ["E-Mail", "erika@example.com"],
+          ["Telefonnummer", "12"],
+        ] as const) {
+          await press(page, "Tab");
+          await expect(textbox(page, name)).toBeFocused();
+          await page.keyboard.type(text);
+        }
+        // Too short a number is still open, as is a subject.
+        await expect(openItems(page)).toHaveText(
+          "Bitte noch ausfüllen oder bestätigen: Telefonnummer, Fächer",
+        );
+        await page.keyboard.type("34567");
+        await expect(openItems(page)).toHaveText(
+          "Bitte noch ausfüllen oder bestätigen: Fächer",
+        );
+        await expect(submit).toBeDisabled();
+        // Each chip is a tab stop and toggles by Space or Enter.
+        const chip = (name: string) =>
+          page.getByRole("button", { name, exact: true });
+        await press(page, "Tab");
+        await expect(chip("Mathematik")).toBeFocused();
+        await press(page, "Space");
+        await expect(chip("Mathematik")).toHaveAttribute(
+          "aria-pressed",
+          "true",
+        );
+        await press(page, "Tab");
+        await press(page, "Tab");
+        await expect(chip("Physik")).toBeFocused();
+        await press(page, "Enter");
+        await expect(chip("Physik")).toHaveAttribute("aria-pressed", "true");
+        await expect(openItems(page)).toHaveCount(0);
+        await expect(submit).toBeEnabled();
+        await press(page, "Tab");
+        await expect(
+          page.getByRole("textbox", { name: "Worum geht’s?" }),
+        ).toBeFocused();
+        await press(page, "Tab");
+        await expect(submit).toBeFocused();
+
+        expect(await settledRequests(page, stub.requests)).toEqual([
+          "2026-11@15",
+        ]);
+        expect(submissions.bodies).toEqual([]);
+      });
+    });
+  }
+
+  test.describe("at 1280px", () => {
+    test.use({ viewport: { width: 1280, height: 844 } });
+
+    test("/termin: a held submission shows its pending state, a failed request its error; retry and a new choice work by keyboard", async ({
+      page,
+    }) => {
+      const { stub, submissions } = await openBooker(page, "/termin");
+      await duration(page).focus();
+      await chooseDuration(page, "90 Minuten");
+      await gridStop(page).focus();
+      await press(page, "ArrowDown");
+      await press(page, "Enter");
+      await press(page, "Tab");
+      await expect(slot(page)).toBeFocused();
+      await press(page, "Enter");
+      await textbox(page, "Vorname").fill("Erika");
+      await textbox(page, "Nachname").fill("Beispiel");
+      await textbox(page, "E-Mail").fill("erika@example.com");
+      await radio(page, "Microsoft Teams").focus();
+      await press(page, "ArrowDown");
+      // Radix moves focus a task after the key; let it land before focusing elsewhere.
+      await expect(radio(page, "Discord")).toBeFocused();
+      await radio(page, "Mathematik").focus();
+      await press(page, "End");
+      await expect(radio(page, "Physik")).toHaveAttribute(
+        "aria-checked",
+        "true",
+      );
+      await page.getByRole("checkbox", { name: /Widerrufsfrist/ }).check();
+      const submit = page.getByRole("button", {
+        name: "Zahlungspflichtig buchen",
+      });
+      await submit.focus();
+      await press(page, "Enter");
+
+      // Pending while the server action is held in the browser.
+      await expect(page.getByText("Termin wird gebucht …")).toBeVisible();
+      await expect(
+        page.getByText("Einen Moment – die Buchung wird bestätigt."),
+      ).toHaveAttribute("aria-live", "polite");
+      await expect.poll(() => submissions.held()).toBe(1);
+      expect(submissions.actions).toEqual([true]);
+      // The draft carries what the keyboard chose in every widget.
+      const draft = (JSON.parse(submissions.bodies[0]!) as object[])[0];
+      expect(draft).toMatchObject({
+        event: "nachhilfe",
+        duration: 90,
+        slot: "2026-11-12T10:00:00.000+01:00",
+        values: { location: "discord-video", subject: "Physik" },
+        agreements: { termsAccepted: true, earlyPerformanceRequested: true },
+      });
+
+      // A request that fails before any answer is a visible error.
+      await submissions.abort();
+      await expect(
+        page.getByRole("heading", { name: "Das hat nicht ganz geklappt" }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Die Buchung hat nicht geklappt."),
+      ).toBeVisible();
+      const resend = page.getByRole("button", { name: "Erneut senden" });
+      await resend.focus();
+      await press(page, "Enter");
+      await expect(page.getByText("Termin wird gebucht …")).toBeVisible();
+      await expect.poll(() => submissions.held()).toBe(1);
+      expect(submissions.actions).toEqual([true, true]);
+      await submissions.abort();
+      await expect(resend).toBeVisible();
+
+      // A new choice returns to the calendar and asks for the month again.
+      await page.getByRole("button", { name: "Anderen Termin wählen" }).focus();
+      await press(page, "Enter");
+      await expect(gridStop(page)).toHaveAccessibleName(
+        "Donnerstag, 5. November 2026, ausgewählt",
+      );
+      await expect(duration(page)).toBeEnabled();
+      await expect(duration(page)).toHaveText("90 Minuten");
+      expect(await settledRequests(page, stub.requests)).toEqual([
+        "2026-11@60",
+        "2026-11@90",
+        "2026-11@90",
+      ]);
+      expect(submissions.held()).toBe(0);
+      expect(submissions.bodies).toHaveLength(2);
+    });
+
+    test("from the page start, the platform links open /termin on the client, and the next Tab reaches the booking card", async ({
+      page,
+    }) => {
+      await freezeTime(page, NOVEMBER);
+      await stubMonths(page, FREE_DAYS);
+      await page.goto("/");
+      await page.evaluate(() =>
+        Object.assign(window, { navigationMarker: true }),
+      );
+      const stops: string[] = [];
+      for (let i = 0; i < 2 + primaryLabels.length + 1; i++) {
+        await press(page, "Tab");
+        stops.push(
+          await page.evaluate(() => {
+            const element = document.activeElement;
+            return (
+              element?.getAttribute("aria-label") ??
+              element?.textContent?.trim() ??
+              ""
+            );
+          }),
+        );
+      }
+      expect(stops).toEqual([
+        "Zum Inhalt springen",
+        "Startseite",
+        ...primaryLabels,
+        "Online lernen",
+      ]);
+      await expect(navTrigger(page)).toBeFocused();
+      await press(page, "Enter");
+      await expect(platformPopover(page)).toBeVisible();
+      const links = platformPopover(page).getByRole("link");
+      for (let i = 0; i < 3; i++) {
+        await press(page, "Tab");
+        await expect(links.nth(i)).toBeFocused();
+      }
+      await expect(links.nth(2)).toHaveAccessibleName(/^Termin buchen/);
+      await press(page, "Enter");
+      await expect(page).toHaveURL(/\/termin$/);
+      expect(await page.evaluate(() => "navigationMarker" in window)).toBe(
+        true,
+      );
+      await expect(platformPopover(page)).toHaveCount(0);
+      await expect(navTrigger(page)).toHaveAttribute("aria-expanded", "false");
+      await expect.poll(() => overlayLeftovers(page)).toEqual(noOverlay);
+      await press(page, "Tab");
+      await expect(duration(page)).toBeFocused();
+      await press(page, "Enter");
+      await expect(
+        page.getByRole("listbox", { name: "Dauer", exact: true }),
+      ).toBeVisible();
+      await press(page, "Escape");
+      await expect(duration(page)).toBeFocused();
+      await expect.poll(() => overlayLeftovers(page)).toEqual(noOverlay);
+    });
+
+    test("/termin: the platform popover and the duration list are never open together", async ({
+      page,
+    }) => {
+      await openBooker(page, "/termin");
+      // The banner is hidden from AT while the list is open; find the trigger by its markup then.
+      const trigger = page.locator("header button[aria-haspopup=dialog]");
+      const list = page.getByRole("listbox", { name: "Dauer", exact: true });
+
+      // A pinned popover closes when the pointer opens the list.
+      await navTrigger(page).click();
+      await page.mouse.move(640, 700);
+      await expect(platformPopover(page)).toBeVisible();
+      await duration(page).click();
+      await expect(list).toBeVisible();
+      await expect(page.locator("[role=dialog]")).toHaveCount(0);
+      // While the list is open, hovering the trigger opens nothing.
+      const box = (await trigger.boundingBox())!;
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+        steps: 5,
+      });
+      await page.waitForTimeout(400);
+      await expect(page.locator("[role=dialog]")).toHaveCount(0);
+      await page.mouse.move(640, 700, { steps: 3 });
+      await press(page, "Escape");
+      await expect(list).toHaveCount(0);
+      await expect(duration(page)).toBeFocused();
+      await expect.poll(() => overlayLeftovers(page)).toEqual(noOverlay);
+
+      // By keyboard: Tab leaves the open popover (closing it) and reaches the duration.
+      await navTrigger(page).focus();
+      await press(page, "Enter");
+      await expect(platformPopover(page)).toBeVisible();
+      for (let i = 0; i < 5; i++) await press(page, "Tab");
+      await expect(duration(page)).toBeFocused();
+      await expect(platformPopover(page)).toHaveCount(0);
+      await press(page, "Enter");
+      await expect(list).toBeVisible();
+      await expect(page.locator("[role=dialog]")).toHaveCount(0);
+      // Escape closes only the list; a second one changes nothing.
+      await press(page, "Escape");
+      await expect(list).toHaveCount(0);
+      await expect(duration(page)).toBeFocused();
+      await press(page, "Escape");
+      await expect(duration(page)).toBeFocused();
+      await expect(duration(page)).toHaveText("60 Minuten");
+      await expect.poll(() => overlayLeftovers(page)).toEqual(noOverlay);
+    });
+
+    test("client navigation between the booking routes gives each a fresh booker and leaves no overlay behind", async ({
+      page,
+    }) => {
+      const { stub } = await openBooker(page, "/termin");
+      await page.evaluate(() =>
+        Object.assign(window, { navigationMarker: true }),
+      );
+      await duration(page).focus();
+      await chooseDuration(page, "90 Minuten");
+
+      await page
+        .getByRole("banner")
+        .getByRole("link", { name: "Kontakt" })
+        .focus();
+      await press(page, "Enter");
+      await expect(page).toHaveURL(/\/kontakt$/);
+      await expect(page.getByRole("grid")).toHaveAccessibleName(
+        "November 2026",
+      );
+      await expect(page.getByRole("combobox")).toHaveCount(0);
+      await expect(gridStop(page)).toHaveCount(1);
+      await expect.poll(() => overlayLeftovers(page)).toEqual(noOverlay);
+
+      await page.goBack();
+      await expect(page).toHaveURL(/\/termin$/);
+      await expect(duration(page)).toHaveText("60 Minuten");
+      await expect(gridStop(page)).toHaveAccessibleName(
+        "Donnerstag, 5. November 2026, ausgewählt",
+      );
+      await page.goForward();
+      await expect(page).toHaveURL(/\/kontakt$/);
+      await expect(gridStop(page)).toHaveCount(1);
+      expect(await page.evaluate(() => "navigationMarker" in window)).toBe(
+        true,
+      );
+      expect(await settledRequests(page, stub.requests)).toEqual([
+        "2026-11@60",
+        "2026-11@90",
+        "2026-11@15",
+        "2026-11@60",
+        "2026-11@15",
+      ]);
+      await expect.poll(() => overlayLeftovers(page)).toEqual(noOverlay);
+    });
+  });
+
+  test.describe("at 390px", () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test.beforeEach(async ({ page }) => {
+      await recordMenuState(page);
+    });
+
+    test("the whole mobile menu by keyboard: the nested platform link opens /termin on the client", async ({
+      page,
+    }) => {
+      await freezeTime(page, NOVEMBER);
+      await stubMonths(page, FREE_DAYS);
+      await page.goto("/");
+      await page.evaluate(() =>
+        Object.assign(window, { navigationMarker: true }),
+      );
+      const menu = page.getByRole("dialog", { name: "Menü" });
+      const opener = page.getByRole("button", { name: "Menü" });
+      for (const name of ["Zum Inhalt springen", "Startseite", "Menü"]) {
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName(name);
+      }
+      await press(page, "Enter");
+      await expect(menu).toBeVisible();
+      for (const name of primaryLabels) {
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName(name);
+      }
+      await press(page, "Tab");
+      const disclosure = menu.getByRole("button", { name: "Online lernen" });
+      await expect(disclosure).toBeFocused();
+      await expect(disclosure).toHaveAttribute("aria-expanded", "false");
+      await press(page, "Enter");
+      await expect(disclosure).toHaveAttribute("aria-expanded", "true");
+      for (const label of platformLabels) {
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName(
+          new RegExp(`^${label}`),
+        );
+      }
+      await press(page, "Enter");
+      await expect(page).toHaveURL(/\/termin$/);
+      await expect(menu).toHaveCount(0);
+      expect(await page.evaluate(() => "navigationMarker" in window)).toBe(
+        true,
+      );
+      expect(await menuStateEvents(page)).toEqual([true, false]);
+      expect(await background(page)).toMatchObject(released);
+      // As after every menu link: the next Tab starts at the skip link.
+      for (const name of ["Zum Inhalt springen", "Startseite", "Menü"]) {
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName(name);
+      }
+      await expect(opener).toHaveAttribute("aria-expanded", "false");
+      await press(page, "Tab");
+      await expect(duration(page)).toBeFocused();
+      await press(page, "Space");
+      await expect(
+        page.getByRole("listbox", { name: "Dauer", exact: true }),
+      ).toBeVisible();
+      await press(page, "Escape");
+      await expect(duration(page)).toBeFocused();
+      await expect.poll(() => overlayLeftovers(page)).toEqual(noOverlay);
+    });
+  });
+});

@@ -630,4 +630,57 @@ test.describe("inside a modal Dialog", () => {
       await expect.poll(() => leftovers(page)).toMatchObject({ panels: 0 });
     });
   }
+  test("by keyboard: the dialog holds Tab, the list holds Tab, and each dismissal closes one layer", async ({
+    page,
+  }) => {
+    await page.goto(story("in-dialog"));
+    const opener = page.getByRole("button", { name: "Dialog öffnen" });
+    const dialog = page.getByRole("dialog", { name: "Termin anpassen" });
+    const log = page.locator("[role=log]");
+    await opener.focus();
+    await page.keyboard.press("Enter");
+    await expect(dialog).toBeVisible();
+    const trigger = dialog.locator("[role=combobox]");
+    // The dialog's own Tab cycle includes the closed Select.
+    await expect(dialog.getByRole("button", { name: "Davor" })).toBeFocused();
+    for (const name of ["Dauer", "Danach", "Davor", "Dauer"]) {
+      await page.keyboard.press("Tab");
+      await expect(page.locator(":focus")).toHaveAccessibleName(name);
+    }
+    await expect(trigger).toBeFocused();
+
+    // Open, the list holds Tab and Shift+Tab; Escape closes only the list.
+    await page.keyboard.press("Enter");
+    const list = page.getByRole("listbox", { name: "Dauer" });
+    const current = list.getByRole("option", { name: "60 Minuten" });
+    await expect(current).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(current).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(current).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(panel(page)).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await expect(dialog).toBeVisible();
+
+    // An outside press while the list is open closes only the list; focus stays in the dialog.
+    await page.keyboard.press("Enter");
+    await expect(current).toBeFocused();
+    await expect(panel(page)).toHaveCSS("opacity", "1");
+    await page.mouse.click(5, 5);
+    await expect(panel(page)).toHaveCount(0);
+    await expect(dialog).toBeVisible();
+    await expect(log).toHaveText("Dialog geschlossen: 0");
+    expect(
+      await dialog.evaluate((node) => node.contains(document.activeElement)),
+    ).toBe(true);
+    await expect(trigger).toContainText("60 Minuten");
+
+    // With the list gone, the next outside press closes the dialog, and focus returns to its opener.
+    await page.mouse.click(5, 5);
+    await expect(dialog).toHaveCount(0);
+    await expect(log).toHaveText("Dialog geschlossen: 1");
+    await expect(opener).toBeFocused();
+    await expect.poll(() => leftovers(page)).toEqual(clean);
+  });
 });

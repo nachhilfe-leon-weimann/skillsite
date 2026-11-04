@@ -597,15 +597,64 @@ Use test cases already introduced per widget; add only missing cross-widget regr
 - [ ] C8.1-C8.8 are integrated with green checks, no unresolved widget focus/keyboard/label regressions, and no
       remaining custom outside-pointer/Escape handlers for the migrated widgets. Generic hooks may remain for
       legitimate unrelated consumers; do not remove exports opportunistically.
-- [ ] `just check`, including production marketing E2E and built-Storybook widget E2E, passes on the final head.
+- [x] `just check`, including production marketing E2E and built-Storybook widget E2E, passes on the final head.
       Every failure/skip has an exact explanation; a local network or browser failure is not reported as green.
-- [ ] Deterministic keyboard, nested-overlay, calendar/date-zone and form integration tests pass.
+- [x] Deterministic keyboard, nested-overlay, calendar/date-zone and form integration tests pass.
 - [ ] Human VoiceOver/Safari and visual checks are recorded with browser/OS/date, routes/stories, actual results
       and any unresolved failures. If unavailable, leave this gate and the spec's overall C8 box unchecked.
-- [ ] Known spike issues relevant to the selected implementation are resolved and evidenced; no broad accessibility
+- [x] Known spike issues relevant to the selected implementation are resolved and evidenced; no broad accessibility
       rule suppression or spike exclusions hide them. Existing phase-E contrast work is explicitly identified.
-- [ ] Every changed/exported C8 widget has representative stories; package exports and ratchet pass. C9 remains
+- [x] Every changed/exported C8 widget has representative stories; package exports and ratchet pass. C9 remains
       a separate full-library coverage audit; this gate does not assert all C9 work is complete.
+
+C8.9 verification on 2026-11-04: on the integrated head of the stack (C8.3-C8.8 on `main` `c96d299`), `just check`
+passes with a fresh production build, the marketing suite and the built-Storybook widget suite. The per-widget cases
+stay as they are; nine marketing cases and one Storybook case add only the paths across widgets, against stubbed
+availability and a frozen clock. Keyboard only, at 390 and 1280px: `/termin` from the skip link through the duration
+(90 minutes, asked for once), the month buttons, the grid's single tab stop, a day, its slot and every form field,
+with the required-field mark, the open items and the disabled submit following each entry up to a valid form, then
+back to the calendar with the day kept and the duration enabled again; `/kontakt` likewise, with its fixed duration,
+the phone check and independent chips. Only one case at 1280px presses submit, with every non-GET request held in the
+browser: the pending state, the draft carrying what each widget chose (duration 90, the API's slot instant, Discord,
+Physik, both agreements), a failed request as a visible error, retry and a new choice; both requests are aborted
+before they leave the browser. No server result is rendered: no integrated Booker result fixture exists and none is
+claimed. The desktop platform links, by keyboard from the page start, open `/termin` on the client and the next Tab
+reaches the duration; the whole mobile menu by keyboard, including the nested platform disclosure, does the same at
+390px after the skip link. The platform popover and the duration list are never open together, by pointer or
+keyboard, and client navigation between `/termin` and `/kontakt` (link, back, forward) mounts a fresh booker each
+time and leaves no guard, lock or hidden content. In Storybook, the Select inside the Dialog keeps Tab in the dialog
+and in the list and closes one layer per Escape or outside press. All ten pass five times in a row. On `main`'s
+build the nine marketing cases fail at the first named widget (grid, popover, menu dialog), so they are no red
+evidence for the paths themselves; two mutation probes fail the expected cases (the consent gate dropped, the default
+duration sent). One finding returns to C8.5 as a follow-up `fix(a11y)` after the stack: inside a Dialog, an outside
+press closes only the list, but focus ends on the dialog instead of the Select's trigger (the Dialog's trapped
+FocusScope refocuses its container when the option unmounts, before the Select's deferred close autofocus, and the
+wrapper's `onCloseAutoFocus` guard then leaves it there; standalone, focus returns to the trigger). The first
+integrated `just check` of the independent review failed once on C8.5's motion case "the duration select panel
+slides and scales in" (1 of 5 full runs; isolated 7 of 40 failures at four workers, 13-14 of 40 at six): its poll
+from the runner could straddle the 260 ms entrance, or the scale transition ended before a second read. The case now
+samples both midpoints in the page on the first frame both transitions run, as the exit case does, and passes 40 of
+40 at six workers and the whole motion spec three times. Outside C8, the booker's step changes (slot, back, submit,
+retry) drop focus to `<body>`, and neither the failure nor the confirmed state is in a live region (the pending
+line's live region mounts with its text), on `main` as here; whether D2 or a separate `fix(a11y)` takes it is the
+maintainer's call. First-load JS of the scripts each
+route's HTML loads (same `next build` settings, gzip level 6) grows against `main` by 71.7 kB raw / 25.4 kB gzip on
+`/`, `/preise` and `/online-lernen` (C8.3 Popover with the shared Radix layer, focus scope, Floating UI and scroll
+lock 22.8 kB, C8.4 Dialog 1.1 kB, C8.5 a regrouped shared chunk 1.5 kB) and by 192.0 kB / 60.9 kB on `/termin` and
+`/kontakt` (also C8.5 Select 10.3 kB, C8.6 RadioGroup/ToggleGroup 4.1 kB, C8.8 DayPicker with `date-fns` and
+`@date-fns/tz` 22.7 kB; C8.7 adds nothing, the Switch has no consumer); no budget applies. No human VoiceOver/Safari
+pass or maintainer look check has been performed; their checklist is in the C8.9 PR. The first gate box stays open
+for that finding and the open C8.3 focus decisions (a Tab lost under a resting pointer, focus guards left by a
+resize within a frame of a close), the fourth for the missing human pass. The spec's C8.9 box asks for both the
+automated and the human half and stays open, as does its "C8 complete" box. No custom document-level
+outside-pointer or Escape handler remains for the migrated widgets; the unused `useBodyScrollLock` export stays
+(C8.4 decision). The #167 findings relevant to Radix and DayPicker are resolved: the modal-menu `aria-hidden-focus`
+failure does not apply (the panel is a non-modal Popover, tested without hidden or inert content), the missing
+focus indicator on the focused day is fixed and tested in C8.8 (light and dark), DayPicker's black chevrons in dark
+mode are avoided by the wrapper's own icons, and the radio group's synthetic-key timing sensitivity is handled and
+tested in C8.6; no axe rule or spike exclusion exists, and the phase-E contrast work is named in the spec (white on
+coral, 2.84:1). The seven C8 widgets have 30 stories (Dialog, Popover, Select, RadioGroup, ChoiceChips, Switch,
+Calendar), their package exports pass `exports.test.ts`, and the ratchet is clean.
 
 ## Verification and PR handoff
 

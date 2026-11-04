@@ -50,17 +50,53 @@ async function durationSelect(page: Page) {
 
 test("the duration select panel slides and scales in", async ({ page }) => {
   await page.goto("/termin");
-  await (await durationSelect(page)).click();
-  const panel = page.getByRole("listbox", { name: "Dauer" });
-  // The entrance starts on the frame the panel is placed: wait for it.
-  await expect.poll(() => midpoint(panel, "translate")).not.toBeNull();
-  const y = await midpoint(panel, "translate");
-  const scale = await midpoint(panel, "scale");
-  expect(translateY(y!)).toBeGreaterThan(-4);
-  expect(translateY(y!)).toBeLessThan(0);
-  expect(scale, "scale transition").not.toBeNull();
+  const trigger = await durationSelect(page);
+  // The entrance starts on the frame the panel is placed and lasts a few
+  // hundred milliseconds, so sample its midpoint in the page, on the first
+  // frame both entrance transitions run, pausing both before either ends.
+  await page.evaluate(() => {
+    const tick = () => {
+      const node = document.querySelector<HTMLElement>(
+        "[data-radix-popper-content-wrapper] > [data-state=open]",
+      );
+      const running = (node?.getAnimations() ?? []).filter(
+        (animation): animation is CSSTransition =>
+          animation instanceof CSSTransition,
+      );
+      const names = running.map((animation) => animation.transitionProperty);
+      if (!node || !names.includes("translate") || !names.includes("scale")) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      for (const animation of running) {
+        animation.pause();
+        animation.currentTime =
+          Number(animation.effect!.getTiming().duration) / 2;
+      }
+      const style = getComputedStyle(node);
+      Object.assign(window, {
+        entranceMidpoint: { translate: style.translate, scale: style.scale },
+      });
+    };
+    requestAnimationFrame(tick);
+  });
+  await trigger.click();
+  const sample = () =>
+    page.evaluate(
+      () =>
+        (
+          window as unknown as {
+            entranceMidpoint?: { translate: string; scale: string };
+          }
+        ).entranceMidpoint ?? null,
+    );
+  await expect.poll(sample).not.toBeNull();
+  const { translate, scale } = (await sample())!;
+  expect(translateY(translate)).toBeGreaterThan(-4);
+  expect(translateY(translate)).toBeLessThan(0);
   expect(Number(scale)).toBeGreaterThan(0.97);
   expect(Number(scale)).toBeLessThan(1);
+  await expect(page.getByRole("listbox", { name: "Dauer" })).toBeVisible();
 });
 
 test("the duration select panel slides and scales out", async ({ page }) => {
