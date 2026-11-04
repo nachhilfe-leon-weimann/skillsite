@@ -257,16 +257,45 @@ test.describe("the mobile navigation dialog", () => {
       expect(await background(page)).toMatchObject(released);
     });
 
-    for (const target of [
-      "Preise",
-      "Startseite",
-      primaryCta.label,
-      "Discord",
+    // Where a menu link leaves focus: on <body>, with the sequential focus start
+    // point at the removed link in the dialog (end of <body>), so the next Tab
+    // reaches the skip link - or, for a fragment, the target's next control.
+    for (const { from, target, to, nextTab } of [
+      {
+        from: "/",
+        target: "Preise",
+        to: /\/preise$/,
+        nextTab: "Zum Inhalt springen",
+      },
+      {
+        from: "/preise",
+        target: "Startseite",
+        to: /\/$/,
+        nextTab: "Zum Inhalt springen",
+      },
+      {
+        from: "/",
+        target: primaryCta.label,
+        to: /\/kontakt#kennenlernen$/,
+        nextTab: "Direkt anfragen",
+      },
+      {
+        from: "/",
+        target: "Discord",
+        to: /\/online-lernen$/,
+        nextTab: "Zum Inhalt springen",
+      },
+      {
+        from: "/preise",
+        target: "Preise",
+        to: /\/preise$/,
+        nextTab: "Zum Inhalt springen",
+      },
     ]) {
-      test(`the ${target} link navigates on the client, closes it and leaves focus to the destination`, async ({
+      test(`the ${target} link from ${from} navigates on the client, closes it and leaves focus to the destination`, async ({
         page,
       }) => {
-        await page.goto(target === "Startseite" ? "/preise" : "/");
+        await page.goto(from);
         await page.evaluate(() =>
           Object.assign(window, { navigationMarker: true }),
         );
@@ -278,9 +307,7 @@ test.describe("the mobile navigation dialog", () => {
         await dialog(page)
           .getByRole("link", { name: new RegExp(`^${target}`) })
           .click();
-        await expect(page).not.toHaveURL(
-          target === "Startseite" ? /\/preise$/ : /\/$/,
-        );
+        await expect(page).toHaveURL(to);
         await expect(dialog(page)).toHaveCount(0);
         expect(await page.evaluate(() => "navigationMarker" in window)).toBe(
           true,
@@ -293,6 +320,36 @@ test.describe("the mobile navigation dialog", () => {
             ),
         );
         await expect(opener(page)).not.toBeFocused();
+        expect(await page.evaluate(() => document.activeElement?.tagName)).toBe(
+          "BODY",
+        );
+        await page.keyboard.press("Tab");
+        await expect(page.locator(":focus")).toHaveAccessibleName(nextTab);
+        await expect(page.locator(":focus")).toBeVisible();
+        expect(await menuStateEvents(page)).toEqual([true, false]);
+        expect(await background(page)).toMatchObject(released);
+      });
+    }
+
+    for (const key of ["Enter", "click"]) {
+      test(`the home link on the home page (${key}) closes it and keeps focus on the header's home link, as on main`, async ({
+        page,
+      }) => {
+        await page.goto("/");
+        await opener(page).click();
+        const menuHome = dialog(page).getByRole("link", { name: "Startseite" });
+        if (key === "Enter") {
+          await menuHome.focus();
+          await page.keyboard.press("Enter");
+        } else await menuHome.click();
+        await expect(dialog(page)).toHaveCount(0);
+        const home = page
+          .getByRole("banner")
+          .getByRole("link", { name: "Startseite" });
+        await expect(home).toBeFocused();
+        await expect(home).toBeVisible();
+        await page.keyboard.press("Tab");
+        await expect(opener(page)).toBeFocused();
         expect(await menuStateEvents(page)).toEqual([true, false]);
         expect(await background(page)).toMatchObject(released);
       });

@@ -105,38 +105,32 @@ function NavbarContent({ pathname }: { pathname: string }) {
         inert={open}
         className="sticky top-0 z-sticky border-b border-line bg-glass backdrop-blur-lg"
       >
-        <Container className="flex items-center gap-2.5 py-3 nav-wide:gap-4">
-          <HomeLink ref={homeLinkRef} />
-
-          <DesktopNav pathname={pathname} platformActive={isPlatformActive} />
-
-          <div className="ml-auto flex items-center gap-2 nav:ml-0 nav-wide:gap-2.5">
-            <Button
-              asChild
-              variant="primary"
-              size="md"
-              className="hidden px-4 nav:inline-flex nav-wide:px-5"
-            >
-              <Link href={primaryCta.href}>
-                {/* Short label in the compact range, full label once there is room. */}
-                <span className="nav-wide:hidden">{primaryCta.shortLabel}</span>
-                <span className="hidden nav-wide:inline">
-                  {primaryCta.label}
-                </span>
-              </Link>
-            </Button>
-            <IconButton
-              ref={menuButtonRef}
-              hover="none"
-              aria-label="Menü"
-              aria-expanded={open}
-              onClick={openMobileMenu}
-              className="inline-flex nav:hidden"
-            >
-              <Menu className="size-5" />
-            </IconButton>
-          </div>
-        </Container>
+        <HeaderRow
+          homeLinkRef={homeLinkRef}
+          nav={
+            <DesktopNav pathname={pathname} platformActive={isPlatformActive} />
+          }
+        >
+          <Button
+            asChild
+            variant="primary"
+            size="md"
+            className="hidden px-4 nav:inline-flex nav-wide:px-5"
+          >
+            <Link href={primaryCta.href}>
+              {/* Short label in the compact range, full label once there is room. */}
+              <span className="nav-wide:hidden">{primaryCta.shortLabel}</span>
+              <span className="hidden nav-wide:inline">{primaryCta.label}</span>
+            </Link>
+          </Button>
+          <MenuButton
+            ref={menuButtonRef}
+            expanded={open}
+            onClick={openMobileMenu}
+          >
+            <Menu className="size-5" />
+          </MenuButton>
+        </HeaderRow>
       </header>
 
       <MobileMenu
@@ -147,7 +141,7 @@ function NavbarContent({ pathname }: { pathname: string }) {
         // Escape and the close control return to the menu button; past the
         // desktop breakpoint, where it is hidden, the visible home link.
         returnFocusRef={menuButtonRef}
-        fallbackFocusRef={homeLinkRef}
+        homeLinkRef={homeLinkRef}
       />
     </>
   );
@@ -159,23 +153,69 @@ function announceMenuState(open: boolean) {
   );
 }
 
-function HomeLink({
-  ref,
-  onClick,
+/**
+ * The header row: home link, the desktop navigation (page header only) and the
+ * trailing controls. The page header and the open menu share it, so the menu's
+ * home link and close control sit exactly where the page header's do.
+ */
+function HeaderRow({
+  homeLinkRef,
+  onHome,
+  nav,
+  children,
 }: {
-  ref?: React.Ref<HTMLAnchorElement>;
-  onClick?: () => void;
+  homeLinkRef?: React.Ref<HTMLAnchorElement>;
+  onHome?: () => void;
+  nav?: React.ReactNode;
+  children: React.ReactNode;
 }) {
   return (
-    <Link
+    <Container className="flex items-center gap-2.5 py-3 nav-wide:gap-4">
+      <Link
+        ref={homeLinkRef}
+        href={routes.home}
+        aria-label="Startseite"
+        onClick={onHome}
+        className="shrink-0"
+      >
+        <Logo name={brand.name} tagline={brand.tagline} src={brand.logo} />
+      </Link>
+
+      {nav}
+
+      <div className="ml-auto flex items-center gap-2 nav:ml-0 nav-wide:gap-2.5">
+        {children}
+      </div>
+    </Container>
+  );
+}
+
+/** The mobile menu control: the opener in the page header, the close control in the menu. */
+function MenuButton({
+  ref,
+  id,
+  expanded,
+  onClick,
+  children,
+}: {
+  ref?: React.Ref<HTMLButtonElement>;
+  id?: string;
+  expanded: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <IconButton
       ref={ref}
-      href={routes.home}
-      aria-label="Startseite"
+      id={id}
+      hover="none"
+      aria-label="Menü"
+      aria-expanded={expanded}
       onClick={onClick}
-      className="shrink-0"
+      className="inline-flex nav:hidden"
     >
-      <Logo name={brand.name} tagline={brand.tagline} src={brand.logo} />
-    </Link>
+      {children}
+    </IconButton>
   );
 }
 
@@ -326,21 +366,29 @@ function MobileMenu({
   pathname,
   platformActive,
   returnFocusRef,
-  fallbackFocusRef,
+  homeLinkRef,
 }: {
   open: boolean;
   onClose: () => void;
   pathname: string;
   platformActive: boolean;
   returnFocusRef: RefObject<HTMLElement | null>;
-  fallbackFocusRef: RefObject<HTMLElement | null>;
+  homeLinkRef: RefObject<HTMLElement | null>;
 }) {
   const closeId = useId();
   const navigatingRef = useRef(false);
+  const focusHomeRef = useRef(false);
 
   // A link navigates: the destination owns focus, not the menu button.
   const navigate = () => {
     navigatingRef.current = true;
+    onClose();
+  };
+  // The home link on the home page leads nowhere new: as when the open menu
+  // was part of the page header, focus stays on the (page header's) home link.
+  const goHome = () => {
+    if (pathname !== routes.home) return navigate();
+    focusHomeRef.current = true;
     onClose();
   };
 
@@ -351,32 +399,25 @@ function MobileMenu({
       layout="custom"
       labelledBy={closeId}
       returnFocusRef={returnFocusRef}
-      fallbackFocusRef={fallbackFocusRef}
+      fallbackFocusRef={homeLinkRef}
       onCloseAutoFocus={(event) => {
-        if (navigatingRef.current) event.preventDefault();
+        if (focusHomeRef.current) {
+          event.preventDefault();
+          homeLinkRef.current?.focus({ preventScroll: true });
+        } else if (navigatingRef.current) event.preventDefault();
         navigatingRef.current = false;
+        focusHomeRef.current = false;
       }}
       // The open header's look: page background, and the same backdrop blur,
       // which also keeps its text rendering.
       className="flex flex-col bg-bg backdrop-blur-lg nav:hidden"
     >
       <header className="flex min-h-0 flex-1 flex-col">
-        <Container className="flex items-center gap-2.5 py-3 nav-wide:gap-4">
-          <HomeLink onClick={navigate} />
-
-          <div className="ml-auto flex items-center gap-2 nav:ml-0 nav-wide:gap-2.5">
-            <IconButton
-              id={closeId}
-              hover="none"
-              aria-label="Menü"
-              aria-expanded
-              onClick={onClose}
-              className="inline-flex nav:hidden"
-            >
-              <X className="size-5" />
-            </IconButton>
-          </div>
-        </Container>
+        <HeaderRow onHome={goHome}>
+          <MenuButton id={closeId} expanded onClick={onClose}>
+            <X className="size-5" />
+          </MenuButton>
+        </HeaderRow>
 
         <MobileMenuLinks
           pathname={pathname}
