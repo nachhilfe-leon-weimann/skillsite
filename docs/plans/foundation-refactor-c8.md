@@ -347,9 +347,10 @@ keeps the `Select<T>` API. Values pass through a type-tagged key (`n:1`, `s:1`, 
 options, so `1`, `"1"` and `""` stay distinct and the original `T` is emitted; `onChange` fires once per committed
 change, not for a re-commit of the current value. The trigger is a combobox named by `label` (V12: "Dauer") whose
 value is the selected label; the listbox shares the name; hints describe their option and never join its name,
-the shown value or typeahead. It passes twelve component tests and seventeen Select browser cases (both tones in
+the shown value or typeahead. It passes thirteen component tests and nineteen Select browser cases (both tones in
 light/dark with arrows, Home/End, Tab/Shift+Tab held in the list, Enter and Space commits, Escape, typeahead closed
-and open, typed values, hints, pointer toggling and outside presses, disabled, a bottom-edge flip, entrance and exit
+and open, typed values, hints, a hovering mouse that leaves the keyboard's ring and Enter target alone, a mouse
+opening on release, pointer toggling and outside presses, disabled, a bottom-edge flip, entrance and exit
 transitions with no lock left, rapid keyboard and pointer reopen, reduced motion, and the InDialog story in
 light/dark: selection, rendering inside the dialog over its backdrop, topmost-only Escape); they pass five times in
 a row. Six marketing cases cover the "Dauer" combobox, a keyboard choice of 90 minutes that the next availability
@@ -358,16 +359,20 @@ and scale in and out, also under reduced motion; they pass five times in a row. 
 the panel renders in place, not portalled, so it inherits theme, fonts and stacking (inside a Dialog too); it keeps
 main's reversible opacity/translate/scale transitions (in over `duration-base`, out over `duration-quick`,
 `ease-flow`, from 4px above at 0.97) with a new `presence-hold-quick` token holding Radix presence for the exit; its
-entrance starts on the frame Radix has placed it, one to two frames later than on main (mounting cost). Sampled
+entrance starts on the frame Radix has placed it, two to three frames later than on main (mounting cost; first
+visible frame 60-67 ms after the key, against 17-34 ms). Sampled
 curves and panel geometry equal main's, apart from a top edge snapped to device pixels (0.02px here). Production
 screenshots of `/termin` at 390/1280px, light/dark, normal/reduced motion (rest, hover, click and keyboard opening,
-hovered and left rows, a pointer and a keyboard commit, Escape, disabled) are identical in 37 of 96 states; the
+hovered and left rows, a hovering mouse after keyboard use, a pointer and a keyboard commit, Escape, disabled) are
+identical in 39 of 112 states; the
 others differ by at most 7/255 per channel in the open panel's antialiasing, or only where main differs from
-itself. To keep main's look, the trigger stays hit-testable while the list is open (hover look, a press closes, a
-press during the exit reopens), rows show a focus ring only after keyboard use, and the keyboard's active row
-regains its background when the pointer leaves the list. Radix's modal pointer model remains: while the list is
-open or leaving (160 ms), the rest of the page takes no pointer input or scroll, an outside press only closes it
-and focus returns to the trigger; near a viewport edge the list opens above the trigger, mirrored. No human
+itself. To keep main's look and pointer behaviour, a mouse opens the list on release, the trigger stays
+hit-testable while the list is open (hover look, a press closes, a press during the exit reopens), the pointer only
+hovers rows while focus (ring and Enter target) stays with the keyboard, and rows show a focus ring only after
+keyboard use. Radix's modal pointer model remains (`SelectContentImpl` hard-codes the scroll lock, outside pointer
+blocking, `hideOthers`, the focus trap and the close on window blur/resize): while the list is open, and until
+about 200 ms after it closes, the rest of the page takes no pointer input or scroll, an outside press only closes
+it and focus returns to the trigger; near a viewport edge the list opens above the trigger, mirrored. No human
 VoiceOver/Safari or maintainer look acceptance is claimed.
 
 ## C8.6 - Radio groups and choice chips

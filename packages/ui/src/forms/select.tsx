@@ -26,7 +26,11 @@ type SelectTone = "default" | "inverse";
 type SelectProps<T extends string | number> = {
   value: T;
   options: SelectOption<T>[];
-  /** Called once per committed change with the option's own value. */
+  /**
+   * Called once per committed change with the option's own value. A `value`
+   * that matches no option shows (and checks) the first option, but choosing
+   * that option is then no change and does not call `onChange`.
+   */
   onChange: (value: T) => void;
   /** Accessible name of the trigger and the list; shown as the eyebrow unless `hideLabel`. */
   label: string;
@@ -129,9 +133,6 @@ export function Select<T extends string | number>({
     contentRef.current = node;
     setMountedContent(node);
   }, []);
-  // The row the keyboard last made active (Radix also focuses rows under the pointer).
-  const activeRowRef = useRef<HTMLElement | null>(null);
-  const pointerFocusRef = useRef(false);
   // A press on the open trigger closes the panel; its click must not reopen it.
   const pressClosedRef = useRef(false);
   // Enter on a row commits and refocuses the trigger during the keydown; the
@@ -232,12 +233,17 @@ export function Select<T extends string | number>({
           // the panel is open or leaving. The trigger stays hit-testable, as
           // before: it keeps its hover look, a press closes the open panel and a
           // press during the exit reopens it.
+          // As before, a mouse opens the panel on release (click), not on press.
           onPointerDown={(event) => {
             pressClosedRef.current = open;
-            if (!open) return;
-            // Skip Radix's handler, which would keep the panel open.
-            event.preventDefault();
-            setOpen(false);
+            if (open) {
+              // Skip Radix's handler, which would keep the panel open.
+              event.preventDefault();
+              setOpen(false);
+            } else if (event.pointerType === "mouse") {
+              // Skip Radix's handler, which opens a mouse press at once.
+              event.preventDefault();
+            }
           }}
           onClick={(event) => {
             const suppress = pressClosedRef.current || enterCommitRef.current;
@@ -245,6 +251,9 @@ export function Select<T extends string | number>({
             enterCommitRef.current = false;
             // Skip Radix's handler, which would reopen the panel.
             if (suppress) event.preventDefault();
+            // Radix opens on the click for touch and pen; open here for every
+            // pointer, so a mouse release does not depend on its internals.
+            else if (!open) setOpen(true);
           }}
           className={cn(
             "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors in-data-[select-pointer]:outline-none",
@@ -306,13 +315,7 @@ export function Select<T extends string | number>({
               trigger.focus({ preventScroll: true });
           }}
           onPointerEnter={() => setHovering(true)}
-          onPointerLeave={() => {
-            setHovering(false);
-            // Radix drops focus to the panel when the pointer leaves a row; as
-            // before, the keyboard's active row takes it back.
-            const row = activeRowRef.current;
-            if (open && row?.isConnected) row.focus({ preventScroll: true });
-          }}
+          onPointerLeave={() => setHovering(false)}
           // Reversible transitions, as before: in over duration-base, out over
           // duration-quick. presence-hold-quick keeps closing content mounted
           // for the exit; on a top-side flip the panel moves the other way.
@@ -335,16 +338,11 @@ export function Select<T extends string | number>({
                   value={optionKey(option.value)}
                   textValue={option.label}
                   aria-describedby={hint}
-                  onPointerMove={() => {
-                    pointerFocusRef.current = true;
-                    queueMicrotask(() => {
-                      pointerFocusRef.current = false;
-                    });
-                  }}
-                  onFocus={(event) => {
-                    if (!pointerFocusRef.current)
-                      activeRowRef.current = event.currentTarget;
-                  }}
+                  // As before, the pointer only hovers rows: focus (the ring and
+                  // the Enter target) stays with the keyboard. Skip Radix's
+                  // focus on hover and its refocus when the pointer leaves.
+                  onPointerMove={(event) => event.preventDefault()}
+                  onPointerLeave={(event) => event.preventDefault()}
                   onKeyDown={(event) => {
                     if (event.key !== "Enter") return;
                     enterCommitRef.current = true;

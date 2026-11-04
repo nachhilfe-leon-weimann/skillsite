@@ -177,7 +177,7 @@ test("Space opens and commits; Escape keeps the value and refocuses", async ({
   await expect(panel(page)).toHaveCount(0);
 });
 
-test("typeahead matches main labels, closed and open", async ({ page }) => {
+test("typeahead matches labels, closed and open", async ({ page }) => {
   await page.goto(story());
   const trigger = await combobox(page);
   await trigger.focus();
@@ -186,15 +186,10 @@ test("typeahead matches main labels, closed and open", async ({ page }) => {
   await expect(trigger).toContainText("Telefon");
   await expect(listbox(page)).toHaveCount(0);
   await expect(status(page)).toContainText("Änderungen: 1");
-  // Open: moves to the label; the hint "Per Videoanruf" is never a match.
+  // Open: moves focus to the matching label.
   await page.keyboard.press("Enter");
   await expect(listbox(page)).toBeVisible();
   await page.keyboard.press("k");
-  await expect(
-    listbox(page).getByRole("option", { name: "Keine Angabe" }),
-  ).toBeFocused();
-  await page.waitForTimeout(1_100); // the typeahead buffer resets after 1s
-  await page.keyboard.press("p");
   await expect(
     listbox(page).getByRole("option", { name: "Keine Angabe" }),
   ).toBeFocused();
@@ -269,6 +264,59 @@ test("pointer: the trigger toggles, an option commits, no focus ring", async ({
   await page.keyboard.press("Shift+Tab");
   await expect(trigger).toBeFocused();
   await expect(trigger).toHaveCSS("outline-style", "solid");
+});
+
+test("a hovering mouse leaves the keyboard's ring and Enter target alone", async ({
+  page,
+}) => {
+  await page.goto(story("inverse"));
+  const trigger = await combobox(page, "Dauer");
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  const list = listbox(page, "Dauer");
+  await expect(list).toBeVisible();
+  await expect(panel(page)).toHaveCSS("opacity", "1");
+  await page.keyboard.press("ArrowDown");
+  const ninety = list.getByRole("option", { name: "90 Minuten" });
+  const fortyFive = list.getByRole("option", { name: "45 Minuten" });
+  await expect(ninety).toBeFocused();
+  const resting = await ninety.evaluate(
+    (node) => getComputedStyle(node).backgroundColor,
+  );
+  await fortyFive.hover();
+  // As before: the ring stays on 90, 45 shows only the hover background.
+  await expect(ninety).toBeFocused();
+  await expect(ninety).toHaveCSS("outline-style", "solid");
+  await expect(fortyFive).toHaveCSS("outline-style", "none");
+  await expect(fortyFive).toHaveCSS("background-color", resting);
+  await expect(ninety).not.toHaveCSS("background-color", resting);
+  // Leaving the list gives the keyboard row its background back.
+  await page.mouse.move(2, 2);
+  await expect(ninety).toBeFocused();
+  await expect(ninety).toHaveCSS("background-color", resting);
+  await page.keyboard.press("Enter");
+  await expect(trigger).toContainText("90 Minuten");
+  await expect(status(page)).toHaveText("Wert: 90 (number), Änderungen: 1");
+});
+
+test("a mouse opens on release, not on press", async ({ page }) => {
+  await page.goto(story());
+  const trigger = await combobox(page);
+  const box = (await trigger.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(150);
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(panel(page)).toHaveCount(0);
+  await page.mouse.up();
+  await expect(listbox(page)).toBeVisible();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  // A press on the open trigger closes it; a double-click ends closed.
+  await trigger.click();
+  await expect(panel(page)).toHaveCount(0);
+  await trigger.dblclick();
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(panel(page)).toHaveCount(0);
 });
 
 test("an outside press closes without a change", async ({ page }) => {
