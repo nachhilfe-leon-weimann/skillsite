@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { isolate, stubAvailability } from "./helpers";
+import { primaryCta } from "../src/content/site";
 
 type Motion = "translate" | "scale";
 
@@ -502,7 +503,7 @@ const mobileMenuMotion = (page: Page) =>
   page
     .getByRole("dialog", { name: "Menü" })
     .getByRole("link", { name: "Preise" })
-    .evaluate((link) => {
+    .evaluate((link, ctaHref) => {
       let node = link.parentElement;
       while (node && getComputedStyle(node).animationName === "none")
         node = node.parentElement;
@@ -512,10 +513,20 @@ const mobileMenuMotion = (page: Page) =>
         name: style.animationName,
         duration: style.animationDuration,
         easing: style.animationTimingFunction,
-        holdsCta: !!node.querySelector('a[href="/kontakt#kennenlernen"]'),
+        holdsCta: !!node.querySelector(`a[href="${ctaHref}"]`),
         isDialog: node.getAttribute("role") === "dialog",
       };
-    });
+    }, primaryCta.href);
+
+/** Whether `element` has an animated ancestor inside the dialog (or is animated itself). */
+const movesInDialog = (element: Locator) =>
+  element.evaluate((node) => {
+    for (let n: Element | null = node; n; n = n.parentElement) {
+      if (getComputedStyle(n).animationName !== "none") return true;
+      if (n.getAttribute("role") === "dialog") return false;
+    }
+    return false;
+  });
 
 /** After one frame: the dialog and its backdrop nodes still in the document. */
 const mobileMenuNodes = (page: Page) =>
@@ -547,6 +558,13 @@ test.describe("the mobile menu", () => {
       holdsCta: true,
       isDialog: false,
     });
+    // The header row stays still: neither the home link nor the close control moves.
+    expect(
+      await movesInDialog(menu.getByRole("link", { name: "Startseite" })),
+    ).toBe(false);
+    expect(
+      await movesInDialog(menu.getByRole("button", { name: "Menü" })),
+    ).toBe(false);
     // The modal's backdrop stays invisible: the menu paints its own background.
     const backdrop = page.locator("body > [data-state='open']:not([role])");
     await expect(backdrop).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");

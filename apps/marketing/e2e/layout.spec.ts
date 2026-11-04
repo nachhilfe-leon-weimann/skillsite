@@ -33,6 +33,13 @@ for (const width of [390, 1079]) {
   }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto("/");
+    const banner0 = page.getByRole("banner");
+    const homeBox = await banner0
+      .getByRole("link", { name: "Startseite" })
+      .boundingBox();
+    const openerBox = await banner0
+      .getByRole("button", { name: "Menü" })
+      .boundingBox();
     await page.getByRole("button", { name: "Menü" }).click();
     // The menu is a portalled dialog now; its header row and links fill it.
     const menu = page.getByRole("dialog", { name: "Menü" });
@@ -52,6 +59,13 @@ for (const width of [390, 1079]) {
       width,
       height: 800,
     });
+    // Its home link and close control sit exactly on the page header's.
+    expect(
+      await banner.getByRole("link", { name: "Startseite" }).boundingBox(),
+    ).toEqual(homeBox);
+    expect(
+      await banner.getByRole("button", { name: "Menü" }).boundingBox(),
+    ).toEqual(openerBox);
   });
 }
 

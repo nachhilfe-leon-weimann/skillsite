@@ -278,26 +278,38 @@ C8.4 verification on 2026-11-04: the previous navbar failed seventeen of the eig
 cases. Tab ran from the menu into the page and on to the footer, the page behind stayed in the accessibility tree,
 crossing to 1080px dropped focus to `<body>`, and history back with the menu open never announced the closed
 state, so the toolbar tint stayed in its menu state. The menu is now C8.2's modal Dialog (`layout="custom"`, named
-"Menü" by its close control). Its content repeats the header row (home link, close control) above the links, the
-"Online lernen" Collapsible and the CTA, all inside one `<header>`; the page header stays in place, `inert`, and
-Radix hides the page from AT, so one banner, home link and menu control exist for keyboard and AT. Radix owns
-Escape, focus containment and the scroll lock; the document Escape listener and the `useBodyScrollLock` call are
-gone. Opening keeps focus on the menu control, now the dialog's close control at the same place; Escape and the
-close control return focus to the menu button, past 1080px to the visible home link; a link leaves focus to the
-destination. The tint event fires on real state changes and once more when an open menu unmounts. Fourteen a11y
-cases at 390/1079px (containment over logo, close, links, nested platform links and CTA in both directions,
-names, landmark, `aria-current`, `aria-hidden`/inert background, Escape once, close control, four client
-navigations, history back, the event contract, repeated cycles without locks, focus guards or ghost tab stops, the
-1079/1080 crossing both ways with the desktop popover usable at once), two layout and two motion cases pass five
-times in a row; the thirty-three C8.3 navbar cases pass five times in a row. The custom-layout Dialog's backdrop
-no longer draws a scrim or fades out over the page on close (it still holds the scroll lock); a widget case covers
-it and failed before. Production screenshots against `main` at 390/1079px, light/dark, normal/reduced motion
-(click, keyboard and touch opening, frames during the fade-down and the disclosure, closing, scrolled pages) match
-in 70 of 76 states pixel for pixel; the dialog keeps the open header's backdrop blur, which keeps its text
-rendering. The six others differ in one check icon on `/preise` at 390px: on main, the header leaving the flow
-behind the menu shifts the page, which reveals it early; here the page beneath does not move. The plan's "existing
-`ios-toolbar-tint.tsx` contract tests" did not exist; the contract is checked in the marketing browser tests. No
-human VoiceOver/Safari or maintainer look acceptance is claimed; the manual Safari mobile check stays open.
+"Menü" by its close control). Its content repeats the header row (one shared component with the page header: home
+link, close control) above the links, the "Online lernen" Collapsible and the CTA, all inside one `<header>`; the
+page header stays in place, `inert`, and Radix hides the page from AT, so one banner, home link and menu control
+exist for keyboard and AT. Radix owns Escape, focus containment and the scroll lock; the document Escape listener
+and the `useBodyScrollLock` call are gone. Opening keeps focus on the menu control, now the dialog's close control
+at the same place; Escape and the close control return focus to the menu button, past 1080px to the visible home
+link. The home link on the home page keeps focus on the page header's home link, as on main. Any other menu link
+leaves focus on `<body>`; the tests pin that and the next Tab stop (the skip link after a route or same-URL
+change, the fragment target's next control after a fragment link). On main the next Tab after a route change
+reached the header's home link, because the menu was part of the header; here the sequential focus start point is
+the removed link in the dialog portal at the end of `<body>` (a maintainer decision in the PR). Box 3's "visible
+connected element" is thus covered for Escape, the close control, the crossing and the home link; after other
+links, focus is on `<body>` by design and the next Tab stop is visible. The tint event fires on real state
+changes and once more when an open menu unmounts. Seventeen a11y cases at 390/1079px (containment over logo, close,
+links, nested platform links and CTA in both directions, names, landmark, `aria-current`, `aria-hidden`/inert
+background, Escape once, close control, five client navigations with focus pinned, the home link on the home
+page by Enter and click, history back, the event contract, repeated cycles without locks, focus guards or ghost
+tab stops, the 1079/1080 crossing both ways with the desktop popover usable at once), two layout cases (the dialog
+fills the viewport; its home link and close control sit on the page header's) and two motion cases (fade-down of
+the links under a still header row) pass five times in a row; the thirty-three C8.3 navbar cases pass. The
+custom-layout Dialog's backdrop no longer draws a scrim or fades out over the page on close (it still holds the
+scroll lock); a widget case covers it and failed before. Production screenshots against `main` at 390/1079px,
+light/dark, normal/reduced motion (click, keyboard and touch opening, frames during the fade-down and the
+disclosure, closing, scrolled pages, the home link) match in 120 of 128 states of the independent review and 76
+of 88 of the implementer's; the dialog keeps the open header's backdrop blur, which keeps its text rendering. All
+other states show one general difference: on main the sticky header leaves the flow behind the open menu, so the
+page beneath shifts up 66px; a reveal whose trigger lies within 66px below the fold plays behind the menu (the
+statistics card on `/` at 1079x800, a check icon on `/preise` at 390x800, also `/preise` at 1079x420 with
+scrollbars), and a same-URL link can leave the page 66px up. Here the page beneath does not move, so neither
+happens. The plan's "existing `ios-toolbar-tint.tsx` contract tests" did not exist; the contract is checked in
+the marketing browser tests. No human VoiceOver/Safari or maintainer look acceptance is claimed; the manual
+Safari mobile check stays open.
 
 ## C8.5 - Select
 
