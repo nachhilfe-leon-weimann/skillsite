@@ -20,7 +20,7 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 ## Commands
 
 - `just dev` - the site (`http://localhost:3000`); `just test` - the tests only; `pnpm storybook` - the workbench.
-- `just check` - green before every push, as CI's `check`; run `just format` first, then `CAL_API_KEY= just check`.
+- `just check` - the full suite, green before every push; run `just format` first, then `CAL_API_KEY= just check`.
 - `just build` - production build and type check of `apps/marketing`; `just typecheck` covers the other packages;
   `just docker-build` / `just docker-run` - the production image.
 - `just smoke` - smoke test on the production build; `just widgets` - Storybook keyboard checks. Both need, once,
@@ -98,7 +98,9 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 A PR is done when every check on its last commit is green (`gh pr checks --watch`), the docs it affects changed in
 the same PR, and _How it was checked_ holds the evidence.
 
-- `just check` is green before every push; CI runs the same, plus a Docker build when Docker inputs change.
+- `just check` is green before every push and stays the full suite. CI scopes a pull request to the areas it
+  changes; shared changes and `main` run the full suite, the release PR repeats every browser test three times,
+  and image inputs add a Docker build.
 - CI sees no look and no content: the maintainer checks both by hand (E-12) from _How to check_.
 
 _How it was checked_ lists the commands actually run with their numbers (passed, failed, skipped) and names every

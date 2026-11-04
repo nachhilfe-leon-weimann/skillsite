@@ -24,8 +24,13 @@ ratchet-update:
 # `next build` type-checks the apps; `typecheck` covers the packages it does not (incl. stories).
 static-checks: format-check lint typecheck ratchet
 
-# Everything that must be green before a push; CI's `check` job runs the same.
+# The full suite, green before every push; CI scopes pull requests to the areas they change (ci.yml).
 check: static-checks test build smoke widgets
+
+# `check` with every browser test three times, to surface flaky tests (CI on the release PR).
+check-repeat: static-checks test build
+    pnpm --filter @skillsite/marketing e2e --repeat-each=3
+    pnpm --filter @skillsite/ui widgets --repeat-each=3
 
 # --- Site ---
 

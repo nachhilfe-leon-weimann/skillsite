@@ -1,5 +1,10 @@
 name: CI
 
+# A pull request runs only the checks its changed areas need. Everything else is a full run of `just check`:
+# a push to main, a manual run, the release PR, a shared change, or a filter that could not decide.
+# The release PR and a manual run repeat every browser test three times to surface flaky tests.
+# The ruleset requires the job `check`, which reports on every run.
+
 on:
   push:
     branches: ["main"]
@@ -14,9 +19,73 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+  changes:
+    name: Detect changes
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      full: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.shared == 'true' }}
+      repeat: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'release-please--') }}
+      website: ${{ steps.filter.outputs.website == 'true' }}
+      ui: ${{ steps.filter.outputs.ui == 'true' }}
+      docker: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.docker == 'true' }}
+    steps:
+      # Runs only on an ordinary pull request; skipped or failed, it leaves `full` set (fail safe).
+      # On a pull request the action lists the changed files through the API: no checkout needed.
+      - name: Map changed files to areas
+        id: filter
+        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--')
+        continue-on-error: true
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          # A file belongs to an area when it matches one of its patterns and none of its `!` patterns.
+          # A change only to Markdown or docs/ matches no area: it gets the format check alone.
+          predicate-quantifier: some-with-excludes
+          filters: |
+            website:
+              - 'apps/marketing/**'
+              - '!**/*.md'
+            ui:
+              - 'packages/ui/**'
+              - '!**/*.md'
+            shared:
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!apps/marketing/**'
+              - '!packages/ui/**'
+            # The runtime image holds only the build output: tests, stories and Storybook never reach it.
+            docker:
+              - 'Dockerfile'
+              - '.dockerignore'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - 'patches/**'
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/build.yml'
+              - 'apps/marketing/**'
+              - 'packages/**'
+              - '!**/*.md'
+              - '!**/*.test.*'
+              - '!**/e2e/**'
+              - '!**/*.stories.*'
+              - '!packages/ui/.storybook/**'
+
+  suite:
+    name: Checks
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ needs.changes.outputs.repeat == 'true' && 45 || 20 }}
+    env:
+      FULL: ${{ needs.changes.outputs.full }}
+      REPEAT: ${{ needs.changes.outputs.repeat }}
+      WEBSITE: ${{ needs.changes.outputs.website }}
+      UI: ${{ needs.changes.outputs.ui }}
 
     steps:
       - name: Checkout
@@ -41,41 +110,60 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install the Playwright browser
-        run: pnpm --filter @skillsite/marketing exec playwright install --with-deps chromium
+      # Both suites share one Playwright version (the lockfile resolves one) and run headless, so the headless
+      # shell is all they need. The runner image ships Chrome's system libraries: apt (`install-deps`, minutes on a
+      # slow mirror) runs only when a launch check shows they are missing.
+      - name: Resolve the Playwright version
+        id: playwright
+        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.UI == 'true'
+        run: echo "version=$(pnpm --filter @skillsite/marketing exec playwright --version | awk '{print $2}')" >> "${GITHUB_OUTPUT}"
 
-      - name: Run checks
+      - name: Cache the Playwright browser
+        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.UI == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}-chromium-headless-shell
+
+      - name: Install the Playwright browser
+        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.UI == 'true'
+        run: |
+          pnpm --filter @skillsite/marketing exec playwright install --only-shell chromium
+          if ! pnpm --filter @skillsite/marketing exec node -e "require('@playwright/test').chromium.launch().then((browser) => browser.close())"; then
+            echo "::warning::Chromium does not launch; installing its system libraries."
+            pnpm --filter @skillsite/marketing exec playwright install-deps chromium
+          fi
+
+      # Full run.
+      - name: Run the full suite
+        if: env.FULL == 'true' && env.REPEAT != 'true'
         run: just check
 
-  changes:
-    name: Detect Docker changes
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      docker: ${{ steps.filter.outputs.docker }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Run the full suite, every browser test three times
+        if: env.FULL == 'true' && env.REPEAT == 'true'
+        run: just check-repeat
 
-      - name: Check Docker inputs
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
-        id: filter
-        with:
-          filters: |
-            docker:
-              - '.dockerignore'
-              - 'Dockerfile'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/build.yml'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'turbo.json'
-              - 'apps/marketing/**'
-              - 'packages/**'
+      # Scoped run: the format check always, then what the changed areas need.
+      - name: Check formatting
+        if: env.FULL != 'true'
+        run: just format-check
+
+      - name: Lint and unit-test the website
+        if: env.FULL != 'true' && env.WEBSITE == 'true'
+        run: pnpm turbo run lint test --filter=@skillsite/marketing
+
+      - name: Lint, type-check and unit-test the UI package
+        if: env.FULL != 'true' && env.UI == 'true'
+        run: pnpm turbo run lint typecheck test --filter=@skillsite/ui
+
+      # The website consumes the UI package, so a change to either builds and smoke-tests it.
+      - name: Ratchet, build and smoke-test the website
+        if: env.FULL != 'true' && (env.WEBSITE == 'true' || env.UI == 'true')
+        run: just ratchet build smoke
+
+      - name: Run the widget checks
+        if: env.FULL != 'true' && env.UI == 'true'
+        run: just widgets
 
   docker-build:
     name: Docker build
@@ -101,3 +189,18 @@ jobs:
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # The required status check: it runs whatever changed and fails when a needed job failed or was
+  # cancelled; a skipped job counts as passed.
+  check:
+    needs: [changes, suite, docker-build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every needed job to pass or skip
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: ${RESULTS}"
+          [[ " ${RESULTS} " != *" failure "* && " ${RESULTS} " != *" cancelled "* ]]
