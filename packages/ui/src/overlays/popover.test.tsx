@@ -192,3 +192,78 @@ test("an outside pointer interaction never sends focus back to the trigger", asy
     screen.getByRole("button", { name: "Plattformen" }),
   );
 });
+
+test("the container is not focusable, so a click on its padding moves no focus there", async () => {
+  render(<Example initialOpen />);
+  const dialog = await screen.findByRole("dialog");
+  expect(dialog.hasAttribute("tabindex")).toBe(false);
+});
+
+test("hitTestableExit keeps a closing panel hit-testable until it has faded out; the wrapper never is", async () => {
+  // Stand in for presence-hold: closed content reports an exit animation, so
+  // Radix presence keeps it mounted until that animation ends.
+  const getStyle = globalThis.getComputedStyle;
+  const spy = vi
+    .spyOn(globalThis, "getComputedStyle")
+    .mockImplementation((element, pseudo) => {
+      const style = getStyle(element, pseudo);
+      if (element.getAttribute("role") !== "dialog") return style;
+      return new Proxy(style, {
+        get: (target, key) =>
+          key === "animationName"
+            ? element.getAttribute("data-state") === "closed"
+              ? "hold"
+              : "none"
+            : Reflect.get(target, key, target),
+      });
+    });
+  function Controlled({ open, hit }: { open: boolean; hit: boolean }) {
+    return (
+      <Popover open={open} onOpenChange={() => {}}>
+        <PopoverTrigger>
+          <button>Plattformen</button>
+        </PopoverTrigger>
+        <PopoverContent label="Plattformen" hitTestableExit={hit}>
+          <a href="#eins">Eins</a>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+  try {
+    for (const hit of [true, false]) {
+      const { rerender, unmount } = render(<Controlled open hit={hit} />);
+      const dialog = await screen.findByRole("dialog");
+      const wrapper = dialog.parentElement!;
+      expect(wrapper.hasAttribute("data-radix-popper-content-wrapper")).toBe(
+        true,
+      );
+      expect(wrapper.style.pointerEvents).toBe("none");
+      expect(dialog.style.pointerEvents).toBe("auto");
+      rerender(<Controlled open={false} hit={hit} />);
+      // Still mounted while it exits; links inert either way.
+      expect(dialog.isConnected).toBe(true);
+      expect(dialog.getAttribute("data-state")).toBe("closed");
+      expect((dialog.firstElementChild as HTMLElement).inert).toBe(true);
+      expect(dialog.style.pointerEvents).toBe(hit ? "auto" : "none");
+      expect(wrapper.style.pointerEvents).toBe("none");
+      // Once faded out (its opacity transition ended), it takes no hits.
+      const ended = (target: Element, propertyName: string) =>
+        target.dispatchEvent(
+          Object.assign(new Event("transitionend", { bubbles: true }), {
+            propertyName,
+          }),
+        );
+      ended(dialog.querySelector("a")!, "opacity");
+      ended(dialog, "translate");
+      expect(dialog.style.pointerEvents).toBe(hit ? "auto" : "none");
+      ended(dialog, "opacity");
+      expect(dialog.style.pointerEvents).toBe("none");
+      // A reopen takes hits again.
+      rerender(<Controlled open hit={hit} />);
+      expect(dialog.style.pointerEvents).toBe("auto");
+      unmount();
+    }
+  } finally {
+    spy.mockRestore();
+  }
+});

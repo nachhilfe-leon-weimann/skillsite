@@ -70,9 +70,9 @@ type PopoverContentProps = {
   className?: string;
   align?: "start" | "center" | "end";
   /**
-   * While closing, keep the panel's area hit-testable (its links stay inert), so
-   * a hover consumer can reopen it when the pointer comes back. Otherwise the
-   * closing panel lets every pointer hit through to the page.
+   * While closing, keep the panel hit-testable until it has faded out (its links
+   * stay inert), so a hover consumer can reopen it when the pointer comes back.
+   * Otherwise the closing panel lets every pointer hit through to the page.
    */
   hitTestableExit?: boolean;
   /** Prevent default to let navigation choose its own focus destination. */
@@ -108,6 +108,7 @@ export function PopoverContent({
   const surfaceRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef(false);
   const interactedOutsideRef = useRef(false);
+  const fadedRef = useRef(false);
 
   // Closed content leaves the tab order and the accessibility tree at once, also
   // while its exit transition runs. Note whether it held focus first, before
@@ -131,24 +132,36 @@ export function PopoverContent({
         !interactedOutsideRef.current &&
         (content.contains(activeElement) ||
           (restoreFocusRef.current && activeElement === body));
-      // The container itself is not inert (its area may stay hit-testable).
-      if (activeElement === content) content.blur();
     }
     surface.inert = !open;
     if (open) content.removeAttribute("aria-hidden");
     else content.setAttribute("aria-hidden", "true");
   }, [open, mountedContent]);
 
-  // A closing panel either passes pointer hits through - Radix's positioning
-  // wrapper included - or, for a hover consumer, keeps its area hit-testable.
+  // Only the content takes pointer hits, never Radix's positioning wrapper. A
+  // closing panel either passes hits through at once or, for a hover consumer,
+  // takes them until it has faded out, as on main, where visibility turns hidden
+  // on the frame the opacity transition ends. Here the exit starts between frames
+  // (Radix presence reads the style at once), and Chrome may then start the
+  // visibility transition a frame after opacity, so the end of the opacity
+  // transition decides.
   useLayoutEffect(() => {
     const content = contentRef.current;
     if (!content) return;
-    const passThrough = !open && !hitTestableExit;
-    content.style.pointerEvents = passThrough ? "none" : "";
     const wrapper = content.parentElement;
     if (wrapper?.hasAttribute("data-radix-popper-content-wrapper"))
-      wrapper.style.pointerEvents = passThrough ? "none" : "";
+      wrapper.style.pointerEvents = "none";
+    if (open) fadedRef.current = false;
+    const hitTestable = open || (hitTestableExit && !fadedRef.current);
+    content.style.pointerEvents = hitTestable ? "auto" : "none";
+    if (open || !hitTestable) return;
+    const onTransitionEnd = (event: TransitionEvent) => {
+      if (event.target !== content || event.propertyName !== "opacity") return;
+      fadedRef.current = true;
+      content.style.pointerEvents = "none";
+    };
+    content.addEventListener("transitionend", onTransitionEnd);
+    return () => content.removeEventListener("transitionend", onTransitionEnd);
   }, [open, hitTestableExit, mountedContent]);
 
   const holdsFocus = () =>
@@ -161,9 +174,14 @@ export function PopoverContent({
       side="bottom"
       align={align}
       onOpenAutoFocus={(event) => event.preventDefault()}
+      // Radix makes the container focusable; a click on the panel's padding
+      // would focus it. Like a plain panel, it moves no focus there.
+      tabIndex={undefined}
       onInteractOutside={(event) => {
-        if (!triggerRef.current?.contains(event.target as Node))
-          interactedOutsideRef.current = true;
+        if (triggerRef.current?.contains(event.target as Node)) return;
+        // Also forget a focus return noted earlier, should the panel reopen.
+        interactedOutsideRef.current = true;
+        restoreFocusRef.current = false;
       }}
       onEscapeKeyDown={() => {
         if (holdsFocus()) triggerRef.current?.focus({ preventScroll: true });
@@ -190,8 +208,9 @@ export function PopoverContent({
           trigger.focus({ preventScroll: true });
       }}
       // Reversible transitions, so an interrupted open or close turns around
-      // smoothly; presence-hold keeps closing content mounted until it ends.
-      className="z-raised outline-none transition-[opacity,translate] duration-base ease-flow not-data-entered:translate-y-2 not-data-entered:opacity-0 data-[side=bottom]:pt-1.5 data-[side=top]:pb-1.5 data-[state=closed]:translate-y-2 data-[state=closed]:opacity-0 data-[state=closed]:animate-presence-hold"
+      // smoothly; visibility turns hidden when the exit ends, however short.
+      // presence-hold keeps closing content mounted for the full exit duration.
+      className="z-raised outline-none transition-[opacity,translate,visibility] duration-base ease-flow not-data-entered:invisible not-data-entered:translate-y-2 not-data-entered:opacity-0 data-[side=bottom]:pt-1.5 data-[side=top]:pb-1.5 data-[state=closed]:invisible data-[state=closed]:translate-y-2 data-[state=closed]:opacity-0 data-[state=closed]:animate-presence-hold"
     >
       <div
         ref={surfaceRef}

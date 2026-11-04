@@ -304,6 +304,157 @@ test.describe("the navbar popover", () => {
     await expect(trigger).toBeFocused();
   });
 
+  // Main's panel turns hidden when its (shortened) exit transition ends, so a
+  // panel that has faded out takes no hits, even while presence still holds it.
+  test("a panel faded out after a short hover takes no hits", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    const box = (await platformTrigger(page).boundingBox())!;
+    await platformTrigger(page).click();
+    await expect(platformPopover(page)).toHaveCSS("opacity", "1");
+    const panelBox = (await platformPopover(page).boundingBox())!;
+    await page.keyboard.press("Escape");
+    await panelGone(page);
+    await page.mouse.move(640, 500);
+    const area = {
+      x: panelBox.x + panelBox.width / 2,
+      y: panelBox.y + panelBox.height / 2,
+    };
+    const samples = await samplePanel(page, async () => {
+      // A hover of about one frame.
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.waitForFunction(() =>
+        document.querySelector(
+          "[data-radix-popper-content-wrapper] > [data-state='open']",
+        ),
+      );
+      await page.evaluate(
+        () => new Promise((resolve) => requestAnimationFrame(resolve)),
+      );
+      await page.mouse.move(640, 500);
+      // Exactly 0 only once the exit transition has ended.
+      await page.waitForFunction(() => {
+        const panel = document.querySelector(
+          "[data-radix-popper-content-wrapper] > *",
+        );
+        return (
+          panel?.getAttribute("data-state") === "closed" &&
+          getComputedStyle(panel).opacity === "0"
+        );
+      });
+      await expect(page.locator("[role='dialog']")).toHaveCount(1);
+      expect(
+        await page.evaluate(
+          ({ x, y }) =>
+            !!document
+              .elementFromPoint(x, y)
+              ?.closest("[data-radix-popper-content-wrapper]"),
+          area,
+        ),
+      ).toBe(false);
+      // Entering its area does not bring it back: it unmounts.
+      await page.mouse.move(area.x, area.y);
+      await panelGone(page);
+    });
+    const closed = samples.findIndex((sample) => !sample.open);
+    expect(closed).toBeGreaterThan(0);
+    expect(samples.slice(closed).filter((sample) => sample.open)).toEqual([]);
+  });
+
+  // An outside click during a hover exit, with focus inside as it began, leaves
+  // focus on <body>: also across a reopen and a second leave.
+  for (const reopen of [false, true]) {
+    test(`a plain-text click during a hover exit keeps focus off the trigger${reopen ? " across a reopen" : ""}`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      const trigger = platformTrigger(page);
+      const box = (await trigger.boundingBox())!;
+      const text = (await page
+        .getByRole("main")
+        .locator("p")
+        .first()
+        .boundingBox())!;
+      const panel = page.locator("[role='dialog']");
+      await samplePanel(page, async () => {
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await panelOpacity(page, "above", 0.99);
+        await trigger.focus();
+        await page.keyboard.press("Tab");
+        await expect(
+          platformPopover(page).getByRole("link").first(),
+        ).toBeFocused();
+        await page.mouse.move(text.x + 2, text.y + 2);
+        await expect(panel).toHaveAttribute("data-state", "closed");
+        await page.mouse.down();
+        await page.mouse.up();
+        // The click landed during the exit.
+        await expect(panel).toHaveCount(1);
+        if (reopen) {
+          await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+          await expect(panel).toHaveAttribute("data-state", "open");
+          await page.mouse.move(640, 500);
+        }
+        await panelGone(page);
+      });
+      await page.evaluate(
+        () => new Promise((resolve) => setTimeout(resolve, 100)),
+      );
+      expect(
+        await page.evaluate(() => document.activeElement === document.body),
+      ).toBe(true);
+    });
+  }
+
+  // As on main, a panel closed with the pointer elsewhere stays hit-testable while
+  // it fades, so the pointer coming back onto it reopens it.
+  for (const close of ["an outside click", "Tab"]) {
+    test(`after ${close} with the pointer elsewhere, re-entry onto the fading panel reopens it`, async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      const trigger = platformTrigger(page);
+      const text = (await page
+        .getByRole("main")
+        .locator("p")
+        .first()
+        .boundingBox())!;
+      await page.mouse.move(text.x + 2, text.y + 2);
+      let link = text;
+      const samples = await samplePanel(page, async () => {
+        await trigger.focus();
+        await page.keyboard.press("Enter");
+        await panelOpacity(page, "above", 0.99);
+        link = (await platformPopover(page)
+          .getByRole("link", { name: /^Termin buchen/ })
+          .boundingBox())!;
+        const panel = page.locator("[role='dialog']");
+        if (close === "Tab") {
+          for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
+        } else {
+          await page.mouse.down();
+          await page.mouse.up();
+        }
+        await expect(panel).toHaveAttribute("data-state", "closed");
+        await panelOpacity(page, "below", 0.7);
+        await page.mouse.move(
+          link.x + link.width / 2,
+          link.y + link.height / 2,
+        );
+        await expect(panel).toHaveAttribute("data-state", "open");
+        await panelOpacity(page, "above", 0.99);
+      });
+      expect(reversals(samples)).toEqual([]);
+      const reopened = samples.findLastIndex((sample) => !sample.open) + 1;
+      expect(reopened).toBeGreaterThan(0);
+      expect(samples[reopened]!.opacity).toBeGreaterThan(0.3);
+    });
+  }
+
   test("is inert at once while it falls out", async ({ page }) => {
     await page.goto("/");
     await platformTrigger(page).click();

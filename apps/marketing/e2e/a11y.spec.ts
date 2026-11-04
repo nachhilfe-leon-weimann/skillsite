@@ -154,6 +154,8 @@ test.describe("the desktop platform popover", () => {
     await page.goto("/");
     await trigger(page).focus();
     await page.keyboard.press("Enter");
+    // As on main, the links become focusable once the entrance has begun.
+    await expect(popover(page)).toBeVisible();
     await page.keyboard.press("Tab");
     await expect(popover(page).getByRole("link").first()).toBeFocused();
     await page.keyboard.press("Escape");
@@ -183,6 +185,23 @@ test.describe("the desktop platform popover", () => {
     await expect(outside).toHaveAttribute("aria-expanded", "true");
   });
 
+  test("a click on the panel's padding keeps it open and moves no focus there", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await trigger(page).click();
+    await expect(trigger(page)).toBeFocused();
+    const card = (await popover(page).locator("> div").boundingBox())!;
+    // The card's 8px padding, beside the links.
+    await page.mouse.click(card.x + 4, card.y + card.height / 2);
+    await expect(popover(page)).toBeVisible();
+    await expect(popover(page)).toHaveAttribute("data-state", "open");
+    // As on main, a click on a non-focusable panel only blurs the trigger.
+    expect(
+      await page.evaluate(() => document.activeElement === document.body),
+    ).toBe(true);
+  });
+
   for (const opening of ["keyboard", "hover"]) {
     test(`a click on plain text outside a ${opening}-opened panel never refocuses the trigger`, async ({
       page,
@@ -197,6 +216,7 @@ test.describe("the desktop platform popover", () => {
       } else {
         await trigger(page).focus();
         await page.keyboard.press("Enter");
+        await expect(popover(page)).toBeVisible();
       }
       await page.keyboard.press("Tab");
       await expect(popover(page).getByRole("link").first()).toBeFocused();

@@ -18,6 +18,22 @@ const links = [
   { label: "Termin buchen", note: "Freie Slots im Kalender" },
 ];
 
+function PanelLinks({ onNavigate }: { onNavigate: () => void }) {
+  return links.map((link) => (
+    <Button
+      asChild
+      key={link.label}
+      variant="ghost"
+      className="flex flex-col items-start gap-0.5 rounded-xl px-3 py-2.5"
+    >
+      <a href={`#${link.label}`} onClick={onNavigate}>
+        <span className="text-body font-semibold text-ink">{link.label}</span>
+        <span className="text-caption text-ink-soft">{link.note}</span>
+      </a>
+    </Button>
+  ));
+}
+
 function Example({ edge = false }: { edge?: boolean }) {
   const [open, setOpen] = useState(false);
   const [closes, setCloses] = useState(0);
@@ -46,23 +62,7 @@ function Example({ edge = false }: { edge?: boolean }) {
             align="end"
             className="flex w-64 flex-col gap-0.5"
           >
-            {links.map((link) => (
-              <Button
-                asChild
-                key={link.label}
-                variant="ghost"
-                className="flex flex-col items-start gap-0.5 rounded-xl px-3 py-2.5"
-              >
-                <a href={`#${link.label}`} onClick={() => setOpen(false)}>
-                  <span className="text-body font-semibold text-ink">
-                    {link.label}
-                  </span>
-                  <span className="text-caption text-ink-soft">
-                    {link.note}
-                  </span>
-                </a>
-              </Button>
-            ))}
+            <PanelLinks onNavigate={() => setOpen(false)} />
           </PopoverContent>
         </Popover>
         <Button variant="primary">Danach</Button>
@@ -81,3 +81,34 @@ export const ViewportEdge: Story = {
   parameters: { layout: "fullscreen" },
   render: () => <Example edge />,
 };
+
+function HoverExample() {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div className="flex justify-end p-6">
+      <div
+        onPointerEnter={() => setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
+      >
+        <Popover open={hovered} onOpenChange={setHovered}>
+          <PopoverTrigger>
+            <Button variant="ghost">Plattformen</Button>
+          </PopoverTrigger>
+          <PopoverContent
+            label="Plattformen"
+            align="end"
+            className="flex w-64 flex-col gap-0.5"
+            hitTestableExit
+          >
+            <PanelLinks onNavigate={() => setHovered(false)} />
+          </PopoverContent>
+        </Popover>
+      </div>
+    </div>
+  );
+}
+
+// A hover consumer: the panel opens while the pointer is over the trigger or the
+// panel. With `hitTestableExit`, the fading panel still catches the pointer, so
+// coming back onto it before it has faded out turns it around.
+export const HoverExit: Story = { render: () => <HoverExample /> };

@@ -199,7 +199,8 @@ function PlatformDropdown({
   const [hovered, setHovered] = useState(false);
   // After a close, a still-hovering pointer must leave before it reopens the panel.
   const [hoverSuppressed, setHoverSuppressed] = useState(false);
-  // Set by a close other than a hover leave: that exit lets the pointer through.
+  // Set by a close that suppresses a hovering pointer (Escape, a trigger or link
+  // click under it): that exit lets the pointer through to the page.
   const [passThroughExit, setPassThroughExit] = useState(false);
   const navigatingRef = useRef(false);
   const open = pinned || (hovered && !hoverSuppressed);
@@ -207,7 +208,7 @@ function PlatformDropdown({
   const close = () => {
     setPinned(false);
     setHoverSuppressed(true);
-    setPassThroughExit(true);
+    setPassThroughExit(hovered);
   };
   const pin = () => {
     setPinned(true);
@@ -259,8 +260,8 @@ function PlatformDropdown({
           label="Online lernen"
           align="end"
           className="flex w-64 flex-col gap-0.5"
-          // After a hover leave the fading panel still catches the pointer, so
-          // coming back onto it turns it around; other closes pass through.
+          // As on main, the fading panel still catches the pointer, so coming
+          // back onto it turns it around; a suppressed close passes through.
           hitTestableExit={!passThroughExit}
           onCloseAutoFocus={(event) => {
             // A link click navigates: the destination owns focus.
