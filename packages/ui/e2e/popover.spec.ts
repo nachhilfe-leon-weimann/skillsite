@@ -242,9 +242,11 @@ test("with hitTestableExit a panel faded out after a short hover takes no hits",
   await expect(panel).toHaveCount(0, { timeout: 10_000 });
 });
 
-test("a hover close with focus inside returns focus to the trigger, also across a reopen during the exit", async ({
-  page,
-}) => {
+/**
+ * Opens the hover story's panel by pointer and moves focus onto its first link;
+ * the pointer rests on the trigger's centre, which it returns.
+ */
+async function hoverOpenWithFocusInside(page: Page) {
   await page.goto(story("hover-exit"));
   const box = (await trigger(page).boundingBox())!;
   const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -253,26 +255,59 @@ test("a hover close with focus inside returns focus to the trigger, also across 
   await trigger(page).focus();
   await page.keyboard.press("Tab");
   await expect(popover(page).getByRole("link").first()).toBeFocused();
+  return centre;
+}
+
+const focusOnBody = (page: Page) =>
+  page.evaluate(() => document.activeElement === document.body);
+
+test("a hover close with focus inside returns focus to the trigger, also across a reopen during the exit", async ({
+  page,
+}) => {
+  const centre = await hoverOpenWithFocusInside(page);
 
   // The pointer leaves with focus inside; the closed panel drops that focus.
   const release = await holdExit(page);
   await page.mouse.move(10, 10);
   const panel = page.locator("[role='dialog']");
   await expect(panel).toHaveAttribute("data-state", "closed");
-  await expect
-    .poll(() => page.evaluate(() => document.activeElement === document.body))
-    .toBe(true);
+  await expect.poll(() => focusOnBody(page)).toBe(true);
   // Back onto the trigger while the exit is held: it reopens, moving no focus.
   await page.mouse.move(centre.x, centre.y);
   await expect(panel).toHaveAttribute("data-state", "open");
   await release();
-  expect(
-    await page.evaluate(() => document.activeElement === document.body),
-    "a reopen moves no focus",
-  ).toBe(true);
+  expect(await focusOnBody(page), "a reopen moves no focus").toBe(true);
 
   // The next leave closes it; after the exit, focus is back on the trigger.
   await page.mouse.move(10, 10);
   await expect(panel).toHaveCount(0);
   await expect(trigger(page)).toBeFocused();
+});
+
+test("an outside press during a hover exit cancels the focus return, also across a reopen", async ({
+  page,
+}) => {
+  const centre = await hoverOpenWithFocusInside(page);
+
+  // Leave with focus inside, then press outside while the exit is held.
+  const release = await holdExit(page);
+  await page.mouse.move(10, 10);
+  const panel = page.locator("[role='dialog']");
+  await expect(panel).toHaveAttribute("data-state", "closed");
+  await page.mouse.down();
+  await page.mouse.up();
+  // Reopen during the exit, then leave again and let the panel unmount.
+  await page.mouse.move(centre.x, centre.y);
+  await expect(panel).toHaveAttribute("data-state", "open");
+  await release();
+  await page.mouse.move(10, 10);
+  await expect(panel).toHaveCount(0);
+  // Radix moves the close focus in a task after the unmount; two frames on, it has.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+  expect(await focusOnBody(page), "focus stays off the trigger").toBe(true);
 });
