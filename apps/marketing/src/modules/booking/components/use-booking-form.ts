@@ -6,9 +6,9 @@ import {
   bookingEvents,
   type BookingDraft,
   type BookingEventKey,
-} from "@/lib/booking/config";
-import { emptyValueFor, type FieldValue } from "@/lib/booking/fields";
-import { validateBookingValues } from "@/lib/booking/validation";
+} from "../model/config";
+import { emptyValueFor, type FieldValue } from "../model/fields";
+import { validateBookingValues } from "../model/validation";
 
 /** Initial form state: empty per field, radios default to their first option. */
 function initialValues(

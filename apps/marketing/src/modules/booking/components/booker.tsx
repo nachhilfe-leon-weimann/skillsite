@@ -31,15 +31,11 @@ import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
-import {
-  bookingWindow,
-  monthKey,
-  monthsBetween,
-} from "@/components/booking/booker-calendar";
-import { BookingForm } from "@/components/booking/booking-form";
+import { bookingWindow, monthKey, monthsBetween } from "./booker-calendar";
+import { BookingForm } from "./booking-form";
 import { bookerText } from "@/content/booking";
-import { requestBooking } from "@/lib/booking/actions";
-import { withFillDuration } from "@/lib/booking/anti-spam";
+import { requestBooking } from "../server/actions";
+import { withFillDuration } from "../model/anti-spam";
 import {
   BOOKING_TIMEZONE,
   bookingEvents,
@@ -49,8 +45,8 @@ import {
   type BookingEventKey,
   type BookingSlot,
   type SubmitFailureReason,
-} from "@/lib/booking/config";
-import { bookingToday, shownMonth } from "@/lib/booking/dates";
+} from "../model/config";
+import { bookingToday, shownMonth } from "../model/dates";
 import { routes } from "@/lib/routes";
 import { trackEvent } from "@/lib/analytics";
 

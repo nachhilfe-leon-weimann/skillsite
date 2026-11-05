@@ -1,7 +1,7 @@
 "use client";
 
 import { RadioGroup } from "@skillsite/ui/forms/radio-group";
-import type { FieldDef } from "@/lib/booking/fields";
+import type { FieldDef } from "../../model/fields";
 
 /** Single-choice radio group as selectable rows (e.g. the platform choice). */
 export function RadioField({

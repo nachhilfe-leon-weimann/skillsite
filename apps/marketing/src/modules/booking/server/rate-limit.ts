@@ -1,4 +1,4 @@
-import { ANTI_SPAM } from "@/lib/booking/config";
+import { ANTI_SPAM } from "../model/config";
 
 export type RateLimitResult =
   { ok: true } | { ok: false; retryAfterMs: number };

@@ -3,9 +3,8 @@ import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { ArrowLink } from "@skillsite/ui/primitives/link";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Text } from "@skillsite/ui/typography/text";
-import { Booker } from "@/components/booking/booker";
+import { Booker, bookingToday } from "@/modules/booking";
 import { CtaSection } from "@/components/sections/cta-section";
-import { bookingToday } from "@/lib/booking/dates";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
 

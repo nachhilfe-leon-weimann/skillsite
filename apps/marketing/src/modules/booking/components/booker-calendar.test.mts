@@ -1,11 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import {
-  bookingWindow,
-  monthKey,
-  monthsBetween,
-} from "@/components/booking/booker-calendar";
-import { bookingToday, shownMonth } from "@/lib/booking/dates";
+import { bookingWindow, monthKey, monthsBetween } from "./booker-calendar";
+import { bookingToday, shownMonth } from "../model/dates";
 
 afterEach(() => {
   vi.useRealTimers();

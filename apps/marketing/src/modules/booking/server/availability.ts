@@ -5,9 +5,9 @@ import {
   type AvailabilityResponse,
   type BookingEventKey,
   type DayAvailability,
-} from "@/lib/booking/config";
-import { fetchCalSlots, type CalSlotsData } from "@/lib/booking/cal/client";
-import { bookingToday, daysInMonth, pad } from "@/lib/booking/dates";
+} from "../model/config";
+import { fetchCalSlots, type CalSlotsData } from "./cal-client";
+import { bookingToday, daysInMonth, pad } from "../model/dates";
 import { serverEnv } from "@/lib/env";
 
 /** Turn Cal's raw slot map into displayable, sorted days (Berlin "HH:mm"). */

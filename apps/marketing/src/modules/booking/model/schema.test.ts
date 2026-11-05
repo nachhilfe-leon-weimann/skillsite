@@ -1,12 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 
-import { FIELD_LIMITS, type BookingSubmission } from "@/lib/booking/config";
-import {
-  checkBookingSubmission,
-  MalformedSubmissionError,
-} from "@/lib/booking/schema";
-import { validateBookingValues } from "@/lib/booking/validation";
+import { FIELD_LIMITS, type BookingSubmission } from "./config";
+import { checkBookingSubmission, MalformedSubmissionError } from "./schema";
+import { validateBookingValues } from "./validation";
 
 const firstMeeting = {
   firstName: "Max",

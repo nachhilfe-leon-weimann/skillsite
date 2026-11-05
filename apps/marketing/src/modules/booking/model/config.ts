@@ -1,5 +1,5 @@
 import { subjects } from "@/content/subjects";
-import type { FieldDef, FieldOption, FieldValue } from "@/lib/booking/fields";
+import type { FieldDef, FieldOption, FieldValue } from "./fields";
 
 export const BOOKING_TIMEZONE = "Europe/Berlin";
 

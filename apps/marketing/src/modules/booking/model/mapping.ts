@@ -1,15 +1,7 @@
-import {
-  bookingEvents,
-  calUsername,
-  type BookingSubmission,
-} from "@/lib/booking/config";
-import {
-  isFieldEmpty,
-  isMultiValue,
-  type FieldValue,
-} from "@/lib/booking/fields";
+import { bookingEvents, calUsername, type BookingSubmission } from "./config";
+import { isFieldEmpty, isMultiValue, type FieldValue } from "./fields";
 import { agbEffectiveDate } from "@/content/agb";
-import { toE164 } from "@/lib/booking/validation";
+import { toE164 } from "./validation";
 
 const asString = (value: FieldValue | undefined): string =>
   value == null ? "" : isMultiValue(value) ? value.join(", ") : value;
