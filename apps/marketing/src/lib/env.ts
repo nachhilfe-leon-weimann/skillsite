@@ -1,6 +1,6 @@
 import "server-only";
 
-import { z } from "zod/mini";
+import * as z from "zod/mini";
 
 /**
  * The app's runtime environment, read in one place. `instrumentation.ts`

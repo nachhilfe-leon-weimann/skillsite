@@ -1,4 +1,4 @@
-import { z } from "zod/mini";
+import * as z from "zod/mini";
 
 import {
   bookingEvents,
@@ -46,7 +46,7 @@ function assertValueShape(field: FieldDef) {
       return value;
     }
     throw new MalformedSubmissionError(
-      `Field ${field.key} holds a ${typeof value}, not text or a selection.`,
+      `Field ${field.key} holds a value of type ${typeof value}, not text or a selection.`,
     );
   };
 }
@@ -182,13 +182,16 @@ const agreementsSchema = preprocess(
  */
 export const bookingSubmissionSchema = z
   .looseObject({
-    event: z.custom<BookingEventKey>((event) =>
-      Object.hasOwn(bookingEvents, event as PropertyKey),
+    // `abort` makes a failed event or slot an aborting issue, and zod skips an
+    // object's checks below once its shape has one: the field checks never run
+    // for an event without fields.
+    event: z.custom<BookingEventKey>(
+      (event) => Object.hasOwn(bookingEvents, event as PropertyKey),
+      { abort: true },
     ),
-    slot: z.custom<string>((slot) => Boolean(slot)),
+    slot: z.custom<string>((slot) => Boolean(slot), { abort: true }),
     agreements: agreementsSchema,
   })
-  // Checks run only once event and slot passed, so the event's fields are known.
   .check(
     z.superRefine((submission, ctx) => {
       const values = bookingValuesSchema(submission.event).safeParse(
