@@ -446,10 +446,10 @@ renders Next's bare default page today. `error.tsx` keeps `reset` in D4; the swi
 
 **Acceptance**
 
-- [ ] A thrown error in a page renders the error boundary in the site's look; a thrown error in the root layout
+- [x] A thrown error in a page renders the error boundary in the site's look; a thrown error in the root layout
       renders `global-error.tsx` with fonts, styles, the stored theme and the tab title - spec box.
-- [ ] Evidence: all routes' HTML identical; the 307 smoke test green; no `loading.tsx` added.
-- [ ] PR body: the visible change (layout errors: bare Next page -> site error page with its tab title),
+- [x] Evidence: all routes' HTML identical; the 307 smoke test green; no `loading.tsx` added.
+- [x] PR body: the visible change (layout errors: bare Next page -> site error page with its tab title),
       screenshots light/dark.
 
 ## D4r - Retry from the error page
