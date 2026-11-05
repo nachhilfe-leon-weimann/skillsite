@@ -30,8 +30,9 @@ function useBookingToday(renderedToday: string) {
 /**
  * The free days of the shown month for an event and duration: it fetches them,
  * aborts a request that a newer one replaces, and while searching skips empty
- * months up to `MAX_MONTH_OFFSET`. A new duration is a new search: pass it
- * together with `restartSearch()`.
+ * months up to `MAX_MONTH_OFFSET`. A new duration is a new search: change it
+ * together with `restartSearch()`, which shows the loading state and skips
+ * empty months again; the new duration alone only refetches the shown month.
  *
  * @param onFirstFreeDay receives the soonest free day of each month that has
  *   one; the latest callback is used, and a new one never refetches.
