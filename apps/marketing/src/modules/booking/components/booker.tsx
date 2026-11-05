@@ -14,18 +14,17 @@ import {
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
 import { InfoRow } from "@skillsite/ui/primitives/info-row";
-import { Calendar } from "@skillsite/ui/forms/calendar";
 import { Select } from "@skillsite/ui/forms/select";
 import { CenteredState } from "@skillsite/ui/layout/centered-state";
 import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
-import { bookingWindow, monthKey, monthsBetween } from "./booker-calendar";
+import { BookingCalendar } from "./booking-calendar";
 import { BookingForm } from "./booking-form";
 import { TimeSlots } from "./time-slots";
 import { UnavailableNotice } from "./unavailable-notice";
-import { MAX_MONTH_OFFSET, useAvailability } from "./use-availability";
+import { useAvailability } from "./use-availability";
 import {
   useBookingSubmission,
   type BookingError,
@@ -33,7 +32,6 @@ import {
 } from "./use-booking-submission";
 import { bookerText } from "@/content/booking";
 import {
-  BOOKING_TIMEZONE,
   bookingEvents,
   type AvailabilityStatus,
   type BookingDraft,
@@ -366,25 +364,15 @@ function SelectStep({
     <div className="mx-auto flex w-full flex-1 flex-col justify-start motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
       <div className="grid gap-x-panel-booker-main gap-y-5 @4xl:grid-cols-[3fr_1fr]">
         <div ref={trackGridFocus}>
-          <Calendar
-            month={monthKey(shown)}
-            {...bookingWindow(shown, monthOffset, MAX_MONTH_OFFSET)}
-            // Every month change - the buttons and the keys that leave the
-            // month - takes the manual path: reset, no auto-advance.
-            onMonthChange={(month) => {
-              const delta = monthsBetween(shown, month);
-              if (delta !== 0) onChangeMonth(delta);
-            }}
-            selected={selectedDate}
-            onSelect={onSelectDate}
-            isSelectable={(date) => availableDates.has(date)}
-            busy={loading}
+          <BookingCalendar
             today={today}
-            timeZone={BOOKING_TIMEZONE}
-            locale="de-DE"
-            weekStartsOn={1}
-            previousMonthLabel={bookerText.calendar.previousMonth}
-            nextMonthLabel={bookerText.calendar.nextMonth}
+            shown={shown}
+            monthOffset={monthOffset}
+            loading={loading}
+            availableDates={availableDates}
+            selectedDate={selectedDate}
+            onSelectDate={onSelectDate}
+            onChangeMonth={onChangeMonth}
           />
         </div>
 
