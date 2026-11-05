@@ -9,7 +9,7 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | When you ...                                | Read                                                                                                                                                                                                                     |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                              |
-| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes), `components/` (`booking/`, `layout/`, `sections/`), `lib/` (`booking/`, `payment/`, routes, metadata, health)                                                                    |
+| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes), `components/` (`booking/`, `layout/`, `sections/`), `lib/` (`booking/`, routes, metadata, health), `modules/` (`payment/`, [module rules][module-rules])                         |
 | change visible text                         | `apps/marketing/src/content/` - all of it, in German                                                                                                                                                                     |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
 | decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
@@ -153,3 +153,4 @@ Every PR states `Review: deep | evidence`, telling the maintainer how closely to
   utility (`inline-doc`, `resize`) emits a stray rule - rename the identifier, never allow-list the rule.
 
 [agent-work]: https://github.com/nachhilfe-leon-weimann/skillforge/blob/main/docs/agent-work.md
+[module-rules]: docs/specs/foundation-refactor.md#target-shape
