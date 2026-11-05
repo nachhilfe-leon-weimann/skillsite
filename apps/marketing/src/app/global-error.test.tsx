@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, expect, test, vi } from "vitest";
 
+import { brandColors } from "@skillsite/ui/tokens/colors";
+
 import GlobalError from "./global-error";
 
 // next/font only runs inside the Next build; the classes stand in for its output.
@@ -45,6 +47,25 @@ test("a root layout error names the tab after the error", () => {
   expect(document.head.querySelector("title")?.textContent).toBe(
     "Ein Fehler ist aufgetreten – Nachhilfe Leon Weimann",
   );
+});
+
+test("a root layout error keeps the phone layout and the browser bar colours", () => {
+  const { head } = renderDocument();
+  const viewports = head.querySelectorAll('meta[name="viewport"]');
+  expect(viewports).toHaveLength(1);
+  expect(viewports[0]?.getAttribute("content")).toBe(
+    "width=device-width, initial-scale=1, viewport-fit=cover",
+  );
+  const themeColors = [...head.querySelectorAll('meta[name="theme-color"]')];
+  expect(
+    themeColors.map((meta) => [
+      meta.getAttribute("media"),
+      meta.getAttribute("content"),
+    ]),
+  ).toEqual([
+    ["(prefers-color-scheme: light)", brandColors.bg],
+    ["(prefers-color-scheme: dark)", brandColors.bgDark],
+  ]);
 });
 
 test("a root layout error shows the error page", () => {

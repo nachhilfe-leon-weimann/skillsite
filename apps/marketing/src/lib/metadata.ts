@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
+import { brandColors } from "@skillsite/ui/tokens/colors";
 import { brand } from "@/content/site";
 import { SITE_URL } from "@/lib/routes";
 
@@ -27,6 +28,27 @@ export function templatedTitle(title: string): string {
   // A replacer function, so `$&` and similar patterns in a title stay literal.
   return titleTemplate.replace("%s", () => title);
 }
+
+/**
+ * The root layout's viewport. `global-error.tsx` replaces the layout, where the
+ * `viewport` export does not reach, and renders the same tags from it.
+ */
+export const siteViewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: brandColors.bg },
+    { media: "(prefers-color-scheme: dark)", color: brandColors.bgDark },
+  ],
+} satisfies Viewport;
+
+/** `siteViewport` as the content of `<meta name="viewport">`, in Next's order. */
+export const siteViewportContent = [
+  `width=${siteViewport.width}`,
+  `initial-scale=${siteViewport.initialScale}`,
+  `viewport-fit=${siteViewport.viewportFit}`,
+].join(", ");
 
 /** The root layout's defaults; every route inherits these unless it sets its own. */
 export const siteMetadata: Metadata = {

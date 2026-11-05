@@ -4,8 +4,7 @@ import type { Metadata, Viewport } from "next";
 import { fontVariables } from "@skillsite/ui/shell/fonts";
 
 import "./globals.css";
-import { brandColors } from "@skillsite/ui/tokens/colors";
-import { siteMetadata } from "@/lib/metadata";
+import { siteMetadata, siteViewport } from "@/lib/metadata";
 import { ThemeProvider } from "@skillsite/ui/shell/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -15,13 +14,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = siteMetadata;
 
-export const viewport: Viewport = {
-  viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: brandColors.bg },
-    { media: "(prefers-color-scheme: dark)", color: brandColors.bgDark },
-  ],
-};
+export const viewport: Viewport = siteViewport;
 
 export default function RootLayout({
   children,

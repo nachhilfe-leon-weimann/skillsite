@@ -7,14 +7,19 @@ import "./globals.css";
 import { useEffect } from "react";
 
 import { ThemeProvider } from "@skillsite/ui/shell/theme-provider";
-import { templatedTitle } from "@/lib/metadata";
+import {
+  siteViewport,
+  siteViewportContent,
+  templatedTitle,
+} from "@/lib/metadata";
 
 import { ErrorState, errorEyebrow } from "./_components/error-state";
 
 /**
  * Root error boundary. It replaces the root layout when the layout itself fails,
- * so it renders its own document - the brand fonts, the global styles and the
- * stored theme - and leaves out navbar and footer, which belong to the layout.
+ * so it renders its own document - the brand fonts, the global styles, the
+ * stored theme and the layout's viewport - and leaves out navbar and footer,
+ * which belong to the layout.
  */
 export default function GlobalError({
   error,
@@ -35,7 +40,12 @@ export default function GlobalError({
       className={fontVariables}
     >
       <body className="flex min-h-dvh flex-col">
+        {/* React hoists these into <head>; the layout's metadata is gone with it. */}
         <title>{templatedTitle(errorEyebrow)}</title>
+        <meta name="viewport" content={siteViewportContent} />
+        {siteViewport.themeColor.map(({ media, color }) => (
+          <meta key={media} name="theme-color" media={media} content={color} />
+        ))}
         <ThemeProvider>
           <main id="main" className="flex-1">
             <ErrorState onRetry={reset} />
