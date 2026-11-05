@@ -26,7 +26,9 @@ const preview: Preview = {
   decorators: [
     (Story, context) => {
       const theme = context.globals.theme === "dark" ? "dark" : "light";
-      document.documentElement.dataset.theme = theme;
+      // A story whose own ThemeProvider sets `data-theme` (`ownsTheme`) keeps it.
+      if (!context.parameters.ownsTheme)
+        document.documentElement.dataset.theme = theme;
       document.documentElement.classList.add(...fontVariables.split(" "));
       return <Story />;
     },
