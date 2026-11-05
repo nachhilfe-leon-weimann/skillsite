@@ -1,8 +1,17 @@
+import { fileURLToPath } from "node:url";
+
 import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
-  // Resolve the `@/` alias of tsconfig.json, like the Next build does.
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    // Resolve the `@/` alias of tsconfig.json, like the Next build does.
+    tsconfigPaths: true,
+    alias: {
+      "server-only": fileURLToPath(
+        new URL("./vitest.server-only.ts", import.meta.url),
+      ),
+    },
+  },
   test: {
     projects: [
       {

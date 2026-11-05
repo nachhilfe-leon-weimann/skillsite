@@ -6,13 +6,10 @@ import { Button } from "@skillsite/ui/primitives/button";
 import { TextLink } from "@skillsite/ui/primitives/link";
 import { Text } from "@skillsite/ui/typography/text";
 import { contactDetails } from "@/content/contact";
-import {
-  buildPaypalUrl,
-  parsePaymentRequest,
-} from "@/lib/payment/invoice-link";
-import { describeLink, logPayment } from "@/lib/payment/log";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
+import { buildPaypalUrl, parsePaymentRequest } from "@/modules/payment";
+import { describeLink, logPayment } from "@/modules/payment/server";
 
 export const metadata: Metadata = pageMetadata({
   title: "Rechnung bezahlen",
