@@ -27,8 +27,12 @@ const preview: Preview = {
     (Story, context) => {
       const theme = context.globals.theme === "dark" ? "dark" : "light";
       // A story whose own ThemeProvider sets `data-theme` (`ownsTheme`) keeps it.
-      if (!context.parameters.ownsTheme)
+      // Every other story also drops the inline `color-scheme` that provider
+      // leaves on <html>, which would override the theme's own scheme.
+      if (!context.parameters.ownsTheme) {
         document.documentElement.dataset.theme = theme;
+        document.documentElement.style.removeProperty("color-scheme");
+      }
       document.documentElement.classList.add(...fontVariables.split(" "));
       return <Story />;
     },
