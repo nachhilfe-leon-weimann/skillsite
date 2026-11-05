@@ -18,7 +18,9 @@ const ui = JSON.parse(
  * (React, Next) to other copies than the app's, and two Reacts break every hook;
  * the Next build bundles one. So the package's peers resolve to the app's
  * copies here (`dedupe`), and the React libraries it pulls in are inlined, so
- * that their React imports take the same route.
+ * that their React imports take the same route. Known limit: an open `Dialog`
+ * still fails, as `react-remove-scroll` loads its CommonJS build, which requires
+ * the second React; pinning the package's React to the app's version removes it.
  */
 const uiReactLibraries = [
   ...Object.keys(ui.dependencies),
