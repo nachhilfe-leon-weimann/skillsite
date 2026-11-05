@@ -6,9 +6,13 @@ payment links printed on invoices - as a pnpm/Turborepo workspace with the Next.
 
 ## Development
 
-Needs Node 26, `pnpm`, `just` and an `apps/marketing/.env` (see `.env.example` next to it;
-`.env.local.example` documents what only local development needs). `just check`'s smoke test needs a
-one-time browser install: `pnpm --filter @skillsite/marketing exec playwright install chromium`.
+Needs Node 26, `pnpm` and `just`. `just check`'s smoke test needs a one-time browser install:
+`pnpm --filter @skillsite/marketing exec playwright install chromium`.
+
+The environment is optional. `apps/marketing/.env` (see `.env.example` next to it) holds `CAL_API_KEY`: without
+it, the booker shows its "unconfigured" state; with it, the key must start with `cal_live_` and contain no
+whitespace, or the server stops at start with an `[env]` line naming the rule. `.env.local.example` documents what
+only local development needs.
 
 | Command                                 |                                                                                           |
 | --------------------------------------- | ----------------------------------------------------------------------------------------- |
