@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BadgeEuro,
   CalendarX2,
@@ -20,10 +20,8 @@ import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
-import { BookingCalendar } from "./booking-calendar";
 import { BookingForm } from "./booking-form";
-import { TimeSlots } from "./time-slots";
-import { UnavailableNotice } from "./unavailable-notice";
+import { SelectStep } from "./select-step";
 import { useAvailability } from "./use-availability";
 import {
   useBookingSubmission,
@@ -33,7 +31,6 @@ import {
 import { bookerText } from "@/content/booking";
 import {
   bookingEvents,
-  type AvailabilityStatus,
   type BookingDraft,
   type BookingEventKey,
   type BookingSlot,
@@ -303,99 +300,6 @@ export function Booker({
         </AnimatedHeight>
       </div>
     </Card>
-  );
-}
-
-type SelectStepProps = {
-  today: string;
-  shown: { year: number; month: number };
-  monthOffset: number;
-  loading: boolean;
-  status: AvailabilityStatus;
-  onRetry: () => void;
-  availableDates: Set<string>;
-  selectedDate: string | null;
-  onSelectDate: (date: string) => void;
-  daySlots: BookingSlot[];
-  onPickSlot: (date: string, slot: BookingSlot) => void;
-  onChangeMonth: (delta: number) => void;
-};
-
-function SelectStep({
-  today,
-  shown,
-  monthOffset,
-  loading,
-  status,
-  onRetry,
-  availableDates,
-  selectedDate,
-  onSelectDate,
-  daySlots,
-  onPickSlot,
-  onChangeMonth,
-}: SelectStepProps) {
-  // Whether the calendar's grid held focus when the unavailable notice
-  // replaced it. Only the grid: a clicked month button keeps main's behaviour
-  // (focus falls to <body>, the page stays where it is).
-  const gridHadFocus = useRef(false);
-  const trackGridFocus = useCallback((node: HTMLDivElement | null) => {
-    if (!node) return;
-    return () => {
-      const grid = node.querySelector("[role=grid]");
-      gridHadFocus.current = grid?.contains(document.activeElement) ?? false;
-    };
-  }, []);
-
-  if (!loading && status !== "ok") {
-    return (
-      <UnavailableNotice
-        status={status}
-        onRetry={onRetry}
-        takeFocusRef={gridHadFocus}
-      />
-    );
-  }
-
-  const noneThisMonth =
-    !loading && status === "ok" && availableDates.size === 0;
-
-  return (
-    <div className="mx-auto flex w-full flex-1 flex-col justify-start motion-safe:animate-rise [--reveal-travel:6px] motion-safe:[animation-delay:80ms]">
-      <div className="grid gap-x-panel-booker-main gap-y-5 @4xl:grid-cols-[3fr_1fr]">
-        <div ref={trackGridFocus}>
-          <BookingCalendar
-            today={today}
-            shown={shown}
-            monthOffset={monthOffset}
-            loading={loading}
-            availableDates={availableDates}
-            selectedDate={selectedDate}
-            onSelectDate={onSelectDate}
-            onChangeMonth={onChangeMonth}
-          />
-        </div>
-
-        <div>
-          {selectedDate ? (
-            <TimeSlots
-              selectedDate={selectedDate}
-              slots={daySlots}
-              onPick={(slot) => onPickSlot(selectedDate, slot)}
-            />
-          ) : noneThisMonth ? (
-            <Text size="small" tone="muted">
-              {bookerText.calendar.noneThisMonth}
-            </Text>
-          ) : (
-            <Text size="small" tone="muted" className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-coral" aria-hidden />
-              {bookerText.calendar.pickDay}
-            </Text>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }
 
