@@ -11,14 +11,14 @@ import { ErrorState } from "./_components/error-state";
  */
 export default function Error({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
 
-  return <ErrorState onRetry={reset} />;
+  return <ErrorState onRetry={retry} />;
 }
