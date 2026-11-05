@@ -1,15 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BadgeEuro, Clock, Phone, Video } from "lucide-react";
 
 import { Card } from "@skillsite/ui/primitives/card";
-import { InfoRow } from "@skillsite/ui/primitives/info-row";
-import { Select } from "@skillsite/ui/forms/select";
 import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
-import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
-import { Heading } from "@skillsite/ui/typography/heading";
-import { Text } from "@skillsite/ui/typography/text";
+import { BookerAside } from "./booker-aside";
 import { BookingForm } from "./booking-form";
 import { BookingResult } from "./booking-result";
 import { SelectStep } from "./select-step";
@@ -23,7 +18,6 @@ import {
   type BookingSlot,
 } from "../model/config";
 import { formatDateLabel } from "../model/dates";
-import { durationLabel, formatSlotPrice } from "../model/pricing";
 import { trackEvent } from "@/lib/analytics";
 
 type BookerProps = {
@@ -156,9 +150,6 @@ export function Booker({
       )
     : null;
 
-  const priceLabel = config.priceLabel;
-  const slotPrice = formatSlotPrice(config, duration);
-
   return (
     <Card
       ref={cardRef}
@@ -166,77 +157,15 @@ export function Booker({
       className="mx-auto @container overflow-hidden"
     >
       <div className="grid @2xl:grid-cols-[20rem_1fr]">
-        <aside className="flex flex-col bg-navy p-panel-booker text-on-navy">
-          <Eyebrow tone="inverse-accent">{bookerText.aside.eyebrow}</Eyebrow>
-          <Heading as="h2" size="h4" className="mt-3.5 text-white">
-            {title}
-          </Heading>
-          <Text size="small" tone="inverse-soft" className="mt-1 mb-5">
-            {subtitle}
-          </Text>
-
-          <div className="flex flex-col gap-3">
-            <InfoRow
-              icon={
-                config.medium === "phone" ? (
-                  <Phone className="size-4" aria-hidden />
-                ) : (
-                  <Video className="size-4" aria-hidden />
-                )
-              }
-            >
-              {config.mediumLabel}
-            </InfoRow>
-            <InfoRow icon={<BadgeEuro className="size-4" aria-hidden />}>
-              {priceLabel}
-            </InfoRow>
-            {config.durations ? (
-              <Select
-                label={bookerText.durationLabel}
-                hideLabel
-                tone="inverse"
-                icon={<Clock className="size-4" aria-hidden />}
-                value={duration}
-                onChange={changeDuration}
-                disabled={selectedSlot !== null}
-                options={config.durations.map((value) => ({
-                  value,
-                  label: bookerText.minutes(value),
-                }))}
-              />
-            ) : (
-              <InfoRow icon={<Clock className="size-4" aria-hidden />}>
-                {durationLabel(config, duration)}
-              </InfoRow>
-            )}
-          </div>
-
-          {summary && step !== "result" ? (
-            <Card surface="glass" className="mt-6 p-4">
-              <Eyebrow as="p" dot={false} tone="inverse-accent">
-                {bookerText.aside.summaryEyebrow}
-              </Eyebrow>
-              <p className="mt-1.5 font-heading font-bold text-white">
-                {summary}
-              </p>
-              {slotPrice ? (
-                <p className="mt-1 text-small font-semibold text-on-navy-soft">
-                  {slotPrice}
-                </p>
-              ) : null}
-            </Card>
-          ) : null}
-
-          {event === "nachhilfe" ? (
-            <Text
-              size="caption"
-              tone="inherit"
-              className="mt-auto pt-6 text-on-navy-muted"
-            >
-              {bookerText.aside.cancellationNote}
-            </Text>
-          ) : null}
-        </aside>
+        <BookerAside
+          event={event}
+          title={title}
+          subtitle={subtitle}
+          duration={duration}
+          onDurationChange={changeDuration}
+          durationLocked={selectedSlot !== null}
+          summary={step !== "result" ? summary : null}
+        />
 
         <AnimatedHeight className="flex min-h-96 flex-col p-panel-booker-main">
           {step === "select" ? (
