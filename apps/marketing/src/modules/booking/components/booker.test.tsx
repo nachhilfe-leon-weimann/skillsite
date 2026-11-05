@@ -128,6 +128,12 @@ test("a lesson is booked from a free time to the confirmation", async () => {
     },
     agreements: { termsAccepted: true, earlyPerformanceRequested: false },
   });
+  // The server's time-trap reads how long the form was open; a send without it
+  // would count as too fast.
+  const sent = sendBooking.mock.calls[0]?.[0];
+  expect(sent?.fillDurationMs).toEqual(expect.any(Number));
+  expect(sent?.fillDurationMs).toBeGreaterThanOrEqual(0);
+  expect(sent).not.toHaveProperty("formLoadedAt");
 
   confirm({ ok: true });
   expect(
