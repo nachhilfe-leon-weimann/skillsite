@@ -20,21 +20,24 @@ const directories = (dir) =>
     .sort();
 
 /**
- * Inside a module, the client-safe parts (`index.ts`, `model/`, `components/`)
- * never import the module's server code (`server/`, `server.ts`), so nothing
- * server-only reaches a client bundle through them. One exception: a component
- * calls a server action by importing its `"use server"` module, which is
- * `server/actions.ts` by convention; Next.js bundles only a reference to it.
+ * The client-safe parts of a module (`index.ts`, `model/`, `components/`)
+ * never import server code - the module's own `server/` and `server.ts`, or
+ * another module's `server.ts` - so nothing server-only reaches a client bundle
+ * through them. (Another module's `server/` is closed to them by the module
+ * zone already.) One exception: a component calls a server action by importing
+ * its `"use server"` module, which is `server/actions.ts` by convention;
+ * Next.js bundles only a reference to it.
  *
  * @param {string} name the module's directory name
+ * @param {string[]} modules every module of the app, `name` included
  */
-function clientSafeZones(name) {
+function clientSafeZones(name, modules) {
   const own = (part) => `./src/modules/${name}/${part}`;
-  const message = `Client-safe code of modules/${name} (index.ts, model/, components/) never imports its server code; components/ may import server/actions.ts.`;
+  const message = `Client-safe code of modules/${name} (index.ts, model/, components/) never imports server code (its own server/ or server.ts, another module's server.ts); components/ may import server/actions.ts.`;
   return [
     {
       target: [own("index.ts"), own("model"), own("components")],
-      from: own("server.ts"),
+      from: modules.map((module) => `./src/modules/${module}/server.ts`),
       message,
     },
     {
@@ -81,7 +84,7 @@ export function moduleBoundaries(appRoot) {
       except: MODULE_ENTRIES,
       message: `Import modules/${name} through its index.ts or server.ts.`,
     },
-    ...clientSafeZones(name),
+    ...clientSafeZones(name, modules),
   ]);
 
   return {

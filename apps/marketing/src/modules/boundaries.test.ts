@@ -134,6 +134,13 @@ describe("client-safe module code", { timeout: 60_000 }, () => {
     ["components/x.tsx", "../server/log"],
     ["components/x.tsx", "@/modules/booking/server/log"],
     ["components/x.tsx", "@/modules/booking/server"],
+    // The server-action exception holds for components/ only.
+    ["index.ts", "./server/actions"],
+    ["model/x.ts", "../server/actions"],
+    // Another module's server entry is server code too.
+    ["index.ts", "../payment/server"],
+    ["model/x.ts", "@/modules/payment/server"],
+    ["components/x.tsx", "@/modules/payment/server"],
   ])("modules/booking/%s importing %s fails lint", async (file, source) => {
     const reports = await lint(
       appRoot,
@@ -162,15 +169,33 @@ describe("client-safe module code", { timeout: 60_000 }, () => {
     );
     expect(reports).toEqual([]);
   });
+
+  test("client-safe code may import another module's index.ts", async () => {
+    const reports = await lint(
+      appRoot,
+      "src/modules/booking/components/x.tsx",
+      'import { buildPaypalUrl } from "@/modules/payment";\nexport const url = buildPaypalUrl;\n',
+    );
+    expect(reports).toEqual([]);
+  });
+
+  test("server code may import another module's server.ts", async () => {
+    const reports = await lint(
+      appRoot,
+      "src/modules/booking/server/x.ts",
+      'import { logPayment } from "@/modules/payment/server";\nexport const log = logPayment;\n',
+    );
+    expect(reports).toEqual([]);
+  });
 });
 
 /**
  * Whether `source` holds a string literal naming a module's server code -
- * `./server`, `@/modules/<name>/server` or a file below either - as an import,
- * a re-export or a dynamic import.
+ * `./server`, `../<name>/server`, `@/modules/<name>/server` or a file below
+ * any of them - as an import, a re-export or a dynamic import.
  */
 const namesServerCode = (source: string) =>
-  /["'](?:\.\/|@\/modules\/[^/"']+\/)server(?:\.ts)?(?:\/[^"']*)?["']/.test(
+  /["'](?:\.\/|\.\.\/[^/"']+\/|@\/modules\/[^/"']+\/)server(?:\.ts)?(?:\/[^"']*)?["']/.test(
     source,
   );
 
@@ -187,6 +212,9 @@ test.each([
   ['export { bookingToday } from "./model/dates";', false],
   ['export * from "@/modules/payment/server";', true],
   ['export * from "@/modules/payment";', false],
+  ['export * from "../payment/server";', true],
+  ['export { logPayment } from "../payment/server/log";', true],
+  ['export * from "../payment";', false],
 ])("the index.ts scan flags %s: %s", (source, flagged) => {
   expect(namesServerCode(source)).toBe(flagged);
 });
