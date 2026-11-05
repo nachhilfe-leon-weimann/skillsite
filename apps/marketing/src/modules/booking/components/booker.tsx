@@ -46,26 +46,12 @@ import {
   type BookingSlot,
   type SubmitFailureReason,
 } from "../model/config";
-import { bookingToday, shownMonth } from "../model/dates";
+import { bookingToday, formatDateLabel, shownMonth } from "../model/dates";
+import { durationLabel, formatSlotPrice } from "../model/pricing";
 import { routes } from "@/lib/routes";
 import { trackEvent } from "@/lib/analytics";
 
 const MAX_MONTH_OFFSET = 3;
-
-const EUR = new Intl.NumberFormat("de-DE", {
-  style: "currency",
-  currency: "EUR",
-});
-
-function dateLabel(dateStr: string) {
-  const [year = NaN, month = NaN, day = NaN] = dateStr.split("-").map(Number);
-  return new Intl.DateTimeFormat("de-DE", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(year, month - 1, day)));
-}
 
 type BookerProps = {
   event: BookingEventKey;
@@ -320,17 +306,14 @@ export function Booker({
   const daySlots =
     availability?.days.find((day) => day.date === selectedDate)?.slots ?? [];
   const summary = selectedSlot
-    ? bookerText.slotSummary(dateLabel(selectedSlot.date), selectedSlot.time)
+    ? bookerText.slotSummary(
+        formatDateLabel(selectedSlot.date),
+        selectedSlot.time,
+      )
     : null;
 
-  const durationLabel = config.durations
-    ? bookerText.minutes(duration)
-    : bookerText.minutes(config.defaultDuration);
   const priceLabel = config.priceLabel;
-  const slotPrice =
-    config.pricePerHour != null
-      ? EUR.format((config.pricePerHour * duration) / 60)
-      : null;
+  const slotPrice = formatSlotPrice(config, duration);
 
   return (
     <Card
@@ -379,7 +362,7 @@ export function Booker({
               />
             ) : (
               <InfoRow icon={<Clock className="size-4" aria-hidden />}>
-                {durationLabel}
+                {durationLabel(config, duration)}
               </InfoRow>
             )}
           </div>
@@ -639,7 +622,7 @@ function TimeSlots({
         </p>
       </div>
       <p className="mb-2 text-caption text-ink-soft">
-        {dateLabel(selectedDate)}
+        {formatDateLabel(selectedDate)}
       </p>
       <div className="flex flex-col gap-2">
         {slots.map((slot) => (

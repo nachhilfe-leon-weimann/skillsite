@@ -25,3 +25,14 @@ export function shownMonth(today: string, offset: number) {
   const target = new Date(Date.UTC(year, month - 1 + offset, 1));
   return { year: target.getUTCFullYear(), month: target.getUTCMonth() + 1 };
 }
+
+/** A booking day ("YYYY-MM-DD") as a German label, e.g. "Di., 10. November". */
+export function formatDateLabel(dateKey: string): string {
+  const [year = NaN, month = NaN, day = NaN] = dateKey.split("-").map(Number);
+  return new Intl.DateTimeFormat("de-DE", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
