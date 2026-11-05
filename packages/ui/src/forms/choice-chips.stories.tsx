@@ -62,9 +62,11 @@ function Frame({
 function SingleExample({
   initial = "",
   options = subjects,
+  disabled,
 }: {
   initial?: string;
   options?: ChoiceOption[];
+  disabled?: boolean;
 }) {
   const [value, setValue] = useState(initial);
   const [changes, setChanges] = useState(0);
@@ -73,6 +75,7 @@ function SingleExample({
       <ChoiceChips
         label="In welchem Fach kann ich dir helfen?"
         required
+        disabled={disabled}
         options={options}
         value={value}
         onChange={(next) => {
@@ -87,9 +90,11 @@ function SingleExample({
 function MultipleExample({
   initial = [],
   options = subjects,
+  disabled,
 }: {
   initial?: string[];
   options?: ChoiceOption[];
+  disabled?: boolean;
 }) {
   const [value, setValue] = useState(initial);
   const [changes, setChanges] = useState(0);
@@ -99,6 +104,7 @@ function MultipleExample({
         multiple
         label="Fächer"
         required
+        disabled={disabled}
         options={options}
         value={value}
         onChange={(next) => {
@@ -127,6 +133,16 @@ export const DisabledChip: Story = {
     <div>
       <SingleExample initial="Mathe" options={withDisabled} />
       <MultipleExample options={withDisabled} />
+    </div>
+  ),
+};
+
+// The whole group disabled, single and multiple.
+export const Disabled: Story = {
+  render: () => (
+    <div>
+      <SingleExample initial="Mathe" disabled />
+      <MultipleExample initial={["Englisch"]} disabled />
     </div>
   ),
 };

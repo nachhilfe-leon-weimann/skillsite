@@ -112,3 +112,32 @@ function HoverExample() {
 // panel. With `hitTestableExit`, the fading panel still catches the pointer, so
 // coming back onto it before it has faded out turns it around.
 export const HoverExit: Story = { render: () => <HoverExample /> };
+
+function AlignedExample({ align }: { align: "start" | "center" | "end" }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger>
+        <Button variant="outline">{align}</Button>
+      </PopoverTrigger>
+      <PopoverContent
+        label={`Plattformen (${align})`}
+        align={align}
+        className="flex w-64 flex-col gap-0.5"
+      >
+        <PanelLinks onNavigate={() => setOpen(false)} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// The panel aligned to the trigger's start, centre or end.
+export const Alignments: Story = {
+  render: () => (
+    <div className="flex justify-center gap-6 p-6">
+      {(["start", "center", "end"] as const).map((align) => (
+        <AlignedExample key={align} align={align} />
+      ))}
+    </div>
+  ),
+};

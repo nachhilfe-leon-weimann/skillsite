@@ -1,7 +1,12 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import { RadioGroup, type ChoiceOption } from "./radio-group";
+import {
+  RadioGroup,
+  RadioGroupItem,
+  RadioGroupRoot,
+  type ChoiceOption,
+} from "./radio-group";
 import { Button } from "../primitives/button";
 
 const meta = {
@@ -88,3 +93,41 @@ export const DisabledOption: Story = {
 export const Disabled: Story = {
   render: () => <Example initial="discord" disabled />,
 };
+
+function ComposedExample() {
+  const [value, setValue] = useState("vormittags");
+  return (
+    <div className="flex max-w-xl flex-col gap-3 p-6">
+      <p id="composed-label" className="text-small font-semibold text-ink">
+        Tageszeit
+      </p>
+      <RadioGroupRoot
+        value={value}
+        onChange={setValue}
+        aria-labelledby="composed-label"
+        className="flex gap-2"
+      >
+        {["vormittags", "nachmittags", "abends"].map((option) => (
+          <RadioGroupItem
+            key={option}
+            value={option}
+            className={
+              value === option
+                ? "rounded-lg border border-coral px-3 py-2 text-small text-ink"
+                : "rounded-lg border border-line px-3 py-2 text-small text-ink-soft"
+            }
+          >
+            {option}
+          </RadioGroupItem>
+        ))}
+      </RadioGroupRoot>
+      <p role="status" className="text-small">
+        Wert: {JSON.stringify(value)}
+      </p>
+    </div>
+  );
+}
+
+// The unstyled parts that RadioGroup and ChoiceChips build on, with a look of
+// the consumer's own.
+export const Composed: Story = { render: () => <ComposedExample /> };
