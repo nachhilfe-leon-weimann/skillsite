@@ -290,8 +290,7 @@ export function Booker({
       }
     } catch {
       setBookingError({
-        message:
-          "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.",
+        message: bookerText.result.genericFailure,
         reason: "generic",
       });
       setBookingPhase("failed");
@@ -321,12 +320,12 @@ export function Booker({
   const daySlots =
     availability?.days.find((day) => day.date === selectedDate)?.slots ?? [];
   const summary = selectedSlot
-    ? `${dateLabel(selectedSlot.date)} – ${selectedSlot.time} Uhr`
+    ? bookerText.slotSummary(dateLabel(selectedSlot.date), selectedSlot.time)
     : null;
 
   const durationLabel = config.durations
-    ? `${duration} Minuten`
-    : `${config.defaultDuration} Minuten`;
+    ? bookerText.minutes(duration)
+    : bookerText.minutes(config.defaultDuration);
   const priceLabel = config.priceLabel;
   const slotPrice =
     config.pricePerHour != null
@@ -341,7 +340,7 @@ export function Booker({
     >
       <div className="grid @2xl:grid-cols-[20rem_1fr]">
         <aside className="flex flex-col bg-navy p-panel-booker text-on-navy">
-          <Eyebrow tone="inverse-accent">Buchung</Eyebrow>
+          <Eyebrow tone="inverse-accent">{bookerText.aside.eyebrow}</Eyebrow>
           <Heading as="h2" size="h4" className="mt-3.5 text-white">
             {title}
           </Heading>
@@ -375,7 +374,7 @@ export function Booker({
                 disabled={selectedSlot !== null}
                 options={config.durations.map((value) => ({
                   value,
-                  label: `${value} Minuten`,
+                  label: bookerText.minutes(value),
                 }))}
               />
             ) : (
@@ -388,7 +387,7 @@ export function Booker({
           {summary && step !== "result" ? (
             <Card surface="glass" className="mt-6 p-4">
               <Eyebrow as="p" dot={false} tone="inverse-accent">
-                Dein Termin
+                {bookerText.aside.summaryEyebrow}
               </Eyebrow>
               <p className="mt-1.5 font-heading font-bold text-white">
                 {summary}
@@ -407,7 +406,7 @@ export function Booker({
               tone="inherit"
               className="mt-auto pt-6 text-on-navy-muted"
             >
-              Bis 24&nbsp;Stunden vorher kostenfrei verschieben oder absagen.
+              {bookerText.aside.cancellationNote}
             </Text>
           ) : null}
         </aside>
@@ -489,13 +488,13 @@ function UnavailableNotice({
     return (
       <CenteredState
         icon={<CalendarX2 className="size-7 text-coral" aria-hidden />}
-        title="Termine konnten nicht geladen werden"
+        title={bookerText.unavailable.error.title}
       >
         <Text tone="muted" className="mb-5">
-          Das hat gerade nicht geklappt. Bitte versuch es noch einmal.
+          {bookerText.unavailable.error.text}
         </Text>
         <Button ref={retryRef} variant="outline" onClick={onRetry}>
-          Erneut versuchen
+          {bookerText.unavailable.error.retry}
         </Button>
       </CenteredState>
     );
@@ -506,13 +505,13 @@ function UnavailableNotice({
       ref={statusRef}
       tabIndex={-1}
       icon={<CalendarClock className="size-7 text-coral" aria-hidden />}
-      title="Online-Terminwahl gerade nicht verfügbar"
+      title={bookerText.unavailable.unconfigured.title}
     >
       <Text tone="muted" className="mb-5">
-        Schreib mir einfach direkt – wir finden zusammen einen passenden Termin.
+        {bookerText.unavailable.unconfigured.text}
       </Text>
       <Button asChild variant="primary">
-        <Link href={routes.contact}>Direkt anfragen</Link>
+        <Link href={routes.contact}>{bookerText.directContact}</Link>
       </Button>
     </CenteredState>
   );
@@ -593,8 +592,8 @@ function SelectStep({
             timeZone={BOOKING_TIMEZONE}
             locale="de-DE"
             weekStartsOn={1}
-            previousMonthLabel="Vorheriger Monat"
-            nextMonthLabel="Nächster Monat"
+            previousMonthLabel={bookerText.calendar.previousMonth}
+            nextMonthLabel={bookerText.calendar.nextMonth}
           />
         </div>
 
@@ -607,13 +606,12 @@ function SelectStep({
             />
           ) : noneThisMonth ? (
             <Text size="small" tone="muted">
-              In diesem Monat sind keine Termine frei. Schau im nächsten Monat
-              nach.
+              {bookerText.calendar.noneThisMonth}
             </Text>
           ) : (
             <Text size="small" tone="muted" className="flex items-center gap-2">
               <span className="size-2 rounded-full bg-coral" aria-hidden />
-              Wähle einen farbig markierten Tag, um freie Zeiten zu sehen.
+              {bookerText.calendar.pickDay}
             </Text>
           )}
         </div>
@@ -636,7 +634,9 @@ function TimeSlots({
       {/* Empty h-9 row mirrors the calendar's month-nav height so the slots
           line up with the day grid beside them. */}
       <div className="mb-4 flex h-9 items-center">
-        <p className="text-small font-semibold text-ink">Freie Uhrzeiten</p>
+        <p className="text-small font-semibold text-ink">
+          {bookerText.calendar.slotsHeading}
+        </p>
       </div>
       <p className="mb-2 text-caption text-ink-soft">
         {dateLabel(selectedDate)}
@@ -649,7 +649,8 @@ function TimeSlots({
             onClick={() => onPick(slot)}
             className="rounded-lg border border-coral px-3 py-2.5 text-center text-small font-semibold text-coral transition-colors hover:bg-coral hover:text-white"
           >
-            {slot.time} Uhr
+            {slot.time}
+            {bookerText.timeSuffix}
           </button>
         ))}
       </div>
@@ -683,10 +684,10 @@ function ResultStep({
             aria-hidden
           />
         }
-        title="Termin wird gebucht …"
+        title={bookerText.result.pending.title}
       >
         <Text tone="muted" aria-live="polite">
-          Einen Moment – die Buchung wird bestätigt.
+          {bookerText.result.pending.text}
         </Text>
       </CenteredState>
     );
@@ -696,7 +697,7 @@ function ResultStep({
     return (
       <CenteredState
         icon={<Check className="size-7 text-coral" aria-hidden />}
-        title="Termin gebucht!"
+        title={bookerText.result.confirmed.title}
       >
         {summary ? (
           <Card
@@ -706,7 +707,7 @@ function ResultStep({
           >
             <InfoRow
               variant="summary"
-              label="Dein Termin"
+              label={bookerText.result.confirmed.summaryLabel}
               icon={
                 event === "kennenlernen" ? (
                   <Phone className="size-4" aria-hidden />
@@ -720,20 +721,16 @@ function ResultStep({
           </Card>
         ) : null}
         <Text tone="muted" className="mb-6">
-          {event === "kennenlernen"
-            ? "Ich rufe dich zum vereinbarten Termin an. Die Bestätigung kommt per E-Mail."
-            : "Die Terminbestätigung kommt per E-Mail. Die Einwahl richtet sich nach der gewählten Plattform."}
+          {bookerText.result.confirmed.text[event]}
         </Text>
         <Button variant="outline" onClick={onChooseAnother}>
-          {event === "kennenlernen" ? <>Fertig</> : <>Weiteren Termin buchen</>}
+          {bookerText.result.confirmed.action[event]}
         </Button>
       </CenteredState>
     );
   }
 
-  const message =
-    error?.message ??
-    "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.";
+  const message = error?.message ?? bookerText.result.genericFailure;
 
   // Retrying can't help in either case - point to the direct contact instead.
   if (error?.reason === "rate_limited" || error?.reason === "blocked") {
@@ -742,15 +739,15 @@ function ResultStep({
         icon={<CalendarX2 className="size-7 text-coral" aria-hidden />}
         title={
           error.reason === "blocked"
-            ? "Termin nicht gebucht"
-            : "Zu viele Anfragen"
+            ? bookerText.result.blockedTitle
+            : bookerText.result.rateLimitedTitle
         }
       >
         <Text tone="muted" className="mb-5">
           {message}
         </Text>
         <Button asChild variant="primary">
-          <Link href={routes.contact}>Direkt anfragen</Link>
+          <Link href={routes.contact}>{bookerText.directContact}</Link>
         </Button>
       </CenteredState>
     );
@@ -760,12 +757,14 @@ function ResultStep({
     return (
       <CenteredState
         icon={<CalendarX2 className="size-7 text-coral" aria-hidden />}
-        title="Termin schon vergeben"
+        title={bookerText.result.slotTakenTitle}
       >
         <Text tone="muted" className="mb-5">
           {message}
         </Text>
-        <Button onClick={onChooseAnother}>Anderen Termin wählen</Button>
+        <Button onClick={onChooseAnother}>
+          {bookerText.result.chooseAnother}
+        </Button>
       </CenteredState>
     );
   }
@@ -773,15 +772,15 @@ function ResultStep({
   return (
     <CenteredState
       icon={<CalendarX2 className="size-7 text-coral" aria-hidden />}
-      title="Das hat nicht ganz geklappt"
+      title={bookerText.result.failedTitle}
     >
       <Text tone="muted" className="mb-5">
         {message}
       </Text>
       <div className="flex flex-wrap justify-center gap-3">
-        <Button onClick={onRetry}>Erneut senden</Button>
+        <Button onClick={onRetry}>{bookerText.result.resend}</Button>
         <Button variant="outline" onClick={onChooseAnother}>
-          Anderen Termin wählen
+          {bookerText.result.chooseAnother}
         </Button>
       </div>
     </CenteredState>
