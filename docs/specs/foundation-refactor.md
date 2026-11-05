@@ -36,8 +36,8 @@ The site works and looks right, but the code underneath is not a system the port
   `Muted` are identical and unused.
 - **The structure hides the domains.** Booking is 22 files / 2,933 lines (~30 % of the app) spread over
   `lib/booking`, `components/booking` and `app/api`, server and isomorphic code unmarked; payment likewise.
-  [`booker.tsx`](../../apps/marketing/src/components/booking/booker.tsx) is 865 lines with eight components
-  inside. The consent subsystem (506 lines) renders nothing but its provider is still mounted. Routes carry
+  [`booker.tsx`](../../apps/marketing/src/modules/booking/components/booker.tsx) is 865 lines with eight
+  components inside. The consent subsystem (506 lines) renders nothing but its provider is still mounted. Routes carry
   most section markup inline (176 `className` attributes in `page.tsx` files against 65 in
   `components/sections`). Shell parts a second app needs (container, section, page header, theme provider,
   fonts, theme toggle, logo) live in `apps/marketing`.
@@ -448,7 +448,7 @@ manual pass on the chosen implementation.
   `server.ts` starts with `import "server-only"`; routes and the API handler import only the public entries;
   boundary rules in the shared ESLint preset (V5).
 - _Acceptance criteria:_
-  - [ ] A deep import (`modules/booking/server/...` from `app/`) fails lint; built output identical.
+  - [x] A deep import (`modules/booking/server/...` from `app/`) fails lint; built output identical.
 
 **D2 - Decompose the booker.** _(after C6)_
 
