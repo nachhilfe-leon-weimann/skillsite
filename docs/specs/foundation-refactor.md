@@ -456,7 +456,7 @@ manual pass on the chosen implementation.
   `BookingResult`; pricing into `model/`; the generic helpers are already in the package (C6).
 - _Check:_ `/termin` and `/kontakt`: both flows, empty month, `unconfigured` and `error` states.
 - _Acceptance criteria:_
-  - [ ] No component file in `modules/booking/components` exceeds 250 lines; the booking steps are covered by
+  - [x] No component file in `modules/booking/components` exceeds 250 lines; the booking steps are covered by
         component tests.
 
 **D3 - Env and zod.**
