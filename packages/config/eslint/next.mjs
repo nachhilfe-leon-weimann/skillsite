@@ -4,7 +4,8 @@ import nextTs from "eslint-config-next/typescript";
 
 /**
  * Shared flat-config preset for Next.js apps in this workspace.
- * Module-boundary rules join here once the portal's feature modules exist.
+ * Import boundaries (modules, packages) live in `boundaries.mjs`; each app and
+ * package adds them after this preset.
  */
 export default defineConfig([
   ...nextVitals,
