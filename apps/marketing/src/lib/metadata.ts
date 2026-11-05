@@ -19,12 +19,20 @@ const siteOpenGraph = {
     "Persönliche Online-Nachhilfe – flexibel, ohne Mindestlaufzeit und für 30 € pro 60 Minuten.",
 } satisfies NonNullable<Metadata["openGraph"]>;
 
+/** The site's tab title: a page's title, then the brand. */
+const titleTemplate = "%s – Nachhilfe Leon Weimann";
+
+/** A page title in the site's template, for a document Next's metadata does not reach. */
+export function templatedTitle(title: string): string {
+  return titleTemplate.replace("%s", title);
+}
+
 /** The root layout's defaults; every route inherits these unless it sets its own. */
 export const siteMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: "Online-Nachhilfe für Mathe, Informatik und Physik",
-    template: "%s – Nachhilfe Leon Weimann",
+    template: titleTemplate,
   },
   description:
     "Persönliche Online-Nachhilfe in Mathematik, Informatik und Physik – flexibel, ohne Mindestlaufzeit und für 30 € pro 60 Minuten.",
