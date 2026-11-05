@@ -619,10 +619,10 @@ Dialog, Popover, Select, RadioGroup, ChoiceChips, Switch, Calendar - are audited
 
 **Acceptance**
 
-- [ ] Every exported component has a story with its variants; Storybook builds in CI - spec box.
-- [ ] The guard fails when one story file is deleted; the render smoke fails on a story that throws (probes,
+- [x] Every exported component has a story with its variants; Storybook builds in CI - spec box.
+- [x] The guard fails when one story file is deleted; the render smoke fails on a story that throws (probes,
       restored).
-- [ ] `exports.test.ts`, `just widgets` and the ratchet are green; no component code changes.
+- [x] `exports.test.ts`, `just widgets` and the ratchet are green; no component code changes.
 
 How to check: in `pnpm storybook`, every group of the table, light and dark, against the variant checklist.
 
