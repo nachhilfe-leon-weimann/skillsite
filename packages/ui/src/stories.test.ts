@@ -40,12 +40,27 @@ const componentModules = Object.values(exports)
   .filter((file) => file.endsWith(".tsx"))
   .sort();
 
-/** The components a module exports: its capitalised functions and constants. */
+/**
+ * The components a module exports by name: its capitalised declarations and
+ * the capitalised names of its `export { ... }` lists (local or re-exported).
+ */
 function exportedComponents(source: string) {
-  return [...source.matchAll(/^export (?:function|const) ([A-Z]\w*)/gm)].map(
-    (match) => match[1] ?? "",
-  );
+  const declared = [
+    ...source.matchAll(
+      /^export (?:async )?(?:function|const|let|class) ([A-Z]\w*)/gm,
+    ),
+  ].map((match) => match[1] ?? "");
+  const listed = [...source.matchAll(/^export (?!type )\{([^}]*)\}/gm)]
+    .flatMap((match) => (match[1] ?? "").split(","))
+    .map((entry) => entry.trim())
+    .filter((entry) => entry && !entry.startsWith("type "))
+    .map((entry) => entry.split(/\s+as\s+/).pop() ?? "")
+    .filter((name) => /^[A-Z]/.test(name));
+  return [...declared, ...listed];
 }
+
+/** Exports the guard cannot name: a default export or a star re-export. */
+const UNNAMED_EXPORT = /^export (?:default\b|\*)/m;
 
 /** `src/<group>/<name>.tsx#Component` for every value a story file imports from the package. */
 function storyImports(storyFile: string) {
@@ -80,6 +95,21 @@ test("the guard sees the components of every exported module", () => {
   expect(names).toContain("src/primitives/button.tsx#Button");
   expect(names).toContain("src/overlays/popover.tsx#PopoverContent");
   expect(names).not.toContain("src/forms/select.tsx#SelectOption");
+});
+
+test("every component module names its exports, so the guard can read them", () => {
+  expect(
+    componentModules.filter((modulePath) =>
+      UNNAMED_EXPORT.test(read(modulePath)),
+    ),
+  ).toEqual([]);
+});
+
+test("every exception names an exported module and an existing story file", () => {
+  for (const [modulePath, storyFile] of Object.entries(STORIED_ELSEWHERE)) {
+    expect(componentModules, modulePath).toContain(modulePath);
+    expect(existsSync(join(packageRoot, storyFile)), storyFile).toBe(true);
+  }
 });
 
 test("every exported component appears in the story file next to its module", () => {
