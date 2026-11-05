@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { pageMetadata, siteMetadata } from "./metadata";
+import { pageMetadata, siteMetadata, templatedTitle } from "./metadata";
 
 test("the site defaults declare no canonical", () => {
   expect(siteMetadata.alternates).toBeUndefined();
@@ -37,4 +37,10 @@ test("an unlisted page has no canonical, is noindex and keeps the site card", ()
     title: "Rechnung bezahlen",
     robots: { index: false, follow: false },
   });
+});
+
+test("a title in the site's template keeps replacement patterns literal", () => {
+  expect(templatedTitle("Preise $& $'")).toBe(
+    "Preise $& $' – Nachhilfe Leon Weimann",
+  );
 });

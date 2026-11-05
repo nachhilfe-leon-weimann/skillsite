@@ -24,7 +24,8 @@ const titleTemplate = "%s – Nachhilfe Leon Weimann";
 
 /** A page title in the site's template, for a document Next's metadata does not reach. */
 export function templatedTitle(title: string): string {
-  return titleTemplate.replace("%s", title);
+  // A replacer function, so `$&` and similar patterns in a title stay literal.
+  return titleTemplate.replace("%s", () => title);
 }
 
 /** The root layout's defaults; every route inherits these unless it sets its own. */
