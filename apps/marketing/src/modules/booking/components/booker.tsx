@@ -32,9 +32,12 @@ import { Text } from "@skillsite/ui/typography/text";
 import { bookingWindow, monthKey, monthsBetween } from "./booker-calendar";
 import { BookingForm } from "./booking-form";
 import { MAX_MONTH_OFFSET, useAvailability } from "./use-availability";
+import {
+  useBookingSubmission,
+  type BookingError,
+  type BookingPhase,
+} from "./use-booking-submission";
 import { bookerText } from "@/content/booking";
-import { requestBooking } from "../server/actions";
-import { withFillDuration } from "../model/anti-spam";
 import {
   BOOKING_TIMEZONE,
   bookingEvents,
@@ -42,7 +45,6 @@ import {
   type BookingDraft,
   type BookingEventKey,
   type BookingSlot,
-  type SubmitFailureReason,
 } from "../model/config";
 import { formatDateLabel } from "../model/dates";
 import { durationLabel, formatSlotPrice } from "../model/pricing";
@@ -59,8 +61,6 @@ type BookerProps = {
 };
 
 type Step = "select" | "form" | "result";
-
-type BookingPhase = "pending" | "confirmed" | "failed";
 
 export function Booker({
   event,
@@ -79,12 +79,6 @@ export function Booker({
     start: string;
   } | null>(null);
   const [step, setStep] = useState<Step>("select");
-  const [bookingPhase, setBookingPhase] = useState<BookingPhase>("pending");
-  const [bookingError, setBookingError] = useState<{
-    message: string;
-    reason: SubmitFailureReason;
-  } | null>(null);
-  const [bookingDraft, setBookingDraft] = useState<BookingDraft | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Funnel entry: the booking widget was opened. `event` distinguishes the
@@ -104,6 +98,13 @@ export function Booker({
     restartSearch,
     retry,
   } = useAvailability(event, duration, setSelectedDate, renderedToday);
+  const {
+    phase: bookingPhase,
+    error: bookingError,
+    submit,
+    retryBooking,
+    reset: resetBooking,
+  } = useBookingSubmission(event, duration);
 
   // Leaving the slot picker shrinks the card; if its top scrolled out of view
   // (e.g. a slot picked far down a long mobile list), bring it back so the next
@@ -158,58 +159,14 @@ export function Booker({
   const chooseAnotherSlot = () => {
     setSelectedSlot(null);
     setSelectedDate(null);
-    setBookingError(null);
-    setBookingDraft(null);
+    resetBooking();
     setStep("select");
     restartSearch();
   };
 
-  // Send the booking to Cal.com. We moved off the slot picker but wait on the
-  // real result before claiming success — Cal's create pipeline (mail, calendar
-  // event, webhooks) takes a few seconds, and a slot can be gone by now, so we
-  // never tell the user "sent" until Cal.com confirms it.
-  const finalizeBooking = async (draft: BookingDraft) => {
-    setBookingPhase("pending");
-    try {
-      // Measured per send, so a retry carries the time elapsed up to the retry.
-      const result = await requestBooking(
-        withFillDuration(draft, performance.now()),
-      );
-      if (result.ok) {
-        setBookingPhase("confirmed");
-        // Conversion: a booking was actually confirmed by Cal.com.
-        trackEvent("booking-confirmed", { type: event, duration });
-      } else {
-        setBookingError({
-          message: result.error,
-          reason: result.reason,
-        });
-        setBookingPhase("failed");
-        trackEvent("booking-failed", { type: event, reason: result.reason });
-      }
-    } catch {
-      setBookingError({
-        message: bookerText.result.genericFailure,
-        reason: "generic",
-      });
-      setBookingPhase("failed");
-      // The request never produced a result (offline, stale deployment), so the
-      // server log has no outcome line - this event is the only trace.
-      trackEvent("booking-failed", { type: event, reason: "request_error" });
-    }
-  };
-
   const submitBooking = (draft: BookingDraft) => {
-    setBookingDraft(draft);
-    setBookingError(null);
+    submit(draft);
     setStep("result");
-    void finalizeBooking(draft);
-  };
-
-  const retryBooking = () => {
-    if (!bookingDraft) return;
-    setBookingError(null);
-    void finalizeBooking(bookingDraft);
   };
 
   const availableDates = new Set(
@@ -557,7 +514,7 @@ type ResultStepProps = {
   phase: BookingPhase;
   summary: string | null;
   event: BookingEventKey;
-  error: { message: string; reason: SubmitFailureReason } | null;
+  error: BookingError | null;
   onRetry: () => void;
   onChooseAnother: () => void;
 };
