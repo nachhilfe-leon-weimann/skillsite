@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { ArrowLink, NavLink, SmartLink, TextLink } from "./link";
+import { ProseP } from "../typography/prose";
 import { Text } from "../typography/text";
 
 const meta = {
@@ -48,13 +49,13 @@ export const TextLinks: Story = {
         site: Alle Details stehen in den{" "}
         <TextLink href="/agb">Geschäftsbedingungen</TextLink>.
       </Text>
-      <p className="text-prose-body text-ink">
+      <ProseP>
         doc: Mehr dazu in der{" "}
         <TextLink variant="doc" href="/datenschutz">
           Datenschutzerklärung
         </TextLink>
         .
-      </p>
+      </ProseP>
       <Text tone="muted">
         underline: Fragen gern{" "}
         <TextLink variant="underline" href="mailto:kontakt@example.com">
