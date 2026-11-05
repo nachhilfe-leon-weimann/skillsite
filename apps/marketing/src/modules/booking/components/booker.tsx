@@ -5,7 +5,6 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
   type RefObject,
@@ -25,7 +24,6 @@ import { Card } from "@skillsite/ui/primitives/card";
 import { InfoRow } from "@skillsite/ui/primitives/info-row";
 import { Calendar } from "@skillsite/ui/forms/calendar";
 import { Select } from "@skillsite/ui/forms/select";
-import { useHydrated } from "@skillsite/ui/hooks/use-hydrated";
 import { CenteredState } from "@skillsite/ui/layout/centered-state";
 import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
@@ -33,25 +31,23 @@ import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { bookingWindow, monthKey, monthsBetween } from "./booker-calendar";
 import { BookingForm } from "./booking-form";
+import { MAX_MONTH_OFFSET, useAvailability } from "./use-availability";
 import { bookerText } from "@/content/booking";
 import { requestBooking } from "../server/actions";
 import { withFillDuration } from "../model/anti-spam";
 import {
   BOOKING_TIMEZONE,
   bookingEvents,
-  type AvailabilityResponse,
   type AvailabilityStatus,
   type BookingDraft,
   type BookingEventKey,
   type BookingSlot,
   type SubmitFailureReason,
 } from "../model/config";
-import { bookingToday, formatDateLabel, shownMonth } from "../model/dates";
+import { formatDateLabel } from "../model/dates";
 import { durationLabel, formatSlotPrice } from "../model/pricing";
 import { routes } from "@/lib/routes";
 import { trackEvent } from "@/lib/analytics";
-
-const MAX_MONTH_OFFSET = 3;
 
 type BookerProps = {
   event: BookingEventKey;
@@ -61,19 +57,6 @@ type BookerProps = {
   /** The booking day the server rendered for (`bookingToday()` in the page). */
   renderedToday: string;
 };
-
-/**
- * The booking day: the server's while hydrating, the visitor's from then on.
- * `/termin` is prerendered, so its HTML carries the build day; reading the clock
- * during hydration would mismatch on every later day and make React throw the
- * server HTML away. The visitor's day is read once per mount, so the shown month
- * and the booking window stay put when midnight passes with the page open.
- */
-function useBookingToday(renderedToday: string) {
-  const hydrated = useHydrated();
-  const [visitorToday] = useState(bookingToday);
-  return { today: hydrated ? visitorToday : renderedToday, hydrated };
-}
 
 type Step = "select" | "form" | "result";
 
@@ -89,18 +72,12 @@ export function Booker({
   const config = bookingEvents[event];
 
   const [duration, setDuration] = useState(config.defaultDuration);
-  const [monthOffset, setMonthOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<{
     date: string;
     time: string;
     start: string;
   } | null>(null);
-  const [availability, setAvailability] = useState<AvailabilityResponse | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
   const [step, setStep] = useState<Step>("select");
   const [bookingPhase, setBookingPhase] = useState<BookingPhase>("pending");
   const [bookingError, setBookingError] = useState<{
@@ -108,17 +85,7 @@ export function Booker({
     reason: SubmitFailureReason;
   } | null>(null);
   const [bookingDraft, setBookingDraft] = useState<BookingDraft | null>(null);
-  // Auto-skip empty months only while searching (initial load / duration
-  // change). Manual month navigation switches this off so going "back" into an
-  // empty month doesn't bounce the user forward again.
-  const autoAdvance = useRef(true);
   const cardRef = useRef<HTMLDivElement>(null);
-
-  const { today, hydrated } = useBookingToday(renderedToday);
-  const shown = useMemo(
-    () => shownMonth(today, monthOffset),
-    [today, monthOffset],
-  );
 
   // Funnel entry: the booking widget was opened. `event` distinguishes the
   // nachhilfe vs. kennenlernen flows and is stable, so this fires once.
@@ -126,59 +93,17 @@ export function Booker({
     trackEvent("booking-started", { type: event });
   }, [event]);
 
-  useEffect(() => {
-    // The server's day may name another month: fetch only the visitor's.
-    if (!hydrated) return;
-    const controller = new AbortController();
-    const query = new URLSearchParams({
-      event,
-      duration: String(duration),
-      year: String(shown.year),
-      month: String(shown.month),
-    });
-    fetch(`/api/booking/availability?${query}`, { signal: controller.signal })
-      .then((res) => {
-        // A non-OK response (e.g. 400) isn't an AvailabilityResponse — treat it
-        // as an error instead of letting a missing `status` read as "ok".
-        if (!res.ok)
-          throw new Error(`Availability request failed: ${res.status}`);
-        return res.json();
-      })
-      .then((data: AvailabilityResponse) => {
-        setAvailability(data);
-        setLoading(false);
-        if (data.status !== "ok") return;
-        const firstDay = data.days[0];
-        if (firstDay) {
-          // Preselect the soonest free day so its times show right away.
-          setSelectedDate(firstDay.date);
-        } else if (autoAdvance.current && monthOffset < MAX_MONTH_OFFSET) {
-          // Empty month → hop forward to the next month with free slots, but
-          // only while auto-searching, never in response to manual navigation.
-          setMonthOffset((current) => Math.min(MAX_MONTH_OFFSET, current + 1));
-          setLoading(true);
-        }
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError")
-          return;
-        setAvailability({
-          status: "error",
-          timeZone: BOOKING_TIMEZONE,
-          days: [],
-        });
-        setLoading(false);
-      });
-    return () => controller.abort();
-  }, [
-    event,
-    duration,
-    shown.year,
-    shown.month,
-    reloadKey,
+  const {
+    today,
+    shown,
     monthOffset,
-    hydrated,
-  ]);
+    availability,
+    loading,
+    status,
+    changeMonth: showMonth,
+    restartSearch,
+    retry,
+  } = useAvailability(event, duration, setSelectedDate, renderedToday);
 
   // Leaving the slot picker shrinks the card; if its top scrolled out of view
   // (e.g. a slot picked far down a long mobile list), bring it back so the next
@@ -204,25 +129,14 @@ export function Booker({
   const changeDuration = (next: number) => {
     if (next === duration) return;
     setDuration(next);
-    setLoading(true);
     // Fresh search for the new duration — let it skip to the soonest free month.
-    autoAdvance.current = true;
+    restartSearch();
     resetSelection();
   };
 
   const changeMonth = (delta: number) => {
-    // Explicit navigation: respect the chosen month, don't auto-skip past it.
-    autoAdvance.current = false;
-    setMonthOffset((current) =>
-      Math.min(MAX_MONTH_OFFSET, Math.max(0, current + delta)),
-    );
-    setLoading(true);
+    showMonth(delta);
     resetSelection();
-  };
-
-  const retry = () => {
-    setLoading(true);
-    setReloadKey((key) => key + 1);
   };
 
   const pickSlot = (date: string, slot: BookingSlot) => {
@@ -247,8 +161,7 @@ export function Booker({
     setBookingError(null);
     setBookingDraft(null);
     setStep("select");
-    autoAdvance.current = true;
-    retry();
+    restartSearch();
   };
 
   // Send the booking to Cal.com. We moved off the slot picker but wait on the
@@ -299,7 +212,6 @@ export function Booker({
     void finalizeBooking(bookingDraft);
   };
 
-  const status: AvailabilityStatus = availability?.status ?? "ok";
   const availableDates = new Set(
     (availability?.days ?? []).map((day) => day.date),
   );
