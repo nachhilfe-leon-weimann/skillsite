@@ -1,4 +1,9 @@
-import { bookingEvents, calUsername, type BookingSubmission } from "./config";
+import {
+  BOOKING_TIMEZONE,
+  bookingEvents,
+  calUsername,
+  type BookingSubmission,
+} from "./config";
 import { isFieldEmpty, isMultiValue, type FieldValue } from "./fields";
 import { agbEffectiveDate } from "@/content/agb";
 import { toE164 } from "./validation";
@@ -19,7 +24,7 @@ export function buildCalBookingBody(
 
   const bookingFieldsResponses: Record<string, unknown> = {};
   const attendee: Record<string, unknown> = {
-    timeZone: "Europe/Berlin",
+    timeZone: BOOKING_TIMEZONE,
     language: "de",
   };
   let firstName = "";
