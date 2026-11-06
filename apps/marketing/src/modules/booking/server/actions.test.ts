@@ -86,6 +86,32 @@ test("a paid lesson without accepted terms is never booked", async () => {
   assert.equal(createCalBooking.mock.calls.length, 0);
 });
 
+test("only an offered event key reaches Cal.com", async () => {
+  const lesson = (event: unknown) =>
+    ({
+      event,
+      slot: "2099-03-02T09:00:00.000Z",
+      duration: 60,
+      values: {
+        firstName: "Max",
+        lastName: "Muster",
+        email: "max@example.com",
+        location: "discord-video",
+        subject: "Mathematik",
+      },
+      agreements: { termsAccepted: false, earlyPerformanceRequested: false },
+      fillDurationMs: 5_000,
+    }) as BookingSubmission;
+  const unknownEvent = await requestBooking(lesson("probe"));
+  assert.deepEqual(unknownEvent, {
+    ok: false,
+    reason: "validation",
+    error: "Bitte wähle einen Termin.",
+  });
+  assert.deepEqual(await requestBooking(lesson(["nachhilfe"])), unknownEvent);
+  assert.equal(createCalBooking.mock.calls.length, 0);
+});
+
 test("a malformed submission ends in the generic failure without reaching Cal.com", async () => {
   for (const values of [null, { ...validValues, firstName: 5 }]) {
     assert.deepEqual(await requestBooking(firstMeeting(values)), {
