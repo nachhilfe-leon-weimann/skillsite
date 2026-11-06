@@ -532,7 +532,8 @@ jsdom, Testing Library) exists. Before writing tests, confirm `apps/marketing/vi
   auto-advance off and clamps to `0..MAX_MONTH_OFFSET`; `restartSearch` switches it on and reloads.
   `onFirstFreeDay` is held in a ref updated on every render and is **not** an effect dependency: the effect's
   dependencies stay today's (`event`, `duration`, the shown month, `reloadKey`, `monthOffset`). If #217 has landed,
-  the hook also takes over its server-day hydration path unchanged.
+  the hook also takes over its server-day hydration path unchanged: #217 has landed, so the hook takes a fourth
+  argument, `renderedToday: string`, and also returns the booking day (`today`).
 - `useBookingSubmission(event, duration)` returns `{ phase, error, submit(draft), retryBooking(), reset() }` - the
   `finalizeBooking` flow, `withFillDuration`, the three analytics events, unchanged.
 - `model/pricing.ts`: `formatSlotPrice(config: BookingEventConfig, duration: number): string | null` and
@@ -562,13 +563,13 @@ jsdom, Testing Library) exists. Before writing tests, confirm `apps/marketing/vi
 
 **Acceptance**
 
-- [ ] No component file in `modules/booking/components` exceeds 250 lines; the booking steps are covered by
+- [x] No component file in `modules/booking/components` exceeds 250 lines; the booking steps are covered by
       component tests - spec box.
-- [ ] Evidence: characterized states identical; HTML and computed styles identical on `/termin` and `/kontakt`
+- [x] Evidence: characterized states identical; HTML and computed styles identical on `/termin` and `/kontakt`
       (calendar, form, empty month, `unconfigured`, `error`, generic failure).
-- [ ] Evidence: network requests per flow unchanged (the availability queries of one scripted flow, before and
+- [x] Evidence: network requests per flow unchanged (the availability queries of one scripted flow, before and
       after, listed in the PR).
-- [ ] `/kontakt?fach=mathematik` preselects the subject exactly as before (characterized state and the page test).
+- [x] `/kontakt?fach=mathematik` preselects the subject exactly as before (characterized state and the page test).
 
 How to check: `/termin` -> duration -> calendar (month back/forward, an empty month) -> slot -> form -> submit
 (generic failure without a Cal key); `/kontakt` and `/kontakt?fach=mathematik` -> slot -> form with the subject
