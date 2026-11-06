@@ -11,6 +11,7 @@ import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
+import { StepNumber } from "@skillsite/ui/typography/step-number";
 import { Text } from "@skillsite/ui/typography/text";
 import { Split } from "@skillsite/ui/layout/split";
 import { CardGrid } from "@skillsite/ui/layout/card-grid";
@@ -82,9 +83,7 @@ export default function OnlineLearningPage() {
               as={Card}
               className="p-6"
             >
-              <span className="font-heading text-digit-md font-extrabold leading-none text-coral">
-                {step.n}
-              </span>
+              <StepNumber size="md">{step.n}</StepNumber>
               <Heading as="h3" size="title" className="mt-3 mb-1.5">
                 {step.title}
               </Heading>

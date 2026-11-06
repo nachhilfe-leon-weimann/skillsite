@@ -167,7 +167,7 @@ export function DocList({
       {items.map((item) => (
         <li key={item} className="flex gap-3">
           <span
-            className="mt-[0.7rem] size-1.5 shrink-0 rounded-full bg-ink/40"
+            className="mt-list-bullet size-1.5 shrink-0 rounded-full bg-ink/40"
             aria-hidden
           />
           <span>{item}</span>
