@@ -59,3 +59,35 @@ export const but = {
     },
   ] satisfies Step[],
 };
+
+/** The copy of /preise around the price data: metadata, intro, panel, cards, BuT, FAQ. */
+export const pricingPage = {
+  metadata: {
+    title: "Preise",
+    description:
+      "Klare Preise ohne Überraschungen: 30 € pro 60 Minuten für alle angebotenen Fächer und Klassenstufen. BuT-Förderung ist möglich.",
+  },
+  header: {
+    eyebrow: "Preise",
+    title: "Klare Preise ohne Überraschungen.",
+  },
+  /** The navy half of the price panel: the label above the price and its button. */
+  panel: {
+    label: "Festpreis für jedes angebotene Fach",
+    firstMeeting: "Kostenloses Erstgespräch",
+  },
+  /** The two cards under the price panel, in page order. */
+  conditionCards: [
+    { title: "Faire Bedingungen", items: fairConditions },
+    { title: "Zahlung und Abrechnung", items: paymentOptions },
+  ] satisfies { title: string; items: Condition[] }[],
+  but: {
+    eyebrow: "Bildung und Teilhabe",
+    title: "Geförderte Nachhilfe – unkompliziert abgerechnet.",
+    /** Followed by `but.officialInfo.source`. */
+    sourceLabel: "Quelle:",
+    /** The accessible name of the official-info button. */
+    officialInfoLabel: `${but.officialInfo.label} auf ${but.officialInfo.source} öffnen`,
+  },
+  faqTitle: "Häufige Fragen zu Preis und Zahlung",
+};
