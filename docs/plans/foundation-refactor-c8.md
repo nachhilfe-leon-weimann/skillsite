@@ -1,7 +1,7 @@
 # Foundation refactor: C8 accessible widgets on Radix
 
 > Status: Implementation plan, 2026-10-21. The maintainer chose Radix on this date.
-> This document records the next implementation wave; it does not claim C8 is implemented or accepted.
+> Implemented through #210; accepted on 2026-11-06 after the maintainer's manual VoiceOver, Safari and look pass.
 > Each numbered slice is one branch and one PR. Implement only a dispatched slice, with its tests and stories.
 
 ## Decision and starting point
@@ -594,13 +594,13 @@ Use test cases already introduced per widget; add only missing cross-widget regr
 
 **C8 completion gate**
 
-- [ ] C8.1-C8.8 are integrated with green checks, no unresolved widget focus/keyboard/label regressions, and no
+- [x] C8.1-C8.8 are integrated with green checks, no unresolved widget focus/keyboard/label regressions, and no
       remaining custom outside-pointer/Escape handlers for the migrated widgets. Generic hooks may remain for
       legitimate unrelated consumers; do not remove exports opportunistically.
 - [x] `just check`, including production marketing E2E and built-Storybook widget E2E, passes on the final head.
       Every failure/skip has an exact explanation; a local network or browser failure is not reported as green.
 - [x] Deterministic keyboard, nested-overlay, calendar/date-zone and form integration tests pass.
-- [ ] Human VoiceOver/Safari and visual checks are recorded with browser/OS/date, routes/stories, actual results
+- [x] Human VoiceOver/Safari and visual checks are recorded with browser/OS/date, routes/stories, actual results
       and any unresolved failures. If unavailable, leave this gate and the spec's overall C8 box unchecked.
 - [x] Known spike issues relevant to the selected implementation are resolved and evidenced; no broad accessibility
       rule suppression or spike exclusions hide them. Existing phase-E contrast work is explicitly identified.
@@ -655,6 +655,11 @@ mode are avoided by the wrapper's own icons, and the radio group's synthetic-key
 tested in C8.6; no axe rule or spike exclusion exists, and the phase-E contrast work is named in the spec (white on
 coral, 2.84:1). The seven C8 widgets have 30 stories (Dialog, Popover, Select, RadioGroup, ChoiceChips, Switch,
 Calendar), their package exports pass `exports.test.ts`, and the ratchet is clean.
+
+C8.9 acceptance on 2026-11-06: the maintainer ran the manual pass of #210's checklist by hand: VoiceOver with
+macOS Safari and iPhone Safari, and the look pass at 390, 1079/1080 and 1280px, light and dark, normal and reduced
+motion. Every item passed, and the C8.3 focus decisions are accepted as they are. The Select-in-Dialog focus
+finding above is tracked as a follow-up in #237; no page puts a Select in a Dialog. This closes the gate.
 
 ## Verification and PR handoff
 
