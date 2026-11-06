@@ -438,7 +438,7 @@ manual pass on the chosen implementation.
 **C9 - Workbench coverage.**
 
 - _Acceptance criteria:_
-  - [ ] Every exported component has a story with its variants; Storybook builds in CI.
+  - [x] Every exported component has a story with its variants; Storybook builds in CI.
 
 ### Phase D - Marketing: structure and migration
 
