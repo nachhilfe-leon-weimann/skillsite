@@ -295,10 +295,10 @@ look_). Test: `apps/marketing/src/modules/boundaries.test.ts`.
 
 **Acceptance**
 
-- [ ] `boundaries.test.ts` passes; `just lint` is green on the real tree. Evidence: the test fails when the zones
+- [x] `boundaries.test.ts` passes; `just lint` is green on the real tree. Evidence: the test fails when the zones
       are removed (probe, restored).
-- [ ] Evidence: HTML snapshot identical; the smoke payment tests (307 and the error page) green.
-- [ ] Every path in `README.md` and `AGENTS.md` exists.
+- [x] Evidence: HTML snapshot identical; the smoke payment tests (307 and the error page) green.
+- [x] Every path in `README.md` and `AGENTS.md` exists.
 
 ## D3 - Env module and zod
 
