@@ -22,8 +22,7 @@ import {
   logFileItems,
   logFilePurposes,
   privacyContact,
-  privacySectionHeading,
-  privacySectionNumber,
+  privacySections,
   retentionItems,
   siteDomain,
   skillBotDataItems,
@@ -60,7 +59,7 @@ function PrivacySection({
   children: React.ReactNode;
 }) {
   return (
-    <DocSection id={id} title={privacySectionHeading(id)}>
+    <DocSection id={id} title={privacySections.heading(id)}>
       {children}
     </DocSection>
   );
@@ -70,7 +69,7 @@ function PrivacySection({
 function SectionRef({ id }: { id: string }) {
   return (
     <TextLink variant="doc" href={`#${id}`}>
-      Abschnitt {privacySectionNumber(id)}
+      Abschnitt {privacySections.number(id)}
     </TextLink>
   );
 }

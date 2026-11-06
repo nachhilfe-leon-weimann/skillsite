@@ -1,4 +1,5 @@
 import { legalContact } from "@/content/legal";
+import { numberedSections } from "@/lib/numbered-sections";
 
 export const privacyPolicyEffectiveDate = new Date("2026-07-14");
 
@@ -11,13 +12,8 @@ export const privacyContact = {
 export const siteDomain = "nachhilfe.leonweimann.de";
 export const analyticsDomain = "analytics.leonweimann.de";
 
-/**
- * Section registry: the single source of truth for order, numbering,
- * navigation label and heading.
- * - `label`: compact name shown in the on-page navigation
- * - `title`: full heading without a number (the number comes from the order)
- */
-export const privacySections = [
+/** Section registry of the privacy policy: order, numbering, navigation labels and headings. */
+export const privacySections = numberedSections([
   {
     id: "verantwortlicher",
     label: "Verantwortlicher",
@@ -88,20 +84,7 @@ export const privacySections = [
     label: "Aktualität und Änderung",
     title: "Aktualität und Änderung dieser Datenschutzerklärung",
   },
-];
-
-/** 1-based section number derived from the registry order. */
-export function privacySectionNumber(id: string): number {
-  const index = privacySections.findIndex((section) => section.id === id);
-  return index === -1 ? 0 : index + 1;
-}
-
-/** Full, numbered heading for a section. */
-export function privacySectionHeading(id: string): string {
-  const section = privacySections.find((entry) => entry.id === id);
-  if (!section) return "";
-  return `${privacySectionNumber(id)}. ${section.title}`;
-}
+]);
 
 /** Canonical data-processing-agreement sentence – identical everywhere. */
 export function dpaSentence(entity: string): string {
