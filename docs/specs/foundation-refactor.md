@@ -118,7 +118,7 @@ Decided by the maintainer; nothing here is reopened by an implementing agent.
 | **V4**   | `Field` gets error and description slots; the booking keeps its visible error pattern for now.                                                                                                                               | 2026-09-25                     |
 | **V5**   | Module boundaries are enforced with `import/no-restricted-paths` (already installed) in the shared ESLint preset.                                                                                                            | 2026-09-25                     |
 | **V6**   | The env schema validates at server start (`instrumentation.ts`), not at import; build and CI stay env-free.                                                                                                                  | 2026-09-25                     |
-| **V7**   | Text that is still inline in routes moves to `content/*.ts` (June convention "texts live in content").                                                                                                                       | 2026-09-25                     |
+| **V7**   | Text that is still inline in routes moves to `content/*.ts` (June convention "texts live in content"); legal prose moves as JSX into `content/legal/*.tsx`, its text byte-identical.                                         | 2026-09-25; 2026-11-06         |
 | **V8**   | This spec fixes the procedure of the design pass, not its outcome.                                                                                                                                                           | 2026-09-25                     |
 | **V9**   | The portal prerequisites known today are recorded here (phase F) so they are not lost.                                                                                                                                       | 2026-09-25                     |
 | **V10**  | Home `<head>` (B3): only the missing `og:url` is added; the untemplated title, the short social description and the file-convention OG image stay.                                                                           | 2026-09-27                     |
@@ -547,8 +547,8 @@ an unmerged one.
 - **Never change what a visitor sees in a refactor slice.** If a unification would move a pixel, keep the
   old value as a named variant. If a slice cannot stay pixel-identical, stop and report.
 - **Bugs get their own `fix:` PR** with the visible change described; unclear bug-or-design cases go to the maintainer.
-- **Never edit visible text** except moving it byte-identically into `content/*.ts`; bulk edits over German
-  files only with UTF-8-safe tools.
+- **Never edit visible text** except moving it byte-identically into `content/*.ts` (legal prose:
+  `content/legal/*.tsx`); bulk edits over German files only with UTF-8-safe tools.
 - Tests guard the contract in [`docs/testing.md`](../testing.md), not `main`'s former behaviour; a refactor's
   "nothing changed" evidence belongs in its PR.
 - Every new theme utility is registered in the `cn` configuration with a test; never add a pattern the ratchet

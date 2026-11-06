@@ -10,7 +10,7 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                              |
 | change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes), `components/` (`layout/`, `sections/`), `lib/` (env, routes, metadata, health), `modules/` (`booking/`, `payment/`, [module rules][module-rules])                                |
-| change visible text                         | `apps/marketing/src/content/` - all of it, in German                                                                                                                                                                     |
+| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`                                                                                                                                |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
 | decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
 | write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                      |
@@ -29,7 +29,8 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 ## Conventions
 
 - English in code, comments, identifiers, specs and commits; German only in visible content, which lives in
-  `apps/marketing/src/content/*.ts`, not in components. Developer artifacts name no person: write "the maintainer".
+  `apps/marketing/src/content/*.ts`, legal prose as JSX in `content/legal/*.tsx`, not in components. Developer
+  artifacts name no person: write "the maintainer".
 - Clean, modular, schema-driven structures, no quick fixes. Pages use `@skillsite/ui` and the type scale
   (`text-display` ... `text-caption`): no arbitrary values (`text-[...]`, inline `color-mix(...)`, hand-tuned
   `clamp()`), no hand-built copies of existing components.
