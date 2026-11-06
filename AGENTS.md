@@ -9,7 +9,7 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | When you ...                                | Read                                                                                                                                                                                                                     |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                              |
-| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes), `components/` (`layout/`, `sections/`), `lib/` (env, routes, metadata, health), `modules/` (`booking/`, `payment/`, [module rules][module-rules])                                |
+| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                 |
 | change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`                                                                                                                                |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
 | decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
@@ -45,6 +45,12 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   `ease-flow`, `ease-soft`, `duration-quick|base|slow`, the `lift` utility and `Reveal`.
 - A refactor changes nothing a visitor sees. A bug gets its own `fix:` PR describing the visible change, even when
   the look changes. If it is unclear whether something is a bug or a design choice, stop and ask.
+- Booking and payment are modules, `apps/marketing/src/modules/<domain>/` ([module rules][module-rules]): outside a
+  module, import only its `index.ts` (client-safe) or `server.ts` (server entry); its `index.ts`, `model/` and
+  `components/` never import server code, except that `components/` may import `server/actions.ts`, a
+  `"use server"` module. The `import/no-restricted-paths` zones of `packages/config/eslint/boundaries.mjs` enforce
+  this. A block one page uses lives in `app/<route>/_components/`, one that several pages use in
+  `components/sections/`.
 - The app reads its environment only through `apps/marketing/src/lib/env.ts` (`serverEnv()`, `appVersion()`,
   `isProduction()`); ESLint rejects `process.env` elsewhere in `src/`. A new variable gets its rule in that schema,
   which `instrumentation.ts` checks at server start: a present but malformed value stops the server.

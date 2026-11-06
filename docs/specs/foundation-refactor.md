@@ -1,6 +1,6 @@
 # Spec: Foundation refactor (one UI system, one type scale, module structure - before the portal)
 
-> Status: Accepted, 2026-09-25 - Phase B done; C7 decided 2026-10-21, C8 planned (not implemented).
+> Status: Accepted, 2026-09-25 - Phase B done; phase C done but for the manual C8.9 pass; Phase D done.
 > This spec is also the decision record for the arc (no separate ADRs, decision V1): _Decisions_ and _Rules of
 > the refactor_ carry the why. It builds on the monorepo arc (P0/P1 done: `apps/marketing`, `packages/config`,
 > `packages/ui` + Storybook) and comes **before** the portal (`apps/portal`, `lernen.leonweimann.de`), which gets
@@ -196,7 +196,7 @@ Modules do not import each other's internals. `app/` routes are thin: data and a
 
 **Where things go.** Domain logic -> its module. A block used by one page -> `app/<route>/_components/`. A block
 used by several pages -> `components/sections`. Anything domain-free that a second app could use ->
-`@skillsite/ui`. Visible text -> `content/*.ts`.
+`@skillsite/ui`. Visible text -> `content/*.ts`; legal prose -> JSX in `content/legal/*.tsx` (V7).
 
 **Tokens.** Three layers: raw values on `:root` (with dark overrides under `[data-theme="dark"]`) -> semantic
 roles (`accent`, `inverse`, `on-accent`, `on-inverse`, ...) -> Tailwind utilities via `@theme`. Existing
@@ -483,7 +483,8 @@ manual pass on the chosen implementation.
 **D5 - Page migration.** _(after C; one PR per route or route group)_
 
 - _Technique:_ replace hand-built patterns by the package components; one-off blocks to
-  `app/<route>/_components/`; inline text to `content/*.ts` (byte-identical, UTF-8-safe edits).
+  `app/<route>/_components/`; inline text to `content/*.ts`, legal prose as JSX to `content/legal/*.tsx` (V7)
+  (byte-identical, UTF-8-safe edits).
 - _Check:_ the migrated routes, light/dark, phone/desktop - no visible change.
 
 **D6 - Cleanup.**

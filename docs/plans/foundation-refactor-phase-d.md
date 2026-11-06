@@ -774,10 +774,10 @@ map (`useBodyScrollLock`); `design-ratchet.json`; `AGENTS.md`; spec status line.
 
 **Acceptance**
 
-- [ ] Log tests unchanged and green; `rg -n "MAX_LOGGED_LENGTH|function loggable" apps/marketing/src` finds only
+- [x] Log tests unchanged and green; `rg -n "MAX_LOGGED_LENGTH|function loggable" apps/marketing/src` finds only
       `lib/log.ts`.
-- [ ] Evidence: HTML identical on all routes, the legal pages included.
-- [ ] `just check` green; every path in `AGENTS.md` and `README.md` exists.
+- [x] Evidence: HTML identical on all routes, the legal pages included.
+- [x] `just check` green; every path in `AGENTS.md` and `README.md` exists.
 
 How to check: `/impressum`, `/datenschutz`, `/agb` (section numbers and headings), `/termin` generic failure without
 a Cal key - light/dark, nothing changes.
