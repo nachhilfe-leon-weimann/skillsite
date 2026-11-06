@@ -1,6 +1,6 @@
 # Spec: Foundation refactor (one UI system, one type scale, module structure - before the portal)
 
-> Status: Accepted, 2026-09-25 - Phase B done; Phase C done but for the manual C8.9 pass; Phase D done.
+> Status: Accepted, 2026-09-25 - Phase B done; Phase C done; Phase D done.
 > This spec is also the decision record for the arc (no separate ADRs, decision V1): _Decisions_ and _Rules of
 > the refactor_ carry the why. It builds on the monorepo arc (P0/P1 done: `apps/marketing`, `packages/config`,
 > `packages/ui` + Storybook) and comes **before** the portal (`apps/portal`, `lernen.leonweimann.de`), which gets
@@ -416,7 +416,7 @@ draft without merging once the decision documentation reaches `main`; its experi
 The missing VoiceOver comparison is an evidence gap, not a failed or completed test. C8 still requires a
 manual pass on the chosen implementation.
 
-**C8 - Accessible widgets.** _(C7 decided; implemented, the manual C8.9 pass pending)_
+**C8 - Accessible widgets.** _(C7 decided; implemented and accepted, 2026-11-06)_
 
 - _Technique:_ Radix-backed shared `Dialog`, non-modal `Popover`, `Select`, `RadioGroup`/choice chips and
   `Switch`; React DayPicker supplies the domain-free calendar grid. The full-screen mobile navigation consumes
@@ -434,8 +434,8 @@ manual pass on the chosen implementation.
   - [x] C8.6: radio rows and single/multi chips preserve payloads and implement the documented keyboard model.
   - [x] C8.7: Switch behavior is tested in a real browser story despite having no live app consumer.
   - [x] C8.8: calendar grid/keyboard behavior, availability adapter and Berlin date/time-zone boundaries pass.
-  - [ ] C8.9: integrated production/UI checks and human VoiceOver/Safari/look acceptance are recorded.
-  - [ ] C8 complete: all slices are integrated and the C8.9 completion gate is satisfied; missing manual evidence
+  - [x] C8.9: integrated production/UI checks and human VoiceOver/Safari/look acceptance are recorded.
+  - [x] C8 complete: all slices are integrated and the C8.9 completion gate is satisfied; missing manual evidence
         leaves this box open.
 
 **C9 - Workbench coverage.**
