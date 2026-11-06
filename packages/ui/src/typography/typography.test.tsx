@@ -8,6 +8,7 @@ import { Heading } from "./heading";
 import * as lead from "./lead";
 import { Lead } from "./lead";
 import * as prose from "./prose";
+import * as stepNumber from "./step-number";
 import * as text from "./text";
 import { Text } from "./text";
 
@@ -55,7 +56,9 @@ test("Text tones on inverse surfaces are named by role", () => {
 
 test("the typography group exports one API", () => {
   expect(
-    [eyebrow, heading, lead, prose, text].flatMap(Object.keys).sort(),
+    [eyebrow, heading, lead, prose, stepNumber, text]
+      .flatMap(Object.keys)
+      .sort(),
   ).toEqual([
     "Address",
     "Eyebrow",
@@ -64,6 +67,7 @@ test("the typography group exports one API", () => {
     "ProseH2",
     "ProseH3",
     "ProseP",
+    "StepNumber",
     "Text",
   ]);
 });
