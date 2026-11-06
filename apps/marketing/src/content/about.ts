@@ -41,18 +41,28 @@ export const software = {
 /** The quotation marks around `aboutQuote`. */
 export const quoteMarks = { open: "„", close: "“" };
 
-/** The copy of /ueber-mich around its data: metadata, intro and section titles. */
+/** The copy of /ueber-mich around its data: metadata, intro, section titles and the code sample. */
 export const aboutPage = {
   metadata: {
     title: "Über mich",
     description:
       "Hi, ich bin Leon. Ich gebe Nachhilfe in Mathe, Informatik und Physik – individuell statt nach Schema, auf Augenhöhe und ohne Druck.",
   },
+  /** Eyebrow, title and button label of the intro; its lead is `aboutIntro`. */
   intro: {
     eyebrow: "Über mich",
     title: "Hi, ich bin Leon.",
-    /** The intro text is `aboutIntro`. */
     firstMeeting: "Finde heraus, ob wir zusammenpassen",
   },
   principlesTitle: "Woran ich mich halte",
+  /** The words of the code sample typed beside the software text; its syntax lives in `code-typewriter`. */
+  code: {
+    comment: "das Prinzip zuerst",
+    fn: "verstehen",
+    param: "stoff",
+    check: "klickt",
+    result: "kann ich selbst",
+    retry: "nochmal",
+    retryArg: "anderswie",
+  },
 };

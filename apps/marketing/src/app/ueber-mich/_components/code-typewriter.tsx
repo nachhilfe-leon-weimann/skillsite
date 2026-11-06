@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useInView } from "@skillsite/ui/hooks/use-in-view";
 import { Card } from "@skillsite/ui/primitives/card";
+import { aboutPage } from "@/content/about";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -23,23 +24,26 @@ const STR = "text-syntax-string"; // strings
 const CM = "text-on-navy-muted"; // comments
 const IND = "  "; // one indent level
 
+// The words of the sample (content); the syntax around them stays here.
+const { comment, fn, param, check, result, retry, retryArg } = aboutPage.code;
+
 // The finished code as coloured segments. Rendered on the server, under reduced
 // motion, and as the invisible sizer that fixes the box height (so typing the
 // lines in never shifts layout).
 const FINAL: Seg[] = [
-  { text: "// das Prinzip zuerst\n", cls: CM },
+  { text: `// ${comment}\n`, cls: CM },
   { text: "function ", cls: KW },
-  { text: "verstehen", cls: FN },
-  { text: "(stoff) {\n" + IND },
+  { text: fn, cls: FN },
+  { text: `(${param}) {\n` + IND },
   { text: "if ", cls: KW },
-  { text: "(stoff.klickt)" },
+  { text: `(${param}.${check})` },
   { text: " ", brk: true },
   { text: "return ", cls: KW },
-  { text: "'kann ich selbst'", cls: STR },
+  { text: `'${result}'`, cls: STR },
   { text: ";\n" + IND },
   { text: "return ", cls: KW },
-  { text: "nochmal", cls: FN },
-  { text: "(stoff, anderswie);\n}" },
+  { text: retry, cls: FN },
+  { text: `(${param}, ${retryArg});\n}` },
 ];
 
 // Pacing (ms). Tuned for a ~4.5-5s indulgent take - retune here to re-pace.
@@ -179,33 +183,33 @@ function buildTimeline(): Frame[] {
   };
 
   // --- the script ---------------------------------------------------------
-  type("// das Prinzip zuerst", CM);
+  type(`// ${comment}`, CM);
   newline("");
   tab("func", "function ", KW);
-  type("verstehen", FN);
+  type(fn, FN);
   pair("(", ")");
-  tab("sto", "stoff");
+  tab(param.slice(0, 3), param);
   overtype();
   type(" ");
   pair("{", "}");
   openBlock(IND);
   type("if ", KW);
   pair("(", ")");
-  tab("sto", "stoff");
+  tab(param.slice(0, 3), param);
   type(".");
-  tab("klic", "klickt");
+  tab(check.slice(0, 4), check);
   overtype();
   softBreak();
   type("return ", KW);
   pair("'", "'", STR);
-  type("kann ich selbst", STR);
+  type(result, STR);
   overtype();
   type(";");
   newline(IND);
   ghost([
     { text: "return ", cls: KW },
-    { text: "nochmal", cls: FN },
-    { text: "(stoff, anderswie);" },
+    { text: retry, cls: FN },
+    { text: `(${param}, ${retryArg});` },
   ]);
   pause(GHOST_THINK);
   acceptGhost();
