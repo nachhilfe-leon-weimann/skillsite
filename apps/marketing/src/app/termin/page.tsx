@@ -5,39 +5,37 @@ import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Text } from "@skillsite/ui/typography/text";
 import { Booker, bookingToday } from "@/modules/booking";
 import { CtaSection } from "@/components/sections/cta-section";
+import { bookingPage } from "@/content/booking";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
 
 export const metadata = pageMetadata({
   canonical: "/termin",
-  title: "Termin buchen",
-  description:
-    "Für bestehende Schüler:innen: freie Termine online buchen und bis 24 Stunden vorher kostenfrei verschieben oder absagen.",
+  ...bookingPage.metadata,
 });
 
 export default function BookingPage() {
+  const { header, booker, newcomer } = bookingPage;
   return (
     <>
       <PageHeader
-        eyebrow="Termin buchen"
-        title="Buche deine nächste Nachhilfestunde."
+        eyebrow={header.eyebrow}
+        title={header.title}
         titleClassName="max-w-measure-14"
-        lead="Du bist schon dabei? Wähle deinen nächsten freien Termin direkt im Kalender. Bis 24 Stunden vorher kannst du kostenfrei verschieben oder absagen."
+        lead={header.lead}
       />
 
       <Container className="py-section-sm">
         <Booker
           renderedToday={bookingToday()}
           event="nachhilfe"
-          title="Nachhilfestunde buchen"
-          subtitle="Such dir einen freien Termin aus – wöchentlich oder nach Bedarf."
+          title={booker.title}
+          subtitle={booker.subtitle}
         />
         <Reveal variant="fade" as="p" className="mt-6">
           <Text as="span" tone="muted">
-            Du nimmst noch keine Nachhilfe bei mir?{" "}
-            <ArrowLink href={routes.firstMeeting}>
-              Starte mit dem kostenlosen Erstgespräch
-            </ArrowLink>
+            {newcomer.text}{" "}
+            <ArrowLink href={routes.firstMeeting}>{newcomer.link}</ArrowLink>
           </Text>
         </Reveal>
       </Container>

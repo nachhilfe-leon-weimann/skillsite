@@ -73,3 +73,27 @@ export const bookerText = {
   /** The way out when booking online cannot help: the contact page. */
   directContact: "Direkt anfragen",
 } as const;
+
+/** The copy of /termin around the booker: metadata, intro, the booker's heading and the way in for newcomers. */
+export const bookingPage = {
+  metadata: {
+    title: "Termin buchen",
+    description:
+      "Für bestehende Schüler:innen: freie Termine online buchen und bis 24 Stunden vorher kostenfrei verschieben oder absagen.",
+  },
+  header: {
+    eyebrow: "Termin buchen",
+    title: "Buche deine nächste Nachhilfestunde.",
+    lead: "Du bist schon dabei? Wähle deinen nächsten freien Termin direkt im Kalender. Bis 24 Stunden vorher kannst du kostenfrei verschieben oder absagen.",
+  },
+  booker: {
+    title: "Nachhilfestunde buchen",
+    subtitle:
+      "Such dir einen freien Termin aus – wöchentlich oder nach Bedarf.",
+  },
+  /** The line under the booker; `text` is followed by the link to the first meeting. */
+  newcomer: {
+    text: "Du nimmst noch keine Nachhilfe bei mir?",
+    link: "Starte mit dem kostenlosen Erstgespräch",
+  },
+};
