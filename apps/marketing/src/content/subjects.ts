@@ -117,3 +117,24 @@ export const subjects: Subject[] = [
     ],
   },
 ];
+
+/** The copy of /faecher around the subject data: metadata, intro, details, FAQ. */
+export const subjectsPage = {
+  metadata: {
+    title: "Fächer",
+    description:
+      "Online-Nachhilfe in Mathematik, Informatik und Physik – verständlich erklärt und zum Festpreis von 30 € pro 60 Minuten.",
+  },
+  header: {
+    eyebrow: "Fächer",
+    title: "Mathe, Informatik und Physik – aus einer Hand.",
+    lead: "In allen drei Fächern geht es darum, Zusammenhänge zu verstehen und sicher anzuwenden. Der Festpreis beträgt jeweils 30 € pro 60 Minuten.",
+  },
+  /** A subject's detail section: its price tag and the first-meeting button. */
+  detail: {
+    priceTag: "30 € · 60 Min.",
+    /** Followed by the subject's name. */
+    firstMeeting: "Erstgespräch:",
+  },
+  faqTitle: "Häufige Fragen zu den Fächern",
+};
