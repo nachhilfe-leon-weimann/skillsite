@@ -9,7 +9,7 @@ import {
   DocSection,
   DocSubSection,
 } from "@/components/docs/doc-components";
-import { ContactAddress } from "@/components/shared/contact-address";
+import { ContactAddress } from "@/components/sections/contact-address";
 import { ProseP } from "@skillsite/ui/typography/prose";
 import { TextLink } from "@skillsite/ui/primitives/link";
 import {
