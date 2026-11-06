@@ -3,6 +3,7 @@ import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Card } from "@skillsite/ui/primitives/card";
 import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
 import { Heading } from "@skillsite/ui/typography/heading";
+import { Text } from "@skillsite/ui/typography/text";
 import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import type { Benefit } from "@/content/home";
 
@@ -29,7 +30,9 @@ export function BenefitGrid({ items }: { items: Benefit[] }) {
           >
             {benefit.title}
           </Heading>
-          <p className="text-card-body text-ink-soft">{benefit.text}</p>
+          <Text tone="muted" className="text-card-body">
+            {benefit.text}
+          </Text>
         </Reveal>
       ))}
     </CardGrid>

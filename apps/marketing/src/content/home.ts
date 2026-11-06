@@ -35,3 +35,42 @@ export const benefits: Benefit[] = [
     text: "Persönlich und individuell statt nach Schema F.",
   },
 ];
+
+/** The home page's hero: intro, calls to action and the two floating badges. */
+export const homeHero = {
+  eyebrow: "Nachhilfe in Mathematik, Informatik und Physik",
+  /** The headline; `highlight` is the underlined word between the two parts. */
+  title: { before: "Lernen, bis es", highlight: "klick", after: "macht." },
+  lead: "Hi, ich bin Leon. Ich erkläre dir den Stoff so lange, bis er wirklich Sinn ergibt – persönlich, online und ohne Mindestlaufzeit.",
+  subjectsLink: "Fächer ansehen",
+  /** The price badge over the photo: the amount, then two lines of note. */
+  priceBadge: {
+    amount: "30 €",
+    unit: "pro 60 Minuten",
+    scope: "jedes angebotene Fach",
+  },
+  /** The navy tag on the photo's top edge. */
+  tag: "Ohne Mindestlaufzeit",
+};
+
+export type SectionIntro = { eyebrow: string; title: string };
+
+/** The intros of the home page's sections, in page order. */
+export const homeSections: Record<
+  "subjects" | "process" | "benefits",
+  SectionIntro
+> = {
+  subjects: {
+    eyebrow: "Drei Fächer, ein Anspruch",
+    title:
+      "Mathe, Informatik und Physik – verstanden, nicht auswendig gelernt.",
+  },
+  process: {
+    eyebrow: "So fängt es an",
+    title: "In drei Schritten zur ersten Stunde.",
+  },
+  benefits: {
+    eyebrow: "Fair und unkompliziert",
+    title: "Nachhilfe mit klaren Bedingungen.",
+  },
+};

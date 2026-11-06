@@ -1,145 +1,25 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Container } from "@skillsite/ui/layout/container";
 import { Section } from "@skillsite/ui/layout/section";
-import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
-import { Button } from "@skillsite/ui/primitives/button";
-import { Card } from "@skillsite/ui/primitives/card";
-import { Heading } from "@skillsite/ui/typography/heading";
-import { Lead } from "@skillsite/ui/typography/lead";
-import { Text } from "@skillsite/ui/typography/text";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { PageHeader } from "@skillsite/ui/layout/page-header";
-import { Split } from "@skillsite/ui/layout/split";
 import { StatGrid } from "@/components/sections/stat-grid";
 import { StepGrid } from "@/components/sections/step-grid";
-import { BenefitGrid } from "@/components/sections/benefit-grid";
 import { SubjectCards } from "@/components/sections/subject-cards";
 import { CtaSection } from "@/components/sections/cta-section";
-import { ProfilePhoto } from "@/components/sections/profile-photo";
-import { homeStats, benefits } from "@/content/home";
+import { homeStats, benefits, homeSections } from "@/content/home";
 import { startSteps } from "@/content/process";
-import { primaryCta, trustLine } from "@/content/site";
-import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
-import { ArrowRight, Check } from "lucide-react";
+import { BenefitGrid } from "./_components/benefit-grid";
+import { Hero } from "./_components/hero";
 
 export const metadata: Metadata = pageMetadata({ home: true });
 
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
-      <Container className="pt-hero-top pb-hero-bottom">
-        <Split gap="split-hero" ratio="1.15/0.85">
-          <div>
-            <Reveal trigger="mount" variant="rise-soft" index={0}>
-              <Eyebrow>Nachhilfe in Mathematik, Informatik und Physik</Eyebrow>
-            </Reveal>
-            <Reveal
-              trigger="mount"
-              variant="rise-soft"
-              index={1}
-              className="mt-4"
-            >
-              <Heading as="h1" size="display">
-                Lernen, bis es{" "}
-                <span className="relative whitespace-nowrap text-coral">
-                  klick
-                  <svg
-                    viewBox="0 0 200 22"
-                    preserveAspectRatio="none"
-                    aria-hidden
-                    className="absolute left-[-2%] bottom-[-0.16em] h-[0.42em] w-[104%] overflow-visible"
-                  >
-                    <path
-                      d="M4 14 C 46 5, 150 4, 196 12"
-                      pathLength={1}
-                      stroke="currentColor"
-                      strokeWidth="5"
-                      fill="none"
-                      strokeLinecap="round"
-                      className="[stroke-dasharray:1] motion-safe:animate-draw"
-                    />
-                  </svg>
-                </span>{" "}
-                macht.
-              </Heading>
-            </Reveal>
-            <Reveal
-              trigger="mount"
-              variant="rise-soft"
-              index={2}
-              className="mt-6"
-            >
-              <Lead className="max-w-measure-30">
-                Hi, ich bin Leon. Ich erkläre dir den Stoff so lange, bis er
-                wirklich Sinn ergibt – persönlich, online und ohne
-                Mindestlaufzeit.
-              </Lead>
-            </Reveal>
-            <Reveal
-              trigger="mount"
-              variant="rise-soft"
-              index={3}
-              className="mt-8 flex flex-wrap gap-3.5"
-            >
-              <Button asChild variant="primary" size="lg">
-                <Link href={primaryCta.href}>
-                  {primaryCta.label} <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href={routes.subjects}>Fächer ansehen</Link>
-              </Button>
-            </Reveal>
-            <Reveal
-              trigger="mount"
-              variant="rise-soft"
-              index={4}
-              className="mt-4"
-            >
-              <Text size="small" tone="muted">
-                {trustLine}
-              </Text>
-            </Reveal>
-          </div>
-
-          <div className="relative">
-            <Reveal trigger="mount" variant="settle" delay={200}>
-              <ProfilePhoto aspect="4/5" />
-            </Reveal>
-            <Reveal
-              trigger="mount"
-              variant="fade"
-              delay={480}
-              as={Card}
-              className="absolute -left-4 bottom-8 flex items-center gap-3 px-4 py-3.5"
-            >
-              <span className="font-heading text-price-badge font-extrabold text-coral">
-                30&nbsp;€
-              </span>
-              <Text size="caption" tone="muted" className="leading-tight">
-                pro 60 Minuten
-                <br />
-                jedes angebotene Fach
-              </Text>
-            </Reveal>
-            <Reveal
-              trigger="mount"
-              variant="fade"
-              delay={580}
-              as={Card}
-              tone="inverse"
-              radius="callout"
-              className="absolute -right-3.5 top-6 flex flex-row gap-2 items-center px-4 py-2.5 text-callout font-semibold text-white"
-            >
-              Ohne Mindestlaufzeit <Check className="size-4" />
-            </Reveal>
-          </div>
-        </Split>
-      </Container>
+      <Hero />
 
       {/* Stats */}
       <Container className="pb-section">
@@ -156,8 +36,8 @@ export default function HomePage() {
       <Section>
         <PageHeader
           variant="section"
-          eyebrow="Drei Fächer, ein Anspruch"
-          title="Mathe, Informatik und Physik – verstanden, nicht auswendig gelernt."
+          eyebrow={homeSections.subjects.eyebrow}
+          title={homeSections.subjects.title}
           titleClassName="max-w-measure-16"
         />
         <div className="mt-9">
@@ -169,8 +49,8 @@ export default function HomePage() {
       <Section surface>
         <PageHeader
           variant="section"
-          eyebrow="So fängt es an"
-          title="In drei Schritten zur ersten Stunde."
+          eyebrow={homeSections.process.eyebrow}
+          title={homeSections.process.title}
           className="mb-10"
         />
         <StepGrid steps={startSteps} className="gap-6" />
@@ -180,8 +60,8 @@ export default function HomePage() {
       <Section>
         <PageHeader
           variant="section"
-          eyebrow="Fair und unkompliziert"
-          title="Nachhilfe mit klaren Bedingungen."
+          eyebrow={homeSections.benefits.eyebrow}
+          title={homeSections.benefits.title}
           className="mb-10"
         />
         <BenefitGrid items={benefits} />
