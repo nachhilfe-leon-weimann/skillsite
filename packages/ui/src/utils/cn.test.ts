@@ -74,6 +74,13 @@ test("role sizes are font sizes and colour tokens are colours", () => {
   expect(cn("bg-accent-tint-14 bg-surface")).toBe("bg-surface");
 });
 
+test("role line heights and trackings sit next to their font size", () => {
+  expect(cn("text-quote leading-quote")).toBe("text-quote leading-quote");
+  expect(cn("text-stat tracking-stat")).toBe("text-stat tracking-stat");
+  expect(cn("leading-quote leading-none")).toBe("leading-none");
+  expect(cn("tracking-stat tracking-tight")).toBe("tracking-tight");
+});
+
 // Drift guard: every token and utility of the theme must be known to `cn`.
 // styles/theme.css is the entry file; its parts are read in its @import order.
 const stylesDir = new URL("../../styles/", import.meta.url);
@@ -120,6 +127,8 @@ const namespaceConflicts: Record<string, [prefix: string, winner: string]> = {
   spacing: ["p", "p-4"],
   "z-index": ["z", "z-10"],
   text: ["text", "text-sm"],
+  leading: ["leading", "leading-none"],
+  tracking: ["tracking", "tracking-tight"],
   ease: ["ease", "ease-linear"],
   "transition-duration": ["duration", "duration-200"],
   animate: ["animate", "animate-none"],
@@ -137,8 +146,6 @@ const unregisteredNamespaces = [
   "text-shadow",
   "inset-shadow",
   "drop-shadow",
-  "tracking",
-  "leading",
   "breakpoint",
   "blur",
   "perspective",

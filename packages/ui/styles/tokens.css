@@ -150,6 +150,8 @@
   --spacing-panel-cta: clamp(2.5rem, 6vw, 4.5rem);
   --spacing-panel-booker: clamp(1.5rem, 3vw, 2.25rem);
   --spacing-panel-booker-main: clamp(1.25rem, 2.5vw, 2rem);
+  /* Top offset of a list bullet: centres it on the first line of leading-7 text. */
+  --spacing-list-bullet: 0.7rem;
 
   /* Stacking order. */
   --z-index-raised: 10;
@@ -298,6 +300,15 @@
   --text-stat-label: 0.92rem;
   --text-stat-label-sm: 0.78rem;
   --text-step-title: 1.2rem;
+
+  /* Line heights and trackings an element sets next to a role size above,
+     named after that size; price-label is the line above the price on /preise. */
+  --leading-code: 1.7;
+  --leading-quote: 1.35;
+  --leading-quote-lg: 1.28;
+  --tracking-price-label: 0.04em;
+  --tracking-quote-lg: -0.015em;
+  --tracking-stat: -0.02em;
 
   /* Legal pages: Tailwind's default sizes, named (prose-h2 = text-2xl,
      prose-h3 = text-lg, prose-sm = text-sm, prose-xs = text-xs; prose-body = the
