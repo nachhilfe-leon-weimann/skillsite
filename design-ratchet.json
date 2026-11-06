@@ -9,6 +9,12 @@
         "file": "packages/ui/src/tokens/colors.ts",
         "reason": "the TS mirror of styles/tokens.css for runtimes without CSS variables (theme-color, manifest, QR code); colors.test.ts keeps it equal"
       }
+    ],
+    "inline-style": [
+      {
+        "file": "apps/marketing/src/app/opengraph-image.tsx",
+        "reason": "Satori renders the og:image from inline styles only: it reads no class names and no CSS variables"
+      }
     ]
   },
   "counts": {
@@ -20,6 +26,6 @@
     "clamp-spacing": 0,
     "hex-color": 0,
     "raw-button": 3,
-    "inline-style": 16
+    "inline-style": 5
   }
 }
