@@ -122,7 +122,9 @@ export function Hero() {
             radius="callout"
             className="absolute -right-3.5 top-6 flex flex-row gap-2 items-center px-4 py-2.5 text-callout font-semibold text-white"
           >
-            {homeHero.tag} <Check className="size-4" />
+            {/* Label and space in one text node: split, the label can shape wider. */}
+            {`${homeHero.tag} `}
+            <Check className="size-4" />
           </Reveal>
         </div>
       </Split>
