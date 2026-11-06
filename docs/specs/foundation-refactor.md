@@ -191,7 +191,10 @@ packages/ui/
 
 **Module rules.** Outside a module, import only from `modules/<domain>` (the `index.ts`) or
 `modules/<domain>/server` (the `server.ts`); never from deeper paths. `index.ts` never re-exports server code.
-Modules do not import each other's internals. `app/` routes are thin: data and actions come from the module.
+Modules do not import each other's internals. Inside a module, the client-safe parts (`index.ts`, `model/`,
+`components/`) never import server code (the module's `server/` and `server.ts`, or another module's
+`server.ts`); the one exception is a component importing the module's `"use server"` action module,
+`server/actions.ts`. `app/` routes are thin: data and actions come from the module.
 `packages/ui` imports nothing from an app. Enforced by `import/no-restricted-paths` in the shared preset (V5).
 
 **Where things go.** Domain logic -> its module. A block used by one page -> `app/<route>/_components/`. A block
