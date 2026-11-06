@@ -48,7 +48,8 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   `isProduction()`); ESLint rejects `process.env` elsewhere in `src/`. A new variable gets its rule in that schema,
   which `instrumentation.ts` checks at server start: a present but malformed value stops the server.
 - Vitest runs only these globs: `packages/ui` `src/**/*.test.ts` (node) and `src/**/*.test.tsx` (jsdom, Testing
-  Library); `apps/marketing` `src/**/*.test.{ts,mts}`; `tests/**/*.test.mts`, `scripts/**/*.test.mjs`; `@/` works.
+  Library); `apps/marketing` `src/**/*.test.{ts,mts}` (node) and `src/**/*.test.tsx` (jsdom, Testing Library);
+  `tests/**/*.test.mts`, `scripts/**/*.test.mjs`; `@/` works.
 
 ## Data protection and secrets
 

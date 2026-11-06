@@ -71,7 +71,9 @@ The site works and looks right, but the code underneath is not a system the port
 ## Non-goals
 
 - **New features and content changes.** Visible text stays word for word; moving strings into `content/*.ts`
-  keeps them byte-identical. The only visible changes are the bug fixes of phase B and the widget fixes of C8.
+  keeps them byte-identical. The only visible changes are the bug fixes of phase B, the widget fixes of C8 and the
+  error-page fixes of D4 (a root layout error renders the site's error page) and D4r (its retry re-runs the failed
+  segment).
 - **Design consolidation during phases A-D.** Fewer icon-badge sizes, fewer white alphas, a WCAG-AA coral:
   that is phase E, pattern by pattern, with the maintainer's approval.
 - **Portal code.** Phase F only writes the portal spec. MSW and the generated `packages/api-client` (both
@@ -473,7 +475,10 @@ manual pass on the chosen implementation.
 
 - _Technique:_ `loading.tsx`/`error.tsx` where a route segment needs them, `global-error.tsx`.
 - _Acceptance criteria:_
-  - [ ] A thrown error in a page renders the error boundary in the site's look.
+  - [x] A thrown error in a page renders the error boundary in the site's look; a thrown error in the root layout
+        renders `global-error.tsx` with the brand fonts, the global styles, the stored theme and the eyebrow "Ein
+        Fehler ist aufgetreten" as its tab title in the site's template (decided November 2026). No `loading.tsx`:
+        no route has anything to wait for, and a streamed boundary would turn the `/zahlung` 307 into a meta refresh.
 
 **D5 - Page migration.** _(after C; one PR per route or route group)_
 
