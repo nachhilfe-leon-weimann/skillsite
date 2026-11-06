@@ -24,7 +24,7 @@ export function Testimonials() {
 
       {/* Keyed so each change replays the fade — a soft crossfade between voices. */}
       <div key={active} className="motion-safe:animate-fade">
-        <blockquote className="mt-6 font-heading text-quote-lg font-medium leading-[1.28] tracking-[-0.015em] text-ink">
+        <blockquote className="mt-6 font-heading text-quote-lg font-medium leading-quote-lg tracking-quote-lg text-ink">
           „{current.quote}“
         </blockquote>
 

@@ -38,7 +38,7 @@ export function StatGrid({
         >
           <div
             className={cn(
-              "font-heading font-extrabold tracking-[-0.02em] text-ink",
+              "font-heading font-extrabold tracking-stat text-ink",
               lg ? "text-stat" : "text-stat-sm",
             )}
           >

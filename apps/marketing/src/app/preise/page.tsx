@@ -9,6 +9,7 @@ import { SmartLink } from "@skillsite/ui/primitives/link";
 import { CheckList } from "@skillsite/ui/primitives/check-list";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
+import { StepNumber } from "@skillsite/ui/typography/step-number";
 import { Text } from "@skillsite/ui/typography/text";
 import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { FaqSection } from "@/components/sections/faq-section";
@@ -51,7 +52,7 @@ export default function PricingPage() {
           >
             <div className="flex flex-col justify-center bg-navy p-panel-pricing text-white">
               <Reveal trigger="mount" variant="rise-soft" delay={0}>
-                <span className="font-semibold tracking-[0.04em] text-accent-blue">
+                <span className="font-semibold tracking-price-label text-accent-blue">
                   Festpreis für jedes angebotene Fach
                 </span>
               </Reveal>
@@ -175,9 +176,7 @@ export default function PricingPage() {
               surface="inset"
               className="p-6"
             >
-              <span className="font-heading text-digit-sm font-extrabold leading-none text-coral">
-                {step.n}
-              </span>
+              <StepNumber size="sm">{step.n}</StepNumber>
               <Text className="mt-3">{step.text}</Text>
             </Reveal>
           ))}

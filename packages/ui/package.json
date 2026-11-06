@@ -25,6 +25,7 @@
     "./typography/heading": "./src/typography/heading.tsx",
     "./typography/lead": "./src/typography/lead.tsx",
     "./typography/prose": "./src/typography/prose.tsx",
+    "./typography/step-number": "./src/typography/step-number.tsx",
     "./typography/text": "./src/typography/text.tsx",
     "./forms/calendar": "./src/forms/calendar.tsx",
     "./forms/choice-chips": "./src/forms/choice-chips.tsx",

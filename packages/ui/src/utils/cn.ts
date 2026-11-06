@@ -67,6 +67,8 @@ const twMerge = extendTailwindMerge({
         "skip-link",
         "tag",
       ],
+      leading: ["code", "quote", "quote-lg"],
+      tracking: ["price-label", "quote-lg", "stat"],
       shadow: [
         "card",
         "glow-sm",
@@ -127,6 +129,7 @@ const twMerge = extendTailwindMerge({
         "panel-cta",
         "panel-booker",
         "panel-booker-main",
+        "list-bullet",
       ],
     },
     classGroups: {

@@ -5,6 +5,7 @@ import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
 import { Heading } from "@skillsite/ui/typography/heading";
+import { StepNumber } from "@skillsite/ui/typography/step-number";
 import { Lead } from "@skillsite/ui/typography/lead";
 import { Text } from "@skillsite/ui/typography/text";
 import { Reveal } from "@skillsite/ui/motion/reveal";
@@ -98,7 +99,7 @@ export default function AboutPage() {
           radius="3xl"
           className="mx-auto max-w-220 p-panel-quote"
         >
-          <p className="font-heading text-quote font-medium leading-[1.35] text-white">
+          <p className="font-heading text-quote font-medium leading-quote text-white">
             „{aboutQuote}“
           </p>
         </Reveal>
@@ -117,9 +118,7 @@ export default function AboutPage() {
               as={Card}
               className="p-6"
             >
-              <span className="font-heading text-digit-sm font-extrabold leading-none text-coral">
-                {principle.n}
-              </span>
+              <StepNumber size="sm">{principle.n}</StepNumber>
               <Heading as="h3" size="title" className="mt-3 mb-2">
                 {principle.title}
               </Heading>

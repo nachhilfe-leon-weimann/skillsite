@@ -239,7 +239,7 @@ function renderSegs(segs: Seg[]) {
 
 const STATIC_FRAME: Frame = { before: FINAL, after: [], idle: false, t: 0 };
 const PRE_CLASS =
-  "col-start-1 row-start-1 m-0 font-mono text-code leading-[1.7] whitespace-pre";
+  "col-start-1 row-start-1 m-0 font-mono text-code leading-code whitespace-pre";
 
 /**
  * The signature moment: the code appears to be written live in an editor -
