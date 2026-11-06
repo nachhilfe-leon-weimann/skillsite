@@ -8,6 +8,7 @@ import {
 } from "@/lib/booking/config";
 import { fetchCalSlots, type CalSlotsData } from "@/lib/booking/cal/client";
 import { bookingToday, daysInMonth, pad } from "@/lib/booking/dates";
+import { serverEnv } from "@/lib/env";
 
 /** Turn Cal's raw slot map into displayable, sorted days (Berlin "HH:mm"). */
 function formatDays(data: CalSlotsData): DayAvailability[] {
@@ -48,7 +49,7 @@ export async function getAvailability(params: {
   month: number;
   durationMinutes: number;
 }): Promise<AvailabilityResponse> {
-  if (!process.env.CAL_API_KEY || !calUsername) {
+  if (!serverEnv().CAL_API_KEY || !calUsername) {
     console.error(
       "[booking] Cal.com is not configured (CAL_API_KEY missing) - no availability served.",
     );

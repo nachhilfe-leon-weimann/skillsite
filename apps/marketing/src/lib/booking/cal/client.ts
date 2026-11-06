@@ -1,4 +1,5 @@
 import { BOOKING_TIMEZONE, CAL_SLOTS_TAG } from "@/lib/booking/config";
+import { serverEnv } from "@/lib/env";
 
 /**
  * The single point of Cal.com v2 I/O. Both availability (slots) and the booking
@@ -9,7 +10,7 @@ import { BOOKING_TIMEZONE, CAL_SLOTS_TAG } from "@/lib/booking/config";
 const SLOTS_URL = "https://api.cal.com/v2/slots";
 const BOOKINGS_URL = "https://api.cal.com/v2/bookings";
 
-const apiKey = () => process.env.CAL_API_KEY || null;
+const apiKey = () => serverEnv().CAL_API_KEY ?? null;
 
 /** Raw Cal slots payload: ISO-date -> list of slot start instants. */
 export type CalSlotsData = Record<string, Array<{ start?: string }>>;

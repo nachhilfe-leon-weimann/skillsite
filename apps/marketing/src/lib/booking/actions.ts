@@ -5,15 +5,16 @@ import { updateTag } from "next/cache";
 
 import {
   ANTI_SPAM,
-  bookingEvents,
   CAL_SLOTS_TAG,
-  startsWithinWithdrawalPeriod,
   type BookingSubmission,
   type SubmitResult,
 } from "@/lib/booking/config";
 import { detectSpamSignal } from "@/lib/booking/anti-spam";
 import { checkRateLimit } from "@/lib/booking/rate-limit";
-import { validateBookingValues } from "@/lib/booking/validation";
+import {
+  checkBookingSubmission,
+  type BookingIssue,
+} from "@/lib/booking/schema";
 import { buildCalBookingBody } from "@/lib/booking/mapping";
 import { createCalBooking } from "@/lib/booking/cal/client";
 import { describeAttempt, logBooking } from "@/lib/booking/log";
@@ -40,6 +41,20 @@ const GENERIC_FAILURE: SubmitResult = {
     "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.",
 };
 
+/** The message a visitor sees for each reason the action turns a submission down. */
+function issueMessage(issue: BookingIssue): string {
+  switch (issue.check) {
+    case "slot":
+      return "Bitte wähle einen Termin.";
+    case "fields":
+      return `Bitte überprüfe deine Eingaben: ${issue.fields.join(", ")}.`;
+    case "terms":
+      return "Bitte bestätige die AGB.";
+    case "withdrawal_notice":
+      return "Bitte bestätige den Hinweis zum Widerrufsrecht.";
+  }
+}
+
 /**
  * Create a booking in Cal.com from a validated submission. Public endpoint, so
  * it re-runs the full schema validation and only forwards whitelisted values.
@@ -61,7 +76,7 @@ export async function requestBooking(
   }
 }
 
-/** Thin orchestration: rate-limit -> anti-spam -> validate -> map -> Cal client. */
+/** Thin orchestration: rate-limit -> anti-spam -> check -> map -> Cal client. */
 async function processBooking(
   submission: BookingSubmission,
   attempt: Record<string, unknown>,
@@ -112,35 +127,9 @@ async function processBooking(
     return { ok: false, reason: "validation", error };
   };
 
-  if (!Object.hasOwn(bookingEvents, submission.event) || !submission.slot) {
-    return rejected({ check: "slot" }, "Bitte wähle einen Termin.");
-  }
-
-  const missing = validateBookingValues(submission.event, submission.values);
-  if (missing.length > 0) {
-    return rejected(
-      { check: "fields", fields: missing },
-      `Bitte überprüfe deine Eingaben: ${missing.join(", ")}.`,
-    );
-  }
-
-  if (
-    submission.event === "nachhilfe" &&
-    !submission.agreements?.termsAccepted
-  ) {
-    return rejected({ check: "terms" }, "Bitte bestätige die AGB.");
-  }
-
-  if (
-    submission.event === "nachhilfe" &&
-    startsWithinWithdrawalPeriod(submission.slot) &&
-    !submission.agreements?.earlyPerformanceRequested
-  ) {
-    return rejected(
-      { check: "withdrawal_notice" },
-      "Bitte bestätige den Hinweis zum Widerrufsrecht.",
-    );
-  }
+  // A malformed shape throws here, into `requestBooking`'s catch.
+  const issue = checkBookingSubmission(submission);
+  if (issue) return rejected(issue, issueMessage(issue));
 
   const result = await createCalBooking(buildCalBookingBody(submission));
 

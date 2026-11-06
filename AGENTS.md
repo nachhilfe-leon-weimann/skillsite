@@ -44,6 +44,9 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   `ease-flow`, `ease-soft`, `duration-quick|base|slow`, the `lift` utility and `Reveal`.
 - A refactor changes nothing a visitor sees. A bug gets its own `fix:` PR describing the visible change, even when
   the look changes. If it is unclear whether something is a bug or a design choice, stop and ask.
+- The app reads its environment only through `apps/marketing/src/lib/env.ts` (`serverEnv()`, `appVersion()`,
+  `isProduction()`); ESLint rejects `process.env` elsewhere in `src/`. A new variable gets its rule in that schema,
+  which `instrumentation.ts` checks at server start: a present but malformed value stops the server.
 - Vitest runs only these globs: `packages/ui` `src/**/*.test.ts` (node) and `src/**/*.test.tsx` (jsdom, Testing
   Library); `apps/marketing` `src/**/*.test.{ts,mts}`; `tests/**/*.test.mts`, `scripts/**/*.test.mjs`; `@/` works.
 

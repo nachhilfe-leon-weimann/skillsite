@@ -463,9 +463,11 @@ manual pass on the chosen implementation.
   all `process.env` reads go through it (`CAL_API_KEY` is read in two places today). Booking validation on zod
   schemas derived from the field declarations - one source for client and server, typed errors.
 - _Acceptance criteria:_
-  - [ ] `next build` without `.env` is green.
-  - [ ] `CAL_API_KEY` stays optional: without it the booker shows the `unconfigured` state exactly as today
+  - [x] `next build` without `.env` is green.
+  - [x] `CAL_API_KEY` stays optional: without it the booker shows the `unconfigured` state exactly as today
         (decided June 2026). A variable that is present but malformed stops the server at start with a clear message.
+        A valid key is non-empty, has no whitespace and starts with `cal_live_` (decided November 2026); an empty
+        value counts as absent.
 
 **D4 - Route robustness.**
 

@@ -58,6 +58,15 @@ export type FieldDef = {
   target: CalTarget;
 };
 
+/** The `email` format: one `@`, a dot in the domain, no whitespace. */
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * The `phone` format, tolerant: optional leading +, then digits with common
+ * separators (space, (), /, -), requiring at least 6 actual digits.
+ */
+export const PHONE_RE = /^\+?(?:[\s()/-]*\d){6,}[\s()/-]*$/;
+
 /** Field value in form state: most fields hold a string, multi-chips a string[]. */
 export type FieldValue = string | string[];
 

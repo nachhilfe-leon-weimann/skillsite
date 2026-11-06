@@ -1,5 +1,7 @@
 import Script from "next/script";
 
+import { isProduction } from "@/lib/env";
+
 // Umami - cookieless web analytics, self-hosted at analytics.leonweimann.de.
 //
 // The website id is NOT a secret: it ships in the page HTML as data-website-id.
@@ -17,7 +19,7 @@ const UMAMI_ALLOWED_DOMAINS = "nachhilfe.leonweimann.de";
 
 export function UmamiAnalytics() {
   // Never load the tracker during local development.
-  if (process.env.NODE_ENV !== "production") return null;
+  if (!isProduction()) return null;
 
   return (
     <Script
