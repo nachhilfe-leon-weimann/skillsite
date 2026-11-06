@@ -184,9 +184,11 @@ export const bookingSubmissionSchema = z
   .looseObject({
     // `abort` makes a failed event or slot an aborting issue, and zod skips an
     // object's checks below once its shape has one: the field checks never run
-    // for an event without fields.
+    // for an event without fields. Only a string can be an offered event key:
+    // `Object.hasOwn` turns any other value into a string first.
     event: z.custom<BookingEventKey>(
-      (event) => Object.hasOwn(bookingEvents, event as PropertyKey),
+      (event) =>
+        typeof event === "string" && Object.hasOwn(bookingEvents, event),
       { abort: true },
     ),
     slot: z.custom<string>((slot) => Boolean(slot), { abort: true }),

@@ -164,6 +164,16 @@ test("an unknown event or a missing slot asks for a slot", () => {
   }
 });
 
+test("only an offered event key is accepted, never a value that reads as one", () => {
+  for (const event of [["nachhilfe"], 1, { toString: () => "nachhilfe" }]) {
+    assert.deepEqual(check({ event }), { check: "slot" });
+    // Turned down as an unknown event before the terms or the withdrawal notice count.
+    assert.deepEqual(check({ event, slot: NEAR_SLOT, agreements: {} }), {
+      check: "slot",
+    });
+  }
+});
+
 test("missing fields are named with the form's labels", () => {
   assert.deepEqual(check({ values: { ...lesson, email: "", subject: "" } }), {
     check: "fields",
