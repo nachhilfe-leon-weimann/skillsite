@@ -23,10 +23,10 @@ import { ErrorState, errorEyebrow } from "./_components/error-state";
  */
 export default function GlobalError({
   error,
-  reset,
+  retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  retry: () => void;
 }) {
   useEffect(() => {
     console.error(error);
@@ -48,7 +48,7 @@ export default function GlobalError({
         ))}
         <ThemeProvider>
           <main id="main" className="flex-1">
-            <ErrorState onRetry={reset} />
+            <ErrorState onRetry={retry} />
           </main>
         </ThemeProvider>
       </body>
