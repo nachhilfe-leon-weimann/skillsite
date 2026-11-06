@@ -1,61 +1,27 @@
-import {
-  DocHero,
-  DocSection,
-  DocShell,
-} from "@/components/docs/doc-components";
-import { ContactAddress } from "@/components/shared/contact-address";
-import { ProseP } from "@skillsite/ui/typography/prose";
-import { TextLink } from "@skillsite/ui/primitives/link";
-import { legalContact } from "@/content/legal";
+import { DocHero, DocShell } from "@/components/docs/doc-components";
+import { ImpressumProse, impressumPage } from "@/content/legal/impressum";
 import { pageMetadata } from "@/lib/metadata";
 import { FileText } from "lucide-react";
 
 export const metadata = pageMetadata({
-  title: "Impressum",
-  description:
-    "Anbieterkennzeichnung und rechtliche Angaben zu Nachhilfe Leon Weimann.",
+  ...impressumPage.metadata,
   canonical: "/impressum",
 });
 
 export default function ImpressumPage() {
+  const { hero } = impressumPage;
   return (
     <DocShell
       hero={
         <DocHero
-          badge="Anbieterkennzeichnung"
+          badge={hero.badge}
           icon={FileText}
-          title="Impressum"
-          lead="Rechtliche Angaben und Kontaktinformationen zu Nachhilfe Leon Weimann."
+          title={hero.title}
+          lead={hero.lead}
         />
       }
     >
-      <DocSection id="anbieter" title="Angaben gemäß § 5 DDG">
-        <ContactAddress />
-      </DocSection>
-
-      <DocSection id="kontakt" title="Kontaktdaten">
-        <ProseP>
-          E-Mail:{" "}
-          <TextLink variant="doc" href={`mailto:${legalContact.email}`}>
-            {legalContact.email}
-          </TextLink>
-          <br />
-          Telefonnummer:{" "}
-          <TextLink variant="doc" href={`tel:${legalContact.phone}`}>
-            {legalContact.phone}
-          </TextLink>
-        </ProseP>
-      </DocSection>
-
-      <DocSection
-        id="streitbeilegung"
-        title="Verbraucherstreitbeilegung / Universalschlichtungsstelle"
-      >
-        <ProseP>
-          Ich bin weder bereit noch verpflichtet, an Streitbeilegungsverfahren
-          vor einer Verbraucherschlichtungsstelle teilzunehmen.
-        </ProseP>
-      </DocSection>
+      <ImpressumProse />
     </DocShell>
   );
 }

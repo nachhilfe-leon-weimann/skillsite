@@ -643,11 +643,11 @@ Steps per route PR: (1) toolkit before-tree; (2) move one-user blocks; (3) swap 
 
 **Acceptance (each D5 PR)**
 
-- [ ] Evidence: HTML text nodes and `<head>` identical; computed styles `No differences.` at 390/1280, light/dark.
-- [ ] The route's files hold no visible German text: no JSX text and no string literal in text props (`title`,
+- [x] Evidence: HTML text nodes and `<head>` identical; computed styles `No differences.` at 390/1280, light/dark.
+- [x] The route's files hold no visible German text: no JSX text and no string literal in text props (`title`,
       `eyebrow`, `lead`, `description`, `alt`, `aria-label`, `pageMetadata` fields); every such string comes from
       `content/`. Deliberate exceptions are listed in the PR.
-- [ ] Only blocks with one user live in the route's `_components/`; ratchet not raised.
+- [x] Only blocks with one user live in the route's `_components/`; ratchet not raised.
 
 ### D5.0 - Shared page values (package)
 
