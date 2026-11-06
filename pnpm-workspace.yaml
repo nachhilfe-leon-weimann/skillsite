@@ -13,8 +13,13 @@ overrides:
   # Remove the layer patch/pins after an upstream release passes both #4143 regressions.
   "@radix-ui/react-dismissable-layer": 1.2.1
   "@radix-ui/react-focus-scope": 1.3.1
-  "brace-expansion@<1.1.18": 1.1.18
+  # Patched versions of tooling-only transitive dependencies (Dependabot); remove each once its parent ships it.
+  "brace-expansion@<1.1.21": 1.1.21
+  "glob@>=9.0.0 <14.0.2": ^14.0.2
   "js-yaml@>=4.0.0 <4.3.1": 4.3.1
+  "minimatch@>=7.0.0 <11.0.1": ^11.0.1
+  "source-map-js@<1.2.2": ^1.2.2
+  "zod@<4.6.6": ^4.6.6
 
 publicHoistPattern:
   - "*eslint*"
