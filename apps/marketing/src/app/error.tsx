@@ -13,7 +13,7 @@ export default function Error({
   error,
   retry,
 }: {
-  error: Error & { digest?: string };
+  error: unknown;
   retry: () => void;
 }) {
   useEffect(() => {

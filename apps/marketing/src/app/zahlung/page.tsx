@@ -3,16 +3,17 @@ import { redirect } from "next/navigation";
 
 import { StatusPage } from "@skillsite/ui/layout/status-page";
 import { Button } from "@skillsite/ui/primitives/button";
-import { TextLink } from "@skillsite/ui/primitives/link";
+import { SmartLink, TextLink } from "@skillsite/ui/primitives/link";
 import { Text } from "@skillsite/ui/typography/text";
 import { contactDetails } from "@/content/contact";
+import { paymentPage } from "@/content/status";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
 import { buildPaypalUrl, parsePaymentRequest } from "@/modules/payment";
 import { describeLink, logPayment } from "@/modules/payment/server";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Rechnung bezahlen",
+  ...paymentPage.metadata,
   unlisted: true,
 });
 
@@ -49,22 +50,21 @@ export default async function PaymentPage({
 
   return (
     <StatusPage
-      eyebrow="Zahlung"
-      title="Dieser Zahlungslink führt nicht weiter."
-      lead={
-        <>
-          Vermutlich ist der Link aus der Rechnung unterwegs abgeschnitten
-          worden. Schreib mir kurz mit deiner Rechnungsnummer – du bekommst
-          sofort einen neuen Link.
-        </>
-      }
+      eyebrow={paymentPage.eyebrow}
+      title={paymentPage.title}
+      lead={paymentPage.lead}
       actions={
         <>
           <Button asChild variant="primary" size="lg">
-            <a href={contactDetails.eMail.href}>E-Mail schreiben</a>
+            <SmartLink href={contactDetails.eMail.href}>
+              {paymentPage.actions.eMail}
+            </SmartLink>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <a href={contactDetails.whatsapp.href}>Über WhatsApp melden</a>
+            {/* Same tab on purpose: intended by the maintainer; `SmartLink` would open a new tab */}
+            <a href={contactDetails.whatsapp.href}>
+              {paymentPage.actions.whatsapp}
+            </a>
           </Button>
         </>
       }
@@ -74,7 +74,7 @@ export default async function PaymentPage({
       </Text>
       <Text size="small" tone="muted" className="mt-2">
         <TextLink variant="underline" href={routes.contact}>
-          Alle Kontaktwege
+          {paymentPage.allContacts}
         </TextLink>
       </Text>
     </StatusPage>

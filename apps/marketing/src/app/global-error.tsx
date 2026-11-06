@@ -12,8 +12,9 @@ import {
   siteViewportContent,
   templatedTitle,
 } from "@/lib/metadata";
+import { errorPage } from "@/content/status";
 
-import { ErrorState, errorEyebrow } from "./_components/error-state";
+import { ErrorState } from "./_components/error-state";
 
 /**
  * Root error boundary. It replaces the root layout when the layout itself fails,
@@ -25,7 +26,7 @@ export default function GlobalError({
   error,
   retry,
 }: {
-  error: Error & { digest?: string };
+  error: unknown;
   retry: () => void;
 }) {
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function GlobalError({
     >
       <body className="flex min-h-dvh flex-col">
         {/* React hoists these into <head>; the layout's metadata is gone with it. */}
-        <title>{templatedTitle(errorEyebrow)}</title>
+        <title>{templatedTitle(errorPage.eyebrow)}</title>
         <meta name="viewport" content={siteViewportContent} />
         {siteViewport.themeColor.map(({ media, color }) => (
           <meta key={media} name="theme-color" media={media} content={color} />
