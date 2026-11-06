@@ -7,12 +7,12 @@ import "./globals.css";
 import { useEffect } from "react";
 
 import { ThemeProvider } from "@skillsite/ui/shell/theme-provider";
+import { errorPage } from "@/content/status";
 import {
   siteViewport,
   siteViewportContent,
   templatedTitle,
 } from "@/lib/metadata";
-import { errorPage } from "@/content/status";
 
 import { ErrorState } from "./_components/error-state";
 

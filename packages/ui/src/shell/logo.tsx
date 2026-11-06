@@ -37,6 +37,8 @@ export function Logo({
         className="rounded-xl shadow-logo"
       />
       {showText ? (
+        // The line height and trackings below are the wordmark's own metrics,
+        // used by this lockup only, so they stay literal instead of tokens.
         <span className={cn("flex flex-col leading-[1.08]", textClassName)}>
           <span
             className={cn(
