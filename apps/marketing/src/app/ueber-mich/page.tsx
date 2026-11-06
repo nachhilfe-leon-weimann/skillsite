@@ -13,34 +13,34 @@ import { Split } from "@skillsite/ui/layout/split";
 import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { StatGrid } from "@/components/sections/stat-grid";
 import { ProfilePhoto } from "@/components/sections/profile-photo";
-import { CodeTypewriter } from "@/components/sections/code-typewriter";
 import { CtaSection } from "@/components/sections/cta-section";
 import {
   aboutIntro,
+  aboutPage,
   aboutStats,
-  aboutQuote,
   principles,
   software,
 } from "@/content/about";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
 import { ArrowRight } from "lucide-react";
+import { CodeTypewriter } from "./_components/code-typewriter";
+import { QuotePanel } from "./_components/quote-panel";
 
 export const metadata = pageMetadata({
   canonical: "/ueber-mich",
-  title: "Über mich",
-  description:
-    "Hi, ich bin Leon. Ich gebe Nachhilfe in Mathe, Informatik und Physik – individuell statt nach Schema, auf Augenhöhe und ohne Druck.",
+  ...aboutPage.metadata,
 });
 
 export default function AboutPage() {
+  const { intro } = aboutPage;
   return (
     <>
       <Container className="py-page-top">
         <Split gap="split-about">
           <div>
             <Reveal trigger="mount" variant="rise-soft" index={0}>
-              <Eyebrow>Über mich</Eyebrow>
+              <Eyebrow>{intro.eyebrow}</Eyebrow>
             </Reveal>
             <Reveal
               trigger="mount"
@@ -49,7 +49,7 @@ export default function AboutPage() {
               className="mt-4"
             >
               <Heading as="h1" size="h1">
-                Hi, ich bin Leon.
+                {intro.title}
               </Heading>
             </Reveal>
             <Reveal
@@ -68,8 +68,7 @@ export default function AboutPage() {
             >
               <Button asChild variant="primary" size="lg">
                 <Link href={routes.firstMeeting}>
-                  Finde heraus, ob wir zusammenpassen{" "}
-                  <ArrowRight className="size-4" />
+                  {intro.firstMeeting} <ArrowRight className="size-4" />
                 </Link>
               </Button>
             </Reveal>
@@ -92,22 +91,12 @@ export default function AboutPage() {
       </Container>
 
       <Container className="pb-section-sm">
-        <Reveal
-          variant="rise-soft"
-          as={Card}
-          tone="inverse"
-          radius="3xl"
-          className="mx-auto max-w-220 p-panel-quote"
-        >
-          <p className="font-heading text-quote font-medium leading-quote text-white">
-            „{aboutQuote}“
-          </p>
-        </Reveal>
+        <QuotePanel />
       </Container>
 
       <Container className="py-section-sm">
         <Reveal variant="rise-soft" className="mb-8">
-          <Heading size="h3">Woran ich mich halte</Heading>
+          <Heading size="h3">{aboutPage.principlesTitle}</Heading>
         </Reveal>
         <CardGrid>
           {principles.map((principle, i) => (

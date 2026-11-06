@@ -37,3 +37,22 @@ export const software = {
   title: "Ich baue selbst Software.",
   text: "Diese Website samt Buchungssystem habe ich vom Design bis zum Code selbst entwickelt. In der Informatik-Nachhilfe heißt das: echte Beispiele aus Projekten, die wirklich laufen, statt trockener Theorie.",
 };
+
+/** The quotation marks around `aboutQuote`. */
+export const quoteMarks = { open: "„", close: "“" };
+
+/** The copy of /ueber-mich around its data: metadata, intro and section titles. */
+export const aboutPage = {
+  metadata: {
+    title: "Über mich",
+    description:
+      "Hi, ich bin Leon. Ich gebe Nachhilfe in Mathe, Informatik und Physik – individuell statt nach Schema, auf Augenhöhe und ohne Druck.",
+  },
+  intro: {
+    eyebrow: "Über mich",
+    title: "Hi, ich bin Leon.",
+    /** The intro text is `aboutIntro`. */
+    firstMeeting: "Finde heraus, ob wir zusammenpassen",
+  },
+  principlesTitle: "Woran ich mich halte",
+};
