@@ -23,7 +23,7 @@ export default function DatenschutzPage() {
 
   return (
     <DocShell
-      sections={privacySections}
+      sections={privacySections.sections}
       hero={
         <DocHero
           badge={hero.badge}

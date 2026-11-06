@@ -63,7 +63,10 @@ export const bookerText = {
     rateLimitedTitle: "Zu viele Anfragen",
     slotTakenTitle: "Termin schon vergeben",
     failedTitle: "Das hat nicht ganz geklappt",
-    /** Shown when the request itself failed, or a failure came without text. */
+    /**
+     * The booking action's answer when Cal.com failed or the attempt broke; the
+     * booker shows it too when the request itself failed or a failure came without text.
+     */
     genericFailure:
       "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.",
     resend: "Erneut senden",

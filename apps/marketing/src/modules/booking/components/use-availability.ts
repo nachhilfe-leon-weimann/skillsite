@@ -9,10 +9,8 @@ import {
   type AvailabilityStatus,
   type BookingEventKey,
 } from "../model/config";
+import { MAX_MONTH_OFFSET } from "../model/calendar-months";
 import { bookingToday, shownMonth } from "../model/dates";
-
-/** The last bookable month, counted from the current one. */
-export const MAX_MONTH_OFFSET = 3;
 
 /**
  * The booking day: the server's while hydrating, the visitor's from then on.

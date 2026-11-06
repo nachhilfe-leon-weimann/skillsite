@@ -19,7 +19,7 @@ export default function AgbPage() {
 
   return (
     <DocShell
-      sections={agbSections}
+      sections={agbSections.sections}
       hero={
         <DocHero
           badge={hero.badge}

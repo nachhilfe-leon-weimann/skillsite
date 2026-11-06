@@ -10,6 +10,8 @@
  * notes or IP addresses.
  */
 
+import { compact, createLogger, loggable } from "@/lib/log";
+
 export type BookingOutcome =
   /** Cal.com confirmed the booking. */
   | "created"
@@ -22,32 +24,14 @@ export type BookingOutcome =
   /** Cal.com was unreachable, unconfigured or answered with an error. */
   | "failed";
 
-const LEVEL = {
+export const logBooking = createLogger<BookingOutcome>("booking", {
   created: "info",
   slot_taken: "info",
   blocked: "warn",
   rate_limited: "warn",
   rejected: "warn",
   failed: "error",
-} as const satisfies Record<BookingOutcome, "info" | "warn" | "error">;
-
-/** Longest untrusted string copied into a log line. */
-const MAX_LOGGED_LENGTH = 64;
-
-export function logBooking(
-  outcome: BookingOutcome,
-  context: Record<string, unknown>,
-): void {
-  // JSON keeps untrusted values on one line, so input can't forge log entries.
-  console[LEVEL[outcome]](`[booking] ${outcome} ${JSON.stringify(context)}`);
-}
-
-/** Bounded copy of an untrusted value for logging; `undefined` if not a string. */
-function loggable(value: unknown): string | undefined {
-  return typeof value === "string"
-    ? value.slice(0, MAX_LOGGED_LENGTH)
-    : undefined;
-}
+});
 
 /** `test.kunde@example.com` -> `te***@example.com`. */
 export function maskEmail(value: unknown): string | undefined {
@@ -72,7 +56,7 @@ export function describeAttempt(submission: unknown): Record<string, unknown> {
       ? (values as Record<string, unknown>).email
       : undefined;
 
-  const context: Record<string, unknown> = {
+  return compact({
     event: loggable(event),
     slot: loggable(slot),
     duration: typeof duration === "number" ? duration : undefined,
@@ -82,9 +66,5 @@ export function describeAttempt(submission: unknown): Record<string, unknown> {
     // Only ever non-empty on a blocked attempt; its content tells a customer's
     // autofill ("Muster GmbH") from a bot.
     honeypot: loggable(honeypot) || undefined,
-  };
-  for (const key of Object.keys(context)) {
-    if (context[key] === undefined) delete context[key];
-  }
-  return context;
+  });
 }

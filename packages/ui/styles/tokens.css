@@ -302,7 +302,7 @@
   --text-step-title: 1.2rem;
 
   /* Line heights and trackings an element sets next to a role size above,
-     named after that size; price-label is the line above the price on /preise. */
+     named after that size; price-label is the small label line above a price. */
   --leading-code: 1.7;
   --leading-quote: 1.35;
   --leading-quote-lg: 1.28;

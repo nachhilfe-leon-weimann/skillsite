@@ -1,4 +1,4 @@
-import { pad } from "../model/dates";
+import { pad } from "./dates";
 
 /**
  * The Booker's side of the calendar: its months as the calendar's "YYYY-MM"
@@ -7,6 +7,9 @@ import { pad } from "../model/dates";
  */
 
 type YearMonth = { year: number; month: number };
+
+/** The last bookable month, counted from the current one. */
+export const MAX_MONTH_OFFSET = 3;
 
 /** "YYYY-MM" of a year and month (1-12). */
 export const monthKey = ({ year, month }: YearMonth) => `${year}-${pad(month)}`;

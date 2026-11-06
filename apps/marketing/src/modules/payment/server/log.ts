@@ -10,34 +10,18 @@
  * carries no name, no e-mail and no IP address.
  */
 
+import { compact, createLogger, loggable } from "@/lib/log";
+
 export type PaymentOutcome =
   /** The customer was sent to PayPal's checkout. */
   | "redirected"
   /** The link was unusable - an error page was shown instead. */
   | "rejected";
 
-const LEVEL = {
+export const logPayment = createLogger<PaymentOutcome>("payment", {
   redirected: "info",
   rejected: "warn",
-} as const satisfies Record<PaymentOutcome, "info" | "warn">;
-
-/** Longest untrusted string copied into a log line. */
-const MAX_LOGGED_LENGTH = 64;
-
-export function logPayment(
-  outcome: PaymentOutcome,
-  context: Record<string, unknown>,
-): void {
-  // JSON keeps untrusted values on one line, so input can't forge log entries.
-  console[LEVEL[outcome]](`[payment] ${outcome} ${JSON.stringify(context)}`);
-}
-
-/** Bounded copy of an untrusted value for logging; `undefined` if not a string. */
-function loggable(value: unknown): string | undefined {
-  return typeof value === "string"
-    ? value.slice(0, MAX_LOGGED_LENGTH)
-    : undefined;
-}
+});
 
 /**
  * Log context for a rejected link: the raw parameters as they arrived, so a
@@ -49,12 +33,5 @@ export function describeLink(input: unknown): Record<string, unknown> {
   if (typeof input !== "object" || input === null) return {};
   const { re, betrag } = input as Record<string, unknown>;
 
-  const context: Record<string, unknown> = {
-    re: loggable(re),
-    betrag: loggable(betrag),
-  };
-  for (const key of Object.keys(context)) {
-    if (context[key] === undefined) delete context[key];
-  }
-  return context;
+  return compact({ re: loggable(re), betrag: loggable(betrag) });
 }

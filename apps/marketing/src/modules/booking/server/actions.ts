@@ -3,6 +3,8 @@
 import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 
+import { bookerText } from "@/content/booking";
+
 import {
   ANTI_SPAM,
   CAL_SLOTS_TAG,
@@ -34,8 +36,7 @@ async function clientIp(): Promise<string> {
 const GENERIC_FAILURE: SubmitResult = {
   ok: false,
   reason: "generic",
-  error:
-    "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.",
+  error: bookerText.result.genericFailure,
 };
 
 /** The message a visitor sees for each reason the action turns a submission down. */

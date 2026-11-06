@@ -5,7 +5,6 @@
   "exports": {
     "./styles/*": "./styles/*",
     "./utils/cn": "./src/utils/cn.ts",
-    "./hooks/use-body-scroll-lock": "./src/hooks/use-body-scroll-lock.ts",
     "./hooks/use-count-up": "./src/hooks/use-count-up.ts",
     "./hooks/use-hydrated": "./src/hooks/use-hydrated.ts",
     "./hooks/use-in-view": "./src/hooks/use-in-view.ts",

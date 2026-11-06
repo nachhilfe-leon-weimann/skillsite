@@ -230,3 +230,19 @@ test("no module's client-safe index.ts names server code", () => {
     ).toBe(false);
   }
 });
+
+test('every module\'s server/actions.ts is a "use server" module', () => {
+  // The client-safe zones let components/ import server/actions.ts because
+  // Next.js bundles only a reference to a "use server" module. Without the
+  // directive, that import would ship the server code to the client.
+  const actions = moduleNames
+    .map((name) => path.join(modulesDir, name, "server/actions.ts"))
+    .filter((file) => existsSync(file));
+  expect(actions.length).toBeGreaterThan(0);
+  for (const file of actions) {
+    expect(
+      readFileSync(file, "utf8").startsWith('"use server";\n'),
+      path.relative(modulesDir, file),
+    ).toBe(true);
+  }
+});

@@ -5,7 +5,7 @@ import {
 } from "@/components/docs/doc-components";
 import { ProseP } from "@skillsite/ui/typography/prose";
 import { TextLink } from "@skillsite/ui/primitives/link";
-import { agbContact, agbSectionHeading } from "@/content/agb";
+import { agbContact, agbSections } from "@/content/agb";
 import { legalContact } from "@/content/legal";
 import { routes } from "@/lib/routes";
 
@@ -36,7 +36,7 @@ function AgbSection({
   children: React.ReactNode;
 }) {
   return (
-    <DocSection id={id} title={agbSectionHeading(id)}>
+    <DocSection id={id} title={agbSections.heading(id)}>
       {children}
     </DocSection>
   );

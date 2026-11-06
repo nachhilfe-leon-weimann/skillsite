@@ -2,7 +2,8 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import type { BookingEventKey } from "../model/config";
-import { MAX_MONTH_OFFSET, useAvailability } from "./use-availability";
+import { MAX_MONTH_OFFSET } from "../model/calendar-months";
+import { useAvailability } from "./use-availability";
 
 /** One availability request the test answers by hand. */
 type Request = {
