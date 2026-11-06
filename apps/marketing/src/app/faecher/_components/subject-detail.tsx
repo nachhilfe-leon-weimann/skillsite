@@ -17,8 +17,8 @@ import { ArrowRight } from "lucide-react";
 
 /**
  * One subject's section on /faecher: its glyph, price tag, description and
- * first-meeting button beside a grid of topic cards. `surface` tints every
- * other section.
+ * first-meeting button beside a grid of topic cards. `surface` gives this
+ * section the tinted background (the page alternates it).
  */
 export function SubjectDetail({
   subject,
@@ -53,7 +53,7 @@ export function SubjectDetail({
             <Link
               href={`${routes.contact}?fach=${subject.anchorId}#kennenlernen`}
             >
-              {/* Label and space in one text node: split, it shapes a hair wider. */}
+              {/* Label and space in one text node: split, the label can shape wider. */}
               {`${detail.firstMeeting} `}
               {subject.name} <ArrowRight className="size-4" />
             </Link>
