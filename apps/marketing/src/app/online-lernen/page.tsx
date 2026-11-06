@@ -7,14 +7,10 @@ import { Pill } from "@skillsite/ui/primitives/pill";
 import { Button } from "@skillsite/ui/primitives/button";
 import { SmartLink } from "@skillsite/ui/primitives/link";
 import { Card } from "@skillsite/ui/primitives/card";
-import { IconBadge } from "@skillsite/ui/primitives/icon-badge";
-import { AnimatedCheckMark } from "@skillsite/ui/motion/animated-check-mark";
 import { Reveal } from "@skillsite/ui/motion/reveal";
 import { Heading } from "@skillsite/ui/typography/heading";
-import { StepNumber } from "@skillsite/ui/typography/step-number";
 import { Text } from "@skillsite/ui/typography/text";
 import { Split } from "@skillsite/ui/layout/split";
-import { CardGrid } from "@skillsite/ui/layout/card-grid";
 import { CtaSection } from "@/components/sections/cta-section";
 import { LessonTimeline } from "@/components/sections/lesson-timeline";
 import { FaqSection } from "@/components/sections/faq-section";
@@ -22,6 +18,7 @@ import {
   discordSetup,
   lessonSteps,
   discordFeatures,
+  onlineLearningPage,
   teamsNote,
   techNote,
 } from "@/content/online-learning";
@@ -31,22 +28,23 @@ import { discordInvite } from "@/content/socials";
 import { pageMetadata } from "@/lib/metadata";
 import { ArrowRight } from "lucide-react";
 import { SiDiscord } from "@icons-pack/react-simple-icons";
+import { FeatureCards } from "./_components/feature-cards";
+import { SetupSteps } from "./_components/setup-steps";
 
 export const metadata = pageMetadata({
   canonical: "/online-lernen",
-  title: "Online lernen",
-  description:
-    "So läuft Online-Nachhilfe über Discord: beitreten, persönlich freischalten lassen und in der ‚lounge‘ starten. Microsoft Teams ist ebenfalls möglich.",
+  ...onlineLearningPage.metadata,
 });
 
 export default function OnlineLearningPage() {
+  const { header, setup, lesson, features } = onlineLearningPage;
   return (
     <>
       <PageHeader
-        eyebrow="Discord – unser Klassenzimmer"
-        title="So läuft deine Nachhilfe über Discord."
+        eyebrow={header.eyebrow}
+        title={header.title}
         titleClassName="max-w-measure-15"
-        lead="Discord ist unser Klassenzimmer – kostenlos und per App oder Browser schnell startklar. Den Zugriff auf die Unterrichtskanäle schalte ich persönlich frei. Microsoft Teams ist ebenfalls möglich."
+        lead={header.lead}
       >
         <Button asChild variant="primary" size="lg">
           <Link href={primaryCta.href}>
@@ -55,77 +53,59 @@ export default function OnlineLearningPage() {
         </Button>
         <Button asChild variant="outline" size="lg">
           <SmartLink href={discordInvite}>
-            <SiDiscord className="size-4" aria-hidden /> Server beitreten
+            <SiDiscord className="size-4" aria-hidden />
+            {/* Space and label in one text node: split, the label can shape wider. */}
+            {` ${onlineLearningPage.joinServer}`}
           </SmartLink>
         </Button>
       </PageHeader>
 
-      {/* Phase 1 — Einmal einrichten */}
+      {/* Phase 1: the one-time setup */}
       <Container className="py-section-sm">
         <Reveal variant="rise-soft">
           <Heading size="h3" className="mb-1.5">
-            Einmal einrichten – dann bist du dabei.
+            {setup.title}
           </Heading>
         </Reveal>
         <Reveal variant="rise-soft" index={1}>
           <Text tone="muted" className="mb-8 max-w-measure-42">
-            Das machst du genau einmal. Danach klickst du dich vor jeder Stunde
-            einfach ein.
+            {setup.text}
           </Text>
         </Reveal>
 
-        <CardGrid>
-          {discordSetup.map((step, i) => (
-            <Reveal
-              key={step.n}
-              variant="rise-soft"
-              index={i}
-              as={Card}
-              className="p-6"
-            >
-              <StepNumber size="md">{step.n}</StepNumber>
-              <Heading as="h3" size="title" className="mt-3 mb-1.5">
-                {step.title}
-              </Heading>
-              <Text size="small" tone="muted">
-                {step.text}
-              </Text>
-            </Reveal>
-          ))}
-        </CardGrid>
+        <SetupSteps steps={discordSetup} />
 
-        {/* Beitreten-Band: Server-Link genau dort, wo er gebraucht wird */}
+        {/* Join band: the server link right where it is needed */}
         <Reveal
           variant="rise-soft"
           as={Card}
           surface="subtle"
           className="mt-6 flex flex-wrap items-center justify-between gap-4 px-6 py-5"
         >
-          <Text className="font-medium">
-            Sobald du Discord hast, komm auf den Server – ich schalte dich frei.
-          </Text>
+          <Text className="font-medium">{setup.joinBand}</Text>
           <Button asChild variant="primary">
             <SmartLink href={discordInvite}>
-              <SiDiscord className="size-4" aria-hidden /> Server beitreten
+              <SiDiscord className="size-4" aria-hidden />
+              {/* Space and label in one text node: split, the label can shape wider. */}
+              {` ${onlineLearningPage.joinServer}`}
             </SmartLink>
           </Button>
         </Reveal>
         <Reveal variant="rise-soft">
           <Text size="small" tone="muted" className="mt-3">
-            Das Erstgespräch führen wir ganz entspannt per Telefon. Discord
-            brauchst du erst für die Nachhilfestunden.
+            {setup.note}
           </Text>
         </Reveal>
       </Container>
 
-      {/* Phase 2 — So läuft deine Stunde */}
+      {/* Phase 2: how a lesson runs */}
       <Section surface>
         <Split align="start" ratio="0.9/1.1">
           <PageHeader
             variant="section"
-            eyebrow="In vier Schritten"
-            title="So läuft deine Stunde."
-            lead="Sobald ich dich freigeschaltet habe, siehst du den Sprachkanal ‚lounge‘ und deinen persönlichen Textkanal ‚vorname-nachname‘. Zur Stunde brauchst du nur die ‚lounge‘ – der Rest passiert von selbst."
+            eyebrow={lesson.eyebrow}
+            title={lesson.title}
+            lead={lesson.lead}
             size="h3"
           />
           <Reveal
@@ -139,42 +119,20 @@ export default function OnlineLearningPage() {
         </Split>
       </Section>
 
-      {/* Server-Funktionen */}
+      {/* Server features */}
       <Container className="py-section-sm">
         <PageHeader
           variant="section"
-          eyebrow="Server-Funktionen"
-          title="Dein Kanal – auch zwischen den Stunden."
+          eyebrow={features.eyebrow}
+          title={features.title}
           size="h3"
           titleClassName="max-w-measure-16"
           className="mb-9"
         />
-        <CardGrid columns="md-2">
-          {discordFeatures.map((feature, index) => (
-            <Reveal
-              key={feature.title}
-              variant="rise-soft"
-              index={index}
-              as={Card}
-              className="flex items-start gap-4 p-6"
-            >
-              <IconBadge className="shrink-0">
-                <AnimatedCheckMark index={index} className="size-5" />
-              </IconBadge>
-              <div>
-                <Heading as="h3" size="title" className="mb-1.5">
-                  {feature.title}
-                </Heading>
-                <Text size="small" tone="muted">
-                  {feature.text}
-                </Text>
-              </div>
-            </Reveal>
-          ))}
-        </CardGrid>
+        <FeatureCards items={discordFeatures} />
       </Container>
 
-      {/* Microsoft Teams + Technik */}
+      {/* Microsoft Teams and the technical requirements */}
       <Section surface id="ms-teams">
         <div className="grid gap-5">
           <Reveal variant="rise-soft" as={Card} surface="inset" className="p-7">
@@ -194,14 +152,18 @@ export default function OnlineLearningPage() {
             className="flex flex-wrap items-center gap-3.5 px-6 py-6"
           >
             <Pill tone="accent" size="code">
-              Technik
+              {onlineLearningPage.techLabel}
             </Pill>
             <Text tone="muted">{techNote}</Text>
           </Reveal>
         </div>
       </Section>
 
-      <FaqSection id="faq" title="Gut zu wissen" items={onlineFaq} />
+      <FaqSection
+        id="faq"
+        title={onlineLearningPage.faqTitle}
+        items={onlineFaq}
+      />
 
       <CtaSection />
     </>

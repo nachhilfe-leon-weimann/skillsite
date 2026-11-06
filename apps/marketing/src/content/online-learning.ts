@@ -74,3 +74,39 @@ export const teamsNote: TeamsNote = {
 
 export const techNote =
   "Computer, Laptop oder Tablet · stabiles Internet · Headset empfohlen. Eine Kamera brauchst du nicht. Discord ist kostenlos.";
+
+/** The copy of /online-lernen around its data: metadata, intros, join band, notes, FAQ. */
+export const onlineLearningPage = {
+  metadata: {
+    title: "Online lernen",
+    description:
+      "So läuft Online-Nachhilfe über Discord: beitreten, persönlich freischalten lassen und in der ‚lounge‘ starten. Microsoft Teams ist ebenfalls möglich.",
+  },
+  header: {
+    eyebrow: "Discord – unser Klassenzimmer",
+    title: "So läuft deine Nachhilfe über Discord.",
+    lead: "Discord ist unser Klassenzimmer – kostenlos und per App oder Browser schnell startklar. Den Zugriff auf die Unterrichtskanäle schalte ich persönlich frei. Microsoft Teams ist ebenfalls möglich.",
+  },
+  /** The label of both Discord invite buttons, after the Discord icon. */
+  joinServer: "Server beitreten",
+  setup: {
+    title: "Einmal einrichten – dann bist du dabei.",
+    text: "Das machst du genau einmal. Danach klickst du dich vor jeder Stunde einfach ein.",
+    /** The band under the setup steps, beside the invite button. */
+    joinBand:
+      "Sobald du Discord hast, komm auf den Server – ich schalte dich frei.",
+    note: "Das Erstgespräch führen wir ganz entspannt per Telefon. Discord brauchst du erst für die Nachhilfestunden.",
+  },
+  lesson: {
+    eyebrow: "In vier Schritten",
+    title: "So läuft deine Stunde.",
+    lead: "Sobald ich dich freigeschaltet habe, siehst du den Sprachkanal ‚lounge‘ und deinen persönlichen Textkanal ‚vorname-nachname‘. Zur Stunde brauchst du nur die ‚lounge‘ – der Rest passiert von selbst.",
+  },
+  features: {
+    eyebrow: "Server-Funktionen",
+    title: "Dein Kanal – auch zwischen den Stunden.",
+  },
+  /** The pill before `techNote`. */
+  techLabel: "Technik",
+  faqTitle: "Gut zu wissen",
+};
