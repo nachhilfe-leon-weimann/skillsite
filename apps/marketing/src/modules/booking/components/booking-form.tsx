@@ -15,16 +15,12 @@ import {
   startsWithinWithdrawalPeriod,
   type BookingDraft,
   type BookingEventKey,
-} from "@/lib/booking/config";
-import {
-  emptyValueFor,
-  type FieldDef,
-  type FieldValue,
-} from "@/lib/booking/fields";
-import { useBookingForm } from "@/components/booking/use-booking-form";
-import { TextField } from "@/components/booking/fields/text-field";
-import { ChipsField } from "@/components/booking/fields/chips-field";
-import { RadioField } from "@/components/booking/fields/radio-field";
+} from "../model/config";
+import { emptyValueFor, type FieldDef, type FieldValue } from "../model/fields";
+import { useBookingForm } from "./use-booking-form";
+import { TextField } from "./fields/text-field";
+import { ChipsField } from "./fields/chips-field";
+import { RadioField } from "./fields/radio-field";
 
 /** Pick the renderer for a field's kind. */
 function FieldControl({

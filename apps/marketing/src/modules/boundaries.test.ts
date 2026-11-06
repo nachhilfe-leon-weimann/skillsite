@@ -73,19 +73,160 @@ describe("module boundaries", { timeout: 60_000 }, () => {
       "src/x.tsx",
       'import { routes } from "../../../apps/marketing/src/lib/routes";\nexport const home = routes;\n',
     );
-    expect(reports).toHaveLength(1);
+    expect(reports.map((report) => report.message)).toEqual([
+      expect.stringContaining("A shared package imports nothing from an app."),
+    ]);
   });
 });
 
-test("no module's client-safe index.ts reaches its server code", () => {
+describe("booking module boundaries", { timeout: 60_000 }, () => {
+  const DEEP = "Import modules/booking through its index.ts or server.ts";
+
+  test.each([
+    "@/modules/booking/server/actions",
+    "@/modules/booking/components/booker",
+  ])("a route importing %s fails lint", async (source) => {
+    const reports = await lint(
+      appRoot,
+      "src/app/termin/page.tsx",
+      `import * as booking from "${source}";\nexport const used = booking;\n`,
+    );
+    expect(reports.map((report) => report.message)).toEqual([
+      expect.stringContaining(DEEP),
+    ]);
+  });
+
+  test("a route may import @/modules/booking and @/modules/booking/server", async () => {
+    const reports = await lint(
+      appRoot,
+      "src/app/termin/page.tsx",
+      [
+        'import { Booker } from "@/modules/booking";',
+        'import { handleAvailabilityRequest } from "@/modules/booking/server";',
+        "export const used = [Booker, handleAvailabilityRequest];",
+        "",
+      ].join("\n"),
+    );
+    expect(reports).toEqual([]);
+  });
+
+  test("another module importing booking's internals fails lint", async () => {
+    const reports = await lint(
+      appRoot,
+      "src/modules/payment/x.ts",
+      'import { bookingEvents } from "@/modules/booking/model/config";\nexport const events = bookingEvents;\n',
+    );
+    expect(reports.map((report) => report.message)).toEqual([
+      expect.stringContaining(DEEP),
+    ]);
+  });
+});
+
+describe("client-safe module code", { timeout: 60_000 }, () => {
+  const CLIENT_SAFE = "Client-safe code of modules/booking";
+
+  test.each([
+    ["index.ts", "@/modules/booking/server"],
+    ["index.ts", "./server"],
+    ["index.ts", "./server/log"],
+    ["model/x.ts", "../server/log"],
+    ["model/x.ts", "@/modules/booking/server"],
+    ["components/x.tsx", "../server/log"],
+    ["components/x.tsx", "@/modules/booking/server/log"],
+    ["components/x.tsx", "@/modules/booking/server"],
+    // The server-action exception holds for components/ only.
+    ["index.ts", "./server/actions"],
+    ["model/x.ts", "../server/actions"],
+    // Another module's server entry is server code too.
+    ["index.ts", "../payment/server"],
+    ["model/x.ts", "@/modules/payment/server"],
+    ["components/x.tsx", "@/modules/payment/server"],
+  ])("modules/booking/%s importing %s fails lint", async (file, source) => {
+    const reports = await lint(
+      appRoot,
+      `src/modules/booking/${file}`,
+      `export * from "${source}";\n`,
+    );
+    expect(reports.map((report) => report.message)).toEqual([
+      expect.stringContaining(CLIENT_SAFE),
+    ]);
+  });
+
+  test("a component may import the module's server actions", async () => {
+    const reports = await lint(
+      appRoot,
+      "src/modules/booking/components/x.tsx",
+      'import { requestBooking } from "../server/actions";\nexport const action = requestBooking;\n',
+    );
+    expect(reports).toEqual([]);
+  });
+
+  test("server code may import the module's model", async () => {
+    const reports = await lint(
+      appRoot,
+      "src/modules/booking/server/x.ts",
+      'import { bookingEvents } from "../model/config";\nexport const events = bookingEvents;\n',
+    );
+    expect(reports).toEqual([]);
+  });
+
+  test("client-safe code may import another module's index.ts", async () => {
+    const reports = await lint(
+      appRoot,
+      "src/modules/booking/components/x.tsx",
+      'import { buildPaypalUrl } from "@/modules/payment";\nexport const url = buildPaypalUrl;\n',
+    );
+    expect(reports).toEqual([]);
+  });
+
+  test("server code may import another module's server.ts", async () => {
+    const reports = await lint(
+      appRoot,
+      "src/modules/booking/server/x.ts",
+      'import { logPayment } from "@/modules/payment/server";\nexport const log = logPayment;\n',
+    );
+    expect(reports).toEqual([]);
+  });
+});
+
+/**
+ * Whether `source` holds a string literal naming a module's server code -
+ * `./server`, `../<name>/server`, `@/modules/<name>/server` or a file below
+ * any of them - as an import, a re-export or a dynamic import.
+ */
+const namesServerCode = (source: string) =>
+  /["'](?:\.\/|\.\.\/[^/"']+\/|@\/modules\/[^/"']+\/)server(?:\.ts)?(?:\/[^"']*)?["']/.test(
+    source,
+  );
+
+test.each([
+  ['export * from "./server";', true],
+  ["export { logBooking } from './server/log';", true],
+  ['import "./server.ts";', true],
+  [
+    'export { handleAvailabilityRequest } from "@/modules/booking/server";',
+    true,
+  ],
+  ['await import("@/modules/booking/server/log");', true],
+  ['export { Booker } from "./components/booker";', false],
+  ['export { bookingToday } from "./model/dates";', false],
+  ['export * from "@/modules/payment/server";', true],
+  ['export * from "@/modules/payment";', false],
+  ['export * from "../payment/server";', true],
+  ['export { logPayment } from "../payment/server/log";', true],
+  ['export * from "../payment";', false],
+])("the index.ts scan flags %s: %s", (source, flagged) => {
+  expect(namesServerCode(source)).toBe(flagged);
+});
+
+test("no module's client-safe index.ts names server code", () => {
   expect(moduleNames.length).toBeGreaterThan(0);
   for (const name of moduleNames) {
     const index = path.join(modulesDir, name, "index.ts");
     expect(existsSync(index), `modules/${name}/index.ts`).toBe(true);
-    // Any string literal naming ./server or a file below it: import, re-export
-    // or dynamic import.
-    expect(readFileSync(index, "utf8")).not.toMatch(
-      /["']\.\/server(?:\.ts)?(?:\/[^"']*)?["']/,
-    );
+    expect(
+      namesServerCode(readFileSync(index, "utf8")),
+      `modules/${name}/index.ts`,
+    ).toBe(false);
   }
 });

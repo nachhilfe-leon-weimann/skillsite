@@ -483,7 +483,8 @@ stays.
 
 **Contracts**
 
-- `index.ts`: `export { Booker } from "./components/booker";` and the client-safe types pages need (none today).
+- `index.ts`: `export { Booker } from "./components/booker";` and what the pages need besides: `bookingToday`
+  (#217 passes the server's day to the Booker), no types today.
 - `server.ts`: `import "server-only";`, then re-exports `handleAvailabilityRequest` from
   `./server/availability-route`.
 - `server/availability-route.ts`: `handleAvailabilityRequest(request: Request): Promise<Response>` - today's
@@ -502,10 +503,10 @@ stays.
 
 **Acceptance**
 
-- [ ] A deep import (`modules/booking/server/...` from `app/`) fails lint; built output identical - spec box
+- [x] A deep import (`modules/booking/server/...` from `app/`) fails lint; built output identical - spec box
       (evidence: HTML snapshot, computed styles of the booker scenarios; smoke and the booking page tests green).
-- [ ] `next build` passes with `server-only` in both `server.ts` files; no `index.ts` imports `./server`.
-- [ ] `/kontakt?fach=mathematik` still preselects the subject in the booker form (`initialSubject`), as on `main`.
+- [x] `next build` passes with `server-only` in both `server.ts` files; no `index.ts` imports `./server`.
+- [x] `/kontakt?fach=mathematik` still preselects the subject in the booker form (`initialSubject`), as on `main`.
 
 How to check: `/termin` (duration -> calendar -> slot -> form) and `/kontakt?fach=mathematik` (slot -> form, the
 subject chip preselected), light/dark, 390/1280 px - nothing changes.

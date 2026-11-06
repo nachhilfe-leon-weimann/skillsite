@@ -1,4 +1,4 @@
-import { pad } from "@/lib/booking/dates";
+import { pad } from "../model/dates";
 
 /**
  * The Booker's side of the calendar: its months as the calendar's "YYYY-MM"

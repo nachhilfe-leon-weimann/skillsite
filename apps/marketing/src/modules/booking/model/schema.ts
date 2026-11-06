@@ -5,8 +5,8 @@ import {
   startsWithinWithdrawalPeriod,
   type BookingEventKey,
   type BookingSubmission,
-} from "@/lib/booking/config";
-import { EMAIL_RE, PHONE_RE, type FieldDef } from "@/lib/booking/fields";
+} from "./config";
+import { EMAIL_RE, PHONE_RE, type FieldDef } from "./fields";
 
 /**
  * The booking validation as zod schemas, derived from the field declarations in

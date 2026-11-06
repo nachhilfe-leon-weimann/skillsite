@@ -12,10 +12,10 @@ vi.mock("next/headers", () => ({
     new Headers({ "x-forwarded-for": `192.0.2.${(request += 1)}` }),
 }));
 vi.mock("next/cache", () => ({ updateTag: () => {} }));
-vi.mock("@/lib/booking/cal/client", () => ({ createCalBooking }));
+vi.mock("./cal-client", () => ({ createCalBooking }));
 
-import { requestBooking } from "@/lib/booking/actions";
-import type { BookingSubmission } from "@/lib/booking/config";
+import { requestBooking } from "./actions";
+import type { BookingSubmission } from "../model/config";
 
 const GENERIC_ERROR =
   "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.";

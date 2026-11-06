@@ -1,7 +1,7 @@
 "use client";
 
 import { ChoiceChips } from "@skillsite/ui/forms/choice-chips";
-import type { FieldDef, FieldValue } from "@/lib/booking/fields";
+import type { FieldDef, FieldValue } from "../../model/fields";
 
 /**
  * Pill choices. `multiple` toggles between a multi-select (value is a string[],

@@ -20,10 +20,46 @@ const directories = (dir) =>
     .sort();
 
 /**
+ * The client-safe parts of a module (`index.ts`, `model/`, `components/`)
+ * never import server code - the module's own `server/` and `server.ts`, or
+ * another module's `server.ts` - so nothing server-only reaches a client bundle
+ * through them. (Another module's `server/` is closed to them by the module
+ * zone already.) One exception: a component calls a server action by importing
+ * its `"use server"` module, which is `server/actions.ts` by convention;
+ * Next.js bundles only a reference to it.
+ *
+ * @param {string} name the module's directory name
+ * @param {string[]} modules every module of the app, `name` included
+ */
+function clientSafeZones(name, modules) {
+  const own = (part) => `./src/modules/${name}/${part}`;
+  const message = `Client-safe code of modules/${name} (index.ts, model/, components/) never imports server code (its own server/ or server.ts, another module's server.ts); components/ may import server/actions.ts.`;
+  return [
+    {
+      target: [own("index.ts"), own("model"), own("components")],
+      from: modules.map((module) => `./src/modules/${module}/server.ts`),
+      message,
+    },
+    {
+      target: [own("index.ts"), own("model")],
+      from: own("server"),
+      message,
+    },
+    {
+      target: own("components"),
+      from: own("server"),
+      except: ["./actions.ts"],
+      message,
+    },
+  ];
+}
+
+/**
  * Module rules of an app: outside a module, code imports only the module's
  * `index.ts` (client-safe) or `server.ts` (server entry), never a deeper path.
  * The modules are the directories of `<appRoot>/src/modules/`; each one is
- * closed to every other top-level entry of `src/` and to every other module.
+ * closed to every other top-level entry of `src/` and to every other module,
+ * and its client-safe parts are closed to its own server code.
  *
  * @param {string} appRoot absolute path of the app (the zones' `basePath`)
  */
@@ -36,17 +72,20 @@ export function moduleBoundaries(appRoot) {
     .sort()
     .map((entry) => `./src/${entry}`);
 
-  const zones = modules.map((name) => ({
-    target: [
-      ...outside,
-      ...modules
-        .filter((other) => other !== name)
-        .map((other) => `./src/modules/${other}`),
-    ],
-    from: `./src/modules/${name}`,
-    except: MODULE_ENTRIES,
-    message: `Import modules/${name} through its index.ts or server.ts.`,
-  }));
+  const zones = modules.flatMap((name) => [
+    {
+      target: [
+        ...outside,
+        ...modules
+          .filter((other) => other !== name)
+          .map((other) => `./src/modules/${other}`),
+      ],
+      from: `./src/modules/${name}`,
+      except: MODULE_ENTRIES,
+      message: `Import modules/${name} through its index.ts or server.ts.`,
+    },
+    ...clientSafeZones(name, modules),
+  ]);
 
   return {
     name: "skillsite/module-boundaries",

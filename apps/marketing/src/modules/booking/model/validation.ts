@@ -1,6 +1,6 @@
-import type { BookingEventKey } from "@/lib/booking/config";
-import type { FieldValue } from "@/lib/booking/fields";
-import { invalidFieldLabels } from "@/lib/booking/schema";
+import type { BookingEventKey } from "./config";
+import type { FieldValue } from "./fields";
+import { invalidFieldLabels } from "./schema";
 
 /**
  * Best-effort E.164 for Cal.com, which wants international numbers, not national

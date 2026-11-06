@@ -8,16 +8,13 @@ import {
   CAL_SLOTS_TAG,
   type BookingSubmission,
   type SubmitResult,
-} from "@/lib/booking/config";
-import { detectSpamSignal } from "@/lib/booking/anti-spam";
-import { checkRateLimit } from "@/lib/booking/rate-limit";
-import {
-  checkBookingSubmission,
-  type BookingIssue,
-} from "@/lib/booking/schema";
-import { buildCalBookingBody } from "@/lib/booking/mapping";
-import { createCalBooking } from "@/lib/booking/cal/client";
-import { describeAttempt, logBooking } from "@/lib/booking/log";
+} from "../model/config";
+import { detectSpamSignal } from "../model/anti-spam";
+import { checkRateLimit } from "./rate-limit";
+import { checkBookingSubmission, type BookingIssue } from "../model/schema";
+import { buildCalBookingBody } from "../model/mapping";
+import { createCalBooking } from "./cal-client";
+import { describeAttempt, logBooking } from "./log";
 
 /**
  * Real client IP behind Traefik (Dokploy). Traefik sets `x-forwarded-for` and

@@ -1,4 +1,4 @@
-import { BOOKING_TIMEZONE } from "@/lib/booking/config";
+import { BOOKING_TIMEZONE } from "./config";
 
 export const pad = (n: number) => String(n).padStart(2, "0");
 

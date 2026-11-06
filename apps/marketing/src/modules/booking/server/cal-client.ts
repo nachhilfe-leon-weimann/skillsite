@@ -1,4 +1,4 @@
-import { BOOKING_TIMEZONE, CAL_SLOTS_TAG } from "@/lib/booking/config";
+import { BOOKING_TIMEZONE, CAL_SLOTS_TAG } from "../model/config";
 import { serverEnv } from "@/lib/env";
 
 /**
