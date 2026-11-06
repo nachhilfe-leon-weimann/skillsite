@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.3](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.2...v1.2.3) (2026-11-06)
+
+
+### Bug Fixes
+
+* **booking:** accept only an offered event key ([#239](https://github.com/nachhilfe-leon-weimann/skillsite/issues/239)) ([b0ec00f](https://github.com/nachhilfe-leon-weimann/skillsite/commit/b0ec00f86e767d62bdb67716652ea4a183bd6234))
+* **errors:** render root layout errors in the site's look ([#221](https://github.com/nachhilfe-leon-weimann/skillsite/issues/221)) ([a301c3f](https://github.com/nachhilfe-leon-weimann/skillsite/commit/a301c3f472eab3b86d3e2a022b562970793197ae))
+* **errors:** retry the failed segment from the error page ([#222](https://github.com/nachhilfe-leon-weimann/skillsite/issues/222)) ([9654361](https://github.com/nachhilfe-leon-weimann/skillsite/commit/9654361284bd70faffd65caa375c386c6bacd9a1))
+
 ## [1.2.2](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.1...v1.2.2) (2026-11-04)
 
 
