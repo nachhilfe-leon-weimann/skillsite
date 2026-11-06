@@ -4,11 +4,11 @@ import { Calendar } from "@skillsite/ui/forms/calendar";
 import { bookerText } from "@/content/booking";
 import { BOOKING_TIMEZONE } from "../model/config";
 import {
+  MAX_MONTH_OFFSET,
   bookingWindow,
   monthKey,
   monthsBetween,
 } from "../model/calendar-months";
-import { MAX_MONTH_OFFSET } from "./use-availability";
 
 type BookingCalendarProps = {
   today: string;

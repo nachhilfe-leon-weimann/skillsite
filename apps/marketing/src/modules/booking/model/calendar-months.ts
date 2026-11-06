@@ -8,6 +8,9 @@ import { pad } from "./dates";
 
 type YearMonth = { year: number; month: number };
 
+/** The last bookable month, counted from the current one. */
+export const MAX_MONTH_OFFSET = 3;
+
 /** "YYYY-MM" of a year and month (1-12). */
 export const monthKey = ({ year, month }: YearMonth) => `${year}-${pad(month)}`;
 
