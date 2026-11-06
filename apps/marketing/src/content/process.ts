@@ -43,13 +43,12 @@ export const discordHighlights: string[] = [
   "Kurze Fragen kannst du auch zwischen den Stunden stellen.",
 ];
 
-/** The navy panel on /ablauf: where the lessons take place. */
+/** The navy panel on /ablauf: where the lessons take place; its highlights are `discordHighlights`. */
 export const discordPanel = {
   eyebrow: "Unser Klassenzimmer",
   title: "Unterricht über Discord oder Microsoft Teams",
   text: "Live mit geteiltem Bildschirm: wie am selben Tisch, nur ohne Anfahrt. Du wählst die Plattform, die für dich am einfachsten ist.",
   platforms: ["Discord", "Microsoft Teams"],
-  /** The highlights are `discordHighlights`. */
   setupLink: "So richtest du Discord ein",
 };
 

@@ -39,7 +39,9 @@ export function DiscordPanel() {
       <CheckList items={discordHighlights} size="sm" tone="inverse" />
       <Button asChild variant="inverse" className="mt-6">
         <Link href={routes.onlineLearning}>
-          {discordPanel.setupLink} <ArrowRight className="size-4" />
+          {/* Label and space in one text node: split, the label can shape wider. */}
+          {`${discordPanel.setupLink} `}
+          <ArrowRight className="size-4" />
         </Link>
       </Button>
     </Card>

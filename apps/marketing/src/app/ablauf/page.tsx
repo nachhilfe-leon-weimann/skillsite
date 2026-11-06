@@ -74,7 +74,9 @@ export default function ProcessPage() {
         <Reveal variant="rise-soft" index={2}>
           <Button asChild variant="primary" size="lg">
             <Link href={routes.booking}>
-              {booking.link} <ArrowRight className="size-4" />
+              {/* Label and space in one text node: split, the label can shape wider. */}
+              {`${booking.link} `}
+              <ArrowRight className="size-4" />
             </Link>
           </Button>
         </Reveal>
