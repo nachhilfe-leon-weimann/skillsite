@@ -1,7 +1,33 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { collectErrors, isolate, stubAvailability } from "./helpers";
 import { indexablePaths, SITE_URL } from "../src/lib/routes";
+
+/** Only the home page declares the root canonical; every other page, the 404 included, must not inherit it. */
+async function expectRootCanonicalOnlyOnHome(page: Page, path: string) {
+  const canonicals = await page
+    .locator('link[rel="canonical"]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  if (path === "/") expect(canonicals, "canonical").toEqual([SITE_URL]);
+  else expect(canonicals, "canonical").not.toContain(SITE_URL);
+}
+
+/** The page opens with its h1, and no heading skips a level below the one before it. */
+async function expectHeadingOutline(page: Page) {
+  const levels = await page
+    .locator("h1, h2, h3, h4, h5, h6")
+    .evaluateAll((headings) =>
+      headings.map((heading) => Number(heading.tagName.slice(1))),
+    );
+  expect(levels[0], "heading outline: the first heading is the h1").toBe(1);
+  levels.forEach((level, i) => {
+    if (i > 0)
+      expect(
+        level,
+        `heading outline: heading ${i + 1} of ${levels.length}`,
+      ).toBeLessThanOrEqual(levels[i - 1]! + 1);
+  });
+}
 
 for (const path of indexablePaths) {
   test(`${path} renders without errors`, async ({ page }) => {
@@ -15,7 +41,9 @@ for (const path of indexablePaths) {
     // locally, so this doesn't hang) before trusting the error collector.
     await page.waitForLoadState("networkidle");
     await expect(page.locator("main#main")).toBeVisible();
-    expect(errors).toEqual([]);
+    expect(errors, "console errors").toEqual([]);
+    await expectRootCanonicalOnlyOnHome(page, path);
+    await expectHeadingOutline(page);
   });
 }
 
@@ -45,17 +73,20 @@ test("an invalid payment link renders a page instead of redirecting", async ({
 }) => {
   await isolate(page);
   const errors = collectErrors(page);
-  const response = await page.goto("/zahlung?re=x&betrag=abc");
+  const path = "/zahlung?re=x&betrag=abc";
+  const response = await page.goto(path);
   expect(response?.status()).toBe(200);
   await page.waitForLoadState("networkidle");
   await expect(page.locator("main#main")).toBeVisible();
-  expect(errors).toEqual([]);
+  expect(errors, "console errors").toEqual([]);
+  await expectRootCanonicalOnlyOnHome(page, path);
 });
 
 test("an unknown route answers 404", async ({ page }) => {
   await isolate(page);
   const errors = collectErrors(page);
-  const response = await page.goto("/gibt-es-nicht");
+  const path = "/gibt-es-nicht";
+  const response = await page.goto(path);
   expect(response?.status()).toBe(404);
   await page.waitForLoadState("networkidle");
   await expect(page.locator("main#main")).toBeVisible();
@@ -64,26 +95,10 @@ test("an unknown route answers 404", async ({ page }) => {
   const unexpectedErrors = errors.filter(
     (message) => !/Failed to load resource: .* 404/.test(message),
   );
-  expect(unexpectedErrors).toEqual([]);
+  expect(unexpectedErrors, "console errors").toEqual([]);
+  // The not-found page once inherited the home page's canonical.
+  await expectRootCanonicalOnlyOnHome(page, path);
 });
-
-for (const path of [
-  ...indexablePaths,
-  "/zahlung?re=x&betrag=abc",
-  "/gibt-es-nicht",
-]) {
-  test(`${path} declares the root canonical only if it is the home page`, async ({
-    page,
-  }) => {
-    await isolate(page);
-    await page.goto(path);
-    const canonicals = await page
-      .locator('link[rel="canonical"]')
-      .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
-    if (path === "/") expect(canonicals).toEqual([SITE_URL]);
-    else expect(canonicals).not.toContain(SITE_URL);
-  });
-}
 
 test("a route in running text navigates without a page load", async ({
   page,
