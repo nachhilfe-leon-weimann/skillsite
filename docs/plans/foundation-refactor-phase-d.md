@@ -1,10 +1,10 @@
 # Foundation refactor: phase D (marketing structure and migration) and C9
 
-> Status: Implementation plan, revised 2026-11-04. Not implemented; the maintainer approves this plan before any
-> slice starts. C8 is on `main` (C8.1-C8.9, through #210); only the spec's manual C8.9 box stays open for the
-> maintainer. The maintainer has answered the plan's questions (_Decisions for this phase_). The whole phase ships
-> as one `gh stack` of 13 slice PRs on top of this plan's PR. Each slice below is one branch and one PR; implement
-> only a dispatched slice, with its tests.
+> Status: Implementation plan, revised 2026-11-04. Implemented: every slice (D0-D6, C9) is done, ending with D6;
+> the maintainer approved this plan before the first slice. C8 is on `main` (C8.1-C8.9, through #210); only the
+> spec's manual C8.9 box stays open for the maintainer. The maintainer has answered the plan's questions
+> (_Decisions for this phase_). The whole phase ships as one `gh stack` of 13 slice PRs on top of this plan's PR.
+> Each slice below is one branch and one PR; implement only a dispatched slice, with its tests.
 
 **Goal:** give the marketing app the module structure of E-03/E-04 (D1), a decomposed booker (D2), one env module
 and zod validation (D3), error boundaries in the site's look (D4), pages built from `@skillsite/ui` with their text
@@ -399,12 +399,12 @@ Anything beyond this table is a regression: stop and report.
 
 **Acceptance**
 
-- [ ] `next build` without `.env` is green (a fresh worktree has none) - spec box.
-- [ ] Without `CAL_API_KEY` the booker shows `unconfigured` exactly as today (evidence: HTML snapshot identical); a
+- [x] `next build` without `.env` is green (a fresh worktree has none) - spec box.
+- [x] Without `CAL_API_KEY` the booker shows `unconfigured` exactly as today (evidence: HTML snapshot identical); a
       present value outside the decided shape stops `next start` with a clear message - spec box.
-- [ ] Schema, action and env tests green; the step-1 table identical before and after (evidence); every log line
+- [x] Schema, action and env tests green; the step-1 table identical before and after (evidence); every log line
       and user message of the action unchanged except the rows of the behaviour-change table.
-- [ ] `.env.example` and README state the variable is optional and what shape it needs.
+- [x] `.env.example` and README state the variable is optional and what shape it needs.
 
 ## D4 - Route robustness
 
