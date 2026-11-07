@@ -126,3 +126,31 @@ test("a malformed submission ends in the generic failure without reaching Cal.co
     /^\[booking\] failed .*"error":"MalformedSubmissionError: /,
   );
 });
+
+test("a booking Cal.com did not confirm is never a success, and is logged once with its cause", async () => {
+  for (const failure of [
+    { cause: "timeout" },
+    { cause: "http", status: 500, code: "InternalServerErrorException" },
+  ]) {
+    vi.mocked(console.error).mockClear();
+    createCalBooking.mockResolvedValueOnce({
+      ok: false,
+      slotTaken: false,
+      failure,
+    });
+    assert.deepEqual(await requestBooking(firstMeeting(validValues)), {
+      ok: false,
+      reason: "generic",
+      error: GENERIC_ERROR,
+    });
+    const lines = vi.mocked(console.error).mock.calls;
+    assert.equal(lines.length, 1);
+    const line = lines[0]?.[0] as string;
+    assert.match(line, /^\[booking\] failed /);
+    assert.ok(line.includes(`"cal":${JSON.stringify(failure)}`), line);
+    assert.ok(line.includes('"attendee":"ma***@example.com"'), line);
+    for (const value of ["Max", "Muster", "max@", "151"]) {
+      assert.ok(!line.includes(value), `${value} leaked into ${line}`);
+    }
+  }
+});

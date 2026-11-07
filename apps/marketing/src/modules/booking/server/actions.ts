@@ -139,7 +139,7 @@ async function processBooking(
     return { ok: true };
   }
   if (result.slotTaken) {
-    logBooking("slot_taken", attempt);
+    logBooking("slot_taken", { ...attempt, cal: result.failure });
     updateTag(CAL_SLOTS_TAG);
     return {
       ok: false,
@@ -148,6 +148,8 @@ async function processBooking(
         "Dieser Termin wurde gerade vergeben. Bitte wähle einen anderen Zeitpunkt.",
     };
   }
-  logBooking("failed", attempt);
+  // A timeout lands here too: Cal.com may still have created the booking, but
+  // only a confirmed one is a success. `cal` names the cause for the maintainer.
+  logBooking("failed", { ...attempt, cal: result.failure });
   return GENERIC_FAILURE;
 }

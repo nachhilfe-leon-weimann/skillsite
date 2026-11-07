@@ -68,3 +68,98 @@ export function describeAttempt(submission: unknown): Record<string, unknown> {
     honeypot: loggable(honeypot) || undefined,
   });
 }
+
+/** What a failed Cal.com booking request leaves in the outcome line. */
+export type CalErrorSummary = {
+  status: number;
+  /** Cal.com's error code, such as `BadRequestException`. */
+  code?: string;
+  message?: string;
+};
+
+/** Anything that reads as an e-mail address or a phone number. */
+const CONTACT_PATTERNS = [/\S+@\S+/g, /\+?\d[\d\s()/.-]{4,}\d/g];
+
+/** Words of a sent value worth scrubbing on their own: Cal.com may echo a part. */
+const MIN_SCRUBBED_LENGTH = 3;
+
+/** The personal values of a booking request: the attendee and the form's answers. */
+function personalValues(sent: unknown): string[] {
+  const { attendee, bookingFieldsResponses } = (sent ?? {}) as Record<
+    string,
+    unknown
+  >;
+  const { name, email, phoneNumber } = (attendee ?? {}) as Record<
+    string,
+    unknown
+  >;
+  const values: string[] = [];
+  const collect = (value: unknown) => {
+    if (typeof value === "string") values.push(value);
+    else if (typeof value === "object" && value !== null) {
+      Object.values(value).forEach(collect);
+    }
+  };
+  [name, email, phoneNumber, bookingFieldsResponses].forEach(collect);
+  // Longest first, so a whole value goes before the words it contains.
+  return [
+    ...new Set(
+      values.flatMap((value) => [value.trim(), ...value.split(/\s+/)]),
+    ),
+  ]
+    .filter((value) => value.length >= MIN_SCRUBBED_LENGTH)
+    .sort((a, b) => b.length - a.length);
+}
+
+/** A pattern matching `value` literally, in any case. */
+const literally = (value: string) =>
+  new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "giu");
+
+function scrub(text: string, personal: string[]): string {
+  return [...personal.map(literally), ...CONTACT_PATTERNS].reduce(
+    (result, pattern) => result.replace(pattern, "[redacted]"),
+    text,
+  );
+}
+
+/**
+ * The loggable part of a Cal.com error response. Cal.com may echo the request
+ * in its error, so only its status, its error code and its message are kept,
+ * each scrubbed of every personal value the request `sent` and of anything that
+ * reads as an e-mail address or a phone number, then bounded. A body that is
+ * not JSON (a proxy's error page) leaves only the status.
+ */
+export function redactCalError(
+  status: number,
+  body: string,
+  sent: unknown,
+): CalErrorSummary {
+  let json: unknown;
+  try {
+    json = JSON.parse(body);
+  } catch {
+    return { status };
+  }
+  const { error, message } = (json ?? {}) as Record<string, unknown>;
+  const nested =
+    typeof error === "object" && error !== null
+      ? (error as Record<string, unknown>)
+      : {};
+  const text = (value: unknown) =>
+    Array.isArray(value)
+      ? value.filter((entry) => typeof entry === "string").join("; ")
+      : value;
+
+  const personal = personalValues(sent);
+  const safe = (value: unknown) => {
+    const raw = text(value);
+    return typeof raw === "string" && raw !== ""
+      ? loggable(scrub(raw, personal))
+      : undefined;
+  };
+  return compact({
+    status,
+    code: safe(nested.code ?? error),
+    message: safe(nested.message ?? message),
+  }) as CalErrorSummary;
+}
