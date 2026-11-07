@@ -33,6 +33,11 @@ publicHoistPattern:
 
 peerDependencyRules:
   allowedVersions:
+    # eslint-config-next's plugins run under the workspace's ESLint 10 (`just lint` is green) but still declare ESLint 9
+    # at most; remove each entry once its plugin declares ESLint 10.
+    "eslint-plugin-import>eslint": "10"
+    "eslint-plugin-jsx-a11y>eslint": "10"
+    "eslint-plugin-react>eslint": "10"
     "@napi-rs/wasm-runtime>@emnapi/core": "1"
     "@napi-rs/wasm-runtime>@emnapi/runtime": "1"
     "tsconfck>typescript": "7"
