@@ -185,7 +185,7 @@ packages/ui/
     shell/                    theme-provider, fonts, theme-toggle, logo
     motion/                   reveal, count-up, animated-check-mark, animated-height, collapsible
     hooks/
-    utils/                    cn (configured twMerge)
+    utils/                    cn (configured twMerge), stat-number (German stat numbers)
   package.json                explicit exports: @skillsite/ui/<group>/<name>, @skillsite/ui/styles/*
 ```
 

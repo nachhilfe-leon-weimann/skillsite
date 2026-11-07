@@ -2,30 +2,22 @@
 
 import { cn } from "../utils/cn";
 import { useCountUp } from "../hooks/use-count-up";
+import { formatStatNumber, parseStatNumber } from "../utils/stat-number";
 
 type CountUpProps = {
-  /** Stat string like "320+", "35+" or "3". Only the digits animate. */
+  /**
+   * Stat string like "320+", "4,8" or "1.200+". Only the number animates, in
+   * German notation: it keeps its decimal comma and thousands dot.
+   */
   value: string;
   duration?: number;
   delay?: number;
   className?: string;
 };
 
-/** Splits "320+" into { prefix: "", to: 320, suffix: "+", decimals: 0 }. */
-function parseStat(value: string) {
-  const match = value.match(/^(\D*)([\d.,]+)(\D*)$/);
-  if (!match) return null;
-  const [, prefix = "", digits = "", suffix = ""] = match;
-  const normalised = digits.replace(/\./g, "").replace(",", ".");
-  const decimals = normalised.includes(".")
-    ? (normalised.split(".")[1] ?? "").length
-    : 0;
-  return { prefix, suffix, to: Number(normalised), decimals };
-}
-
 export function CountUp({ value, duration, delay, className }: CountUpProps) {
-  const parsed = parseStat(value);
-  const { ref, display } = useCountUp<HTMLSpanElement>({
+  const parsed = parseStatNumber(value);
+  const { ref, value: current } = useCountUp<HTMLSpanElement>({
     to: parsed?.to ?? 0,
     duration,
     delay,
@@ -49,7 +41,7 @@ export function CountUp({ value, duration, delay, className }: CountUpProps) {
         suppressHydrationWarning
       >
         {parsed.prefix}
-        {display}
+        {formatStatNumber(current, parsed)}
         {parsed.suffix}
       </span>
     </span>
