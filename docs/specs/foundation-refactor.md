@@ -275,10 +275,10 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 
 **A6 - Playwright smoke.**
 
-- _Technique:_ Playwright against `next start` of a production build, in CI: every route of
-  `apps/marketing/src/lib/routes.ts` plus `/zahlung` (valid and invalid query) and a 404 renders without console
-  errors; the booker on `/termin` reaches the slot list with `/api/booking/availability` stubbed by `page.route`.
-  Functional only, no screenshots.
+- _Technique:_ Playwright against the standalone server of a production build, started as the Docker image
+  starts it (`scripts/prepare-standalone.mjs`), in CI: every route of `apps/marketing/src/lib/routes.ts` plus
+  `/zahlung` (valid and invalid query) and a 404 renders without console errors; the booker on `/termin` reaches
+  the slot list with `/api/booking/availability` stubbed by `page.route`. Functional only, no screenshots.
 - _Acceptance criteria:_
   - [x] `just smoke` and CI run the suite green; breaking a route's render makes it red.
 
