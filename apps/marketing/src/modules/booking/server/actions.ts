@@ -42,7 +42,9 @@ const GENERIC_FAILURE: SubmitResult = {
 /** The message a visitor sees for each reason the action turns a submission down. */
 function issueMessage(issue: BookingIssue): string {
   switch (issue.check) {
+    // The duration is chosen with the slot: a hand-made one asks for a slot again.
     case "slot":
+    case "duration":
       return bookerText.result.rejected.slot;
     case "fields":
       return bookerText.result.rejected.fields(issue.fields);

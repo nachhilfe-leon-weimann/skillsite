@@ -159,3 +159,30 @@ test("a booking Cal.com did not confirm is never a success, and is logged once w
     assert.equal(vi.mocked(console.warn).mock.calls.length, 0);
   }
 });
+
+test("a duration the lesson does not offer never reaches Cal.com", async () => {
+  const lesson = {
+    event: "nachhilfe",
+    slot: "2099-03-02T09:00:00.000Z",
+    duration: 600,
+    values: {
+      firstName: "Max",
+      lastName: "Muster",
+      email: "max@example.com",
+      location: "discord-video",
+      subject: "Mathematik",
+    },
+    agreements: { termsAccepted: true, earlyPerformanceRequested: false },
+    fillDurationMs: 5_000,
+  } as BookingSubmission;
+  assert.deepEqual(await requestBooking(lesson), {
+    ok: false,
+    reason: "validation",
+    error: "Bitte wähle einen Termin.",
+  });
+  assert.equal(createCalBooking.mock.calls.length, 0);
+  assert.match(
+    vi.mocked(console.warn).mock.calls[0]?.[0] as string,
+    /^\[booking\] rejected \{"check":"duration",.*"duration":600/,
+  );
+});

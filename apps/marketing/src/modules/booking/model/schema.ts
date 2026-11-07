@@ -155,18 +155,27 @@ export function invalidFieldLabels(
   );
 }
 
-/** The legal confirmations, read as truthy flags whatever was sent. */
+/**
+ * The legal confirmations as the server checks them: a confirmation is the
+ * boolean `true` the form sends, anything else - absent, `"true"`, `1` - is not
+ * given. The Cal.com mapping records these booleans, never the raw values.
+ */
+export function readAgreements(agreements: unknown): {
+  termsAccepted: boolean;
+  earlyPerformanceRequested: boolean;
+} {
+  const flags = agreements as
+    | { termsAccepted?: unknown; earlyPerformanceRequested?: unknown }
+    | null
+    | undefined;
+  return {
+    termsAccepted: flags?.termsAccepted === true,
+    earlyPerformanceRequested: flags?.earlyPerformanceRequested === true,
+  };
+}
+
 const agreementsSchema = preprocess(
-  (agreements) => {
-    const flags = agreements as
-      | { termsAccepted?: unknown; earlyPerformanceRequested?: unknown }
-      | null
-      | undefined;
-    return {
-      termsAccepted: Boolean(flags?.termsAccepted),
-      earlyPerformanceRequested: Boolean(flags?.earlyPerformanceRequested),
-    };
-  },
+  readAgreements,
   z.object({
     termsAccepted: z.boolean(),
     earlyPerformanceRequested: z.boolean(),
@@ -174,11 +183,22 @@ const agreementsSchema = preprocess(
 );
 
 /**
+ * Whether `duration` is one the event offers: one of its selectable durations,
+ * or for a fixed-length event its own length. Absent means the event's default.
+ */
+function isOfferedDuration(event: BookingEventKey, duration: unknown): boolean {
+  if (duration === undefined) return true;
+  const { durations, defaultDuration } = bookingEvents[event];
+  const offered: readonly number[] = durations ?? [defaultDuration];
+  return typeof duration === "number" && offered.includes(duration);
+}
+
+/**
  * What the server action checks before a submission may reach Cal.com, in its
- * order: an offered event with a chosen slot, then the event's fields, then the
- * terms for a paid lesson. The withdrawal notice depends on the clock, so
- * `checkBookingSubmission` adds it. Everything else (`duration`, the anti-spam
- * fields, unknown keys) passes through untouched.
+ * order: an offered event with a chosen slot, then an offered duration, then the
+ * event's fields, then the terms for a paid lesson. The withdrawal notice
+ * depends on the clock, so `checkBookingSubmission` adds it. Everything else
+ * (the anti-spam fields, unknown keys) passes through untouched.
  */
 export const bookingSubmissionSchema = z
   .looseObject({
@@ -195,6 +215,11 @@ export const bookingSubmissionSchema = z
     agreements: agreementsSchema,
   })
   .check(
+    // `abort` keeps the field checks from running for a duration not offered.
+    z.refine(
+      (submission) => isOfferedDuration(submission.event, submission.duration),
+      { path: ["duration"], abort: true },
+    ),
     z.superRefine((submission, ctx) => {
       const values = bookingValuesSchema(submission.event).safeParse(
         submission.values,
@@ -225,6 +250,7 @@ export const bookingSubmissionSchema = z
 /** Why the action turns a submission down, as its log line's `check` names it. */
 export type BookingIssue =
   | { check: "slot" }
+  | { check: "duration" }
   | { check: "fields"; fields: string[] }
   | { check: "terms" }
   | { check: "withdrawal_notice" };
@@ -254,6 +280,8 @@ export function checkBookingSubmission(
             ),
           ),
         };
+      case "duration":
+        return { check: "duration" };
       case "agreements":
         return { check: "terms" };
       default:
