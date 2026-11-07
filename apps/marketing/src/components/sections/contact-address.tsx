@@ -1,5 +1,5 @@
 import { Address } from "@skillsite/ui/typography/text";
-import { legalContact } from "@/content/legal";
+import { legalContact } from "@/content/legal-contact";
 
 export function ContactAddress({ className }: { className?: string }) {
   return (

@@ -719,7 +719,7 @@ nothing changes.
 - The inline legal prose moves into JSX content modules `content/legal/{impressum,datenschutz,agb}.tsx`
   (decision 4): components or JSX constants that hold the paragraphs with their inline links and section
   references, byte-identical text; the pages render them. Existing `content/agb.ts`, `content/privacy.ts` and
-  `content/legal.ts` keep their data (sections, headings, numbering) where it is.
+  `content/legal-contact.ts` keep their data (sections, headings, numbering) where it is.
 - The convention is documented in `AGENTS.md` (_Conventions_: "visible content, which lives in
   `apps/marketing/src/content/*.ts`"; _Where to look_: `apps/marketing/src/content/`), in the spec's V7 and in its
   _Rules for implementing agents_ ("moving it byte-identically into `content/*.ts`"). D5d updates the `AGENTS.md`
