@@ -41,6 +41,9 @@ export const software = {
 /** The quotation marks around `aboutQuote`. */
 export const quoteMarks = { open: "„", close: "“" };
 
+/** A word of the code sample that is typed up to `typed`, then completed with Tab. */
+export type TabCompletion = { word: string; typed: string };
+
 /** The copy of /ueber-mich around its data: metadata, intro, section titles and the code sample. */
 export const aboutPage = {
   metadata: {
@@ -55,12 +58,15 @@ export const aboutPage = {
     firstMeeting: "Finde heraus, ob wir zusammenpassen",
   },
   principlesTitle: "Woran ich mich halte",
-  /** The words of the code sample typed beside the software text; its syntax lives in `code-typewriter`. */
+  /**
+   * The words of the code sample typed beside the software text; its syntax lives in `code-typewriter`.
+   * `param` and `check` are typed up to their prefix, then completed with Tab.
+   */
   code: {
     comment: "das Prinzip zuerst",
     fn: "verstehen",
-    param: "stoff",
-    check: "klickt",
+    param: { word: "stoff", typed: "sto" } satisfies TabCompletion,
+    check: { word: "klickt", typed: "klic" } satisfies TabCompletion,
     result: "kann ich selbst",
     retry: "nochmal",
     retryArg: "anderswie",
