@@ -204,7 +204,7 @@ test.describe("/termin calendar", () => {
     await expect(day(page, "Samstag, 30. Januar 2027")).toBeFocused();
   });
 
-  test("an error after a keyboard month change hands focus to Retry, which loads the month again", async ({
+  test("an error after a keyboard month change hands focus to Retry, which loads the month again and hands focus back to the calendar", async ({
     page,
   }) => {
     const stub = await open(page, path, {
@@ -225,6 +225,35 @@ test.describe("/termin calendar", () => {
     await expect(selectedDay(page)).toHaveAccessibleName(
       "Donnerstag, 3. Dezember 2026, ausgewählt",
     );
+    await expect(selectedDay(page)).toBeFocused();
+    expect(await settledRequests(page, stub.requests)).toEqual([
+      at("2026-11"),
+      at("2026-12"),
+      at("2026-12"),
+    ]);
+  });
+
+  test("a Retry whose reload fails again hands focus to the new Retry", async ({
+    page,
+  }) => {
+    const stub = await open(page, path, {
+      "2026-11": ["2026-11-30"],
+      "2026-12": "error",
+    });
+    await expect(selectedDay(page)).toHaveAccessibleName(/30\. November/);
+    await tabIntoGrid(page);
+    await page.keyboard.press("ArrowRight");
+    const retry = page.getByRole("button", { name: "Erneut versuchen" });
+    await expect(retry).toBeFocused();
+
+    // While the month loads again, the calendar stands in for the notice, and
+    // the Retry that held focus is gone; then the reload fails.
+    stub.hold("2026-12");
+    await page.keyboard.press("Enter");
+    await expect(grid(page)).toHaveAccessibleName("Dezember 2026");
+    await expect(retry).toHaveCount(0);
+    await stub.release("2026-12");
+    await expect(retry).toBeFocused();
     expect(await settledRequests(page, stub.requests)).toEqual([
       at("2026-11"),
       at("2026-12"),

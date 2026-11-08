@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
 import { Card } from "@skillsite/ui/primitives/card";
 import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
@@ -49,6 +49,14 @@ export function Booker({
   } | null>(null);
   const [step, setStep] = useState<Step>("select");
   const cardRef = useRef<HTMLDivElement>(null);
+  const formTitleRef = useRef<HTMLDivElement>(null);
+  const resultTitleRef = useRef<HTMLHeadingElement>(null);
+  // A step change the visitor makes removes the control they used (a slot,
+  // Back, Send, Resend, a new choice), so focus would fall to the page. It goes
+  // to the title of what replaced it instead, or, back at the selection, to
+  // the calendar once it shows (`SelectStep`).
+  const focusNext = useRef<RefObject<HTMLElement | null> | null>(null);
+  const selectionTakesFocus = useRef(false);
 
   // Funnel entry: the booking widget was opened. `event` distinguishes the
   // nachhilfe vs. kennenlernen flows and is stable, so this fires once.
@@ -74,6 +82,13 @@ export function Booker({
     retryBooking,
     reset: resetBooking,
   } = useBookingSubmission(event, duration);
+
+  useEffect(() => {
+    const target = focusNext.current?.current;
+    focusNext.current = null;
+    // The card's own scroll (below) decides what is in view.
+    target?.focus({ preventScroll: true });
+  }, [step, bookingPhase]);
 
   // Leaving the slot picker shrinks the card; if its top scrolled out of view
   // (e.g. a slot picked far down a long mobile list), bring it back so the next
@@ -112,6 +127,7 @@ export function Booker({
   const pickSlot = (date: string, slot: BookingSlot) => {
     setSelectedSlot({ date, time: slot.time, start: slot.start });
     setStep("form");
+    focusNext.current = formTitleRef;
     // Funnel step: a time slot was chosen and the form opened.
     trackEvent("slot-selected", { type: event });
   };
@@ -119,6 +135,7 @@ export function Booker({
   const backToSelect = () => {
     setSelectedSlot(null);
     setStep("select");
+    selectionTakesFocus.current = true;
   };
 
   // Leave the result step and start a fresh selection. Reloads availability
@@ -131,11 +148,18 @@ export function Booker({
     resetBooking();
     setStep("select");
     restartSearch();
+    selectionTakesFocus.current = true;
   };
 
   const submitBooking = (draft: BookingDraft) => {
     submit(draft);
     setStep("result");
+    focusNext.current = resultTitleRef;
+  };
+
+  const resendBooking = () => {
+    retryBooking();
+    focusNext.current = resultTitleRef;
   };
 
   const availableDates = new Set(
@@ -185,6 +209,7 @@ export function Booker({
               daySlots={daySlots}
               onPickSlot={pickSlot}
               onChangeMonth={changeMonth}
+              takeFocusRef={selectionTakesFocus}
             />
           ) : null}
 
@@ -196,6 +221,7 @@ export function Booker({
                 slotStart={selectedSlot.start}
                 duration={config.durations ? duration : undefined}
                 initialSubject={initialSubject}
+                titleRef={formTitleRef}
                 onBack={backToSelect}
                 onSubmit={submitBooking}
               />
@@ -208,7 +234,8 @@ export function Booker({
               summary={summary}
               event={event}
               error={bookingError}
-              onRetry={retryBooking}
+              titleRef={resultTitleRef}
+              onRetry={resendBooking}
               onChooseAnother={chooseAnotherSlot}
             />
           ) : null}

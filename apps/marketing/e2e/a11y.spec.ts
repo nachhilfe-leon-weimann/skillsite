@@ -778,6 +778,11 @@ test.describe("the integrated keyboard paths", () => {
   const slot = (page: Page) => page.getByRole("button", { name: "10:00 Uhr" });
   const back = (page: Page) =>
     page.getByRole("button", { name: "Zurück zur Terminwahl" });
+  /** The form's title with the chosen slot below it. */
+  const formTitle = (page: Page) =>
+    page.getByText("Deine Daten", { exact: true }).locator("..");
+  /** The booker's status region, which announces a booking's outcome. */
+  const resultStatus = (page: Page) => page.getByRole("status");
   const openItems = (page: Page) =>
     page.getByText("Bitte noch ausfüllen oder bestätigen:");
   const textbox = (page: Page, name: string) =>
@@ -907,7 +912,8 @@ test.describe("the integrated keyboard paths", () => {
         const submit = page.getByRole("button", {
           name: "Zahlungspflichtig buchen",
         });
-        await press(page, "Tab");
+        await expect(formTitle(page)).toBeFocused();
+        await press(page, "Shift+Tab");
         await expect(back(page)).toBeFocused();
         await press(page, "Tab");
         await expect(textbox(page, "Vorname")).toBeFocused();
@@ -985,7 +991,8 @@ test.describe("the integrated keyboard paths", () => {
         );
         await expect(duration(page)).toBeEnabled();
         await expect(duration(page)).toHaveText("90 Minuten");
-        await press(page, "Tab");
+        await expect(gridStop(page)).toBeFocused();
+        await press(page, "Shift+Tab");
         await expect(nextMonth(page)).toBeFocused();
 
         expect(await settledRequests(page, stub.requests)).toEqual([
@@ -1035,7 +1042,8 @@ test.describe("the integrated keyboard paths", () => {
       const submit = page.getByRole("button", {
         name: "Erstgespräch buchen",
       });
-      await press(page, "Tab");
+      await expect(formTitle(page)).toBeFocused();
+      await press(page, "Shift+Tab");
       await expect(back(page)).toBeFocused();
       for (const [name, text] of [
         ["Vorname", "Erika"],
@@ -1119,7 +1127,7 @@ test.describe("the integrated keyboard paths", () => {
       await expect(page.getByText("Termin wird gebucht …")).toBeVisible();
       await expect(
         page.getByText("Einen Moment – die Buchung wird bestätigt."),
-      ).toHaveAttribute("aria-live", "polite");
+      ).toBeVisible();
       await expect.poll(() => submissions.held()).toBe(1);
       expect(submissions.actions).toEqual([true]);
       // The draft carries what the keyboard chose in every widget.
@@ -1134,11 +1142,12 @@ test.describe("the integrated keyboard paths", () => {
 
       // A request that fails before any answer is a visible error.
       await submissions.abort();
+      const failed = page.getByRole("heading", {
+        name: "Das hat nicht ganz geklappt",
+      });
+      await expect(failed).toBeVisible();
       await expect(
-        page.getByRole("heading", { name: "Das hat nicht ganz geklappt" }),
-      ).toBeVisible();
-      await expect(
-        page.getByText("Die Buchung hat nicht geklappt."),
+        failed.locator("..").getByText("Die Buchung hat nicht geklappt."),
       ).toBeVisible();
       const resend = page.getByRole("button", { name: "Erneut senden" });
       await resend.focus();
@@ -1162,6 +1171,94 @@ test.describe("the integrated keyboard paths", () => {
         "2026-11@90",
         "2026-11@90",
       ]);
+      expect(submissions.held()).toBe(0);
+      expect(submissions.bodies).toHaveLength(2);
+    });
+
+    for (const path of ["/termin", "/kontakt"]) {
+      test(`${path}: a picked slot moves focus to the form's title, and Back to the selected day`, async ({
+        page,
+      }) => {
+        const { submissions } = await openBooker(page, path);
+        await slot(page).focus();
+        await press(page, "Enter");
+        const title = formTitle(page);
+        await expect(title).toBeFocused();
+        await expect(title).toHaveText(
+          /^Deine Daten\s*Do\., 5\. November – 10:00 Uhr$/,
+        );
+        // The title is no tab stop: Tab goes on into the form, Shift+Tab to Back.
+        await press(page, "Tab");
+        await expect(textbox(page, "Vorname")).toBeFocused();
+        await press(page, "Shift+Tab");
+        await expect(back(page)).toBeFocused();
+
+        await press(page, "Enter");
+        await expect(gridStop(page)).toBeFocused();
+        await expect(gridStop(page)).toHaveAccessibleName(
+          "Donnerstag, 5. November 2026, ausgewählt",
+        );
+        await press(page, "Tab");
+        await expect(slot(page)).toBeFocused();
+        expect(submissions.bodies).toEqual([]);
+      });
+    }
+
+    test("/termin: sending moves focus to the result's title and announces the outcome; Resend and a new choice keep focus in the booker", async ({
+      page,
+    }) => {
+      const { submissions } = await openBooker(page, "/termin");
+      await slot(page).focus();
+      await press(page, "Enter");
+      await textbox(page, "Vorname").fill("Erika");
+      await textbox(page, "Nachname").fill("Beispiel");
+      await textbox(page, "E-Mail").fill("erika@example.com");
+      await radio(page, "Physik").click();
+      await page.getByRole("checkbox", { name: /Widerrufsfrist/ }).check();
+      await page
+        .getByRole("button", { name: "Zahlungspflichtig buchen" })
+        .focus();
+      await press(page, "Enter");
+
+      // Pending: the title of the state that replaced the form has focus; the
+      // status region stays empty, so nothing is announced twice.
+      const pending = page.getByRole("heading", {
+        level: 3,
+        name: "Termin wird gebucht …",
+      });
+      await expect(pending).toBeFocused();
+      const status = resultStatus(page);
+      await expect(status).toHaveText("");
+      await expect.poll(() => submissions.held()).toBe(1);
+
+      // The outcome: the title keeps focus, the status region announces it.
+      const failed = page.getByRole("heading", {
+        level: 3,
+        name: "Das hat nicht ganz geklappt",
+      });
+      const failure =
+        /^Das hat nicht ganz geklappt\s*Die Buchung hat nicht geklappt\./;
+      await submissions.abort();
+      await expect(failed).toBeFocused();
+      await expect(status).toHaveText(failure);
+
+      // Resend: focus goes back to the title; the region empties until the next outcome.
+      await page.getByRole("button", { name: "Erneut senden" }).focus();
+      await press(page, "Enter");
+      await expect(pending).toBeFocused();
+      await expect(status).toHaveText("");
+      await expect.poll(() => submissions.held()).toBe(1);
+      await submissions.abort();
+      await expect(failed).toBeFocused();
+      await expect(status).toHaveText(failure);
+
+      // A new choice: once the times are loaded again, the selected day has focus.
+      await page.getByRole("button", { name: "Anderen Termin wählen" }).focus();
+      await press(page, "Enter");
+      await expect(gridStop(page)).toBeFocused();
+      await expect(gridStop(page)).toHaveAccessibleName(
+        "Donnerstag, 5. November 2026, ausgewählt",
+      );
       expect(submissions.held()).toBe(0);
       expect(submissions.bodies).toHaveLength(2);
     });

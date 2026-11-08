@@ -157,13 +157,11 @@ test("a booking whose request fails can be sent again", async () => {
   fireEvent.click(
     screen.getByRole("button", { name: "Zahlungspflichtig buchen" }),
   );
+  const failed = await screen.findByRole("heading", {
+    name: "Das hat nicht ganz geklappt",
+  });
   expect(
-    await screen.findByRole("heading", {
-      name: "Das hat nicht ganz geklappt",
-    }),
-  ).toBeDefined();
-  expect(
-    screen.getByText(
+    within(failed.parentElement!).getByText(
       "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.",
     ),
   ).toBeDefined();

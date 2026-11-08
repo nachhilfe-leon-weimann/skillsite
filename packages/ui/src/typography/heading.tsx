@@ -46,6 +46,7 @@ export type HeadingSize = NonNullable<
 type HeadingProps = React.HTMLAttributes<HTMLHeadingElement> &
   VariantProps<typeof headingVariants> & {
     as?: "h1" | "h2" | "h3" | "h4" | "p" | "div" | "span";
+    ref?: React.Ref<HTMLHeadingElement>;
   };
 
 export function Heading({

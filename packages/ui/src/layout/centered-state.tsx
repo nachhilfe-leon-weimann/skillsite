@@ -1,5 +1,6 @@
 import { IconBadge } from "../primitives/icon-badge";
 import { Heading } from "../typography/heading";
+import { cn } from "../utils/cn";
 
 type CenteredStateProps = {
   /** The state's icon (or a spinner); it sets its own size and colour. */
@@ -10,6 +11,13 @@ type CenteredStateProps = {
   /** `-1` lets the state take focus from script, e.g. when it replaced the focused content. */
   tabIndex?: -1;
   ref?: React.Ref<HTMLDivElement>;
+  /**
+   * Makes the title a focus target for script (`tabIndex` -1), e.g. when the
+   * state replaced the control that held focus. It draws no focus ring: it is
+   * no control, and focusing it moves nothing on screen.
+   */
+  focusableTitle?: boolean;
+  titleRef?: React.Ref<HTMLHeadingElement>;
 };
 
 /**
@@ -22,6 +30,8 @@ export function CenteredState({
   children,
   tabIndex,
   ref,
+  focusableTitle = false,
+  titleRef,
 }: CenteredStateProps) {
   return (
     <div
@@ -38,7 +48,13 @@ export function CenteredState({
       >
         {icon}
       </IconBadge>
-      <Heading as="h3" size="h4" className="mb-2">
+      <Heading
+        as="h3"
+        size="h4"
+        ref={titleRef}
+        tabIndex={focusableTitle ? -1 : undefined}
+        className={cn("mb-2", focusableTitle && "outline-none")}
+      >
         {title}
       </Heading>
       {children}
