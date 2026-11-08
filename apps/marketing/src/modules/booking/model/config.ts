@@ -65,6 +65,12 @@ export const ANTI_SPAM = {
   rateLimit: {
     short: { max: 4, windowMs: 10 * 60 * 1_000 },
     daily: { max: 15, windowMs: 24 * 60 * 60 * 1_000 },
+    /**
+     * Most client addresses tracked at once - bounds the memory a flood of
+     * addresses can take. Past it, the address whose last recorded attempt
+     * is the oldest goes.
+     */
+    maxClients: 10_000,
   },
 } as const;
 

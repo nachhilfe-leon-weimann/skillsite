@@ -534,7 +534,9 @@ an unmerged one.
 
 ## Backlog (outside this spec)
 
-- Security follow-ups of the booking action (decision S) and the hardening list (`poweredByHeader`, CSP).
+- Security follow-ups of the booking action (decision S): the duration allow-list, the POST timeout, redacted
+  Cal.com errors, the bounded rate-limit map and checked `agreements` in the Cal.com metadata are done (#238);
+  open: `cal-api-version` and the hardening list (`poweredByHeader`, CSP).
 - Privacy text vs. reality: SkillForge's database on Neon, log retention ("a few days" vs. size-based
   rotation), the booking/payment log lines, "IP at most 24 hours".
 - Alerting channel for `blocked`/`failed` bookings; a test booking and an Umami cross-check after the phantom fix.
