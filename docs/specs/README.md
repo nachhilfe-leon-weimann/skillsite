@@ -49,6 +49,9 @@ A slice:
   anything not verified says so.
 - **Every slice names its symbols and files** and has criteria a reviewer can check, ticked in the PR that
   fulfils them.
+- **A slice fits one review.** It lands as one PR with its tests and adds at most about 400 lines of code; tests
+  and generated files (`pnpm-lock.yaml`, recorded fixtures) do not count. The maintainer then reads it in one
+  sitting. A larger requirement is cut into several slices.
 - **Every slice says what to look at.** CI sees no look and no content: _Check_ names the routes and states the
   maintainer checks by hand, and the PR's _How to check_ repeats them.
 - **The order is explicit.** The timeline names what runs in parallel, what waits and which files two slices
@@ -60,7 +63,7 @@ A slice:
 
 - A spec's _Rules for implementing agents_ apply in addition to [`AGENTS.md`](../../AGENTS.md); if they contradict
   it, ask.
-- Progress shows only in the checkboxes and the status block: a slice's last PR ticks its boxes, and a change of
+- Progress shows only in the checkboxes and the status block: a slice PR ticks its own boxes, and a change of
   course gets an **Amended** line or an amended date in the decision table. Moved code gets a status line saying
   what moved where.
 - No tracking issues.
