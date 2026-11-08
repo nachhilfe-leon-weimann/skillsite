@@ -100,9 +100,12 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 - **Stop at once** on a credential prompt, real personal data in view, a live system the work would need (the
   production database, a third-party API on a real account) and a spec-code contradiction in a money path.
 - **Specs while implementing**: a slice PR updates status, checkboxes and obvious slips; decisions change only with
-  the maintainer's approval. A slice that is too big may be split (reason in the PR); combining slices needs asking.
+  the maintainer's approval. A slice that outgrows one review ([`docs/specs/README.md`](docs/specs/README.md)) may
+  be split into a stack, each PR with its tests (reason in the PR) - the one exception to one PR per slice; combining
+  slices needs asking.
 - **Briefs and handoffs** follow the [agent work guide][agent-work]: a subagent that does not load this file gets
   its paragraph verbatim; a handoff goes into the chat, for a phase also onto its last PR, never into a file.
+  PR bodies and handoffs are as compact as possible: bullets over paragraphs, nothing the diff or the spec says.
 
 ## Definition of done
 
