@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { createRef } from "react";
 import { afterEach, expect, test } from "vitest";
 
 import { CenteredState } from "./centered-state";
@@ -30,6 +31,40 @@ test("CenteredState: icon circle, an h3 title, then the message", () => {
   expect(heading.nextElementSibling?.textContent).toBe(
     "Die Bestätigung kommt per E-Mail.",
   );
+});
+
+test("CenteredState: a focusable title is a focus target for script only, without a ring", () => {
+  const titleRef = createRef<HTMLHeadingElement>();
+  render(
+    <CenteredState
+      icon={null}
+      title="Termin wird gebucht …"
+      focusableTitle
+      titleRef={titleRef}
+    >
+      <p>Einen Moment.</p>
+    </CenteredState>,
+  );
+  const heading = screen.getByRole("heading", {
+    level: 3,
+    name: "Termin wird gebucht …",
+  });
+  expect(titleRef.current).toBe(heading);
+  expect(heading.tabIndex).toBe(-1);
+  expect(heading.className).toBe(
+    "font-heading text-balance hyphens-heading text-h4 mb-2 outline-none",
+  );
+  titleRef.current!.focus();
+  expect(document.activeElement).toBe(heading);
+});
+
+test("CenteredState: by default the title takes no focus", () => {
+  render(<CenteredState icon={null} title="Termin gebucht!" />);
+  expect(
+    screen
+      .getByRole("heading", { name: "Termin gebucht!" })
+      .hasAttribute("tabindex"),
+  ).toBe(false);
 });
 
 test("StatusPage: eyebrow, h1, lead, actions, then the extra lines", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, type RefObject } from "react";
 
 import { Text } from "@skillsite/ui/typography/text";
 import { bookerText } from "@/content/booking";
@@ -22,7 +22,19 @@ type SelectStepProps = {
   daySlots: BookingSlot[];
   onPickSlot: (date: string, slot: BookingSlot) => void;
   onChangeMonth: (delta: number) => void;
+  /**
+   * Set when this step should take focus once it shows: the control that held
+   * focus went with the previous step. The calendar's tab stop takes it, or
+   * the notice that stands in for the calendar.
+   */
+  takeFocusRef: RefObject<boolean>;
 };
+
+/** Focus fell to the page: the control that held it is gone. */
+function focusIsLost() {
+  const active = document.activeElement;
+  return !active || active === document.body;
+}
 
 /**
  * The first step: the calendar and the free times of the selected day, or the
@@ -41,25 +53,50 @@ export function SelectStep({
   daySlots,
   onPickSlot,
   onChangeMonth,
+  takeFocusRef,
 }: SelectStepProps) {
-  // Whether the calendar's grid held focus when the unavailable notice
-  // replaced it. Only the grid: a clicked month button keeps main's behaviour
-  // (focus falls to <body>, the page stays where it is).
-  const gridHadFocus = useRef(false);
-  const trackGridFocus = useCallback((node: HTMLDivElement | null) => {
-    if (!node) return;
-    return () => {
-      const grid = node.querySelector("[role=grid]");
-      gridHadFocus.current = grid?.contains(document.activeElement) ?? false;
-    };
-  }, []);
+  const calendarRef = useRef<HTMLDivElement | null>(null);
+  // When the unavailable notice replaces the calendar, it takes focus if the
+  // calendar's grid held it, or if this step still waits for focus and focus
+  // is still lost. Only the grid: a clicked month button keeps main's
+  // behaviour (focus falls to <body>, the page stays where it is).
+  const trackGridFocus = useCallback(
+    (node: HTMLDivElement | null) => {
+      calendarRef.current = node;
+      if (!node) return;
+      return () => {
+        calendarRef.current = null;
+        const grid = node.querySelector("[role=grid]");
+        const gridHadFocus = grid?.contains(document.activeElement) ?? false;
+        takeFocusRef.current =
+          gridHadFocus || (takeFocusRef.current && focusIsLost());
+      };
+    },
+    [takeFocusRef],
+  );
+
+  // Once the calendar shows its month, its tab stop - the selected day -
+  // takes the focus this step waits for, unless the visitor has put focus
+  // somewhere since.
+  useEffect(() => {
+    if (!takeFocusRef.current || loading || status !== "ok") return;
+    takeFocusRef.current = false;
+    if (!focusIsLost()) return;
+    calendarRef.current
+      ?.querySelector<HTMLElement>('[role=grid] button[tabindex="0"]')
+      ?.focus({ preventScroll: true });
+  }, [loading, status, takeFocusRef]);
 
   if (!loading && status !== "ok") {
     return (
       <UnavailableNotice
         status={status}
-        onRetry={onRetry}
-        takeFocusRef={gridHadFocus}
+        onRetry={() => {
+          // Retry goes with the notice: the calendar takes focus once loaded.
+          takeFocusRef.current = true;
+          onRetry();
+        }}
+        takeFocusRef={takeFocusRef}
       />
     );
   }

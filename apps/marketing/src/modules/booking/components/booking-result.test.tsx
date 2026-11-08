@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
@@ -28,6 +34,8 @@ function renderResult(props: Partial<ComponentProps<typeof BookingResult>>) {
 }
 
 const heading = () => screen.getByRole("heading").textContent;
+/** The visible state, without the status region that repeats its outcome. */
+const shown = () => within(screen.getByRole("heading").parentElement!);
 const buttons = () =>
   screen.queryAllByRole("button").map((button) => button.textContent);
 const failure = (reason: SubmitFailureReason) => ({
@@ -39,7 +47,7 @@ describe.each(events)("%s", (event) => {
   test("while Cal.com confirms, the booker says it is booking and offers nothing to click", () => {
     renderResult({ event, phase: "pending" });
     expect(heading()).toBe("Termin wird gebucht …");
-    const status = screen.getByText(
+    const status = shown().getByText(
       "Einen Moment – die Buchung wird bestätigt.",
     );
     expect(status.getAttribute("aria-live")).toBe("polite");
@@ -49,8 +57,8 @@ describe.each(events)("%s", (event) => {
   test("a confirmed booking shows the booked slot", () => {
     renderResult({ event, phase: "confirmed" });
     expect(heading()).toBe("Termin gebucht!");
-    expect(screen.getByText("Dein Termin")).toBeDefined();
-    expect(screen.getByText(summary)).toBeDefined();
+    expect(shown().getByText("Dein Termin")).toBeDefined();
+    expect(shown().getByText(summary)).toBeDefined();
   });
 
   test.each(["rate_limited", "blocked"] as const)(
@@ -60,7 +68,7 @@ describe.each(events)("%s", (event) => {
       expect(heading()).toBe(
         reason === "blocked" ? "Termin nicht gebucht" : "Zu viele Anfragen",
       );
-      expect(screen.getByText(`Server text for ${reason}.`)).toBeDefined();
+      expect(shown().getByText(`Server text for ${reason}.`)).toBeDefined();
       expect(
         screen
           .getByRole("link", { name: "Direkt anfragen" })
@@ -92,7 +100,7 @@ describe.each(events)("%s", (event) => {
         error: failure(reason),
       });
       expect(heading()).toBe("Das hat nicht ganz geklappt");
-      expect(screen.getByText(`Server text for ${reason}.`)).toBeDefined();
+      expect(shown().getByText(`Server text for ${reason}.`)).toBeDefined();
       expect(buttons()).toEqual(["Erneut senden", "Anderen Termin wählen"]);
       fireEvent.click(screen.getByRole("button", { name: "Erneut senden" }));
       expect(onRetry).toHaveBeenCalledTimes(1);
@@ -103,10 +111,52 @@ describe.each(events)("%s", (event) => {
     },
   );
 
+  test("the title stays the same element from booking to outcome, and a status region announces the outcome once", () => {
+    const props = {
+      summary,
+      event,
+      onRetry: vi.fn(),
+      onChooseAnother: vi.fn(),
+    };
+    const { rerender } = render(
+      <BookingResult {...props} phase="pending" error={null} />,
+    );
+    const title = screen.getByRole("heading");
+    const status = screen.getByRole("status");
+    const announced = () =>
+      [...status.children].map((line) => line.textContent);
+    // Empty while booking: the title, which takes focus, says it already.
+    expect(announced()).toEqual([]);
+
+    rerender(
+      <BookingResult {...props} phase="failed" error={failure("generic")} />,
+    );
+    expect(screen.getByRole("heading")).toBe(title);
+    expect(screen.getByRole("status")).toBe(status);
+    expect(announced()).toEqual([
+      "Das hat nicht ganz geklappt",
+      "Server text for generic.",
+    ]);
+
+    // Sent again: empty until the next outcome.
+    rerender(<BookingResult {...props} phase="pending" error={null} />);
+    expect(screen.getByRole("heading")).toBe(title);
+    expect(announced()).toEqual([]);
+
+    rerender(<BookingResult {...props} phase="confirmed" error={null} />);
+    expect(screen.getByRole("heading")).toBe(title);
+    expect(announced()).toEqual([
+      "Termin gebucht!",
+      event === "kennenlernen"
+        ? "Ich rufe dich zum vereinbarten Termin an. Die Bestätigung kommt per E-Mail."
+        : "Die Terminbestätigung kommt per E-Mail. Die Einwahl richtet sich nach der gewählten Plattform.",
+    ]);
+  });
+
   test("a failure without a message from the server still explains itself", () => {
     renderResult({ event, error: null });
     expect(
-      screen.getByText(
+      shown().getByText(
         "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.",
       ),
     ).toBeDefined();
@@ -119,7 +169,7 @@ test("after the first meeting is booked, the visitor learns to expect a call and
     phase: "confirmed",
   });
   expect(
-    screen.getByText(
+    shown().getByText(
       "Ich rufe dich zum vereinbarten Termin an. Die Bestätigung kommt per E-Mail.",
     ),
   ).toBeDefined();
@@ -133,7 +183,7 @@ test("after a lesson is booked, the visitor can book another one", () => {
     phase: "confirmed",
   });
   expect(
-    screen.getByText(
+    shown().getByText(
       "Die Terminbestätigung kommt per E-Mail. Die Einwahl richtet sich nach der gewählten Plattform.",
     ),
   ).toBeDefined();

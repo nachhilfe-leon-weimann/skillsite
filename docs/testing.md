@@ -31,8 +31,9 @@ Each behaviour is guarded on the cheapest layer that can see it, and on one laye
 - **Wiring:** the current page is marked; the 1080px breakpoint hands over between mobile and desktop navigation;
   client navigation leaves no overlay behind; the platform popover and the duration list are never open together.
 - **Booking:** the whole keyboard path to a valid form, never submitting; the availability states (days, empty,
-  error, unconfigured); the calendar across time zones and month bounds; failure and success are announced
-  (guarded once the booker announces them).
+  error, unconfigured); the calendar across time zones and month bounds; each step change moves focus to what
+  replaced the control that was used, and a failed booking is announced in the status region (a confirmed one
+  cannot be reached without a real booking, so its announcement is guarded on the component layer).
 - **Motion:** only two things. A declared animation runs at all and ends in its end state (the Tailwind v4
   `translate`/`scale` trap in [`AGENTS.md`](../AGENTS.md)); with reduced motion, everything is at its end state at
   once.

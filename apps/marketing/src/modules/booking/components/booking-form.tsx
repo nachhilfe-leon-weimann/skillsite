@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type Ref } from "react";
 import { ArrowLeft, ArrowRight, Calendar } from "lucide-react";
 
 import { Button } from "@skillsite/ui/primitives/button";
@@ -65,6 +65,12 @@ type BookingFormProps = {
   /** Selected duration in minutes (variable-length events). */
   duration?: number;
   initialSubject?: string;
+  /**
+   * The form's title with the chosen slot, where focus goes when the form
+   * replaces the picked slot. A target for script only: it is no control, so
+   * it draws no focus ring.
+   */
+  titleRef?: Ref<HTMLDivElement>;
   onBack: () => void;
   /** Hand the assembled draft to the parent, which sends it. */
   onSubmit: (draft: BookingDraft) => void;
@@ -81,6 +87,7 @@ export function BookingForm({
   slotStart,
   duration,
   initialSubject,
+  titleRef,
   onBack,
   onSubmit,
 }: BookingFormProps) {
@@ -159,7 +166,7 @@ export function BookingForm({
         >
           <ArrowLeft className="size-4" aria-hidden />
         </IconButton>
-        <div className="min-w-0">
+        <div ref={titleRef} tabIndex={-1} className="min-w-0 outline-none">
           <Text className="font-semibold text-ink">Deine Daten</Text>
           <span className="mt-0.5 flex items-center gap-1.5 text-small text-ink-soft">
             <Calendar className="size-3.5 shrink-0 text-coral" aria-hidden />

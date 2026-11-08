@@ -204,7 +204,7 @@ test.describe("/termin calendar", () => {
     await expect(day(page, "Samstag, 30. Januar 2027")).toBeFocused();
   });
 
-  test("an error after a keyboard month change hands focus to Retry, which loads the month again", async ({
+  test("an error after a keyboard month change hands focus to Retry, which loads the month again and hands focus back to the calendar", async ({
     page,
   }) => {
     const stub = await open(page, path, {
@@ -225,6 +225,7 @@ test.describe("/termin calendar", () => {
     await expect(selectedDay(page)).toHaveAccessibleName(
       "Donnerstag, 3. Dezember 2026, ausgewählt",
     );
+    await expect(selectedDay(page)).toBeFocused();
     expect(await settledRequests(page, stub.requests)).toEqual([
       at("2026-11"),
       at("2026-12"),
