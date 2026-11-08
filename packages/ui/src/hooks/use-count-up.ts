@@ -18,7 +18,6 @@ type CountUpOptions = {
   from?: number;
   /** Total ramp time in ms. */
   duration?: number;
-  decimals?: number;
   /** Stagger offset in ms before counting starts. */
   delay?: number;
 };
@@ -33,7 +32,6 @@ export function useCountUp<T extends Element = HTMLSpanElement>({
   to,
   from = 0,
   duration = 1000,
-  decimals = 0,
   delay = 0,
 }: CountUpOptions) {
   const { ref, inView } = useInView<T>();
@@ -71,5 +69,5 @@ export function useCountUp<T extends Element = HTMLSpanElement>({
     };
   }, [inView, to, from, duration, delay]);
 
-  return { ref, value, display: value.toFixed(decimals) };
+  return { ref, value };
 }

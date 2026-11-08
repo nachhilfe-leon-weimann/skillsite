@@ -70,6 +70,21 @@ test("the first meeting carries no agreements", () => {
   assert.equal("policies-accepted" in responses, false);
 });
 
+test("a lesson whose terms were not accepted gets no policies-accepted", () => {
+  const body = buildCalBookingBody(
+    lesson({
+      agreements: { termsAccepted: false, earlyPerformanceRequested: true },
+    }),
+  );
+  const responses = body.bookingFieldsResponses as Record<string, unknown>;
+  assert.equal("policies-accepted" in responses, false);
+  // The metadata still records what was (not) confirmed.
+  assert.equal(
+    (body.metadata as Record<string, string>).termsAccepted,
+    "false",
+  );
+});
+
 test("a lesson asks Cal.com for the chosen length", () => {
   assert.equal(buildCalBookingBody(lesson()).lengthInMinutes, 45);
 });
