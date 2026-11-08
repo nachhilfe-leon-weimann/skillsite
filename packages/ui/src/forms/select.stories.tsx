@@ -127,9 +127,10 @@ export const NearEdge: Story = {
   ),
 };
 
-function DialogExample() {
+function DialogExample({ nested = false }: { nested?: boolean }) {
   const [open, setOpen] = useState(false);
   const [closes, setCloses] = useState(0);
+  const [innerOpen, setInnerOpen] = useState(false);
   const id = useId();
   const close = () => {
     setOpen(false);
@@ -150,10 +151,32 @@ function DialogExample() {
         <Button className="mt-4" onClick={close}>
           Schließen
         </Button>
+        {nested ? (
+          <Button className="mt-4 ml-2" onClick={() => setInnerOpen(true)}>
+            Weiter
+          </Button>
+        ) : null}
       </Dialog>
+      {nested ? (
+        <Dialog
+          open={innerOpen}
+          onClose={() => setInnerOpen(false)}
+          labelledBy={`${id}-inner`}
+        >
+          <h2 id={`${id}-inner`} className="mb-4 text-h4">
+            Bestätigen
+          </h2>
+          <Button onClick={() => setInnerOpen(false)}>Zurück</Button>
+        </Dialog>
+      ) : null}
     </div>
   );
 }
 
 // Nested in a modal Dialog: Escape closes only the topmost layer.
 export const InDialog: Story = { render: () => <DialogExample /> };
+
+// A second modal opened from the first, e.g. a confirmation after a choice.
+export const InNestedDialog: Story = {
+  render: () => <DialogExample nested />,
+};

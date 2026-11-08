@@ -665,7 +665,8 @@ The #237 follow-up fixes it in the Select: focus that fell to the page or to a c
 dialog's panel) returns to the trigger, as after Escape; focus on another control stays. A follow-up to #257 keeps
 focus on the trigger from the outside press on (a press that focuses no other control no longer drops focus to the
 page while the list leaves), and while the list leaves inside a modal Dialog, the Select holds focus in the dialog
-until the dialog's own trap resumes, so Tab and Shift+Tab cannot leave it then.
+until the dialog's own trap resumes at the list's unmount, so Tab and Shift+Tab cannot leave it then; a dialog opened
+on top takes focus as usual.
 
 ## Verification and PR handoff
 

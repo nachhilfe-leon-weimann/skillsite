@@ -84,8 +84,8 @@ const focusIn = (container: Locator) =>
   container.evaluate((node) => node.contains(document.activeElement));
 
 /** Opens the "In Dialog" story's dialog and its list by keyboard, settled. */
-async function openListInDialog(page: Page) {
-  await page.goto(story("in-dialog"));
+async function openListInDialog(page: Page, name = "in-dialog") {
+  await page.goto(story(name));
   await page.getByRole("button", { name: "Dialog öffnen" }).click();
   const dialog = page.getByRole("dialog", { name: "Termin anpassen" });
   const trigger = dialog.locator("[role=combobox]");
@@ -626,6 +626,47 @@ test.describe("inside a modal Dialog", () => {
       "Dialog geschlossen: 1",
     );
     await expect.poll(() => leftovers(page)).toEqual(clean);
+  });
+
+  test("a dialog opened from the dialog after the list has left takes focus", async ({
+    page,
+  }) => {
+    const { dialog } = await openListInDialog(page, "in-nested-dialog");
+    const autoFocused = await closeAutoFocusRun(page);
+    await page.keyboard.press("Escape");
+    await expect(panel(page)).toHaveCount(0);
+    await autoFocused();
+
+    const next = dialog.getByRole("button", { name: "Weiter" });
+    await next.click();
+    const inner = page.getByRole("dialog", { name: "Bestätigen" });
+    await expect(inner.getByRole("button", { name: "Zurück" })).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(inner).toHaveCount(0);
+    await expect(next).toBeFocused();
+  });
+
+  test("a dialog opened while the list leaves takes focus", async ({
+    page,
+  }) => {
+    await openListInDialog(page, "in-nested-dialog");
+    const release = await holdExit(page);
+    const autoFocused = await closeAutoFocusRun(page);
+    await page.keyboard.press("Escape");
+    await expect(panel(page)).toHaveAttribute("inert", "");
+    // Danach, Schließen, Weiter; hidden from AT while the list is mounted.
+    for (let press = 0; press < 3; press++) await page.keyboard.press("Tab");
+    await expect(page.locator(":focus")).toHaveText("Weiter");
+    await page.keyboard.press("Enter");
+    const back = page
+      .locator("[role=dialog]", { hasText: "Bestätigen" })
+      .locator("button", { hasText: "Zurück" });
+    await expect(back).toBeFocused();
+
+    await release();
+    await expect(panel(page)).toHaveCount(0);
+    await autoFocused();
+    await expect(back).toBeFocused();
   });
 
   test("focus that still falls to the page while the list leaves returns to the trigger, not the dialog's panel", async ({
