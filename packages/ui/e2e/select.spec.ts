@@ -1,6 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 
-import { expect, test } from "./fixtures";
+import { expect, holdExit, test } from "./fixtures";
 
 const story = (name = "default") =>
   `/iframe.html?id=forms-select--${name}&viewMode=story&globals=theme:light`;
@@ -201,7 +201,9 @@ test("a hovering mouse leaves the keyboard's Enter target alone", async ({
   await expect(status(page)).toHaveText("Wert: 90 (number), Änderungen: 1");
 });
 
-test("an outside press closes without a change", async ({ page }) => {
+test("an outside press closes without a change and refocuses the trigger", async ({
+  page,
+}) => {
   await page.goto(story());
   const trigger = await combobox(page);
   await trigger.click();
@@ -210,6 +212,7 @@ test("an outside press closes without a change", async ({ page }) => {
   await expect(panel(page)).toHaveCSS("opacity", "1");
   await page.mouse.click(5, 5);
   await expect(panel(page)).toHaveCount(0);
+  await expect(trigger).toBeFocused();
   await expect(trigger).toContainText("Online");
   await expect(status(page)).toContainText("Änderungen: 0");
   expect(await leftovers(page)).toEqual(clean);
@@ -369,7 +372,7 @@ test.describe("inside a modal Dialog", () => {
     await expect.poll(() => leftovers(page)).toMatchObject({ panels: 0 });
   });
 
-  test("by keyboard: the dialog holds Tab, the list holds Tab, and each dismissal closes one layer", async ({
+  test("by keyboard: the dialog holds Tab, the list holds Tab, and each dismissal closes one layer and returns focus to its opener", async ({
     page,
   }) => {
     await page.goto(story("in-dialog"));
@@ -402,7 +405,8 @@ test.describe("inside a modal Dialog", () => {
     await expect(trigger).toBeFocused();
     await expect(dialog).toBeVisible();
 
-    // An outside press while the list is open closes only the list; focus stays in the dialog.
+    // An outside press while the list is open closes only the list; focus
+    // returns to the trigger, as after Escape, not to the dialog's panel.
     await page.keyboard.press("Enter");
     await expect(current).toBeFocused();
     await expect(panel(page)).toHaveCSS("opacity", "1");
@@ -410,9 +414,7 @@ test.describe("inside a modal Dialog", () => {
     await expect(panel(page)).toHaveCount(0);
     await expect(dialog).toBeVisible();
     await expect(log).toHaveText("Dialog geschlossen: 0");
-    expect(
-      await dialog.evaluate((node) => node.contains(document.activeElement)),
-    ).toBe(true);
+    await expect(trigger).toBeFocused();
     await expect(trigger).toContainText("60 Minuten");
 
     // With the list gone, the next outside press closes the dialog, and focus returns to its opener.
@@ -421,5 +423,45 @@ test.describe("inside a modal Dialog", () => {
     await expect(log).toHaveText("Dialog geschlossen: 1");
     await expect(opener).toBeFocused();
     await expect.poll(() => leftovers(page)).toEqual(clean);
+  });
+
+  test("focus that moved on while the list was leaving stays there", async ({
+    page,
+  }) => {
+    await page.goto(story("in-dialog"));
+    await page.getByRole("button", { name: "Dialog öffnen" }).click();
+    const dialog = page.getByRole("dialog", { name: "Termin anpassen" });
+    const trigger = dialog.locator("[role=combobox]");
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("option", { name: "60 Minuten" }),
+    ).toBeFocused();
+    await expect(panel(page)).toHaveCSS("opacity", "1");
+
+    // The outside press closes the list; while it leaves, Tab moves focus on.
+    const release = await holdExit(page);
+    await page.mouse.click(5, 5);
+    await expect(panel(page)).toHaveAttribute("inert", "");
+    await page.keyboard.press("Tab");
+    const moved = await page.evaluateHandle(() => document.activeElement);
+    expect(
+      await page.evaluate(
+        ([node, dialog]) =>
+          node instanceof HTMLButtonElement &&
+          node.getAttribute("role") !== "combobox" &&
+          dialog.contains(node),
+        [moved, await dialog.elementHandle()] as const,
+      ),
+    ).toBe(true);
+
+    await release();
+    await expect(panel(page)).toHaveCount(0);
+    // The list's close autofocus runs in a task queued at its unmount: let it run.
+    await page.evaluate(() => new Promise((done) => setTimeout(done)));
+    expect(
+      await page.evaluate((node) => document.activeElement === node, moved),
+    ).toBe(true);
+    await expect(dialog).toBeVisible();
   });
 });
