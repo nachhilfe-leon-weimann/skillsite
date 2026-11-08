@@ -1,4 +1,4 @@
-import { legalContact } from "@/content/legal";
+import { legalContact } from "@/content/legal-contact";
 import { numberedSections } from "@/lib/numbered-sections";
 
 export const privacyPolicyEffectiveDate = new Date("2026-07-14");

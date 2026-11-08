@@ -28,8 +28,6 @@ export const contactDetails = {
   },
 } satisfies Record<ContactDetailKey, ContactDetail>;
 
-export const contactDetailsList = Object.values(contactDetails);
-
 /** The copy of /kontakt around the contact details: metadata, intro, the three cards, the first meeting. */
 export const contactPage = {
   metadata: {

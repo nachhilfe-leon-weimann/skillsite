@@ -1,5 +1,5 @@
 import { brand } from "@/content/site";
-import { legalContact } from "@/content/legal";
+import { legalContact } from "@/content/legal-contact";
 import { contactDetails } from "@/content/contact";
 import { socials } from "@/content/socials";
 import { SITE_URL } from "@/lib/routes";

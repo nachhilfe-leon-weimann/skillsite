@@ -6,7 +6,7 @@ import {
 import { ProseP } from "@skillsite/ui/typography/prose";
 import { TextLink } from "@skillsite/ui/primitives/link";
 import { agbContact, agbSections } from "@/content/agb";
-import { legalContact } from "@/content/legal";
+import { legalContact } from "@/content/legal-contact";
 import { routes } from "@/lib/routes";
 
 /** /agb around its prose: metadata and hero. */
