@@ -6,7 +6,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, beforeAll, expect, test, vi } from "vitest";
+import { afterEach, beforeAll, expect, onTestFinished, test, vi } from "vitest";
 
 import { useState } from "react";
 
@@ -283,4 +283,46 @@ test("a closed panel leaves the accessibility tree and returns focus", async () 
   fireEvent.keyDown(focusedOption(), { key: "Escape" });
   await waitFor(() => expect(document.activeElement).toBe(trigger()));
   expect(screen.queryByRole("listbox")).toBeNull();
+});
+
+test("a tabbable container the visitor moves to while the list leaves keeps focus", async () => {
+  render(
+    <div role="group" aria-label="Gruppe" tabIndex={0}>
+      <Controlled options={durations} initial={60} />
+    </div>,
+  );
+  await openByKeyboard();
+  fireEvent.keyDown(focusedOption(), { key: "Escape" });
+  expect(document.activeElement).toBe(trigger());
+  // Before the list's close autofocus runs (a task queued at its unmount).
+  const group = screen.getByRole("group", { name: "Gruppe" });
+  group.focus();
+  await act(() => new Promise((done) => setTimeout(done)));
+  expect(screen.queryByRole("listbox")).toBeNull();
+  expect(document.activeElement).toBe(group);
+});
+
+test("in a modal dialog, the focus hold of a leaving list ends at its unmount", async () => {
+  const add = vi.spyOn(document, "addEventListener");
+  const remove = vi.spyOn(document, "removeEventListener");
+  onTestFinished(() => {
+    add.mockRestore();
+    remove.mockRestore();
+  });
+  // The hold is the only capture focusin listener on the document.
+  const count = (spy: typeof add) =>
+    spy.mock.calls.filter(([type, , capture]) => type === "focusin" && capture)
+      .length;
+  render(
+    <div role="dialog" aria-modal="true" aria-label="Dialog">
+      <Controlled options={durations} initial={60} />
+    </div>,
+  );
+  await openByKeyboard();
+  fireEvent.keyDown(focusedOption(), { key: "Escape" });
+  expect(count(add)).toBe(1);
+  // The list's close autofocus runs in a task queued at its unmount.
+  await act(() => new Promise((done) => setTimeout(done)));
+  expect(screen.queryByRole("listbox")).toBeNull();
+  expect(count(remove)).toBe(1);
 });

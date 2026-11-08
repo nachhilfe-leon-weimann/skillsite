@@ -99,16 +99,77 @@ const MODIFIER_KEYS = new Set(["Alt", "Control", "Meta", "Shift"]);
 
 /**
  * Focus fell away from the trigger rather than moving to another control: to
- * the page, or to a container that holds the trigger. After an outside press,
- * focus falls to the page; when the list then unmounts, a modal Dialog's focus
- * trap moves it onto the dialog's panel.
+ * the page, or to a container that holds the trigger and is not in the tab
+ * order (a tabbable one is a stop the visitor chose). Focus that rests on the
+ * page when the list unmounts is moved by a modal Dialog's focus trap onto the
+ * dialog's panel (tabIndex -1).
  */
 function focusFellFrom(trigger: HTMLElement, active: Element | null) {
   return (
     !active ||
     active === trigger.ownerDocument.body ||
-    (active !== trigger && active.contains(trigger))
+    (active !== trigger &&
+      active.contains(trigger) &&
+      !(active instanceof HTMLElement && active.tabIndex >= 0))
   );
+}
+
+/**
+ * What a press may focus: its nearest focusable element, as most browsers pick
+ * it. Safari focuses no button or link on a click; there such a press drops
+ * focus to the page, or in a modal Dialog to the dialog's panel, and
+ * onCloseAutoFocus returns it to the trigger.
+ */
+const PRESS_FOCUSABLE = [
+  "a[href]",
+  "area[href]",
+  "button:not(:disabled)",
+  "input:not(:disabled)",
+  "select:not(:disabled)",
+  "textarea:not(:disabled)",
+  "iframe",
+  "summary",
+  "audio[controls]",
+  "video[controls]",
+  "[contenteditable]:not([contenteditable='false'])",
+  "[tabindex]",
+].join(",");
+
+const MODAL = "[aria-modal='true']";
+
+/**
+ * While a closed list leaves, its focus scope still pauses a modal Dialog's
+ * focus trap: Radix resumes it only once the list unmounts. Hold focus in the
+ * dialog that holds the trigger meanwhile, as its trap would: focus that lands
+ * outside returns to the dialog's last focused element. Never fight another
+ * modal that takes focus (a dialog opened on top): stand down for good. Does
+ * nothing once the dialog itself closes (it turns inert). Returns the release,
+ * or nothing outside a modal Dialog.
+ */
+function holdFocusInModal(trigger: HTMLElement) {
+  const modal = trigger.closest<HTMLElement>(MODAL);
+  if (!modal) return undefined;
+  const doc = trigger.ownerDocument;
+  const active = doc.activeElement;
+  let last: HTMLElement =
+    active instanceof HTMLElement && modal.contains(active) ? active : trigger;
+  const hold = (event: FocusEvent) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (modal.contains(target)) {
+      last = target;
+      return;
+    }
+    if (target.closest(MODAL)) {
+      release();
+      return;
+    }
+    if (!modal.isConnected || modal.closest("[inert]")) return;
+    last.focus({ preventScroll: true });
+  };
+  const release = () => doc.removeEventListener("focusin", hold, true);
+  doc.addEventListener("focusin", hold, true);
+  return release;
 }
 
 /**
@@ -178,16 +239,30 @@ export function Select<T extends string | number>({
   // Focus follows the state at once, also while the exit transition keeps the
   // closed panel mounted (inert). Runs after Radix has released its focus trap.
   const wasOpenRef = useRef(false);
+  // Releases the focus hold of a leaving list (see holdFocusInModal).
+  const releaseHoldRef = useRef<(() => void) | undefined>(undefined);
+  const releaseHold = useCallback(() => {
+    releaseHoldRef.current?.();
+    releaseHoldRef.current = undefined;
+  }, []);
+  useEffect(() => releaseHold, [releaseHold]);
   useEffect(() => {
     const content = contentRef.current;
     const active = document.activeElement;
+    releaseHold();
     if (!open && wasOpenRef.current) {
       const trigger = triggerRef.current;
+      // Every way to close leaves focus in the list. focusFellFrom is a guard:
+      // its container clause has no path here, as the open list's focus scope
+      // keeps focus inside it; it matters in onCloseAutoFocus.
       if (
         trigger?.isConnected &&
         (focusFellFrom(trigger, active) || content?.contains(active))
       )
         trigger.focus({ preventScroll: true });
+      // Until the list's close autofocus, which runs at its unmount.
+      if (trigger && content?.isConnected)
+        releaseHoldRef.current = holdFocusInModal(trigger);
     } else if (open && !wasOpenRef.current && content?.isConnected) {
       // Reopened during the exit: Radix focuses the selected row only on mount.
       if (!content.contains(active)) {
@@ -198,7 +273,7 @@ export function Select<T extends string | number>({
       }
     }
     wasOpenRef.current = open;
-  }, [open]);
+  }, [open, releaseHold]);
 
   // Radix focuses rows and the trigger programmatically around pointer
   // interactions, so Chrome would show focus rings on them after a click or a
@@ -326,11 +401,31 @@ export function Select<T extends string | number>({
           aria-hidden={open ? undefined : true}
           style={open ? undefined : { pointerEvents: "none" }}
           onPointerDownOutside={(event) => {
+            const trigger = triggerRef.current;
+            const target = event.target;
+            if (!trigger || !(target instanceof Node)) return;
             // The trigger's own handlers decide (see above).
-            if (triggerRef.current?.contains(event.target as Node))
+            if (trigger.contains(target)) {
               event.preventDefault();
+              return;
+            }
+            // The press closes the list, and the close returns focus to the
+            // trigger at once. A press that focuses no other control would
+            // then drop focus to the page for the whole exit, where no focus
+            // trap catches it. Skip the press's focus change, as a native select
+            // keeps focus when its list is dismissed. A press on another
+            // control is left to the browser, which focuses that control
+            // (Safari not for a button or link, see PRESS_FOCUSABLE).
+            const control =
+              target instanceof Element
+                ? target.closest(PRESS_FOCUSABLE)
+                : null;
+            if (focusFellFrom(trigger, control))
+              event.detail.originalEvent.preventDefault();
           }}
           onCloseAutoFocus={(event) => {
+            // The list unmounted: Radix resumes the dialog's trap now.
+            releaseHold();
             // Focus moved to another control when the panel closed; do not
             // pull it back now. Focus that fell away returns to the trigger.
             event.preventDefault();
