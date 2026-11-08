@@ -49,9 +49,9 @@ A slice:
   anything not verified says so.
 - **Every slice names its symbols and files** and has criteria a reviewer can check, ticked in the PR that
   fulfils them.
-- **A slice fits one review.** It lands as one PR with its tests and adds at most about 400 lines of code; tests
-  and generated files (`pnpm-lock.yaml`, recorded fixtures) do not count. The maintainer then reads it in one
-  sitting. A larger requirement is cut into several slices.
+- **A slice fits one review.** It lands as one PR with its tests and adds at most about 400 lines of code; tests,
+  docs and generated files (`pnpm-lock.yaml`, recorded fixtures) do not count. The maintainer then reads it in one
+  sitting. A larger requirement is split into several, one slice each.
 - **Every slice says what to look at.** CI sees no look and no content: _Check_ names the routes and states the
   maintainer checks by hand, and the PR's _How to check_ repeats them.
 - **The order is explicit.** The timeline names what runs in parallel, what waits and which files two slices
