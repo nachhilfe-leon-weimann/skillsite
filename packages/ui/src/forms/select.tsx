@@ -98,6 +98,20 @@ const OPTION = "[role='option']";
 const MODIFIER_KEYS = new Set(["Alt", "Control", "Meta", "Shift"]);
 
 /**
+ * Focus fell away from the trigger rather than moving to another control: to
+ * the page, or to a container that holds the trigger. After an outside press,
+ * focus falls to the page; when the list then unmounts, a modal Dialog's focus
+ * trap moves it onto the dialog's panel.
+ */
+function focusFellFrom(trigger: HTMLElement, active: Element | null) {
+  return (
+    !active ||
+    active === trigger.ownerDocument.body ||
+    (active !== trigger && active.contains(trigger))
+  );
+}
+
+/**
  * Select on Radix: a combobox trigger with a rotating chevron and a listbox
  * panel that slides and scales in below it. Radix owns the keyboard (arrows,
  * Home/End, typeahead, Enter/Space, Escape), focus, outside interaction and the
@@ -171,7 +185,7 @@ export function Select<T extends string | number>({
       const trigger = triggerRef.current;
       if (
         trigger?.isConnected &&
-        (!active || active === document.body || content?.contains(active))
+        (focusFellFrom(trigger, active) || content?.contains(active))
       )
         trigger.focus({ preventScroll: true });
     } else if (open && !wasOpenRef.current && content?.isConnected) {
@@ -317,11 +331,14 @@ export function Select<T extends string | number>({
               event.preventDefault();
           }}
           onCloseAutoFocus={(event) => {
-            // Focus moved when the panel closed; do not pull it back now.
+            // Focus moved to another control when the panel closed; do not
+            // pull it back now. Focus that fell away returns to the trigger.
             event.preventDefault();
             const trigger = triggerRef.current;
-            const active = document.activeElement;
-            if (trigger?.isConnected && (!active || active === document.body))
+            if (
+              trigger?.isConnected &&
+              focusFellFrom(trigger, document.activeElement)
+            )
               trigger.focus({ preventScroll: true });
           }}
           onPointerEnter={() => setHovering(true)}
