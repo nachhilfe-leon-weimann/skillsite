@@ -660,6 +660,7 @@ C8.9 acceptance on 2026-11-06: the maintainer ran the manual pass of #210's chec
 macOS Safari and iPhone Safari, and the look pass at 390, 1079/1080 and 1280px, light and dark, normal and reduced
 motion. Every item passed, and the C8.3 focus decisions are accepted as they are. The Select-in-Dialog focus
 finding above is tracked as a follow-up in #237; no page puts a Select in a Dialog. This closes the gate.
+
 The #237 follow-up fixes it in the Select: focus that fell to the page or to a container of the trigger (the
 dialog's panel) returns to the trigger, as after Escape; focus on another control stays.
 
