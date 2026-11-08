@@ -78,88 +78,69 @@ test("every outcome is one greppable line at the matching level", () => {
   assert.deepEqual(error.mock.calls[0], ["[booking] failed {}"]);
 });
 
-// What the booking sent to Cal.com - synthetic attendee data.
-const sentBooking = {
-  start: "2099-03-02T09:00:00.000Z",
-  eventTypeSlug: "nachhilfe-online",
-  attendee: {
-    name: "Testa Kundin",
-    email: "testa.kundin@example.com",
-    phoneNumber: "+491700000000",
-    timeZone: "Europe/Berlin",
-    language: "de",
-  },
-  bookingFieldsResponses: {
-    name: { firstName: "Testa", lastName: "Kundin" },
-    notes: "Bruchrechnung (a+b)*c vor der Klassenarbeit",
-  },
-};
-
-test("a Cal.com error is logged with its status, code and message", () => {
-  const body = JSON.stringify({
-    status: "error",
-    error: {
-      code: "BadRequestException",
-      message: "User either already has booking at this time",
-    },
-  });
-  assert.deepEqual(redactCalError(400, body, sentBooking), {
-    status: 400,
+// A Cal.com error that echoes synthetic personal data in every free-text spot:
+// punctuation-adjacent words, a two-letter name, a quoted copy of the request,
+// a third person's name and contact details.
+const echoingError = {
+  status: "error",
+  error: {
     code: "BadRequestException",
-    message: "User either already has booking at this time",
-  });
-});
-
-test("a Cal.com error never logs what the visitor entered", () => {
-  const body = JSON.stringify({
-    error: {
-      code: "BadRequestException",
-      message:
-        "Testa Kundin <testa.kundin@example.com>, +491700000000: Bruchrechnung (a+b)*c vor der Klassenarbeit",
-      details: { attendee: sentBooking.attendee },
+    message:
+      'Li Kundin (li.kundin@example.com, +49 170 0000000) wrote: "Rhabarberkuchen." Ask Otto Beispiel.',
+    details: {
+      attendee: { name: "Li Kundin", email: "li.kundin@example.com" },
+      notes: "Rhabarberkuchen.",
     },
-  });
-  const logged = JSON.stringify(redactCalError(400, body, sentBooking));
-  for (const value of [
-    "Testa",
-    "Kundin",
-    "testa.kundin",
-    "example.com",
-    "1700000000",
-    "Bruchrechnung",
-    "(a+b)*c",
-  ]) {
-    assert.ok(!logged.includes(value), `${value} leaked into ${logged}`);
+  },
+  message: "Rhabarberkuchen, Li!",
+};
+const personal = [
+  "Li",
+  "Kundin",
+  "li.kundin",
+  "example.com",
+  "170",
+  "Rhabarberkuchen",
+  "Otto",
+  "Beispiel",
+];
+
+test("a Cal.com error leaves only its status and code, never its message", () => {
+  const logged = redactCalError(400, JSON.stringify(echoingError));
+  assert.deepEqual(logged, { status: 400, code: "BadRequestException" });
+  for (const value of personal) {
+    assert.ok(!JSON.stringify(logged).includes(value), value);
   }
-  assert.match(logged, /"status":400/);
-  assert.match(logged, /"code":"BadRequestException"/);
 });
 
-test("an e-mail address or phone number Cal.com echoes is never logged", () => {
-  const body = JSON.stringify({
-    message: ["other.person@example.org is invalid", "call 0151 2345 6789"],
-    error: "Bad Request",
-  });
-  const logged = redactCalError(422, body, {});
-  assert.equal(logged.status, 422);
-  assert.equal(logged.code, "Bad Request");
-  assert.ok(!JSON.stringify(logged).includes("other.person"));
-  assert.ok(!JSON.stringify(logged).includes("2345"));
+test("a plain error string counts as the code", () => {
+  assert.deepEqual(
+    redactCalError(422, JSON.stringify({ error: "Unprocessable_Entity" })),
+    { status: 422, code: "Unprocessable_Entity" },
+  );
+});
+
+test("a code that is not a plain code is dropped", () => {
+  for (const code of [
+    "Li Kundin",
+    "li.kundin@example.com",
+    "x".repeat(65),
+    42,
+    "",
+  ]) {
+    assert.deepEqual(redactCalError(400, JSON.stringify({ error: { code } })), {
+      status: 400,
+    });
+  }
 });
 
 test("a Cal.com error body that is not JSON logs only its status", () => {
-  assert.deepEqual(
-    redactCalError(
-      502,
-      "<html>Bad Gateway for testa.kundin@example.com</html>",
-      sentBooking,
-    ),
-    { status: 502 },
-  );
-  assert.deepEqual(redactCalError(500, "", sentBooking), { status: 500 });
-});
-
-test("a long Cal.com message is bounded", () => {
-  const body = JSON.stringify({ error: { message: "x".repeat(500) } });
-  assert.equal(redactCalError(400, body, {}).message?.length, 64);
+  for (const body of [
+    "<html>Bad Gateway for li.kundin@example.com</html>",
+    "",
+    "null",
+    "[1]",
+  ]) {
+    assert.deepEqual(redactCalError(502, body), { status: 502 });
+  }
 });

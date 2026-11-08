@@ -41,6 +41,34 @@ test("a booking Cal.com does not confirm in time fails, and is never a success",
   vi.useFakeTimers();
   fetchMock.mockImplementation(hangUntilAborted);
 
+  let settled = false;
+  const result = createCalBooking(booking).finally(() => {
+    settled = true;
+  });
+  await vi.advanceTimersByTimeAsync(BOOKING_TIMEOUT_MS - 1);
+  assert.equal(settled, false, "gave up before the timeout");
+  await vi.advanceTimersByTimeAsync(1);
+
+  assert.deepEqual(await result, {
+    ok: false,
+    slotTaken: false,
+    failure: { cause: "timeout" },
+  });
+});
+
+test("a Cal.com error whose body outlasts the timeout fails as a timeout", async () => {
+  vi.useFakeTimers();
+  fetchMock.mockImplementation(async (_url, init) => {
+    const body = new ReadableStream({
+      start(stream) {
+        init?.signal?.addEventListener("abort", () =>
+          stream.error(new DOMException("aborted", "AbortError")),
+        );
+      },
+    });
+    return new Response(body, { status: 500 });
+  });
+
   const result = createCalBooking(booking);
   await vi.advanceTimersByTimeAsync(BOOKING_TIMEOUT_MS);
 
@@ -61,30 +89,25 @@ test("a confirmed booking returns Cal.com's uid", async () => {
   });
 });
 
-test("a Cal.com error carries its status and code, never what the visitor entered", async () => {
+test("a Cal.com error carries its status and code, never its message", async () => {
   fetchMock.mockResolvedValue(
     Response.json(
       {
         status: "error",
         error: {
           code: "BadRequestException",
-          message: "testa.kundin@example.com (Testa Kundin) is invalid",
+          message: "testa.kundin@example.com (Testa Kundin) is invalid.",
         },
       },
       { status: 400 },
     ),
   );
 
-  const result = await createCalBooking(booking);
-  assert.equal(result.ok, false);
-  assert.ok(!result.ok);
-  assert.equal(result.slotTaken, false);
-  assert.equal(result.failure.cause, "http");
-  assert.equal(result.failure.status, 400);
-  assert.equal(result.failure.code, "BadRequestException");
-  for (const value of ["testa", "Testa", "Kundin", "example.com"]) {
-    assert.ok(!JSON.stringify(result.failure).includes(value));
-  }
+  assert.deepEqual(await createCalBooking(booking), {
+    ok: false,
+    slotTaken: false,
+    failure: { cause: "http", status: 400, code: "BadRequestException" },
+  });
 });
 
 test("a taken slot is told apart from a generic failure", async () => {

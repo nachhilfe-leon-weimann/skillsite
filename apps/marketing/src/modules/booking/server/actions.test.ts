@@ -132,7 +132,9 @@ test("a booking Cal.com did not confirm is never a success, and is logged once w
     { cause: "timeout" },
     { cause: "http", status: 500, code: "InternalServerErrorException" },
   ]) {
-    vi.mocked(console.error).mockClear();
+    for (const level of ["info", "warn", "error"] as const) {
+      vi.mocked(console[level]).mockClear();
+    }
     createCalBooking.mockResolvedValueOnce({
       ok: false,
       slotTaken: false,
@@ -152,5 +154,8 @@ test("a booking Cal.com did not confirm is never a success, and is logged once w
     for (const value of ["Max", "Muster", "max@", "151"]) {
       assert.ok(!line.includes(value), `${value} leaked into ${line}`);
     }
+    // The outcome line is the attempt's only line.
+    assert.equal(vi.mocked(console.info).mock.calls.length, 0);
+    assert.equal(vi.mocked(console.warn).mock.calls.length, 0);
   }
 });

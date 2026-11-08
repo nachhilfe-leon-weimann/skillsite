@@ -84,7 +84,11 @@ export async function fetchCalSlots(params: {
  */
 export const BOOKING_TIMEOUT_MS = 20_000;
 
-/** Why a booking was not created - safe to log, it never holds what was sent. */
+/**
+ * Why a booking was not created, as the outcome line logs it: our own cause,
+ * Cal.com's HTTP status and its plain error code - never Cal.com's message or
+ * body, which may echo what was sent.
+ */
 export type CalBookingFailure =
   | { cause: "unconfigured" | "timeout" }
   | { cause: "network"; message?: string }
@@ -138,10 +142,18 @@ export async function createCalBooking(
     if (!res.ok) {
       // The raw body may echo the attendee: it is only matched, never logged.
       const detail = await res.text().catch(() => "");
+      // The time ran out while the error body was still arriving.
+      if (controller.signal.aborted) {
+        return {
+          ok: false,
+          slotTaken: res.status === 409,
+          failure: { cause: "timeout" },
+        };
+      }
       return {
         ok: false,
         slotTaken: res.status === 409 || SLOT_TAKEN.test(detail),
-        failure: { cause: "http", ...redactCalError(res.status, detail, body) },
+        failure: { cause: "http", ...redactCalError(res.status, detail) },
       };
     }
     const uid = bookingUid(await res.json().catch(() => null));
