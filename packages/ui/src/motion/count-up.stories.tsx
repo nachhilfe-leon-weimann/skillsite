@@ -19,6 +19,8 @@ const stats = [
   { value: "120+", label: "Beispielwert mit Suffix" },
   { value: "€ 45", label: "Beispielwert mit Präfix" },
   { value: "7", label: "Ganze Zahl" },
+  { value: "4,8", label: "Dezimalzahl mit Komma" },
+  { value: "1.200+", label: "Tausender mit Punkt" },
   { value: "24/7", label: "Kein Zahlenwert: wörtlich" },
 ];
 
@@ -33,7 +35,7 @@ function Example() {
       >
         Nochmal zählen
       </Button>
-      <dl key={run} className="grid gap-6 sm:grid-cols-4">
+      <dl key={run} className="grid gap-6 sm:grid-cols-3">
         {stats.map((stat, index) => (
           <div key={stat.label} className="text-ink">
             <dt className="sr-only">{stat.label}</dt>
@@ -54,7 +56,7 @@ function Example() {
 
 /**
  * Stat values count up once in view and end at their value; reduced motion
- * shows the value at once. Only the digits count; a value that is no number
- * renders as it is.
+ * shows the value at once. Only the number counts, keeping its decimal comma
+ * and thousands dot; a value that is no number renders as it is.
  */
 export const Stats: Story = { render: () => <Example /> };
