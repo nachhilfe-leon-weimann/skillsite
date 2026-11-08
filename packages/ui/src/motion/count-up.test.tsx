@@ -23,7 +23,7 @@ afterEach(() => {
 
 /** The visible counter, not the invisible sizer that reserves its width. */
 const counter = (container: HTMLElement) =>
-  container.querySelector('[class~="absolute"]')?.textContent;
+  container.querySelector("span > span:not([aria-hidden])")?.textContent;
 
 test.each(["4,8", "1.200+", "€ 12,50", "320+"])(
   "%s keeps its German notation under reduced motion",
