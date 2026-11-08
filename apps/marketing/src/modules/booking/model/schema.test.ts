@@ -174,6 +174,34 @@ test("only an offered event key is accepted, never a value that reads as one", (
   }
 });
 
+test("a lesson is booked only for a duration it offers", () => {
+  for (const duration of [45, 60, 90, undefined]) {
+    assert.equal(check({ duration }), null);
+  }
+  for (const duration of [75, 0, -60, 60.5, Number.NaN, "60", null, [60]]) {
+    assert.deepEqual(check({ duration }), { check: "duration" });
+  }
+});
+
+test("a fixed-length first meeting accepts no other duration", () => {
+  const meeting = (duration: unknown) =>
+    checkBookingSubmission(
+      {
+        event: "kennenlernen",
+        slot: FAR_SLOT,
+        duration,
+        values: firstMeeting,
+        fillDurationMs: 5_000,
+      } as BookingSubmission,
+      NOW,
+    );
+  assert.equal(meeting(undefined), null);
+  assert.equal(meeting(15), null);
+  for (const duration of [60, 90, "15"]) {
+    assert.deepEqual(meeting(duration), { check: "duration" });
+  }
+});
+
 test("missing fields are named with the form's labels", () => {
   assert.deepEqual(check({ values: { ...lesson, email: "", subject: "" } }), {
     check: "fields",
@@ -185,6 +213,10 @@ test("a paid lesson without accepted terms is turned down", () => {
   for (const agreements of [
     undefined,
     { termsAccepted: false, earlyPerformanceRequested: true },
+    // A confirmation is the boolean the form sends, never a value that reads as one.
+    { termsAccepted: "false", earlyPerformanceRequested: true },
+    { termsAccepted: "true", earlyPerformanceRequested: true },
+    { termsAccepted: 1, earlyPerformanceRequested: true },
   ]) {
     assert.deepEqual(check({ agreements }), { check: "terms" });
   }
@@ -192,6 +224,13 @@ test("a paid lesson without accepted terms is turned down", () => {
 
 test("a lesson within the withdrawal period needs the early start confirmed", () => {
   assert.deepEqual(check({ slot: NEAR_SLOT }), { check: "withdrawal_notice" });
+  assert.deepEqual(
+    check({
+      slot: NEAR_SLOT,
+      agreements: { termsAccepted: true, earlyPerformanceRequested: "yes" },
+    }),
+    { check: "withdrawal_notice" },
+  );
 });
 
 test("the free first meeting never needs agreements", () => {
@@ -209,10 +248,19 @@ test("the free first meeting never needs agreements", () => {
   );
 });
 
-test("the checks run in order: slot, fields, terms, withdrawal notice", () => {
+test("the checks run in order: slot, duration, fields, terms, withdrawal notice", () => {
   assert.deepEqual(
-    check({ slot: "", values: { ...lesson, email: "" }, agreements: {} }),
+    check({
+      slot: "",
+      duration: 75,
+      values: { ...lesson, email: "" },
+      agreements: {},
+    }),
     { check: "slot" },
+  );
+  assert.deepEqual(
+    check({ duration: 75, values: { ...lesson, email: "" }, agreements: {} }),
+    { check: "duration" },
   );
   assert.deepEqual(
     check({

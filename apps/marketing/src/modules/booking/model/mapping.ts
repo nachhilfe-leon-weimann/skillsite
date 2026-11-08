@@ -6,6 +6,7 @@ import {
 } from "./config";
 import { isFieldEmpty, isMultiValue, type FieldValue } from "./fields";
 import { agbEffectiveDate } from "@/content/agb";
+import { readAgreements } from "./schema";
 import { toE164 } from "./validation";
 
 const asString = (value: FieldValue | undefined): string =>
@@ -63,11 +64,12 @@ export function buildCalBookingBody(
   attendee.name = `${firstName} ${lastName}`.trim();
   bookingFieldsResponses.name = { firstName, lastName };
 
+  // The booleans the server checked, never the raw values that were sent.
   const paidAgreements =
-    submission.event === "nachhilfe" && submission.agreements
-      ? submission.agreements
+    submission.event === "nachhilfe"
+      ? readAgreements(submission.agreements)
       : null;
-  if (paidAgreements) {
+  if (paidAgreements?.termsAccepted) {
     bookingFieldsResponses["policies-accepted"] = true;
   }
 
