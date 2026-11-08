@@ -60,7 +60,7 @@ A slice:
 
 - A spec's _Rules for implementing agents_ apply in addition to [`AGENTS.md`](../../AGENTS.md); if they contradict
   it, ask.
-- Progress shows only in the checkboxes and the status block: a slice PR ticks its own boxes, and a change of
+- Progress shows only in the checkboxes and the status block: a slice's last PR ticks its boxes, and a change of
   course gets an **Amended** line or an amended date in the decision table. Moved code gets a status line saying
   what moved where.
 - No tracking issues.

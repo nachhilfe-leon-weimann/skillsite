@@ -83,8 +83,8 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   its reason lives in a spec, an ADR or the [agent work guide][agent-work], and a reason an agent gives names its
   source (a spec, an ADR, the code) - without one, ask. Agent memory holds only personal preferences and private
   context; what an agent needs for the work is in the repository, in public wording.
-- **The plan lives in specs** (`docs/specs/`): a larger arc starts with its spec, code follows; one PR per slice,
-  ticking its own boxes; a lasting decision goes into the spec or an ADR. No planning in issues, boards or labels;
+- **The plan lives in specs** (`docs/specs/`): a larger arc starts with its spec, code follows; a slice's boxes are
+  ticked in its last PR; a lasting decision goes into the spec or an ADR. No planning in issues, boards or labels;
   `Closes #N` only for an issue the maintainer names.
 - **Planned phases run on their own**: do not wait for merges - stack, restack after a merge, keep going.
 - **Tests guard the contract in [`docs/testing.md`](docs/testing.md)**, not `main`'s old behaviour or the look: no frame
@@ -99,10 +99,11 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   All questions go into one message, numbered, each with a proposal and its reason; only blocking ones at once.
 - **Stop at once** on a credential prompt, real personal data in view, a live system the work would need (the
   production database, a third-party API on a real account) and a spec-code contradiction in a money path.
-- **Specs while implementing**: a slice PR updates status, checkboxes and obvious slips; decisions change only with
-  the maintainer's approval. A slice that is too big may be split (reason in the PR); combining slices needs asking.
+- **Specs while implementing**: a slice's last PR updates status, checkboxes and obvious slips; decisions change only with
+  the maintainer's approval. A slice that is too big is split in its stack (_PR size_); combining slices needs asking.
 - **Briefs and handoffs** follow the [agent work guide][agent-work]: a subagent that does not load this file gets
   its paragraph verbatim; a handoff goes into the chat, for a phase also onto its last PR, never into a file.
+  PR bodies and handoffs are as compact as possible: bullets over paragraphs, nothing the diff or the spec says.
 
 ## Definition of done
 
@@ -131,6 +132,11 @@ Every PR states `Review: deep | evidence`, telling the maintainer how closely to
   run `git status -sb` before every edit, as a merge deletes the branch and can leave the checkout on `main`.
 - **Only the maintainer merges** (E-16); every PR lands by squash (_Rules of the refactor_). Dependent PRs form a
   GitHub stack (`gh stack`), never a hand-built chain; `gh stack sync` restacks with `--force-with-lease`.
+- **A slice lands as one PR or a small stack.** **PR size**: aim for <= ~400 changed lines, never above 1000;
+  generated files (`pnpm-lock.yaml`, recorded fixtures) do not count. Larger work is split in the stack, reason in
+  the PR. Once code plus tests would exceed ~300 lines, the new tests get their own PR directly above the code PR
+  (edits to existing tests stay in the code PR); below that they stay together. The maintainer merges the code and
+  the test PR together; each is green on its own.
 - Never tag, release, or change repo settings, rulesets, secrets, variables or deploy configuration; name a needed
   setting under _For the maintainer_.
 - _How to check_ (E-12): routes and states, light and dark, phone and desktop; for a `fix:` the visible change with

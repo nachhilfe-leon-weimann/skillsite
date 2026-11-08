@@ -108,7 +108,7 @@ Decided by the maintainer; nothing here is reopened by an implementing agent.
 | **E-14** | Specs live versioned in `docs/specs/` (this file), task plans in `docs/plans/`, conventions in the root `AGENTS.md` (`CLAUDE.md` = `@AGENTS.md`); `docs/ref/` stays private.                                                 | 2026-09-25, amended 2026-11-03 |
 | **E-15** | Next's generated agent files are switched off (`agentRules: false`); the root `AGENTS.md` is the only anchor.                                                                                                                | 2026-09-25, amended 2026-11-03 |
 | **E-16** | Agents push feature branches and open PRs (dependent ones as a GitHub stack); **the maintainer merges**. Commits carry **no** `Co-Authored-By` trailer.                                                                      | 2026-09-25                     |
-| **E-17** | Execution: an orchestrator session hands independent slices to parallel, worktree-isolated agents; one PR per slice; slices that touch the same `@skillsite/ui` files run in sequence.                                       | 2026-09-25                     |
+| **E-17** | Execution: an orchestrator session hands independent slices to parallel, worktree-isolated agents; a slice lands as one PR or a small stack; slices that touch the same `@skillsite/ui` files run in sequence.               | 2026-09-25, amended 2026-11-04 |
 | **E-21** | Accessible widgets: a time-boxed spike (Radix Primitives vs React Aria Components) first; the maintainer picks (gate C7).                                                                                                    | 2026-09-25                     |
 | **E-02** | Portal decisions other than E-21 are taken in the portal spec (phase F), against SkillForge as it is then.                                                                                                                   | 2026-09-25                     |
 | **S**    | Security follow-ups of the booking action: backlog, no date.                                                                                                                                                                 | 2026-09-25                     |
@@ -559,7 +559,7 @@ an unmerged one.
   "nothing changed" evidence belongs in its PR.
 - Every new theme utility is registered in the `cn` configuration with a test; never add a pattern the ratchet
   counts - lower the count instead.
-- One PR per slice; `just check` green before every push; the PR body carries _How to check_. Push the branch
+- A slice lands as one PR or a small stack (size limits in `AGENTS.md`); `just check` green before every push; the PR body carries _How to check_. Push the branch
   and open the PR; **never merge**, never change repo settings, rulesets, the App or Dokploy - list needed
   settings in the PR. No `Co-Authored-By` trailer.
 - Tick this spec's acceptance boxes in the PR that fulfils them; flip the status line when a phase is done.
