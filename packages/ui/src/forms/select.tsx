@@ -99,17 +99,36 @@ const MODIFIER_KEYS = new Set(["Alt", "Control", "Meta", "Shift"]);
 
 /**
  * Focus fell away from the trigger rather than moving to another control: to
- * the page, or to a container that holds the trigger. After an outside press,
- * focus falls to the page; when the list then unmounts, a modal Dialog's focus
- * trap moves it onto the dialog's panel.
+ * the page, or to a container that holds the trigger and is not in the tab
+ * order (a tabbable one is a stop the visitor chose). Focus that rests on the
+ * page when the list unmounts is moved by a modal Dialog's focus trap onto the
+ * dialog's panel (tabIndex -1).
  */
 function focusFellFrom(trigger: HTMLElement, active: Element | null) {
   return (
     !active ||
     active === trigger.ownerDocument.body ||
-    (active !== trigger && active.contains(trigger))
+    (active !== trigger &&
+      active.contains(trigger) &&
+      !(active instanceof HTMLElement && active.tabIndex >= 0))
   );
 }
+
+/** What a press focuses, as the browser picks it: its nearest focusable element. */
+const PRESS_FOCUSABLE = [
+  "a[href]",
+  "area[href]",
+  "button:not(:disabled)",
+  "input:not(:disabled)",
+  "select:not(:disabled)",
+  "textarea:not(:disabled)",
+  "iframe",
+  "summary",
+  "audio[controls]",
+  "video[controls]",
+  "[contenteditable]:not([contenteditable='false'])",
+  "[tabindex]",
+].join(",");
 
 /**
  * Select on Radix: a combobox trigger with a rotating chevron and a listbox
@@ -183,6 +202,9 @@ export function Select<T extends string | number>({
     const active = document.activeElement;
     if (!open && wasOpenRef.current) {
       const trigger = triggerRef.current;
+      // Every way to close leaves focus in the list. focusFellFrom is a guard:
+      // its container clause has no path here, as the open list's focus scope
+      // keeps focus inside it; it matters in onCloseAutoFocus.
       if (
         trigger?.isConnected &&
         (focusFellFrom(trigger, active) || content?.contains(active))
@@ -326,9 +348,27 @@ export function Select<T extends string | number>({
           aria-hidden={open ? undefined : true}
           style={open ? undefined : { pointerEvents: "none" }}
           onPointerDownOutside={(event) => {
+            const trigger = triggerRef.current;
+            const target = event.target;
+            if (!trigger || !(target instanceof Node)) return;
             // The trigger's own handlers decide (see above).
-            if (triggerRef.current?.contains(event.target as Node))
+            if (trigger.contains(target)) {
               event.preventDefault();
+              return;
+            }
+            // The press closes the list, and the close returns focus to the
+            // trigger at once. A press that focuses no other control would
+            // then drop focus to the page for the whole exit, while neither
+            // focus trap holds it (a modal Dialog's resumes only once the list
+            // unmounts). Skip the press's focus change, as a native select
+            // keeps focus when its list is dismissed. A press on another
+            // control focuses that control.
+            const control =
+              target instanceof Element
+                ? target.closest(PRESS_FOCUSABLE)
+                : null;
+            if (focusFellFrom(trigger, control))
+              event.detail.originalEvent.preventDefault();
           }}
           onCloseAutoFocus={(event) => {
             // Focus moved to another control when the panel closed; do not

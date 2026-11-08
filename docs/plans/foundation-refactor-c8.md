@@ -662,7 +662,9 @@ motion. Every item passed, and the C8.3 focus decisions are accepted as they are
 finding above is tracked as a follow-up in #237; no page puts a Select in a Dialog. This closes the gate.
 
 The #237 follow-up fixes it in the Select: focus that fell to the page or to a container of the trigger (the
-dialog's panel) returns to the trigger, as after Escape; focus on another control stays.
+dialog's panel) returns to the trigger, as after Escape; focus on another control stays. A follow-up to #257 keeps
+focus on the trigger from the outside press on: a press that focuses no other control no longer drops focus to the
+page while the list leaves, so Shift+Tab from there stays in the dialog.
 
 ## Verification and PR handoff
 

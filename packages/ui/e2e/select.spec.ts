@@ -39,6 +39,47 @@ const clean = {
   hiddenOutside: 0,
 };
 
+/**
+ * Resolves one task after the leaving panel's close autofocus has run: Radix
+ * dispatches it on the panel in a task queued at the unmount, then focuses.
+ * Arm it while the panel is still in the page.
+ */
+async function closeAutoFocusRun(page: Page) {
+  // Wrapped: a handle to a bare promise would wait for it.
+  const done = await panel(page).evaluateHandle((node) => ({
+    ran: new Promise<void>((resolve) =>
+      node.addEventListener(
+        "focusScope.autoFocusOnUnmount",
+        () => setTimeout(resolve),
+        { once: true },
+      ),
+    ),
+  }));
+  return () => done.evaluate(({ ran }) => ran);
+}
+
+/**
+ * Counts every time focus falls to the page from now on: a focus change with
+ * no element to receive it, which leaves `document.activeElement` on `<body>`.
+ */
+async function falls(page: Page) {
+  const count = await page.evaluateHandle(() => {
+    const state = { falls: 0 };
+    document.addEventListener(
+      "focusout",
+      (event) => {
+        if (!event.relatedTarget) state.falls += 1;
+      },
+      true,
+    );
+    return state;
+  });
+  return () => count.evaluate((state) => state.falls);
+}
+
+const isActive = (locator: Locator) =>
+  locator.evaluate((node) => node === document.activeElement);
+
 async function geometry(trigger: Locator, page: Page) {
   const triggerBox = (await trigger.boundingBox())!;
   const panelBox = (await panel(page).boundingBox())!;
@@ -210,9 +251,18 @@ test("an outside press closes without a change and refocuses the trigger", async
   await expect(listbox(page)).toBeVisible();
   // A visitor presses outside an open list, not mid-entrance: wait until it has settled.
   await expect(panel(page)).toHaveCSS("opacity", "1");
+  // Focus stays on the trigger from the press on: also while the list leaves.
+  const fell = await falls(page);
+  const release = await holdExit(page);
+  const autoFocused = await closeAutoFocusRun(page);
   await page.mouse.click(5, 5);
+  await expect(panel(page)).toHaveAttribute("inert", "");
+  expect(await isActive(trigger)).toBe(true);
+  await release();
   await expect(panel(page)).toHaveCount(0);
+  await autoFocused();
   await expect(trigger).toBeFocused();
+  expect(await fell(), "focus fell to <body>").toBe(0);
   await expect(trigger).toContainText("Online");
   await expect(status(page)).toContainText("Änderungen: 0");
   expect(await leftovers(page)).toEqual(clean);
@@ -455,13 +505,106 @@ test.describe("inside a modal Dialog", () => {
       ),
     ).toBe(true);
 
+    const autoFocused = await closeAutoFocusRun(page);
     await release();
     await expect(panel(page)).toHaveCount(0);
-    // The list's close autofocus runs in a task queued at its unmount: let it run.
-    await page.evaluate(() => new Promise((done) => setTimeout(done)));
+    await autoFocused();
     expect(
       await page.evaluate((node) => document.activeElement === node, moved),
     ).toBe(true);
+    await expect(dialog).toBeVisible();
+  });
+
+  test("an outside press keeps focus on the trigger while the list leaves, so Shift+Tab stays in the dialog", async ({
+    page,
+  }) => {
+    await page.goto(story("in-dialog"));
+    await page.getByRole("button", { name: "Dialog öffnen" }).click();
+    const dialog = page.getByRole("dialog", { name: "Termin anpassen" });
+    const trigger = dialog.locator("[role=combobox]");
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("option", { name: "60 Minuten" }),
+    ).toBeFocused();
+    await expect(panel(page)).toHaveCSS("opacity", "1");
+
+    const fell = await falls(page);
+    const release = await holdExit(page);
+    const autoFocused = await closeAutoFocusRun(page);
+    await page.mouse.click(5, 5);
+    await expect(panel(page)).toHaveAttribute("inert", "");
+    // Leaving: focus is already back on the trigger, never on <body>.
+    expect.soft(await isActive(trigger), "trigger focused").toBe(true);
+    await page.keyboard.press("Shift+Tab");
+    expect(
+      await dialog.evaluate((node) => node.contains(document.activeElement)),
+      "focus inside the dialog",
+    ).toBe(true);
+    // Radix hides the dialog's other content from AT until the list unmounts.
+    const before = dialog.locator("button", { hasText: "Davor" });
+    expect(await isActive(before)).toBe(true);
+
+    await release();
+    await expect(panel(page)).toHaveCount(0);
+    await autoFocused();
+    await expect(before).toBeFocused();
+    expect(await fell(), "focus fell to <body>").toBe(0);
+    await expect(dialog).toBeVisible();
+  });
+
+  test("focus that still falls to the page while the list leaves returns to the trigger, not the dialog's panel", async ({
+    page,
+  }) => {
+    await page.goto(story("in-dialog"));
+    await page.getByRole("button", { name: "Dialog öffnen" }).click();
+    const dialog = page.getByRole("dialog", { name: "Termin anpassen" });
+    const trigger = dialog.locator("[role=combobox]");
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("option", { name: "60 Minuten" }),
+    ).toBeFocused();
+    await expect(panel(page)).toHaveCSS("opacity", "1");
+
+    const release = await holdExit(page);
+    const autoFocused = await closeAutoFocusRun(page);
+    await page.keyboard.press("Escape");
+    await expect(panel(page)).toHaveAttribute("inert", "");
+    // A fallback, e.g. a browser that moves focus on a cancelled press: the
+    // dialog's trap moves focus from <body> onto its panel at the unmount.
+    await trigger.evaluate((node) => (node as HTMLElement).blur());
+    await release();
+    await expect(panel(page)).toHaveCount(0);
+    await autoFocused();
+    await expect(trigger).toBeFocused();
+  });
+
+  test("a press on another control while the list is open moves focus there", async ({
+    page,
+  }) => {
+    await page.goto(story("in-dialog"));
+    await page.getByRole("button", { name: "Dialog öffnen" }).click();
+    const dialog = page.getByRole("dialog", { name: "Termin anpassen" });
+    const trigger = dialog.locator("[role=combobox]");
+    // A control that takes the pointer while a list is open, as a RadioGroup item does.
+    const before = dialog.getByRole("button", { name: "Davor" });
+    await before.evaluate((node) => {
+      node.style.pointerEvents = "auto";
+    });
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("option", { name: "60 Minuten" }),
+    ).toBeFocused();
+    await expect(panel(page)).toHaveCSS("opacity", "1");
+
+    const autoFocused = await closeAutoFocusRun(page);
+    // Radix hides the dialog's other content from AT while the list is open.
+    await dialog.locator("button", { hasText: "Davor" }).click();
+    await expect(panel(page)).toHaveCount(0);
+    await autoFocused();
+    await expect(before).toBeFocused();
     await expect(dialog).toBeVisible();
   });
 });

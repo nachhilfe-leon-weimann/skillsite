@@ -284,3 +284,20 @@ test("a closed panel leaves the accessibility tree and returns focus", async () 
   await waitFor(() => expect(document.activeElement).toBe(trigger()));
   expect(screen.queryByRole("listbox")).toBeNull();
 });
+
+test("a tabbable container the visitor moves to while the list leaves keeps focus", async () => {
+  render(
+    <div role="group" aria-label="Gruppe" tabIndex={0}>
+      <Controlled options={durations} initial={60} />
+    </div>,
+  );
+  await openByKeyboard();
+  fireEvent.keyDown(focusedOption(), { key: "Escape" });
+  expect(document.activeElement).toBe(trigger());
+  // Before the list's close autofocus runs (a task queued at its unmount).
+  const group = screen.getByRole("group", { name: "Gruppe" });
+  group.focus();
+  await act(() => new Promise((done) => setTimeout(done)));
+  expect(screen.queryByRole("listbox")).toBeNull();
+  expect(document.activeElement).toBe(group);
+});
