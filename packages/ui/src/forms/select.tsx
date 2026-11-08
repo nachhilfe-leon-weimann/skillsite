@@ -114,7 +114,11 @@ function focusFellFrom(trigger: HTMLElement, active: Element | null) {
   );
 }
 
-/** What a press focuses, as the browser picks it: its nearest focusable element. */
+/**
+ * What a press may focus: its nearest focusable element, as most browsers pick
+ * it. Safari focuses no button or link on a click; there such a press drops
+ * focus to the page, and onCloseAutoFocus returns it to the trigger.
+ */
 const PRESS_FOCUSABLE = [
   "a[href]",
   "area[href]",
@@ -221,6 +225,35 @@ export function Select<T extends string | number>({
     }
     wasOpenRef.current = open;
   }, [open]);
+
+  // While the closed list leaves, its focus scope still pauses a modal
+  // Dialog's focus trap: Radix resumes it only when the list unmounts. Hold
+  // focus in that dialog meanwhile, as its trap would: focus that lands outside
+  // returns to the dialog's last focused element. Not once the dialog itself
+  // closes (it turns inert), and nothing outside a modal Dialog.
+  useEffect(() => {
+    const trigger = triggerRef.current;
+    if (open || !mountedContent || !trigger) return;
+    const modal = trigger.closest<HTMLElement>("[aria-modal='true']");
+    if (!modal) return;
+    const active = document.activeElement;
+    let last: HTMLElement =
+      active instanceof HTMLElement && modal.contains(active)
+        ? active
+        : trigger;
+    const holdFocus = (event: FocusEvent) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (modal.contains(target)) {
+        last = target;
+        return;
+      }
+      if (!modal.isConnected || modal.closest("[inert]")) return;
+      last.focus({ preventScroll: true });
+    };
+    document.addEventListener("focusin", holdFocus, true);
+    return () => document.removeEventListener("focusin", holdFocus, true);
+  }, [open, mountedContent]);
 
   // Radix focuses rows and the trigger programmatically around pointer
   // interactions, so Chrome would show focus rings on them after a click or a
@@ -358,11 +391,11 @@ export function Select<T extends string | number>({
             }
             // The press closes the list, and the close returns focus to the
             // trigger at once. A press that focuses no other control would
-            // then drop focus to the page for the whole exit, while neither
-            // focus trap holds it (a modal Dialog's resumes only once the list
-            // unmounts). Skip the press's focus change, as a native select
+            // then drop focus to the page for the whole exit, where no focus
+            // trap catches it. Skip the press's focus change, as a native select
             // keeps focus when its list is dismissed. A press on another
-            // control focuses that control.
+            // control is left to the browser, which focuses that control
+            // (Safari not for a button or link, see PRESS_FOCUSABLE).
             const control =
               target instanceof Element
                 ? target.closest(PRESS_FOCUSABLE)

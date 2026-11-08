@@ -76,9 +76,12 @@ export async function settledScroll(page: Page) {
  * Hold the open panel's exit where it begins: once it turns closed, its
  * transitions and presence animation pause, so the closing panel stays in the
  * page while the test acts. The returned function lets any held exit run on.
+ * `panel` names another closing layer, e.g. a dialog's panel.
  */
-export async function holdExit(page: Page) {
-  const panel = page.locator("[data-radix-popper-content-wrapper] > *");
+export async function holdExit(
+  page: Page,
+  panel: Locator = page.locator("[data-radix-popper-content-wrapper] > *"),
+) {
   await panel.evaluate((node) => {
     const observer = new MutationObserver(() => {
       if (node.getAttribute("data-state") !== "closed") return;

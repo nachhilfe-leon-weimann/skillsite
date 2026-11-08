@@ -80,6 +80,22 @@ async function falls(page: Page) {
 const isActive = (locator: Locator) =>
   locator.evaluate((node) => node === document.activeElement);
 
+const focusIn = (container: Locator) =>
+  container.evaluate((node) => node.contains(document.activeElement));
+
+/** Opens the "In Dialog" story's dialog and its list by keyboard, settled. */
+async function openListInDialog(page: Page) {
+  await page.goto(story("in-dialog"));
+  await page.getByRole("button", { name: "Dialog öffnen" }).click();
+  const dialog = page.getByRole("dialog", { name: "Termin anpassen" });
+  const trigger = dialog.locator("[role=combobox]");
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("option", { name: "60 Minuten" })).toBeFocused();
+  await expect(panel(page)).toHaveCSS("opacity", "1");
+  return { dialog, trigger };
+}
+
 async function geometry(trigger: Locator, page: Page) {
   const triggerBox = (await trigger.boundingBox())!;
   const panelBox = (await panel(page).boundingBox())!;
@@ -435,7 +451,7 @@ test.describe("inside a modal Dialog", () => {
     const trigger = dialog.locator("[role=combobox]");
     // The dialog's own Tab cycle includes the closed Select.
     await expect(dialog.getByRole("button", { name: "Davor" })).toBeFocused();
-    for (const name of ["Dauer", "Danach", "Davor", "Dauer"]) {
+    for (const name of ["Dauer", "Danach", "Schließen", "Davor", "Dauer"]) {
       await page.keyboard.press("Tab");
       await expect(page.locator(":focus")).toHaveAccessibleName(name);
     }
@@ -551,6 +567,65 @@ test.describe("inside a modal Dialog", () => {
     await expect(before).toBeFocused();
     expect(await fell(), "focus fell to <body>").toBe(0);
     await expect(dialog).toBeVisible();
+  });
+
+  for (const close of ["an outside press", "Escape"])
+    for (const key of ["Tab", "Shift+Tab"])
+      test(`after ${close}, ${key} stays in the dialog while the list leaves`, async ({
+        page,
+      }) => {
+        const { dialog, trigger } = await openListInDialog(page);
+        const release = await holdExit(page);
+        const autoFocused = await closeAutoFocusRun(page);
+        if (close === "Escape") await page.keyboard.press("Escape");
+        else await page.mouse.click(5, 5);
+        await expect(panel(page)).toHaveAttribute("inert", "");
+        expect(await isActive(trigger)).toBe(true);
+        // Past the dialog's first or last control: its own trap is paused
+        // until the list unmounts.
+        for (let press = 1; press <= 3; press++) {
+          await page.keyboard.press(key);
+          expect(await focusIn(dialog), `${key} #${press}`).toBe(true);
+        }
+
+        await release();
+        await expect(panel(page)).toHaveCount(0);
+        await autoFocused();
+        expect(await focusIn(dialog), "after the unmount").toBe(true);
+        await expect(dialog).toBeVisible();
+      });
+
+  test("a dialog that closes while the list leaves lets focus go", async ({
+    page,
+  }) => {
+    await openListInDialog(page);
+    // Hidden from AT while the dialog is open: found by its text.
+    const opener = page.locator("button", { hasText: "Dialog öffnen" });
+    // Also while it leaves, hidden from AT then.
+    const dialog = page.locator("[role=dialog]");
+    await holdExit(page);
+    await page.keyboard.press("Escape");
+    await expect(panel(page)).toHaveAttribute("inert", "");
+    // Close the dialog from inside it while the list still leaves, and hold
+    // the dialog's own exit, too.
+    const releaseDialog = await holdExit(page, dialog);
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    // Hidden from AT while the list is mounted: match by its text.
+    await expect(page.locator(":focus")).toHaveText("Schließen");
+    await page.keyboard.press("Enter");
+    await expect(dialog).toHaveAttribute("data-state", "closed");
+    // Focus moved out by the page while the dialog leaves stays there.
+    await opener.focus();
+    expect(await isActive(opener)).toBe(true);
+
+    await releaseDialog();
+    await expect(dialog).toHaveCount(0);
+    await expect(opener).toBeFocused();
+    await expect(page.locator("[role=log]")).toHaveText(
+      "Dialog geschlossen: 1",
+    );
+    await expect.poll(() => leftovers(page)).toEqual(clean);
   });
 
   test("focus that still falls to the page while the list leaves returns to the trigger, not the dialog's panel", async ({

@@ -131,24 +131,25 @@ function DialogExample() {
   const [open, setOpen] = useState(false);
   const [closes, setCloses] = useState(0);
   const id = useId();
+  const close = () => {
+    setOpen(false);
+    setCloses((count) => count + 1);
+  };
   return (
     <div className="space-y-4 p-6">
       <Button onClick={() => setOpen(true)}>Dialog öffnen</Button>
       <p role="log" className="text-small">
         Dialog geschlossen: {closes}
       </p>
-      <Dialog
-        open={open}
-        onClose={() => {
-          setOpen(false);
-          setCloses((count) => count + 1);
-        }}
-        labelledBy={`${id}-title`}
-      >
+      <Dialog open={open} onClose={close} labelledBy={`${id}-title`}>
         <h2 id={`${id}-title`} className="mb-4 text-h4">
           Termin anpassen
         </h2>
         <Example label="Dauer" options={durations} initial={60} />
+        {/* Closes the dialog by itself, e.g. while the list is still leaving. */}
+        <Button className="mt-4" onClick={close}>
+          Schließen
+        </Button>
       </Dialog>
     </div>
   );
