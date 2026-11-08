@@ -25,6 +25,12 @@ const lesson = (change: Record<string, unknown> = {}) =>
 const metadata = (submission: BookingSubmission) =>
   buildCalBookingBody(submission).metadata as Record<string, string>;
 
+test("a paid lesson tells Cal.com the policies were accepted", () => {
+  const responses = buildCalBookingBody(lesson())
+    .bookingFieldsResponses as Record<string, unknown>;
+  assert.equal(responses["policies-accepted"], true);
+});
+
 test("a paid lesson records the confirmed agreements in Cal.com's metadata", () => {
   const recorded = metadata(lesson());
   assert.equal(recorded.termsAccepted, "true");
@@ -60,6 +66,8 @@ test("the first meeting carries no agreements", () => {
   });
   assert.equal(body.metadata, undefined);
   assert.equal(body.lengthInMinutes, undefined);
+  const responses = body.bookingFieldsResponses as Record<string, unknown>;
+  assert.equal("policies-accepted" in responses, false);
 });
 
 test("a lesson asks Cal.com for the chosen length", () => {
