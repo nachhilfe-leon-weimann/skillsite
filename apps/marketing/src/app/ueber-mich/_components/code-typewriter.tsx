@@ -24,7 +24,8 @@ const STR = "text-syntax-string"; // strings
 const CM = "text-on-navy-muted"; // comments
 const IND = "  "; // one indent level
 
-// The words of the sample (content); the syntax around them stays here.
+// The words of the sample and their typed prefixes (content); the syntax around
+// them stays here.
 const { comment, fn, param, check, result, retry, retryArg } = aboutPage.code;
 
 // The finished code as coloured segments. Rendered on the server, under reduced
@@ -34,16 +35,16 @@ const FINAL: Seg[] = [
   { text: `// ${comment}\n`, cls: CM },
   { text: "function ", cls: KW },
   { text: fn, cls: FN },
-  { text: `(${param}) {\n` + IND },
+  { text: `(${param.word}) {\n` + IND },
   { text: "if ", cls: KW },
-  { text: `(${param}.${check})` },
+  { text: `(${param.word}.${check.word})` },
   { text: " ", brk: true },
   { text: "return ", cls: KW },
   { text: `'${result}'`, cls: STR },
   { text: ";\n" + IND },
   { text: "return ", cls: KW },
   { text: retry, cls: FN },
-  { text: `(${param}, ${retryArg});\n}` },
+  { text: `(${param.word}, ${retryArg});\n}` },
 ];
 
 // Pacing (ms). Tuned for a ~4.5-5s indulgent take - retune here to re-pace.
@@ -188,16 +189,16 @@ function buildTimeline(): Frame[] {
   tab("func", "function ", KW);
   type(fn, FN);
   pair("(", ")");
-  tab(param.slice(0, 3), param);
+  tab(param.typed, param.word);
   overtype();
   type(" ");
   pair("{", "}");
   openBlock(IND);
   type("if ", KW);
   pair("(", ")");
-  tab(param.slice(0, 3), param);
+  tab(param.typed, param.word);
   type(".");
-  tab(check.slice(0, 4), check);
+  tab(check.typed, check.word);
   overtype();
   softBreak();
   type("return ", KW);
@@ -209,7 +210,7 @@ function buildTimeline(): Frame[] {
   ghost([
     { text: "return ", cls: KW },
     { text: retry, cls: FN },
-    { text: `(${param}, ${retryArg});` },
+    { text: `(${param.word}, ${retryArg});` },
   ]);
   pause(GHOST_THINK);
   acceptGhost();
