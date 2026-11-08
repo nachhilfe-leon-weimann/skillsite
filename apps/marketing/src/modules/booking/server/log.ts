@@ -68,3 +68,39 @@ export function describeAttempt(submission: unknown): Record<string, unknown> {
     honeypot: loggable(honeypot) || undefined,
   });
 }
+
+/** What a failed Cal.com booking request leaves in the outcome line. */
+export type CalErrorSummary = {
+  status: number;
+  /** Cal.com's error code, such as `BadRequestException`. */
+  code?: string;
+};
+
+/** A machine code: no spaces, nothing that could carry a sentence or a name. */
+const CAL_ERROR_CODE = /^[A-Za-z0-9_.-]{1,64}$/;
+
+/**
+ * The loggable part of a Cal.com error response: its HTTP status and Cal.com's
+ * error code (`error.code`, or a plain `error` string), the code only when it is
+ * a plain code. Cal.com's free-text message is never kept: it may echo what was
+ * sent, and no scrubbing can be sure to catch every personal detail in it.
+ */
+export function redactCalError(status: number, body: string): CalErrorSummary {
+  let json: unknown;
+  try {
+    json = JSON.parse(body);
+  } catch {
+    return { status };
+  }
+  const error =
+    typeof json === "object" && json !== null
+      ? (json as Record<string, unknown>).error
+      : undefined;
+  const code =
+    typeof error === "object" && error !== null
+      ? (error as Record<string, unknown>).code
+      : error;
+  return typeof code === "string" && CAL_ERROR_CODE.test(code)
+    ? { status, code }
+    : { status };
+}

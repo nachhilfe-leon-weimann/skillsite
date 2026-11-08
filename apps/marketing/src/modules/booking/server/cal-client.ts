@@ -1,5 +1,8 @@
 import { BOOKING_TIMEZONE, CAL_SLOTS_TAG } from "../model/config";
 import { serverEnv } from "@/lib/env";
+import { loggable } from "@/lib/log";
+
+import { redactCalError, type CalErrorSummary } from "./log";
 
 /**
  * The single point of Cal.com v2 I/O. Both availability (slots) and the booking
@@ -74,9 +77,27 @@ export async function fetchCalSlots(params: {
   }
 }
 
+/**
+ * How long the booking POST may take before it is aborted and answered as a
+ * failure. Above the slots request's 12 s: a booking does more on Cal.com's side
+ * (calendar write, meeting link, e-mails).
+ */
+export const BOOKING_TIMEOUT_MS = 20_000;
+
+/**
+ * Why a booking was not created, as the outcome line logs it: our own cause,
+ * Cal.com's HTTP status and its plain error code - never Cal.com's message or
+ * body, which may echo what was sent.
+ */
+export type CalBookingFailure =
+  | { cause: "unconfigured" | "timeout" }
+  | { cause: "network"; message?: string }
+  | ({ cause: "http" } & CalErrorSummary);
+
 export type CreateBookingResult =
   /** `uid` is Cal.com's booking id, `null` if the response didn't carry one. */
-  { ok: true; uid: string | null } | { ok: false; slotTaken: boolean };
+  | { ok: true; uid: string | null }
+  | { ok: false; slotTaken: boolean; failure: CalBookingFailure };
 
 /** Booking uid of a create response; recurring events answer with a list. */
 function bookingUid(json: unknown): string | null {
@@ -86,20 +107,27 @@ function bookingUid(json: unknown): string | null {
   return typeof uid === "string" ? uid : null;
 }
 
+/** Cal.com's wording for a slot that is gone; it has no stable code for it. */
+const SLOT_TAKEN =
+  /no longer available|not available|already booked|fully booked|no available|seats[_ ]?full|slot.*(taken|unavailable)/i;
+
 /**
  * Create a booking. `slotTaken` distinguishes a gone slot (send the user back to
  * pick another) from a generic failure (let them retry the same one) - Cal.com
- * has no stable machine code for it, so we detect it defensively.
+ * has no stable machine code for it, so we detect it defensively. A request
+ * that outlasts `BOOKING_TIMEOUT_MS` is aborted and fails; the caller logs the
+ * `failure` in its outcome line.
  */
 export async function createCalBooking(
   body: Record<string, unknown>,
 ): Promise<CreateBookingResult> {
   const key = apiKey();
   if (!key) {
-    console.error("[booking] Cal.com is not configured - booking not created.");
-    return { ok: false, slotTaken: false };
+    return { ok: false, slotTaken: false, failure: { cause: "unconfigured" } };
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), BOOKING_TIMEOUT_MS);
   try {
     const res = await fetch(BOOKINGS_URL, {
       method: "POST",
@@ -109,18 +137,24 @@ export async function createCalBooking(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
     if (!res.ok) {
+      // The raw body may echo the attendee: it is only matched, never logged.
       const detail = await res.text().catch(() => "");
-      console.error(
-        `[booking] Cal.com booking failed: ${res.status} ${detail}`,
-      );
-      const slotTaken =
-        res.status === 409 ||
-        /no longer available|not available|already booked|fully booked|no available|seats[_ ]?full|slot.*(taken|unavailable)/i.test(
-          detail,
-        );
-      return { ok: false, slotTaken };
+      // The time ran out while the error body was still arriving.
+      if (controller.signal.aborted) {
+        return {
+          ok: false,
+          slotTaken: res.status === 409,
+          failure: { cause: "timeout" },
+        };
+      }
+      return {
+        ok: false,
+        slotTaken: res.status === 409 || SLOT_TAKEN.test(detail),
+        failure: { cause: "http", ...redactCalError(res.status, detail) },
+      };
     }
     const uid = bookingUid(await res.json().catch(() => null));
     if (!uid) {
@@ -130,7 +164,11 @@ export async function createCalBooking(
     }
     return { ok: true, uid };
   } catch (error) {
-    console.error("[booking] Cal.com booking request errored", error);
-    return { ok: false, slotTaken: false };
+    const failure: CalBookingFailure = controller.signal.aborted
+      ? { cause: "timeout" }
+      : { cause: "network", message: loggable(String(error)) };
+    return { ok: false, slotTaken: false, failure };
+  } finally {
+    clearTimeout(timeout);
   }
 }
