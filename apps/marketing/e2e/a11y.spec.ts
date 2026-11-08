@@ -1127,7 +1127,7 @@ test.describe("the integrated keyboard paths", () => {
       await expect(page.getByText("Termin wird gebucht …")).toBeVisible();
       await expect(
         page.getByText("Einen Moment – die Buchung wird bestätigt."),
-      ).toHaveAttribute("aria-live", "polite");
+      ).toBeVisible();
       await expect.poll(() => submissions.held()).toBe(1);
       expect(submissions.actions).toEqual([true]);
       // The draft carries what the keyboard chose in every widget.

@@ -47,10 +47,9 @@ describe.each(events)("%s", (event) => {
   test("while Cal.com confirms, the booker says it is booking and offers nothing to click", () => {
     renderResult({ event, phase: "pending" });
     expect(heading()).toBe("Termin wird gebucht …");
-    const status = shown().getByText(
-      "Einen Moment – die Buchung wird bestätigt.",
-    );
-    expect(status.getAttribute("aria-live")).toBe("polite");
+    expect(
+      shown().getByText("Einen Moment – die Buchung wird bestätigt."),
+    ).toBeDefined();
     expect(buttons()).toEqual([]);
   });
 

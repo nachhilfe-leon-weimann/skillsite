@@ -99,11 +99,7 @@ function resultView({
       ),
       title: bookerText.result.pending.title,
       message: null,
-      body: (
-        <Text tone="muted" aria-live="polite">
-          {bookerText.result.pending.text}
-        </Text>
-      ),
+      body: <Text tone="muted">{bookerText.result.pending.text}</Text>,
     };
   }
 
