@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.4](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.3...v1.2.4) (2026-11-08)
+
+
+### Bug Fixes
+
+* **a11y:** keep focus on a select's trigger while its list closes ([#258](https://github.com/nachhilfe-leon-weimann/skillsite/issues/258)) ([36e838b](https://github.com/nachhilfe-leon-weimann/skillsite/commit/36e838b92291fc8a9cbf7cd3a4348a88e9b06daf))
+* **a11y:** move focus and announce the outcome on the booker's step changes ([#256](https://github.com/nachhilfe-leon-weimann/skillsite/issues/256)) ([5057c58](https://github.com/nachhilfe-leon-weimann/skillsite/commit/5057c5823ea840d2e4b5d63be5798ee0ad6de41f))
+* **a11y:** refocus a dialog's select trigger after an outside press ([#257](https://github.com/nachhilfe-leon-weimann/skillsite/issues/257)) ([b91b243](https://github.com/nachhilfe-leon-weimann/skillsite/commit/b91b24362f932f580943f0878ec43d7c83fed36e))
+* **booking:** allow-list durations and record checked agreements ([#253](https://github.com/nachhilfe-leon-weimann/skillsite/issues/253)) ([8b11ad8](https://github.com/nachhilfe-leon-weimann/skillsite/commit/8b11ad85485dc78acced312cb8583e0eb669c106))
+* **booking:** bound the rate-limit map and forget expired addresses ([#255](https://github.com/nachhilfe-leon-weimann/skillsite/issues/255)) ([9c704ff](https://github.com/nachhilfe-leon-weimann/skillsite/commit/9c704ff9fb4dab4536e78d5aabc028cbfc870092))
+* **booking:** time out the Cal.com booking and redact its errors ([#252](https://github.com/nachhilfe-leon-weimann/skillsite/issues/252)) ([9cbc840](https://github.com/nachhilfe-leon-weimann/skillsite/commit/9cbc8403788f0d88109f8433966f8f5bc57d4737))
+* **ui:** keep the German separators in CountUp ([#249](https://github.com/nachhilfe-leon-weimann/skillsite/issues/249)) ([6f50c38](https://github.com/nachhilfe-leon-weimann/skillsite/commit/6f50c3829fa490987d64ab11a476921a808f7c17))
+
 ## [1.2.3](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.2...v1.2.3) (2026-11-06)
 
 
