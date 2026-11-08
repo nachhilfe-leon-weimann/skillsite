@@ -26,12 +26,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    ignore:
-      # The workspace already runs ESLint 10 through peerDependencyRules (pnpm-workspace.yaml) while eslint-config-next's
-      # plugins declare ESLint 9 at most; lift once they declare ESLint 10 and those entries are gone.
-      - dependency-name: "eslint"
-        update-types:
-          - "version-update:semver-major"
 
   - package-ecosystem: "docker"
     directory: "/"
