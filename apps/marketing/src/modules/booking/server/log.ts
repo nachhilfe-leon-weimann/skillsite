@@ -76,7 +76,7 @@ export type CalErrorSummary = {
   code?: string;
 };
 
-/** A machine code: no spaces, nothing that could carry a sentence or a name. */
+/** A machine code: no spaces, so never a sentence - at most one token. */
 const CAL_ERROR_CODE = /^[A-Za-z0-9_.-]{1,64}$/;
 
 /**

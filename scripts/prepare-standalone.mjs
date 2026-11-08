@@ -55,6 +55,6 @@ export function prepareStandalone(appDir, root = repoRoot) {
   return layout;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (import.meta.main) {
   prepareStandalone(path.resolve(process.argv[2] ?? process.cwd()));
 }

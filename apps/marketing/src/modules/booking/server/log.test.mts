@@ -134,7 +134,7 @@ test("a code that is not a plain code is dropped", () => {
   }
 });
 
-test("a Cal.com error body that is not JSON logs only its status", () => {
+test("a Cal.com error body that is not a JSON object logs only its status", () => {
   for (const body of [
     "<html>Bad Gateway for li.kundin@example.com</html>",
     "",

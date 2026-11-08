@@ -1,8 +1,10 @@
+import { spawnSync } from "node:child_process";
 import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -92,4 +94,18 @@ test("the smoke suite starts the server entry it prepares", () => {
   const { server } = standaloneLayout(marketing, repoRoot);
   expect(config).toContain(`node ${path.relative(marketing, server)}`);
   expect(config).toContain("prepare-standalone.mjs");
+});
+
+test("runs as a CLI when reached through a symlink", () => {
+  // argv[1] keeps the symlinked path while the module URL is resolved: the entry guard must still fire.
+  sandbox = mkdtempSync(path.join(tmpdir(), "prepare-standalone-"));
+  const link = path.join(sandbox, "prepare-standalone.mjs");
+  symlinkSync(path.join(repoRoot, "scripts", "prepare-standalone.mjs"), link);
+  const unbuilt = path.join(sandbox, "app");
+  mkdirSync(unbuilt);
+  const run = spawnSync(process.execPath, [link, unbuilt], {
+    encoding: "utf8",
+  });
+  expect(run.status).not.toBe(0);
+  expect(run.stderr).toMatch(/No standalone server/);
 });

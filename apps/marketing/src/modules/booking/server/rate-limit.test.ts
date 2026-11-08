@@ -1,13 +1,21 @@
 import assert from "node:assert/strict";
-import { test } from "vitest";
+import { beforeEach, test, vi } from "vitest";
 
 import { ANTI_SPAM } from "../model/config";
-import { checkRateLimit, createRateLimiter } from "./rate-limit";
+import { createRateLimiter } from "./rate-limit";
 
 const { short, daily } = ANTI_SPAM.rateLimit;
 const MINUTE = 60_000;
 
-test("an address may try four times in ten minutes, then waits for the oldest attempt to age out", () => {
+// The booking action's limiter lives at module scope: every test imports a fresh copy of the module.
+beforeEach(() => {
+  vi.resetModules();
+});
+const freshCheckRateLimit = async () =>
+  (await import("./rate-limit")).checkRateLimit;
+
+test("an address may try four times in ten minutes, then waits for the oldest attempt to age out", async () => {
+  const checkRateLimit = await freshCheckRateLimit();
   const ip = "192.0.2.10";
   for (let attempt = 0; attempt < short.max; attempt += 1) {
     assert.deepEqual(checkRateLimit(ip, attempt * MINUTE), { ok: true });
@@ -19,7 +27,8 @@ test("an address may try four times in ten minutes, then waits for the oldest at
   assert.deepEqual(checkRateLimit(ip, short.windowMs), { ok: true });
 });
 
-test("an address may try fifteen times a day", () => {
+test("an address may try fifteen times a day", async () => {
+  const checkRateLimit = await freshCheckRateLimit();
   const ip = "192.0.2.11";
   // Spread out, so the ten-minute window never counts more than one.
   const at = (attempt: number) => attempt * short.windowMs;
@@ -31,7 +40,8 @@ test("an address may try fifteen times a day", () => {
   assert.deepEqual(checkRateLimit(ip, daily.windowMs), { ok: true });
 });
 
-test("a refused attempt does not count against the address", () => {
+test("a refused attempt does not count against the address", async () => {
+  const checkRateLimit = await freshCheckRateLimit();
   const ip = "192.0.2.12";
   for (let attempt = 0; attempt < short.max; attempt += 1) {
     checkRateLimit(ip, 0);

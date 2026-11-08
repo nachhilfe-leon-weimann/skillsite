@@ -21,7 +21,6 @@ export function CountUp({ value, duration, delay, className }: CountUpProps) {
     to: parsed?.to ?? 0,
     duration,
     delay,
-    decimals: parsed?.decimals ?? 0,
   });
 
   // Non-numeric values (nothing to animate) render verbatim.

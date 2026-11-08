@@ -114,7 +114,7 @@ Decided by the maintainer; nothing here is reopened by an implementing agent.
 | **S**    | Security follow-ups of the booking action: backlog, no date.                                                                                                                                                                 | 2026-09-25                     |
 | **V1**   | This spec is the decision record; no ADRs for the arc.                                                                                                                                                                       | 2026-09-25                     |
 | **V2**   | Prettier without Tailwind class sorting (sorting can change which conflicting class `twMerge` keeps).                                                                                                                        | 2026-09-25                     |
-| **V3**   | Dependabot ignores ESLint majors until `eslint-config-next` supports ESLint 10.                                                                                                                                              | 2026-09-25                     |
+| **V3**   | Dependabot ignored ESLint majors until the workspace could run ESLint 10. Lifted: the workspace runs ESLint 10 (#186, #248); a later major arrives as a Dependabot PR and CI decides.                                        | 2026-09-25, lifted 2026-11-08  |
 | **V4**   | `Field` gets error and description slots; the booking keeps its visible error pattern for now.                                                                                                                               | 2026-09-25                     |
 | **V5**   | Module boundaries are enforced with `import/no-restricted-paths` (already installed) in the shared ESLint preset.                                                                                                            | 2026-09-25                     |
 | **V6**   | The env schema validates at server start (`instrumentation.ts`), not at import; build and CI stay env-free.                                                                                                                  | 2026-09-25                     |
@@ -268,7 +268,7 @@ Each slice is one PR. _Check_ is what the maintainer looks at before merging.
 - _Technique:_ remove the transitional job _Lint and build_ from `ci.yml` (the ruleset only requires `check`);
   align the `turbo` version pinned in the `Dockerfile` with the workspace; a `typecheck` task (`tsc --noEmit`)
   for workspaces `next build` does not type-check (`packages/ui` incl. stories); Dependabot ignores ESLint
-  majors (V3) and no longer drops patch updates when a major PR is closed.
+  majors (V3, lifted 2026-11-08) and no longer drops patch updates when a major PR is closed.
 - _Acceptance criteria:_
   - [x] CI runs one job `check` = format, lint, typecheck, test, build, ratchet.
   - [x] Docker image builds with the workspace's turbo version.

@@ -23,7 +23,7 @@ import { TextField } from "./fields/text-field";
 import { ChipsField } from "./fields/chips-field";
 import { RadioField } from "./fields/radio-field";
 
-const text = bookerText.form;
+const formText = bookerText.form;
 
 /** Pick the renderer for a field's kind. */
 function FieldControl({
@@ -117,7 +117,7 @@ export function BookingForm({
   const openItems = [
     ...missing,
     ...(needsEarlyPerformanceConsent && !earlyPerformanceRequested
-      ? [text.withdrawalNoticeItem]
+      ? [formText.withdrawalNoticeItem]
       : []),
   ];
 
@@ -144,7 +144,7 @@ export function BookingForm({
         aria-hidden
         className="pointer-events-none absolute -left-2500 top-0 h-0 w-0 overflow-hidden"
       >
-        <label htmlFor="booking-hp">{text.honeypotLabel}</label>
+        <label htmlFor="booking-hp">{formText.honeypotLabel}</label>
         <input
           id="booking-hp"
           name="booking-hp"
@@ -164,13 +164,13 @@ export function BookingForm({
         <IconButton
           size="sm"
           onClick={onBack}
-          aria-label={text.back}
+          aria-label={formText.back}
           className="shrink-0"
         >
           <ArrowLeft className="size-4" aria-hidden />
         </IconButton>
         <div ref={titleRef} tabIndex={-1} className="min-w-0 outline-none">
-          <Text className="font-semibold text-ink">{text.title}</Text>
+          <Text className="font-semibold text-ink">{formText.title}</Text>
           <span className="mt-0.5 flex items-center gap-1.5 text-small text-ink-soft">
             <Calendar className="size-3.5 shrink-0 text-coral" aria-hidden />
             {slotLabel}
@@ -213,17 +213,19 @@ export function BookingForm({
                 className="mt-1 size-4 shrink-0 accent-coral"
                 required
               />
-              <span>{text.earlyPerformanceConsent}</span>
+              <span>{formText.earlyPerformanceConsent}</span>
             </label>
           ) : null}
           <Text size="note" tone="muted">
-            {text.legalNote.acceptTerms}{" "}
-            <TextLink href={routes.agb}>{text.legalNote.termsLink}</TextLink>
-            {text.legalNote.privacyText}{" "}
-            <TextLink href={routes.datenschutz}>
-              {text.legalNote.privacyLink}
+            {formText.legalNote.acceptTerms}{" "}
+            <TextLink href={routes.agb}>
+              {formText.legalNote.termsLink}
             </TextLink>
-            {text.legalNote.end}
+            {formText.legalNote.privacyText}{" "}
+            <TextLink href={routes.datenschutz}>
+              {formText.legalNote.privacyLink}
+            </TextLink>
+            {formText.legalNote.end}
           </Text>
         </Card>
       ) : null}
@@ -242,7 +244,7 @@ export function BookingForm({
           aria-live="polite"
           className="text-center text-caption text-ink-soft"
         >
-          {text.openItems}{" "}
+          {formText.openItems}{" "}
           <span className="font-semibold text-ink">{openItems.join(", ")}</span>
         </p>
       )}
