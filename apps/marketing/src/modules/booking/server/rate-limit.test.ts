@@ -91,6 +91,38 @@ test("at the bound, the address whose last recorded attempt is oldest makes room
   assert.deepEqual(limiter.check("first", 800), { ok: true });
 });
 
+test("a recorded attempt keeps an address longer than one seen first", () => {
+  const limiter = createRateLimiter({
+    windows: [{ max: 2, windowMs: 1_000 }],
+    maxClients: 10,
+  });
+  limiter.check("a", 0);
+  limiter.check("b", 500);
+  assert.deepEqual(limiter.check("a", 900), { ok: true });
+
+  // "b" is forgotten at 1,500 although "a" was seen first: "a" recorded at 900.
+  limiter.check("c", 1_600);
+  assert.equal(limiter.trackedClients(), 2);
+  assert.deepEqual(limiter.check("a", 1_700), { ok: true });
+  assert.equal(limiter.check("a", 1_750).ok, false);
+});
+
+test("a recorded attempt of a known address pushes no other address out", () => {
+  const limiter = createRateLimiter({
+    windows: [{ max: 2, windowMs: 1_000 }],
+    maxClients: 3,
+  });
+  limiter.check("a", 0);
+  limiter.check("b", 100);
+  limiter.check("c", 150);
+  assert.deepEqual(limiter.check("b", 200), { ok: true });
+
+  assert.equal(limiter.trackedClients(), 3);
+  // "a" still counts its attempt at 0.
+  assert.deepEqual(limiter.check("a", 250), { ok: true });
+  assert.equal(limiter.check("a", 260).ok, false);
+});
+
 test("an oversized address header is tracked under a bounded key", () => {
   const limiter = createRateLimiter({
     windows: [{ max: 1, windowMs: 1_000 }],
