@@ -9,6 +9,7 @@ import { IconButton } from "@skillsite/ui/primitives/icon-button";
 import { TextLink } from "@skillsite/ui/primitives/link";
 import { Text } from "@skillsite/ui/typography/text";
 import { cn } from "@skillsite/ui/utils/cn";
+import { bookerText } from "@/content/booking";
 import { routes } from "@/lib/routes";
 import {
   bookingEvents,
@@ -21,6 +22,8 @@ import { useBookingForm } from "./use-booking-form";
 import { TextField } from "./fields/text-field";
 import { ChipsField } from "./fields/chips-field";
 import { RadioField } from "./fields/radio-field";
+
+const text = bookerText.form;
 
 /** Pick the renderer for a field's kind. */
 function FieldControl({
@@ -114,7 +117,7 @@ export function BookingForm({
   const openItems = [
     ...missing,
     ...(needsEarlyPerformanceConsent && !earlyPerformanceRequested
-      ? ["Widerrufshinweis"]
+      ? [text.withdrawalNoticeItem]
       : []),
   ];
 
@@ -141,7 +144,7 @@ export function BookingForm({
         aria-hidden
         className="pointer-events-none absolute -left-2500 top-0 h-0 w-0 overflow-hidden"
       >
-        <label htmlFor="booking-hp">Dieses Feld bitte leer lassen</label>
+        <label htmlFor="booking-hp">{text.honeypotLabel}</label>
         <input
           id="booking-hp"
           name="booking-hp"
@@ -161,13 +164,13 @@ export function BookingForm({
         <IconButton
           size="sm"
           onClick={onBack}
-          aria-label="Zurück zur Terminwahl"
+          aria-label={text.back}
           className="shrink-0"
         >
           <ArrowLeft className="size-4" aria-hidden />
         </IconButton>
         <div ref={titleRef} tabIndex={-1} className="min-w-0 outline-none">
-          <Text className="font-semibold text-ink">Deine Daten</Text>
+          <Text className="font-semibold text-ink">{text.title}</Text>
           <span className="mt-0.5 flex items-center gap-1.5 text-small text-ink-soft">
             <Calendar className="size-3.5 shrink-0 text-coral" aria-hidden />
             {slotLabel}
@@ -210,18 +213,17 @@ export function BookingForm({
                 className="mt-1 size-4 shrink-0 accent-coral"
                 required
               />
-              <span>
-                Der Unterricht darf vor Ablauf der 14-tägigen Widerrufsfrist
-                beginnen. Mir ist bekannt, dass mein Widerrufsrecht nach
-                vollständiger Durchführung der gebuchten Stunde erlischt.
-              </span>
+              <span>{text.earlyPerformanceConsent}</span>
             </label>
           ) : null}
           <Text size="note" tone="muted">
-            Mit Klick auf „Zahlungspflichtig buchen“ akzeptierst du die{" "}
-            <TextLink href={routes.agb}>AGB</TextLink>. Informationen zur
-            Datenverarbeitung findest du in der{" "}
-            <TextLink href={routes.datenschutz}>Datenschutzerklärung</TextLink>.
+            {text.legalNote.acceptTerms}{" "}
+            <TextLink href={routes.agb}>{text.legalNote.termsLink}</TextLink>
+            {text.legalNote.privacyText}{" "}
+            <TextLink href={routes.datenschutz}>
+              {text.legalNote.privacyLink}
+            </TextLink>
+            {text.legalNote.end}
           </Text>
         </Card>
       ) : null}
@@ -240,7 +242,7 @@ export function BookingForm({
           aria-live="polite"
           className="text-center text-caption text-ink-soft"
         >
-          Bitte noch ausfüllen oder bestätigen:{" "}
+          {text.openItems}{" "}
           <span className="font-semibold text-ink">{openItems.join(", ")}</span>
         </p>
       )}

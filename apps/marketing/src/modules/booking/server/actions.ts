@@ -43,13 +43,13 @@ const GENERIC_FAILURE: SubmitResult = {
 function issueMessage(issue: BookingIssue): string {
   switch (issue.check) {
     case "slot":
-      return "Bitte wähle einen Termin.";
+      return bookerText.result.rejected.slot;
     case "fields":
-      return `Bitte überprüfe deine Eingaben: ${issue.fields.join(", ")}.`;
+      return bookerText.result.rejected.fields(issue.fields);
     case "terms":
-      return "Bitte bestätige die AGB.";
+      return bookerText.result.rejected.terms;
     case "withdrawal_notice":
-      return "Bitte bestätige den Hinweis zum Widerrufsrecht.";
+      return bookerText.result.rejected.withdrawalNotice;
   }
 }
 
@@ -86,8 +86,7 @@ async function processBooking(
     return {
       ok: false,
       reason: "rate_limited",
-      error:
-        "Zu viele Anfragen in kurzer Zeit. Bitte versuch es später erneut oder schreib mir direkt.",
+      error: bookerText.result.rateLimited,
     };
   }
 
@@ -103,15 +102,13 @@ async function processBooking(
       return {
         ok: false,
         reason: "too_fast",
-        error:
-          "Das ging schneller, als mein Spamschutz erlaubt. Es wurde noch kein Termin gebucht – bitte sende die Buchung einfach noch einmal.",
+        error: bookerText.result.tooFast,
       };
     }
     return {
       ok: false,
       reason: "blocked",
-      error:
-        "Mein Spamschutz hat diese Buchung leider aufgehalten. Es wurde kein Termin gebucht – bitte schreib mir kurz direkt, dann trage ich dich ein.",
+      error: bookerText.result.blocked,
     };
   }
 
@@ -144,8 +141,7 @@ async function processBooking(
     return {
       ok: false,
       reason: "slot_taken",
-      error:
-        "Dieser Termin wurde gerade vergeben. Bitte wähle einen anderen Zeitpunkt.",
+      error: bookerText.result.slotTaken,
     };
   }
   // A timeout lands here too: Cal.com may still have created the booking, but

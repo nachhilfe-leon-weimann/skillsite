@@ -28,6 +28,42 @@ export const bookerText = {
     slotsHeading: "Freie Uhrzeiten",
   },
 
+  /** The booking form around the event's fields, whose labels come from the event's configuration. */
+  form: {
+    title: "Deine Daten",
+    /** Accessible name of the back button (not shown). */
+    back: "Zurück zur Terminwahl",
+    /**
+     * Label of the hidden honeypot field. It must stay meaningless to autofill:
+     * never words that read like profile data (company, website, name).
+     */
+    honeypotLabel: "Dieses Feld bitte leer lassen",
+    /**
+     * Paid lesson starting within the withdrawal period: the consent to begin
+     * early. Legal-adjacent - its wording changes only on explicit request.
+     */
+    earlyPerformanceConsent:
+      "Der Unterricht darf vor Ablauf der 14-tägigen Widerrufsfrist beginnen. Mir ist bekannt, dass mein Widerrufsrecht nach vollständiger Durchführung der gebuchten Stunde erlischt.",
+    /**
+     * Paid lesson: the line on the terms and the privacy policy. `acceptTerms`
+     * and `privacyText` are each followed by a space and their link, `end`
+     * follows the last link. Legal-adjacent - its wording changes only on
+     * explicit request.
+     */
+    legalNote: {
+      acceptTerms:
+        "Mit Klick auf „Zahlungspflichtig buchen“ akzeptierst du die",
+      termsLink: "AGB",
+      privacyText: ". Informationen zur Datenverarbeitung findest du in der",
+      privacyLink: "Datenschutzerklärung",
+      end: ".",
+    },
+    /** Under a disabled submit button; followed by a space and the open items. */
+    openItems: "Bitte noch ausfüllen oder bestätigen:",
+    /** The open item while the early-performance consent is unchecked. */
+    withdrawalNoticeItem: "Widerrufshinweis",
+  },
+
   unavailable: {
     error: {
       title: "Termine konnten nicht geladen werden",
@@ -69,6 +105,25 @@ export const bookerText = {
      */
     genericFailure:
       "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.",
+    /** The booking action's answers when it turns an attempt down before or at Cal.com. */
+    rateLimited:
+      "Zu viele Anfragen in kurzer Zeit. Bitte versuch es später erneut oder schreib mir direkt.",
+    /** The anti-spam time trap: a retry measures again and passes. */
+    tooFast:
+      "Das ging schneller, als mein Spamschutz erlaubt. Es wurde noch kein Termin gebucht – bitte sende die Buchung einfach noch einmal.",
+    blocked:
+      "Mein Spamschutz hat diese Buchung leider aufgehalten. Es wurde kein Termin gebucht – bitte schreib mir kurz direkt, dann trage ich dich ein.",
+    slotTaken:
+      "Dieser Termin wurde gerade vergeben. Bitte wähle einen anderen Zeitpunkt.",
+    /** The booking action's answer for a submission it rejects, by the failed check. */
+    rejected: {
+      slot: "Bitte wähle einen Termin.",
+      /** Names the invalid fields by their labels, in declaration order. */
+      fields: (labels: readonly string[]) =>
+        `Bitte überprüfe deine Eingaben: ${labels.join(", ")}.`,
+      terms: "Bitte bestätige die AGB.",
+      withdrawalNotice: "Bitte bestätige den Hinweis zum Widerrufsrecht.",
+    },
     resend: "Erneut senden",
     chooseAnother: "Anderen Termin wählen",
   },
