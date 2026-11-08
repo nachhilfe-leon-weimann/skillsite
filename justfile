@@ -44,6 +44,7 @@ build:
 
 test:
     pnpm test
+    node --test .claude/hooks/
 
 # Functional smoke test against the production build (needs `playwright install chromium` once).
 smoke:

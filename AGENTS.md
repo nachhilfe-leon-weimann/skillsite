@@ -65,6 +65,8 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   maintainer runs; agents see only counts or redacted output.
 - **Secrets**: never read or print `.env` files, only the tracked `*.example` files. No environment dumps, no remote
   shells. A prompt for credentials or a login means stop and ask.
+- **The agent guard** (`.claude/hooks/guard.mjs`) blocks merges, secret reads, remote shells and repo administration;
+  it catches accidents, it is no security boundary. A block means stop and ask, never work around it.
 - **No new external service** without asking. **Legal texts** change only on an explicit request; flag a change that
   may affect one.
 - **No real Cal.com bookings from an agent session.** The real key sits in untracked env files under
