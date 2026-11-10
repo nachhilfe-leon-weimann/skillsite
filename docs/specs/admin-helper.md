@@ -1,6 +1,6 @@
 # Spec: Admin helper (the portal's admin area: login, lessons, billing, credit)
 
-> Status: Accepted, 2026-11-10 - SS0 to SS2 done.
+> Status: Accepted, 2026-11-10 - SS0 to SS2 done; SS3 built, its security review pending.
 > Builds on [`foundation-refactor.md`](foundation-refactor.md) (decision V15 brings this arc ahead of phase E) and on
 > SkillForge's [`user-authentication.md`](https://github.com/nachhilfe-leon-weimann/skillforge/blob/main/docs/specs/user-authentication.md)
 > (its _BFF contract_). This spec is the decision record of the arc; it takes the phase-F decisions the admin helper
@@ -178,15 +178,15 @@ APP=portal` works; Playwright smoke in `apps/portal/e2e/`. `AGENTS.md`, `README.
   the start page after login and the logout; light, phone and desktop - against a local SkillForge with a synthetic
   admin.
 - _Acceptance criteria:_
-  - [ ] A synthetic admin logs in against a local SkillForge and reaches the start page; logout returns to `/login`,
+  - [x] A synthetic admin logs in against a local SkillForge and reaches the start page; logout returns to `/login`,
         and a refresh with the revoked token answers `invalid_grant`.
-  - [ ] No token reaches the browser: the only cookie is the session ID, and neither the HTML, the RSC payload nor
+  - [x] No token reaches the browser: the only cookie is the session ID, and neither the HTML, the RSC payload nor
         `.next/static` contains a token.
-  - [ ] Two concurrent requests with an expiring access token cause exactly one refresh (test).
-  - [ ] `invalid_grant` on refresh ends the portal session; the next request lands on `/login` (test).
-  - [ ] A login without `admin` creates no portal session and revokes its SkillForge session (test).
-  - [ ] The 11th failed login from one IP within 15 minutes never reaches SkillForge (test).
-  - [ ] Each of these tests turns red when the guarded behaviour is broken (mutation probes in the PR).
+  - [x] Two concurrent requests with an expiring access token cause exactly one refresh (test).
+  - [x] `invalid_grant` on refresh ends the portal session; the next request lands on `/login` (test).
+  - [x] A login without `admin` creates no portal session and revokes its SkillForge session (test).
+  - [x] The 11th failed login from one IP within 15 minutes never reaches SkillForge (test).
+  - [x] Each of these tests turns red when the guarded behaviour is broken (mutation probes in the PR).
   - [ ] An independent security review's conclusion is in the PR.
 
 ### Phase B - UI kit _(outline; detailed before it starts)_
