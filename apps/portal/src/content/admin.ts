@@ -1,9 +1,9 @@
-/** The admin area's start page; a placeholder until the modules arrive. */
+/** The admin area's start page; the modules join it later. */
 export const adminHome = {
   metadata: {
     title: "Übersicht",
   },
   eyebrow: "Verwaltung",
   title: "Übersicht",
-  lead: "Hier entstehen Stunden, Abrechnung und Guthaben.",
+  lead: "Du bist als Admin angemeldet. Hier entstehen Stunden, Abrechnung und Guthaben.",
 };

@@ -10,3 +10,13 @@ export const notFoundPage = {
     home: "Zur Übersicht",
   },
 };
+
+/** A page that could not be built, most likely because SkillForge did not answer; the session is kept. */
+export const errorPage = {
+  eyebrow: "Fehler",
+  title: "Das hat nicht geklappt.",
+  lead: "Die Seite konnte nicht geladen werden. Meist ist SkillForge gerade nicht erreichbar – du bleibst angemeldet.",
+  actions: {
+    retry: "Erneut versuchen",
+  },
+};
