@@ -4,8 +4,7 @@ import { connection } from "next/server";
 import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { Text } from "@skillsite/ui/typography/text";
 import { loginForm, loginPage } from "@/content/login";
-import { LoginForm } from "@/modules/auth";
-import { authConfigured } from "@/modules/auth/server";
+import { authConfigured, LoginForm } from "@/modules/auth/server";
 
 export const metadata: Metadata = loginPage.metadata;
 

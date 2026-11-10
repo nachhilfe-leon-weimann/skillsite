@@ -53,6 +53,18 @@ export class FakeSkillforge {
   revokeFails = false;
   /** Holds every refresh until `releaseRefreshes()`, so a test can send concurrent requests. */
   holdRefreshes = false;
+  /** `/auth/me` answers 500. */
+  meFails = false;
+  /** Runs when a token request arrives, before it is answered (e.g. to move a test clock). */
+  onToken: (() => void) | undefined;
+  /** Answers a grant instead of the fake's logic, e.g. a malformed body or another error code. */
+  tokenOverride: ((grant: string | null) => Response | undefined) | undefined;
+  /**
+   * The token endpoint answers 307 to this URL. Like fetch, the fake refuses to follow when the request says
+   * `redirect: "error"`, and otherwise follows - sending the form on to the target, which `followed` records.
+   */
+  redirectTokenTo: string | undefined;
+  readonly followed: { url: string; body: string }[] = [];
 
   /** The refresh token issued last. */
   lastRefreshToken: string | undefined;
@@ -70,6 +82,16 @@ export class FakeSkillforge {
     if (this.down) throw new TypeError("fetch failed");
 
     if (request.method === "POST" && url.pathname === "/api/v1/auth/token") {
+      if (this.redirectTokenTo) {
+        if (request.redirect === "error")
+          throw new TypeError("fetch failed: redirect");
+        this.followed.push({
+          url: this.redirectTokenTo,
+          body: await request.text(),
+        });
+        return json(200, {});
+      }
+      this.onToken?.();
       if (
         request.headers.get("content-type") !==
         "application/x-www-form-urlencoded"
@@ -84,9 +106,10 @@ export class FakeSkillforge {
       }
       const form = new URLSearchParams(await request.text());
       call.grant = form.get("grant_type") ?? undefined;
-      return this.#token(form);
+      return this.tokenOverride?.(form.get("grant_type")) ?? this.#token(form);
     }
     if (request.method === "GET" && url.pathname === "/api/v1/auth/me") {
+      if (this.meFails) return json(500, { code: "internal_error" });
       const bearer = this.#bearer(request);
       if (!bearer) return json(401, { code: "unauthorized" });
       return json(

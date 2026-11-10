@@ -4,10 +4,11 @@
  *
  * Production builds use the `__Host-` prefix: the browser then accepts the cookie only with `Secure`, `Path=/` and
  * no `Domain`, so no subdomain can set or shadow it. `Secure` needs HTTPS, which `next dev` does not serve - there
- * the cookie goes without the prefix and without `Secure` (admin helper spec, SS3).
+ * the cookie goes without the prefix and without `Secure` (admin helper spec, SS3). Cookies ignore ports, so the
+ * name says whose session it is: on `localhost` the marketing app (port 3000) and the portal (3001) share a jar.
  */
 export function sessionCookieName(production: boolean): string {
-  return production ? "__Host-session" : "session";
+  return production ? "__Host-portal-session" : "portal-session";
 }
 
 /** The attributes the portal sets the cookie with, in the shape of Next's `cookies().set`. */

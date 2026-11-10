@@ -65,17 +65,21 @@ test("a successful login sets only the session ID cookie, with its attributes, a
   expect(cookieJar.writes).toEqual([
     {
       // Tests run outside a production build: no `__Host-` prefix and no `Secure` there.
-      name: "session",
+      name: "portal-session",
       value: expect.stringMatching(/^[\w-]{43}$/),
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
         secure: false,
-        maxAge: skillforge.refreshTtlSeconds,
+        maxAge: expect.any(Number),
       },
     },
   ]);
+  // Counted from the end of the login: never beyond SkillForge's own expiry.
+  const { maxAge } = cookieJar.writes[0]!.options as { maxAge: number };
+  expect(maxAge).toBeLessThanOrEqual(skillforge.refreshTtlSeconds);
+  expect(maxAge).toBeGreaterThanOrEqual(skillforge.refreshTtlSeconds - 1);
   expect(store.get(cookieJar.writes[0]!.value)?.userId).toBe(ADMIN.userId);
 });
 
@@ -100,7 +104,7 @@ test("a new login ends the session the browser still held", async () => {
   );
   if (!first.ok) throw new Error(first.failure);
   const previous = store.get(first.sessionId)!;
-  cookieJar = new FakeCookieJar({ session: first.sessionId });
+  cookieJar = new FakeCookieJar({ "portal-session": first.sessionId });
   jar.current = cookieJar;
 
   await expect(
@@ -124,7 +128,7 @@ test("logout revokes, deletes the session and clears the cookie", async () => {
   expect(skillforge.isRevoked(refreshToken)).toBe(true);
   expect(store.get(id)).toBeUndefined();
   expect(cookieJar.writes.at(-1)).toEqual({
-    name: "session",
+    name: "portal-session",
     value: "",
     options: {
       httpOnly: true,

@@ -119,3 +119,35 @@ test("revoke sends the refresh token with the portal's own bearer token", async 
   expect(request.headers.get("authorization")).toBe("Bearer sf_at_service");
   expect(await request.json()).toEqual({ refresh_token: "sf_rt_synthetic" });
 });
+
+test("every call refuses to follow a redirect", async () => {
+  const { requests, api } = capture(tokenResponse);
+  await api.clientCredentials();
+  await api.me("sf_at_synthetic");
+  await api.revoke("sf_rt_synthetic", "sf_at_service");
+  expect(requests.map((request) => request.redirect)).toEqual([
+    "error",
+    "error",
+    "error",
+  ]);
+});
+
+test("a token response that breaks the contract is invalid, not a token", async () => {
+  const { api } = capture(() =>
+    Response.json({ access_token: "sf_at_synthetic", expires_in: "900" }),
+  );
+  expect(await api.clientCredentials()).toEqual({
+    ok: false,
+    error: "invalid_response",
+  });
+});
+
+test("an /auth/me answer without roles is invalid", async () => {
+  const { api } = capture(() =>
+    Response.json({ principal_type: "user", user_id: "u", party_id: null }),
+  );
+  expect(await api.me("sf_at_synthetic")).toEqual({
+    ok: false,
+    error: "invalid_response",
+  });
+});

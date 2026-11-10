@@ -16,6 +16,7 @@ function session(id: string, overrides: Partial<PortalSession> = {}) {
     userId: "00000000-0000-4000-8000-000000000001",
     partyId: null,
     roles: ["admin"],
+    rolesVerified: true,
     lastSeenAt: START,
     ...overrides,
   } satisfies PortalSession;

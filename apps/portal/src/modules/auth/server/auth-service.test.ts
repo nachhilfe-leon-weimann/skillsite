@@ -200,6 +200,125 @@ describe("throttle", () => {
   });
 });
 
+describe("throttle: only what is not the user's is forgiven", () => {
+  test("an e-mail of spaces is a failed login that never reaches SkillForge and counts", async () => {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      expect(await loginAs("   ", ADMIN.password)).toEqual({
+        ok: false,
+        failure: "invalid_credentials",
+      });
+    }
+    expect(skillforge.calls).toEqual([]);
+    expect((await loginAs(ADMIN.email, ADMIN.password)).ok).toBe(false);
+  });
+
+  test.each([
+    ["invalid_request", 422, "invalid_credentials"],
+    ["invalid_scope", 400, "not_configured"],
+    ["validation_error", 422, "invalid_credentials"],
+  ])(
+    "a password grant refused with %s counts against the throttle",
+    async (code, status, failure) => {
+      skillforge.tokenOverride = (grant) =>
+        grant === "password"
+          ? Response.json({ code, detail: "x" }, { status })
+          : undefined;
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        expect(await loginAs(ADMIN.email, ADMIN.password)).toEqual({
+          ok: false,
+          failure,
+        });
+      }
+      const callsBefore = skillforge.calls.length;
+      expect(await loginAs(ADMIN.email, ADMIN.password)).toEqual({
+        ok: false,
+        failure: "throttled",
+      });
+      expect(skillforge.calls.length).toBe(callsBefore);
+    },
+  );
+
+  test.each(["invalid_client", "unauthorized_client"])(
+    "the portal's client refused with %s is forgiven: it says nothing about the person",
+    async (code) => {
+      skillforge.tokenOverride = () =>
+        Response.json(
+          { code, detail: "x" },
+          { status: code === "invalid_client" ? 401 : 400 },
+        );
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        expect(await loginAs(ADMIN.email, ADMIN.password)).toEqual({
+          ok: false,
+          failure: "not_configured",
+        });
+      }
+    },
+  );
+});
+
+describe("SkillForge's answers are checked, never trusted", () => {
+  test("a redirect from the token endpoint is not followed: the password goes nowhere else", async () => {
+    skillforge.redirectTokenTo = "http://elsewhere.test/collect";
+    expect(await loginAs(ADMIN.email, ADMIN.password)).toEqual({
+      ok: false,
+      failure: "unreachable",
+    });
+    expect(skillforge.followed).toEqual([]);
+  });
+
+  test.each([
+    ["a lifetime that is no number", { expires_in: "900" }],
+    ["a lifetime of zero", { expires_in: 0 }],
+    ["no access token", { access_token: "" }],
+    ["a session end that is no number", { refresh_expires_in: "soon" }],
+  ])(
+    "a login answered with %s is refused, without a session",
+    async (_, broken) => {
+      skillforge.tokenOverride = (grant) =>
+        grant === "password"
+          ? Response.json({
+              access_token: "sf_at_synthetic_x",
+              token_type: "bearer",
+              expires_in: 900,
+              scope: "account:self",
+              refresh_token: "sf_rt_synthetic_x",
+              refresh_expires_in: 3600,
+              ...broken,
+            })
+          : undefined;
+      expect(await loginAs(ADMIN.email, ADMIN.password)).toEqual({
+        ok: false,
+        failure: "unreachable",
+      });
+      expect(store.size).toBe(0);
+    },
+  );
+
+  test("a refresh answered with a broken body ends the session (fail closed)", async () => {
+    const session = await loggedInAdmin();
+    clock = session.accessExpiresAt;
+    skillforge.tokenOverride = (grant) =>
+      grant === "refresh_token"
+        ? Response.json({ access_token: "sf_at_synthetic_x", expires_in: null })
+        : undefined;
+    expect(await auth.resolve(session.id)).toEqual({ status: "ended" });
+    expect(store.get(session.id)).toBeUndefined();
+  });
+
+  test("the session's end is counted from before the grant, never later than SkillForge's", async () => {
+    // SkillForge takes five seconds to answer; its expiry runs from when it received the request.
+    skillforge.onToken = () => {
+      clock += 5000;
+    };
+    const result = await loginAs(ADMIN.email, ADMIN.password);
+    if (!result.ok) throw new Error(result.failure);
+    expect(store.get(result.sessionId)?.refreshExpiresAt).toBe(
+      START + skillforge.refreshTtlSeconds * 1000,
+    );
+    expect(result.maxAgeSeconds).toBe(skillforge.refreshTtlSeconds - 5);
+  });
+});
+
 describe("requests", () => {
   test("a live session is handed out without calling SkillForge, and its idle clock restarts", async () => {
     const session = await loggedInAdmin();
@@ -298,6 +417,37 @@ describe("requests", () => {
     expect(await auth.resolve(session.id)).toEqual({ status: "ended" });
     expect(store.get(session.id)).toBeUndefined();
     expect(skillforge.isRevoked(skillforge.lastRefreshToken ?? "")).toBe(true);
+  });
+
+  test("after a refresh whose role check failed, the next request checks the roles before it is served", async () => {
+    const admin = { ...ADMIN, roles: ["admin"] };
+    skillforge.accounts = [admin];
+    const session = await loggedInAdmin();
+    clock = session.accessExpiresAt;
+    skillforge.meFails = true;
+
+    expect(await auth.resolve(session.id)).toEqual({ status: "unreachable" });
+    const renewed = store.get(session.id);
+    expect(renewed?.refreshToken).not.toBe(session.refreshToken);
+    expect(renewed?.rolesVerified).toBe(false);
+
+    // The role was taken away meanwhile; the access token is fresh, so only /auth/me tells.
+    skillforge.meFails = false;
+    admin.roles = ["tutor"];
+    const refreshes = skillforge.grants("refresh_token");
+    expect(await auth.resolve(session.id)).toEqual({ status: "ended" });
+    expect(skillforge.grants("refresh_token")).toBe(refreshes);
+    expect(skillforge.isRevoked(renewed?.refreshToken ?? "")).toBe(true);
+  });
+
+  test("a successful role check marks the session verified, and later requests skip it", async () => {
+    const session = await loggedInAdmin();
+    store.set({ ...session, rolesVerified: false });
+    expect((await auth.resolve(session.id)).status).toBe("active");
+    expect(store.get(session.id)?.rolesVerified).toBe(true);
+    const meCalls = skillforge.count(ME);
+    await auth.resolve(session.id);
+    expect(skillforge.count(ME)).toBe(meCalls);
   });
 
   test("8 hours without a request end the session and revoke its SkillForge session (AH-11)", async () => {
