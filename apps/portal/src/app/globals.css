@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@skillsite/ui/styles/theme.css";
+
+/* Generate utilities for classes used inside the shared UI package. */
+@source "../../../../packages/ui/src";

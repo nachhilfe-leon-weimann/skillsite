@@ -10,21 +10,23 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                              |
 | change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                 |
-| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`                                                                                                                                |
+| change the portal (admin helper)            | `apps/portal/src/` (`@skillsite/portal`, [`admin-helper.md`](docs/specs/admin-helper.md)): `app/` (`(admin)/`, `login/`, `health/`), `lib/` (env, routes, health), `modules/auth/`, `proxy.ts`                           |
+| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`; the portal's in `apps/portal/src/content/`                                                                                    |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
 | decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
-| write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                      |
+| write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `apps/portal/e2e/` (smoke), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                          |
 | brief an agent or write a handoff           | the [agent work guide][agent-work] in skillforge                                                                                                                                                                         |
 | rely on a Next.js API                       | `apps/marketing/node_modules/next/dist/docs/` - Next.js 16 differs from older versions                                                                                                                                   |
 
 ## Commands
 
-- `just dev` - the site (`http://localhost:3000`); `just test` - the tests only; `pnpm storybook` - the workbench.
+- `just dev` - the site (`http://localhost:3000`) and the portal (`http://localhost:3001`); `just test` - the tests
+  only; `pnpm storybook` - the workbench.
 - `just check` - the full suite, green before every push; run `just format` first, then `CAL_API_KEY= just check`.
-- `just build` - production build and type check of `apps/marketing`; `just typecheck` covers the other packages;
-  `just docker-build` / `just docker-run` - the production image.
-- `just smoke` - smoke test on the production build; `just widgets` - Storybook keyboard checks. Both need, once,
-  `pnpm --filter @skillsite/marketing exec playwright install chromium`.
+- `just build` - production build and type check of both apps; `just typecheck` covers the other packages;
+  `just docker-build` / `just docker-run` - the production image (`just docker-build <image> portal` for the portal).
+- `just smoke` - smoke test of both apps on their production builds; `just widgets` - Storybook keyboard checks.
+  Both need, once, `pnpm --filter @skillsite/marketing exec playwright install chromium`.
 
 ## Conventions
 
@@ -51,12 +53,12 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   `"use server"` module. The `import/no-restricted-paths` zones of `packages/config/eslint/boundaries.mjs` enforce
   this. A block one page uses lives in `app/<route>/_components/`, one that several pages use in
   `components/sections/`.
-- The app reads its environment only through `apps/marketing/src/lib/env.ts` (`serverEnv()`, `appVersion()`,
+- An app reads its environment only through its `src/lib/env.ts` (`serverEnv()`, `appVersion()`,
   `isProduction()`); ESLint rejects `process.env` elsewhere in `src/`. A new variable gets its rule in that schema,
   which `instrumentation.ts` checks at server start: a present but malformed value stops the server.
 - Vitest runs only these globs: `packages/ui` `src/**/*.test.ts` (node) and `src/**/*.test.tsx` (jsdom, Testing
   Library); `apps/marketing` `src/**/*.test.{ts,mts}` (node) and `src/**/*.test.tsx` (jsdom, Testing Library);
-  `tests/**/*.test.mts`, `scripts/**/*.test.mjs`; `@/` works.
+  `apps/portal` `src/**/*.test.{ts,mts}` (node); `tests/**/*.test.mts`, `scripts/**/*.test.mjs`; `@/` works.
 
 ## Data protection and secrets
 
@@ -154,18 +156,18 @@ Every PR states `Review: deep | evidence`, telling the maintainer how closely to
 ## Traps
 
 - Bulk edits over German files only with UTF-8-safe tools (`perl -CSD -pi -e ...`); plain `sed`/`perl` break ä, ß.
-- `next dev` serving stale CSS: delete `apps/marketing/.next` and restart.
+- `next dev` serving stale CSS: delete the app's `.next` (`apps/marketing/.next`, `apps/portal/.next`) and restart.
 - Tailwind v4 `translate-*` / `scale-*` set `translate` / `scale`, not `transform`: write
   `transition-[opacity,translate,scale]`, and verify motion in a browser (`apps/marketing/e2e/motion.spec.ts`).
 - `next-themes` runs with `disableTransitionOnChange`: theme switches do not animate, on purpose.
 - `next/font/google` downloads the fonts at build time: `just build` needs network access to Google Fonts.
 - Keep exactly one `<footer>`: the iOS 26 Safari toolbar tint follows it (`components/layout/ios-toolbar-tint.tsx`).
-- `next dev` writes its own `AGENTS.md` into the project directory, `apps/marketing/`, not the repo root.
-  `agentRules: false` in `apps/marketing/next.config.ts` switches that off; the root `AGENTS.md` is the only anchor.
+- `next dev` writes its own `AGENTS.md` into the app's directory, not the repo root. `agentRules: false` in the
+  shared app config (`packages/config/next/app-config.mjs`) switches that off; the root `AGENTS.md` is the only anchor.
 - A component passed to `Reveal as={…}` from a server page must be a client module (`"use client"`); a lifting card
   stays a child of a `Reveal`, not merged via `as` - on one element the `.reveal` rules beat `lift`'s hover.
 - Import `@skillsite/ui/shell/fonts` before `globals.css` in `app/layout.tsx` (`layout-imports.test.ts` guards it).
-- Tailwind's `@source` (`apps/marketing/src/app/globals.css`) scans `packages/ui/src`: a name that happens to be a
+- Tailwind's `@source` (each app's `src/app/globals.css`) scans `packages/ui/src`: a name that happens to be a
   utility (`inline-doc`, `resize`) emits a stray rule - rename the identifier, never allow-list the rule.
 
 [agent-work]: https://github.com/nachhilfe-leon-weimann/skillforge/blob/main/docs/agent-work.md
