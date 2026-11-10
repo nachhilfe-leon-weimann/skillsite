@@ -56,7 +56,7 @@ async function adminCookie(): Promise<string> {
   ).login({ email: ADMIN.email, password: ADMIN.password }, "shared");
   if (!result.ok) throw new Error(result.failure);
   // Tests run outside a production build: the cookie goes without its prefix.
-  jar.current = new FakeCookieJar({ session: result.sessionId });
+  jar.current = new FakeCookieJar({ "portal-session": result.sessionId });
   return result.sessionId;
 }
 

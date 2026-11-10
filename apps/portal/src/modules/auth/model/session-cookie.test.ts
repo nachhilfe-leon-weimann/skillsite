@@ -8,12 +8,12 @@ import {
 } from "./session-cookie";
 
 test("a production build names the cookie with the __Host- prefix", () => {
-  assert.equal(sessionCookieName(true), "__Host-session");
+  assert.equal(sessionCookieName(true), "__Host-portal-session");
 });
 
-test("next dev, without HTTPS, names it without the prefix", () => {
+test("next dev, without HTTPS, names it without the prefix, but still as the portal's: cookies ignore ports", () => {
   // The browser drops a `__Host-` cookie that is not `Secure`, and `Secure` needs HTTPS.
-  assert.equal(sessionCookieName(false), "session");
+  assert.equal(sessionCookieName(false), "portal-session");
 });
 
 test("in production the cookie is HttpOnly, SameSite=Lax, Path=/ and Secure, and lives as long as the session", () => {

@@ -75,12 +75,33 @@ function cause(failure: CallFailure): Record<string, unknown> {
     : { cause: failure.error };
 }
 
-function credential(value: unknown, maxLength: number): string | null {
-  return typeof value === "string" &&
-    value.length > 0 &&
-    value.length <= maxLength
-    ? value
+/** A form value within SkillForge's limits; `trim` for the e-mail, never for a password. */
+function credential(
+  value: unknown,
+  maxLength: number,
+  trim: boolean,
+): string | null {
+  if (typeof value !== "string") return null;
+  const candidate = trim ? value.trim() : value;
+  return candidate.length > 0 && candidate.length <= maxLength
+    ? candidate
     : null;
+}
+
+/** SkillForge refused the portal's client, not the person: the codes that say nothing about the credentials. */
+const CLIENT_FAULTS = new Set(["invalid_client", "unauthorized_client"]);
+
+/**
+ * Whether a failed password grant says nothing about the person's input: SkillForge unreachable, its answer broken,
+ * or the portal's client refused. Only these are forgiven by the throttle; every other refusal counts, including
+ * `invalid_scope`, which SkillForge answers only after it verified the password.
+ */
+function notTheUsers(failure: CallFailure): boolean {
+  return (
+    failure.error === "unreachable" ||
+    failure.error === "invalid_response" ||
+    (failure.error === "rejected" && CLIENT_FAULTS.has(failure.code ?? ""))
+  );
 }
 
 export function createAuthService({
@@ -126,50 +147,54 @@ export function createAuthService({
     return seen;
   }
 
-  async function refresh(session: PortalSession): Promise<SessionResult> {
-    const result = await api.refreshGrant(session.refreshToken);
-    if (!result.ok) {
-      if (result.error === "invalid_grant") {
-        // The BFF contract: `invalid_grant` on refresh ends the portal session.
-        store.delete(session.id);
-        log("session_ended", {
-          user_id: session.userId,
-          reason: "invalid_grant",
-        });
-        return { status: "ended" };
+  /**
+   * Brings a session up to date before a request uses it: refreshes the tokens when the access token runs out, then
+   * reads the roles from `/auth/me` - after every refresh, and on the next request after a check that failed.
+   */
+  async function renew(session: PortalSession): Promise<SessionResult> {
+    let current = session;
+    const refreshing = needsRefresh(session, now());
+    if (refreshing) {
+      // Before the call: the session's end is computed from a time no later than SkillForge's.
+      const at = now();
+      const result = await api.refreshGrant(session.refreshToken);
+      if (!result.ok) {
+        if (result.error === "invalid_grant") {
+          // The BFF contract: `invalid_grant` on refresh ends the portal session.
+          return end(session, "invalid_grant");
+        }
+        if (result.error === "invalid_response") {
+          // SkillForge may have rotated the token, but the answer cannot be trusted: fail closed.
+          return end(session, "invalid_response");
+        }
+        // A network error keeps the session (admin helper spec, SS3).
+        log("refresh_error", { user_id: session.userId, ...cause(result) });
+        return { status: "unreachable" };
       }
-      // A network error keeps the session (admin helper spec, SS3).
-      log("refresh_error", { user_id: session.userId, ...cause(result) });
-      return { status: "unreachable" };
-    }
 
-    const tokens = result.tokens;
-    if (!tokens.refreshToken) {
-      // The presented refresh token is spent; without its successor the session cannot go on.
-      store.delete(session.id);
-      log("session_ended", {
-        user_id: session.userId,
-        reason: "no_refresh_token",
-      });
-      return { status: "ended" };
+      const tokens = result.tokens;
+      if (!tokens.refreshToken) {
+        // The presented refresh token is spent; without its successor the session cannot go on.
+        return end(session, "no_refresh_token");
+      }
+      current = {
+        ...session,
+        ...sessionTokens(
+          { ...tokens, refreshToken: tokens.refreshToken },
+          at,
+          session.refreshExpiresAt,
+        ),
+        rolesVerified: false,
+      };
     }
-    const at = now();
-    const renewed: PortalSession = {
-      ...session,
-      ...sessionTokens(
-        { ...tokens, refreshToken: tokens.refreshToken },
-        at,
-        session.refreshExpiresAt,
-      ),
-    };
 
     // Follow a role change: the admin area stays open to admins only (AH-9).
-    const me = await api.me(tokens.accessToken);
+    const me = await api.me(current.accessToken);
     const gone = !store.get(session.id);
     if (gone || (me.ok && !isAdmin(me.me.roles))) {
-      // Logged out while the refresh ran, or no admin any more: end the session the refresh just renewed.
+      // Logged out meanwhile, or no admin any more: end the session and revoke what it holds now.
       store.delete(session.id);
-      await revoke(tokens.refreshToken, session.userId);
+      await revoke(current.refreshToken, session.userId);
       log("session_ended", {
         user_id: session.userId,
         reason: gone ? "logged_out" : "not_admin",
@@ -177,27 +202,36 @@ export function createAuthService({
       return { status: "ended" };
     }
     if (!me.ok) {
-      // Keep the new tokens - the old refresh token is spent - but this request cannot go on.
-      store.set(renewed);
+      // Keep the new tokens - the old refresh token is spent - but unverified: this request cannot go on, and the
+      // next one checks the roles again.
+      store.set(current);
       log("refresh_error", { user_id: session.userId, ...cause(me) });
       return { status: "unreachable" };
     }
 
     const fresh: PortalSession = {
-      ...renewed,
+      ...current,
       roles: me.me.roles,
       partyId: me.me.party_id,
+      rolesVerified: true,
     };
     store.set(fresh);
-    log("refreshed", { user_id: session.userId });
+    if (refreshing) log("refreshed", { user_id: session.userId });
     return { status: "active", session: fresh };
   }
 
-  /** One refresh per session at a time: a second caller waits for the first one's result. */
-  function refreshOnce(session: PortalSession): Promise<SessionResult> {
+  /** Deletes a session that cannot go on and logs why. */
+  function end(session: PortalSession, reason: string): SessionResult {
+    store.delete(session.id);
+    log("session_ended", { user_id: session.userId, reason });
+    return { status: "ended" };
+  }
+
+  /** One renewal per session at a time: a second caller waits for the first one's result (single-flight). */
+  function renewOnce(session: PortalSession): Promise<SessionResult> {
     let pending = refreshes.get(session.id);
     if (!pending) {
-      pending = refresh(session).finally(() => refreshes.delete(session.id));
+      pending = renew(session).finally(() => refreshes.delete(session.id));
       refreshes.set(session.id, pending);
     }
     return pending;
@@ -211,26 +245,40 @@ export function createAuthService({
         return { ok: false, failure: "throttled" };
       }
 
-      const username = credential(email, MAX_EMAIL_LENGTH);
-      const secret = credential(password, MAX_PASSWORD_LENGTH);
+      const username = credential(email, MAX_EMAIL_LENGTH, true);
+      const secret = credential(password, MAX_PASSWORD_LENGTH, false);
       if (!username || !secret) {
         log("login_failed", { reason: "invalid_input" });
         return { ok: false, failure: "invalid_credentials" };
       }
 
-      const grant = await api.passwordGrant(username.trim(), secret);
+      // Before the call: the session's end is computed from a time no later than SkillForge's.
+      const at = now();
+      const grant = await api.passwordGrant(username, secret);
       if (!grant.ok) {
         if (grant.error === "invalid_grant") {
           log("login_failed", { reason: "invalid_credentials" });
           return { ok: false, failure: "invalid_credentials" };
         }
-        // The credentials were not tested: the attempt does not count.
-        throttle.forgive(ticket);
-        log("login_error", cause(grant));
+        if (notTheUsers(grant)) {
+          // The credentials were not tested, or SkillForge refused the portal itself: the attempt does not count.
+          throttle.forgive(ticket);
+          log("login_error", cause(grant));
+          return {
+            ok: false,
+            failure:
+              grant.error === "rejected" ? "not_configured" : "unreachable",
+          };
+        }
+        // Any other refusal counts against the throttle. `invalid_scope` comes only after a verified password:
+        // the client's ceiling does not fit the account.
+        log("login_failed", { reason: "rejected", ...cause(grant) });
         return {
           ok: false,
           failure:
-            grant.error === "unreachable" ? "unreachable" : "not_configured",
+            grant.error === "rejected" && grant.code === "invalid_scope"
+              ? "not_configured"
+              : "invalid_credentials",
         };
       }
 
@@ -249,8 +297,7 @@ export function createAuthService({
         log("login_error", cause(me));
         return {
           ok: false,
-          failure:
-            me.error === "unreachable" ? "unreachable" : "not_configured",
+          failure: me.error === "rejected" ? "not_configured" : "unreachable",
         };
       }
       const { user_id: userId, party_id: partyId, roles } = me.me;
@@ -262,14 +309,14 @@ export function createAuthService({
         return { ok: false, failure: "not_admin" };
       }
 
-      const at = now();
       const session: PortalSession = {
         id: nextSessionId(),
         ...sessionTokens({ ...tokens, refreshToken }, at),
         userId,
         partyId,
         roles,
-        lastSeenAt: at,
+        rolesVerified: true,
+        lastSeenAt: now(),
       };
       store.set(session);
       throttle.clear(ticket);
@@ -277,7 +324,8 @@ export function createAuthService({
       return {
         ok: true,
         sessionId: session.id,
-        maxAgeSeconds: (session.refreshExpiresAt - at) / 1000,
+        // Counted from now: the cookie never outlives the session.
+        maxAgeSeconds: (session.refreshExpiresAt - now()) / 1000,
       };
     },
 
@@ -294,9 +342,9 @@ export function createAuthService({
         return { status: "ended" };
       }
 
-      if (needsRefresh(session, now())) {
-        const refreshed = await refreshOnce(session);
-        if (refreshed.status !== "active") return refreshed;
+      if (needsRefresh(session, now()) || !session.rolesVerified) {
+        const renewed = await renewOnce(session);
+        if (renewed.status !== "active") return renewed;
       }
       const seen = touch(sessionId);
       return seen ? { status: "active", session: seen } : { status: "ended" };

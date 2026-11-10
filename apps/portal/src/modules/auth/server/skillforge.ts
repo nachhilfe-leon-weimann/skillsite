@@ -1,3 +1,5 @@
+import * as z from "zod/mini";
+
 import {
   createSkillforgeClient,
   type components,
@@ -7,8 +9,9 @@ import {
 /**
  * SkillForge's auth endpoints as the BFF uses them: the token endpoint (form-encoded, the client authenticated by
  * HTTP Basic), `/auth/me` and `/auth/revoke`. Every call goes through `@skillsite/api-client` and the `fetch` the
- * caller passes in, so tests run without a network. Results are values, never thrown: a network error, a timeout
- * and a 5xx are `unreachable`, every other refusal names SkillForge's error `code`.
+ * caller passes in, so tests run without a network. Results are values, never thrown: a network error, a timeout,
+ * a redirect and a 5xx are `unreachable`, a success whose body breaks the contract is `invalid_response` (fail
+ * closed: nothing of it is used), every other refusal names SkillForge's error `code`.
  */
 
 /** Where SkillForge is and how the portal's client authenticates there. */
@@ -32,12 +35,20 @@ export type TokenSet = {
 /** A refusal: `invalid_grant` is the person's credentials or refresh token, `rejected` anything else SkillForge said. */
 export type CallFailure =
   | { ok: false; error: "unreachable" }
+  | { ok: false; error: "invalid_response" }
   | { ok: false; error: "invalid_grant" }
   | { ok: false; error: "rejected"; status: number; code?: string };
 
 export type TokenResult = { ok: true; tokens: TokenSet } | CallFailure;
 
-export type Me = components["schemas"]["MeResponse"];
+/** What `/auth/me` says about a person, as far as the BFF relies on it (`meResponse` checks it at runtime). */
+export type Me = {
+  principal_type: string;
+  user_id: string | null;
+  party_id: string | null;
+  /** Kept as strings: a role a newer SkillForge adds must not break the admin check. */
+  roles: string[];
+};
 export type MeResult = { ok: true; me: Me } | CallFailure;
 
 export type RevokeResult = { ok: true } | CallFailure;
@@ -58,6 +69,27 @@ export const SKILLFORGE_TIMEOUT_MS = 10_000;
 const ERROR_CODE = /^[a-z_]{1,64}$/;
 
 type TokenForm = components["schemas"]["Body_auth_create_token"];
+
+/**
+ * The parts of a token response the BFF relies on, checked at runtime: a lifetime that is not a positive whole
+ * number of seconds would silently disable refresh and expiry, so it refuses the response instead.
+ */
+const tokenResponse = z.object({
+  access_token: z.string().check(z.minLength(1)),
+  expires_in: z.int().check(z.positive()),
+  refresh_token: z.optional(z.nullable(z.string().check(z.minLength(1)))),
+  refresh_expires_in: z.optional(z.nullable(z.int().check(z.positive()))),
+});
+
+/** The parts of `/auth/me` the admin gate relies on. */
+const meResponse = z.object({
+  principal_type: z.string(),
+  user_id: z.nullable(z.string().check(z.minLength(1))),
+  party_id: z.nullable(z.string()),
+  roles: z.array(z.string()),
+});
+
+const INVALID_RESPONSE = { ok: false, error: "invalid_response" } as const;
 
 function errorCode(error: unknown): string | undefined {
   const code =
@@ -101,10 +133,12 @@ export function createSkillforgeAuthApi(
     baseUrl: connection.baseUrl,
     fetch,
   });
-  // Every call is fresh: nothing of an auth exchange may come from a cache.
+  // Every call is fresh: nothing of an auth exchange may come from a cache. A redirect is an error, never
+  // followed: fetch would send the form - a password, a refresh token - on to wherever it points.
   const init = () =>
     ({
       cache: "no-store",
+      redirect: "error",
       signal: AbortSignal.timeout(SKILLFORGE_TIMEOUT_MS),
     }) as const;
 
@@ -129,13 +163,15 @@ export function createSkillforgeAuthApi(
         },
       );
       if (!data) return failure(response.status, error);
+      const parsed = tokenResponse.safeParse(data);
+      if (!parsed.success) return INVALID_RESPONSE;
       return {
         ok: true,
         tokens: {
-          accessToken: data.access_token,
-          expiresIn: data.expires_in,
-          refreshToken: data.refresh_token ?? undefined,
-          refreshExpiresIn: data.refresh_expires_in ?? undefined,
+          accessToken: parsed.data.access_token,
+          expiresIn: parsed.data.expires_in,
+          refreshToken: parsed.data.refresh_token ?? undefined,
+          refreshExpiresIn: parsed.data.refresh_expires_in ?? undefined,
         },
       };
     });
@@ -154,9 +190,11 @@ export function createSkillforgeAuthApi(
           ...init(),
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        return data
-          ? { ok: true as const, me: data }
-          : failure(response.status, error);
+        if (!data) return failure(response.status, error);
+        const parsed = meResponse.safeParse(data);
+        return parsed.success
+          ? { ok: true as const, me: parsed.data }
+          : INVALID_RESPONSE;
       }),
 
     revoke: (refreshToken, serviceToken) =>

@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { adminHome } from "@/content/admin";
-import { LogoutButton } from "@/modules/auth";
-import { requireAdminSession } from "@/modules/auth/server";
+import { LogoutButton, requireAdminSession } from "@/modules/auth/server";
 
 export const metadata: Metadata = adminHome.metadata;
 

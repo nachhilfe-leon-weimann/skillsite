@@ -1,7 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// The model file, not the module's entry: the entry also exports the components, which Playwright cannot load.
-import { sessionCookieName } from "../src/modules/auth/model/session-cookie";
+import { sessionCookieName } from "../src/modules/auth";
 
 /** Collect console errors and uncaught exceptions of a page. */
 function collectErrors(page: Page): string[] {

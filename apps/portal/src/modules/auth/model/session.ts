@@ -14,6 +14,11 @@ export type PortalSession = {
   readonly userId: string;
   readonly partyId: string | null;
   readonly roles: readonly string[];
+  /**
+   * Whether `roles` were read from `/auth/me` for the current access token. A refresh whose `/auth/me` failed stores
+   * its new tokens with this `false`; the next request then checks the roles before it is served (AH-9).
+   */
+  readonly rolesVerified: boolean;
   /** Epoch milliseconds of the last request that used the session. */
   readonly lastSeenAt: number;
 };
