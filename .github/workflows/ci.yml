@@ -49,8 +49,10 @@ jobs:
             website:
               - 'apps/marketing/**'
               - '!**/*.md'
+            # The API client exists for the portal, so it belongs to the portal's area.
             portal:
               - 'apps/portal/**'
+              - 'packages/api-client/**'
               - '!**/*.md'
             ui:
               - 'packages/ui/**'
@@ -61,6 +63,7 @@ jobs:
               - '!docs/**'
               - '!apps/marketing/**'
               - '!apps/portal/**'
+              - '!packages/api-client/**'
               - '!packages/ui/**'
             # The runtime image holds only the build output: tests, stories and Storybook never reach it.
             docker:
@@ -162,6 +165,10 @@ jobs:
       - name: Lint and unit-test the portal
         if: env.FULL != 'true' && env.PORTAL == 'true'
         run: pnpm turbo run lint test --filter=@skillsite/portal
+
+      - name: Lint, type-check and unit-test the API client
+        if: env.FULL != 'true' && env.PORTAL == 'true'
+        run: pnpm turbo run lint typecheck test --filter=@skillsite/api-client
 
       - name: Lint, type-check and unit-test the UI package
         if: env.FULL != 'true' && env.UI == 'true'

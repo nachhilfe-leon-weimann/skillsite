@@ -122,6 +122,15 @@ test.each([
     ["portal"],
   ],
   [
+    "API client code and contract",
+    [
+      "packages/api-client/src/index.ts",
+      "packages/api-client/contracts/openapi.json",
+    ],
+    ["portal", "docker"],
+  ],
+  ["API client tests", ["packages/api-client/src/schema.test.ts"], ["portal"]],
+  [
     "UI package code",
     ["packages/ui/src/primitives/button.tsx"],
     ["ui", "docker"],
@@ -246,6 +255,16 @@ test.each([
     );
   },
 );
+
+test("a change to the portal or the API client lints, type-checks and unit-tests the API client", () => {
+  const step = suite.steps.find(
+    (s) =>
+      s.run ===
+      "pnpm turbo run lint typecheck test --filter=@skillsite/api-client",
+  );
+
+  assert.equal(step?.if, "env.FULL != 'true' && env.PORTAL == 'true'");
+});
 
 test("a change to image inputs builds the image of every app", () => {
   const apps = readdirSync(path.join(root, "apps"), { withFileTypes: true })

@@ -11,3 +11,6 @@ docs/wording/
 **/.turbo/
 **/storybook-static/
 **/next-env.d.ts
+# Generated: the vendored SkillForge contract stays a byte copy, the schema is the generator's output.
+packages/api-client/contracts/
+packages/api-client/src/schema.ts

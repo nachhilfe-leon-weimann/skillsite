@@ -6,17 +6,18 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 
 ## Where to look
 
-| When you ...                                | Read                                                                                                                                                                                                                     |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                              |
-| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                 |
-| change the portal (admin helper)            | `apps/portal/src/` (`@skillsite/portal`, [`admin-helper.md`](docs/specs/admin-helper.md)): `app/` (`(admin)/`, `login/`, `health/`), `lib/` (env, routes, health), `modules/auth/`, `proxy.ts`                           |
-| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`; the portal's in `apps/portal/src/content/`                                                                                    |
-| build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
-| decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
-| write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `apps/portal/e2e/` (smoke), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                          |
-| brief an agent or write a handoff           | the [agent work guide][agent-work] in skillforge                                                                                                                                                                         |
-| rely on a Next.js API                       | `apps/marketing/node_modules/next/dist/docs/` - Next.js 16 differs from older versions                                                                                                                                   |
+| When you ...                                | Read                                                                                                                                                                                                                                                                   |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                                                                            |
+| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                                                               |
+| change the portal (admin helper)            | `apps/portal/src/` (`@skillsite/portal`, [`admin-helper.md`](docs/specs/admin-helper.md)): `app/` (`(admin)/`, `login/`, `health/`), `lib/` (env, routes, health), `modules/auth/`, `proxy.ts`                                                                         |
+| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`; the portal's in `apps/portal/src/content/`                                                                                                                                  |
+| call SkillForge or take a new contract      | `packages/api-client/` (`@skillsite/api-client`): `createSkillforgeClient` and the contract types; `contracts/openapi.json` (vendored) and `src/schema.ts` (generated) are never edited - `pnpm --filter @skillsite/api-client sync [checkout]` copies and regenerates |
+| build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets                                               |
+| decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                                                                   |
+| write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `apps/portal/e2e/` (smoke), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                                        |
+| brief an agent or write a handoff           | the [agent work guide][agent-work] in skillforge                                                                                                                                                                                                                       |
+| rely on a Next.js API                       | `apps/marketing/node_modules/next/dist/docs/` - Next.js 16 differs from older versions                                                                                                                                                                                 |
 
 ## Commands
 
@@ -58,7 +59,8 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   which `instrumentation.ts` checks at server start: a present but malformed value stops the server.
 - Vitest runs only these globs: `packages/ui` `src/**/*.test.ts` (node) and `src/**/*.test.tsx` (jsdom, Testing
   Library); `apps/marketing` `src/**/*.test.{ts,mts}` (node) and `src/**/*.test.tsx` (jsdom, Testing Library);
-  `apps/portal` `src/**/*.test.{ts,mts}` (node); `tests/**/*.test.mts`, `scripts/**/*.test.mjs`; `@/` works.
+  `apps/portal` `src/**/*.test.{ts,mts}` (node); `packages/api-client` `src/**/*.test.ts` (node), its
+  `*.test-d.ts` type tests run in `just typecheck`; `tests/**/*.test.mts`, `scripts/**/*.test.mjs`; `@/` works.
 
 ## Data protection and secrets
 

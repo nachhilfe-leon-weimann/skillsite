@@ -25,6 +25,11 @@ only local development needs.
 Everything else is in the [`justfile`](justfile). The image builds the marketing app by default;
 another app comes from `--build-arg APP=<name>` (`just docker-build <image> portal`).
 
+The portal calls SkillForge through [`packages/api-client`](packages/api-client), a client typed by SkillForge's
+OpenAPI contract. A new SkillForge release comes in as a PR of its own:
+`pnpm --filter @skillsite/api-client sync [checkout]` copies the contract from a SkillForge checkout (default
+`../skillforge`) and regenerates the types; `just check` then shows what the new contract breaks.
+
 ## Operating the booking
 
 Every booking attempt that reaches the server leaves exactly one line in the container log
