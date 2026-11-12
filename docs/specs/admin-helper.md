@@ -1,6 +1,6 @@
 # Spec: Admin helper (the portal's admin area: login, lessons, billing, credit)
 
-> Status: Accepted, 2026-11-10 - SS0 done.
+> Status: Accepted, 2026-11-10 - SS0 and SS1 done.
 > Builds on [`foundation-refactor.md`](foundation-refactor.md) (decision V15 brings this arc ahead of phase E) and on
 > SkillForge's [`user-authentication.md`](https://github.com/nachhilfe-leon-weimann/skillforge/blob/main/docs/specs/user-authentication.md)
 > (its _BFF contract_). This spec is the decision record of the arc; it takes the phase-F decisions the admin helper
@@ -130,10 +130,10 @@ APP=portal` works; Playwright smoke in `apps/portal/e2e/`. `AGENTS.md`, `README.
 - _Check:_ `http://localhost:3001` redirects to `/login`; the login placeholder and the 404, light, phone and
   desktop.
 - _Acceptance criteria:_
-  - [ ] `just check` lints, type-checks, tests, builds and smoke-tests both apps.
-  - [ ] A request to `/` without a session cookie is redirected to `/login` (smoke).
-  - [ ] `docker build --build-arg APP=portal .` builds an image whose `/health` reports the version.
-  - [ ] A pull request that changes only `apps/portal` runs the portal checks; one that changes image inputs builds
+  - [x] `just check` lints, type-checks, tests, builds and smoke-tests both apps.
+  - [x] A request to `/` without a session cookie is redirected to `/login` (smoke).
+  - [x] `docker build --build-arg APP=portal .` builds an image whose `/health` reports the version.
+  - [x] A pull request that changes only `apps/portal` runs the portal checks; one that changes image inputs builds
         both images.
 
 **SS2 - The API client.** _(after SS1)_
