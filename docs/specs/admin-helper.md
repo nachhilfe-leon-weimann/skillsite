@@ -1,6 +1,6 @@
 # Spec: Admin helper (the portal's admin area: login, lessons, billing, credit)
 
-> Status: Accepted, 2026-11-10 - SS0 and SS1 done.
+> Status: Accepted, 2026-11-10 - SS0 to SS2 done.
 > Builds on [`foundation-refactor.md`](foundation-refactor.md) (decision V15 brings this arc ahead of phase E) and on
 > SkillForge's [`user-authentication.md`](https://github.com/nachhilfe-leon-weimann/skillforge/blob/main/docs/specs/user-authentication.md)
 > (its _BFF contract_). This spec is the decision record of the arc; it takes the phase-F decisions the admin helper
@@ -146,10 +146,10 @@ APP=portal` works; Playwright smoke in `apps/portal/e2e/`. `AGENTS.md`, `README.
   regenerates in memory and fails when `src/schema.ts` differs.
 - _Check:_ none visible.
 - _Acceptance criteria:_
-  - [ ] Changing `contracts/openapi.json` without regenerating turns `just test` red.
-  - [ ] A typed call to `/api/v1/auth/me` type-checks; a wrong path or body fails `just typecheck` (a
+  - [x] Changing `contracts/openapi.json` without regenerating turns `just test` red.
+  - [x] A typed call to `/api/v1/auth/me` type-checks; a wrong path or body fails `just typecheck` (a
         `@ts-expect-error` test).
-  - [ ] `openapi-fetch` is the package's only runtime dependency.
+  - [x] `openapi-fetch` is the package's only runtime dependency.
 
 **SS3 - Login through the BFF.** _(after SS2; `Review: deep`)_
 

@@ -1,0 +1,8 @@
+{
+  "extends": "@skillsite/config/typescript/base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src", "scripts", "vitest.config.mts"],
+  "exclude": ["node_modules"]
+}
