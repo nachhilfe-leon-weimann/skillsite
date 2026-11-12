@@ -10,7 +10,7 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                                                                            |
 | change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                                                               |
-| change the portal (admin helper)            | `apps/portal/src/` (`@skillsite/portal`, [`admin-helper.md`](docs/specs/admin-helper.md)): `app/` (`(admin)/`, `login/`, `health/`), `lib/` (env, routes, health), `modules/auth/`, `proxy.ts`                                                                         |
+| change the portal (admin helper)            | `apps/portal/src/` (`@skillsite/portal`, [`admin-helper.md`](docs/specs/admin-helper.md)): `app/` (`(admin)/`, `login/`, `health/`), `lib/` (env, log, routes, health), `modules/auth/` (BFF login), `proxy.ts`                                                        |
 | change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`; the portal's in `apps/portal/src/content/`                                                                                                                                  |
 | call SkillForge or take a new contract      | `packages/api-client/` (`@skillsite/api-client`): `createSkillforgeClient` and the contract types; `contracts/openapi.json` (vendored) and `src/schema.ts` (generated) are never edited - `pnpm --filter @skillsite/api-client sync [checkout]` copies and regenerates |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets                                               |
@@ -81,6 +81,11 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 - **Booking:** success only once Cal.com confirmed it; an anti-spam hit is a visible error. Never compare client and
   server clocks (the client sends a duration); honeypot names never sound like profile data (company, website,
   name); one `[booking] <outcome>` log line per attempt, with a masked e-mail only.
+- **Portal auth** follows SkillForge's BFF contract: tokens and the client secret never reach the browser (cookie,
+  props, RSC payload, bundle); every SkillForge call is server code behind `modules/auth/server.ts`; one
+  `[auth] <outcome>` line, naming a user by `user_id` only. Agents run the portal only against a local SkillForge on
+  the local database with synthetic accounts (AH-13), passing the client secret by command substitution, never in a
+  file in the repo.
 
 ## How we work
 

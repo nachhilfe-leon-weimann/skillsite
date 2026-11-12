@@ -83,7 +83,7 @@ export function appConfig({
     // Inlined into the bundle at build time; `/health` reports it as `version`.
     env: { APP_VERSION: releasedVersion(repoRoot) },
     // Internal packages ship TypeScript sources; Next compiles them in place.
-    transpilePackages: ["@skillsite/ui"],
+    transpilePackages: ["@skillsite/ui", "@skillsite/api-client"],
     allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS
       ? process.env.ALLOWED_DEV_ORIGINS.split(",")
       : [],
