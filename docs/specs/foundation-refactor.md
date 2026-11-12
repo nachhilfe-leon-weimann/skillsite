@@ -1,6 +1,8 @@
 # Spec: Foundation refactor (one UI system, one type scale, module structure - before the portal)
 
 > Status: Accepted, 2026-09-25 - Phase B done; Phase C done; Phase D done.
+> **Amended 2026-11-10:** V15 brings the admin helper (`apps/portal`, route group `(admin)`) ahead of phase E;
+> its spec is [`admin-helper.md`](admin-helper.md).
 > This spec is also the decision record for the arc (no separate ADRs, decision V1): _Decisions_ and _Rules of
 > the refactor_ carry the why. It builds on the monorepo arc (P0/P1 done: `apps/marketing`, `packages/config`,
 > `packages/ui` + Storybook) and comes **before** the portal (`apps/portal`, `lernen.leonweimann.de`), which gets
@@ -77,7 +79,8 @@ The site works and looks right, but the code underneath is not a system the port
 - **Design consolidation during phases A-D.** Fewer icon-badge sizes, fewer white alphas, a WCAG-AA coral:
   that is phase E, pattern by pattern, with the maintainer's approval.
 - **Portal code.** Phase F only writes the portal spec. MSW and the generated `packages/api-client` (both
-  decided in July) come with the portal.
+  decided in July) come with the portal. Exception: the admin helper (V15), whose spec brings `apps/portal` and
+  `packages/api-client` ahead of phase E.
 - **Security follow-ups of the booking action** (duration allow-list, POST timeout, redacted Cal errors,
   bounded rate-limit map, `cal-api-version`) - backlog without a date (decision S).
 - **Visual-regression or screenshot tooling.** The maintainer checks the look by hand (decision E-12); the July
@@ -126,6 +129,7 @@ Decided by the maintainer; nothing here is reopened by an implementing agent.
 | **V12**  | The booker's duration select is named "Dauer" for assistive technology (B4); nothing visible changes.                                                                                                                        | 2026-09-27                     |
 | **V13**  | Brand icons inside named links get `aria-hidden` only (B4); their `<title>` and its hover tooltip stay.                                                                                                                      | 2026-09-27                     |
 | **V14**  | C7 choice: Radix Primitives plus React DayPicker for C8. Keep shared UI APIs/tokens; discard the #167 spike; manual C8 acceptance remains required.                                                                          | 2026-10-21                     |
+| **V15**  | The admin helper comes before phase E; [`admin-helper.md`](admin-helper.md) takes the phase-F decisions it needs. Admin screens get a lighter look check: light only, phone and desktop.                                     | 2026-11-04                     |
 
 Earlier decisions this spec relies on (unchanged):
 
@@ -505,6 +509,9 @@ manual pass on the chosen implementation.
 
 ### Phase F - Portal kickoff
 
+- The admin helper runs ahead of phase E (V15): [`admin-helper.md`](admin-helper.md) takes the decisions it needs
+  (real auth, route groups, session store, data sources, domain, OpenAPI sourcing, analytics); the rest stays open
+  here.
 - Write the portal spec with the open portal decisions (start with real auth, views and route groups, #31,
   session store, data sources, domain, OpenAPI sourcing, status colours, typography density, analytics, 2.0.0).
 - Prerequisites known today (V9):
@@ -527,6 +534,7 @@ B1 -> C1 -> C2 -> C3 -> C4 -> C5 -> C6 -> C8 -> C9
 C3 -> C7 (parallel to C4-C6; Radix chosen 2026-10-21) -> C8
 C1 -> D1 (parallel to C2-C6)          C6 -> D2        A4 -> D3 -> D4
 C9 + D1-D4 -> D5 -> D6 -> E -> F
+D6 -> admin helper (V15, ahead of E; admin-helper.md)
 ```
 
 Slices touching the same package files run in sequence (E-17). A stacked PR is used only where a slice builds on
@@ -545,7 +553,7 @@ an unmerged one.
 ## Open questions
 
 - **Phase E:** each consolidation - the maintainer, per pattern.
-- **Phase F:** the portal decisions listed there.
+- **Phase F:** the portal decisions listed there that [`admin-helper.md`](admin-helper.md) does not take.
 
 ## Rules for implementing agents
 
