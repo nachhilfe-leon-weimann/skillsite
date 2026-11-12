@@ -6,7 +6,7 @@
  * dorny/paths-filter does (picomatch with `dot: true`), so a slip turns `check` red.
  */
 import assert from "node:assert/strict";
-import { globSync, readFileSync } from "node:fs";
+import { globSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { load } from "js-yaml";
@@ -26,8 +26,10 @@ type Step = {
 type Job = {
   name?: string;
   if?: string;
+  env?: Record<string, string>;
   needs?: string | string[];
   outputs?: Record<string, string>;
+  strategy?: { matrix?: Record<string, unknown> };
   steps: Step[];
 };
 type Workflow = { on: Record<string, unknown>; jobs: Record<string, Job> };
@@ -35,10 +37,10 @@ type Workflow = { on: Record<string, unknown>; jobs: Record<string, Job> };
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 const workflow = load(read(".github/workflows/ci.yml")) as Workflow;
-const { changes, suite, check } = workflow.jobs;
+const { changes, suite, check, "docker-build": dockerBuild } = workflow.jobs;
 const filterStep = changes.steps.find((step) => step.id === "filter")!;
 
-type Area = "website" | "ui" | "shared" | "docker";
+type Area = "website" | "portal" | "ui" | "shared" | "docker";
 const filters = load(filterStep.with!.filters) as Record<Area, string[]>;
 
 /**
@@ -108,6 +110,16 @@ test.each([
       "apps/marketing/src/lib/routes.test.ts",
     ],
     ["website"],
+  ],
+  [
+    "portal code",
+    ["apps/portal/src/proxy.ts", "apps/portal/public/logo-icon.png"],
+    ["portal", "docker"],
+  ],
+  [
+    "portal tests",
+    ["apps/portal/e2e/smoke.spec.ts", "apps/portal/src/proxy.test.ts"],
+    ["portal"],
   ],
   [
     "UI package code",
@@ -201,9 +213,57 @@ test("`just check-repeat` is `just check` with every browser test three times", 
       .map((line) => line.trim()),
     [
       "pnpm --filter @skillsite/marketing e2e --repeat-each=3",
+      "pnpm --filter @skillsite/portal e2e --repeat-each=3",
       "pnpm --filter @skillsite/ui widgets --repeat-each=3",
     ],
   );
+});
+
+test.each([
+  ["website", "WEBSITE", "marketing"],
+  ["portal", "PORTAL", "portal"],
+])(
+  "a change to the %s runs its checks; a UI change builds and smoke-tests it too",
+  (area, env, app) => {
+    const runs = (flag: string) =>
+      suite.steps
+        .filter((step) => step.if?.includes(`env.${flag} == 'true'`))
+        .map((step) => step.run);
+
+    assert.equal(
+      changes.outputs![area],
+      `\${{ steps.filter.outputs.${area} == 'true' }}`,
+    );
+    assert.equal(suite.env![env], `\${{ needs.changes.outputs.${area} }}`);
+    assert.ok(
+      runs(env).includes(`pnpm turbo run lint test --filter=@skillsite/${app}`),
+    );
+    assert.ok(
+      runs(env).includes(`pnpm turbo run e2e --filter=@skillsite/${app}`),
+    );
+    assert.ok(
+      runs("UI").includes(`pnpm turbo run e2e --filter=@skillsite/${app}`),
+    );
+  },
+);
+
+test("a change to image inputs builds the image of every app", () => {
+  const apps = readdirSync(path.join(root, "apps"), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+  const build = dockerBuild.steps.find((step) =>
+    step.uses?.startsWith("docker/build-push-action@"),
+  )!;
+
+  assert.deepEqual([dockerBuild.strategy?.matrix?.app].flat().sort(), apps);
+  assert.equal(build.with!["build-args"], "APP=${{ matrix.app }}");
+  for (const app of apps) {
+    assert.ok(
+      areas([`apps/${app}/src/app/layout.tsx`]).includes("docker"),
+      app,
+    );
+  }
 });
 
 test("the runtime image holds only build output, so tests and stories stay out of it", () => {
@@ -265,8 +325,8 @@ test("every browser suite runs headless on one Playwright version", () => {
   assert.equal(new Set(locked).size, 1);
   const sources = globSync(
     [
-      "{apps/marketing,packages/ui}/playwright.config.ts",
-      "{apps/marketing,packages/ui}/e2e/**/*.ts",
+      "{apps/marketing,apps/portal,packages/ui}/playwright.config.ts",
+      "{apps/marketing,apps/portal,packages/ui}/e2e/**/*.ts",
     ],
     { cwd: root },
   );

@@ -30,6 +30,7 @@ jobs:
       full: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.shared == 'true' }}
       repeat: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'release-please--') }}
       website: ${{ steps.filter.outputs.website == 'true' }}
+      portal: ${{ steps.filter.outputs.portal == 'true' }}
       ui: ${{ steps.filter.outputs.ui == 'true' }}
       docker: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.docker == 'true' }}
     steps:
@@ -48,6 +49,9 @@ jobs:
             website:
               - 'apps/marketing/**'
               - '!**/*.md'
+            portal:
+              - 'apps/portal/**'
+              - '!**/*.md'
             ui:
               - 'packages/ui/**'
               - '!**/*.md'
@@ -56,6 +60,7 @@ jobs:
               - '!**/*.md'
               - '!docs/**'
               - '!apps/marketing/**'
+              - '!apps/portal/**'
               - '!packages/ui/**'
             # The runtime image holds only the build output: tests, stories and Storybook never reach it.
             docker:
@@ -69,6 +74,7 @@ jobs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/build.yml'
               - 'apps/marketing/**'
+              - 'apps/portal/**'
               - 'packages/**'
               - '!**/*.md'
               - '!**/*.test.*'
@@ -85,6 +91,7 @@ jobs:
       FULL: ${{ needs.changes.outputs.full }}
       REPEAT: ${{ needs.changes.outputs.repeat }}
       WEBSITE: ${{ needs.changes.outputs.website }}
+      PORTAL: ${{ needs.changes.outputs.portal }}
       UI: ${{ needs.changes.outputs.ui }}
 
     steps:
@@ -115,18 +122,18 @@ jobs:
       # slow mirror) runs only when a launch check shows they are missing.
       - name: Resolve the Playwright version
         id: playwright
-        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.UI == 'true'
+        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.PORTAL == 'true' || env.UI == 'true'
         run: echo "version=$(pnpm --filter @skillsite/marketing exec playwright --version | awk '{print $2}')" >> "${GITHUB_OUTPUT}"
 
       - name: Cache the Playwright browser
-        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.UI == 'true'
+        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.PORTAL == 'true' || env.UI == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}-chromium-headless-shell
 
       - name: Install the Playwright browser
-        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.UI == 'true'
+        if: env.FULL == 'true' || env.WEBSITE == 'true' || env.PORTAL == 'true' || env.UI == 'true'
         run: |
           pnpm --filter @skillsite/marketing exec playwright install --only-shell chromium
           if ! pnpm --filter @skillsite/marketing exec node -e "require('@playwright/test').chromium.launch().then((browser) => browser.close())"; then
@@ -152,25 +159,43 @@ jobs:
         if: env.FULL != 'true' && env.WEBSITE == 'true'
         run: pnpm turbo run lint test --filter=@skillsite/marketing
 
+      - name: Lint and unit-test the portal
+        if: env.FULL != 'true' && env.PORTAL == 'true'
+        run: pnpm turbo run lint test --filter=@skillsite/portal
+
       - name: Lint, type-check and unit-test the UI package
         if: env.FULL != 'true' && env.UI == 'true'
         run: pnpm turbo run lint typecheck test --filter=@skillsite/ui
 
-      # The website consumes the UI package, so a change to either builds and smoke-tests it.
-      - name: Ratchet, build and smoke-test the website
+      - name: Run the design ratchet
+        if: env.FULL != 'true' && (env.WEBSITE == 'true' || env.PORTAL == 'true' || env.UI == 'true')
+        run: just ratchet
+
+      # Both apps consume the UI package, so a change to an app or the package builds and smoke-tests that app;
+      # `e2e` depends on `build` (turbo.json).
+      - name: Build and smoke-test the website
         if: env.FULL != 'true' && (env.WEBSITE == 'true' || env.UI == 'true')
-        run: just ratchet build smoke
+        run: pnpm turbo run e2e --filter=@skillsite/marketing
+
+      - name: Build and smoke-test the portal
+        if: env.FULL != 'true' && (env.PORTAL == 'true' || env.UI == 'true')
+        run: pnpm turbo run e2e --filter=@skillsite/portal
 
       - name: Run the widget checks
         if: env.FULL != 'true' && env.UI == 'true'
         run: just widgets
 
+  # Every app's image, since image inputs (packages/, the lockfile, the Dockerfile) are mostly shared.
   docker-build:
-    name: Docker build
+    name: Docker build (${{ matrix.app }})
     needs: changes
     if: needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [marketing, portal]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -187,8 +212,9 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: APP=${{ matrix.app }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
 
   # The required status check: it runs whatever changed and fails when a needed job failed or was
   # cancelled; a skipped job counts as passed.
