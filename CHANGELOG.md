@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.5](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.4...v1.2.5) (2026-11-14)
+
+
+### Bug Fixes
+
+* **analytics:** load umami from insights.leonweimann.de ([#277](https://github.com/nachhilfe-leon-weimann/skillsite/issues/277)) ([c8066f7](https://github.com/nachhilfe-leon-weimann/skillsite/commit/c8066f7973322b4da3f8784bd85283077cba9455))
+
 ## [1.2.4](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.3...v1.2.4) (2026-11-08)
 
 
