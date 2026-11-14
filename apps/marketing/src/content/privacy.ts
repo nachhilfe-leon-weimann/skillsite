@@ -10,7 +10,7 @@ export const privacyContact = {
 
 /** Own domains – kept central so they render identically everywhere. */
 export const siteDomain = "nachhilfe.leonweimann.de";
-export const analyticsDomain = "analytics.leonweimann.de";
+export const analyticsDomain = "insights.leonweimann.de";
 
 /** Section registry of the privacy policy: order, numbering, navigation labels and headings. */
 export const privacySections = numberedSections([
