@@ -24,3 +24,17 @@ test("turbo passes CAL_API_KEY through to every task", () => {
     "turbo.json must list CAL_API_KEY in globalPassThroughEnv",
   );
 });
+
+// The same for the withdrawal mail: `WITHDRAWAL_MAILBOX= just dev` keeps the function unconfigured, so no
+// agent session sends a real e-mail through Microsoft Graph even when an env file holds the credentials.
+test.each([
+  "GRAPH_TENANT_ID",
+  "GRAPH_CLIENT_ID",
+  "GRAPH_CLIENT_SECRET",
+  "WITHDRAWAL_MAILBOX",
+])("turbo passes %s through to every task", (name) => {
+  assert.ok(
+    turbo.envMode === "loose" || turbo.globalPassThroughEnv?.includes(name),
+    `turbo.json must list ${name} in globalPassThroughEnv`,
+  );
+});

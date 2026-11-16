@@ -16,6 +16,7 @@ import { cn } from "@skillsite/ui/utils/cn";
 import { brand, primaryNav, platformNav } from "@/content/site";
 import { socials, type SocialKey } from "@/content/socials";
 import { contactDetails } from "@/content/contact";
+import { withdrawalLink } from "@/content/withdrawal";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { routes } from "@/lib/routes";
 
@@ -133,6 +134,14 @@ export function Footer() {
             </TextLink>
             <TextLink variant="inverse-muted" href={routes.agb}>
               AGB
+            </TextLink>
+            {/* § 356a BGB: the withdrawal function, prominent on every page. */}
+            <TextLink
+              variant="inverse"
+              href={routes.withdrawalFunction}
+              className="font-semibold"
+            >
+              {withdrawalLink.label}
             </TextLink>
             <ThemeToggle />
           </div>
