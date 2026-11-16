@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test, vi } from "vitest";
 
-import { compact, createLogger, loggable } from "./log.ts";
+import { compact, createLogger, loggable, maskEmail } from "./log.ts";
 
 test("an outcome is one line, tagged with its domain, at the outcome's level", () => {
   const info = vi.spyOn(console, "info").mockImplementation(() => {});
@@ -51,4 +51,13 @@ test("a context leaves out what could not be read", () => {
     e: "",
   });
   assert.deepEqual(compact({}), {});
+});
+
+test("e-mail addresses are masked down to a recognisable hint", () => {
+  assert.equal(maskEmail("test.kunde@example.com"), "te***@example.com");
+  assert.equal(maskEmail("  a@example.com "), "a***@example.com");
+  assert.equal(maskEmail("not-an-email"), undefined);
+  assert.equal(maskEmail(""), undefined);
+  assert.equal(maskEmail(["a@example.com"]), undefined);
+  assert.equal(maskEmail(undefined), undefined);
 });

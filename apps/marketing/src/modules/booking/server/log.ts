@@ -12,8 +12,6 @@
 
 import { compact, createLogger, loggable, maskEmail } from "@/lib/log";
 
-export { maskEmail };
-
 export type BookingOutcome =
   /** Cal.com confirmed the booking. */
   | "created"

@@ -38,7 +38,7 @@ export function WithdrawalReview({
   return (
     <div className="flex flex-col gap-5">
       <Heading
-        as="h3"
+        as="h2"
         size="h4"
         ref={titleRef}
         tabIndex={-1}

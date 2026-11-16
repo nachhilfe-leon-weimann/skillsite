@@ -17,7 +17,10 @@ afterEach(() => {
 });
 
 function stubFetch(answer: (url: URL) => Response | Promise<Response>) {
-  const fetch = vi.fn(async (url: URL, _init?: RequestInit) => answer(url));
+  // Typed with both arguments, so a test can read the request init.
+  const fetch = vi.fn<(url: URL, init?: RequestInit) => Promise<Response>>(
+    async (url) => answer(url),
+  );
   vi.stubGlobal("fetch", fetch);
   return fetch;
 }

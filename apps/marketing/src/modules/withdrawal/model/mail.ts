@@ -96,13 +96,14 @@ export function acknowledgementMail(
 }
 
 /**
- * The notice to the provider's mailbox. `acknowledgement` says whether
- * Graph accepted the acknowledgement or left it unknown.
+ * The notice to the provider's mailbox. `acknowledgement` says whether Graph
+ * accepted the acknowledgement, left it unknown or refused it - then the
+ * provider must acknowledge by hand.
  */
 export function noticeMail(
   declaration: WithdrawalDeclaration,
   receivedAt: string,
-  acknowledgement: "sent" | "unknown",
+  acknowledgement: "sent" | "unknown" | "refused",
 ): WithdrawalMessage {
   const text = withdrawalMail.notice;
   return {

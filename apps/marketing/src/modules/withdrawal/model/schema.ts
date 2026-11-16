@@ -18,8 +18,16 @@ import { multiLine, singleLine } from "./text";
 /** The `email` format: one `@`, a dot in the domain, no whitespace. */
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** A name is no address: nothing that a mail client turns into a link. */
+/** What a mail client turns into a link: a scheme or a www. host. */
 const LINK_LIKE = /:\/\/|www\.|https?:/i;
+
+/**
+ * Whether a value holds a link. The acknowledgement echoes the visitor's text
+ * to an address the visitor chose, so no field may carry one. Bare domains
+ * pass: an e-mail address in the note is one, and a legal function must not
+ * refuse a plausible declaration.
+ */
+export const containsLink = (value: string) => LINK_LIKE.test(value);
 
 function fieldSchema(field: WithdrawalFieldDef) {
   const clean = field.kind === "textarea" ? multiLine : singleLine;
@@ -28,9 +36,7 @@ function fieldSchema(field: WithdrawalFieldDef) {
   if (field.kind === "email") {
     checks.push(z.refine((value: string) => EMAIL_RE.test(value)));
   }
-  if (field.key === "name") {
-    checks.push(z.refine((value: string) => !LINK_LIKE.test(value)));
-  }
+  checks.push(z.refine((value: string) => !containsLink(value)));
   return z.pipe(
     z.transform((value: unknown) => {
       if (typeof value === "string") return clean(value);

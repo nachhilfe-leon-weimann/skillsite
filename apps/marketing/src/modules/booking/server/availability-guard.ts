@@ -1,4 +1,4 @@
-import { createSweeper } from "./sweeper";
+import { createSweeper } from "@/lib/sweeper";
 
 export const AVAILABILITY_RATE_LIMIT = {
   maxAttempts: 30,

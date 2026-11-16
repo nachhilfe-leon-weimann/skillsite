@@ -13,13 +13,15 @@ registration `skillsite-withdrawal`, its Exchange role assignment and scope (_Un
 - `apps/marketing/src/modules/withdrawal/server/graph-mail.ts` calls exactly two hosts, `login.microsoftonline.com`
   (token) and `graph.microsoft.com` (`POST /v1.0/users/{mailbox}/sendMail`, `saveToSentItems: true`), with plain
   `fetch`, no redirects, 8 s timeout per request, and never retries a send.
-- The consumer sees success only after Graph answered the acknowledgement with `202`. A refused request (token
-  error, `4xx`) means nothing was sent: the page asks the consumer to send the withdrawal by e-mail. A timeout, a lost
-  connection, a `5xx` or another success code is _unknown_: the page says it may have arrived; the notice still goes
-  out and says so, so the maintainer can check Sent Items and acknowledge by hand.
+- The consumer sees success only after Graph answered the acknowledgement with `202`. Otherwise the page asks the
+  consumer to send the withdrawal by e-mail as well. A refused acknowledgement (`4xx`) or a timeout, lost connection,
+  `5xx` or other success code (_unknown_) still triggers the notice, which says so: check Sent Items and acknowledge
+  by hand without delay (§ 356a (4) BGB). A failed token request sends nothing at all.
 - Each attempt leaves one line `[withdrawal] <outcome>` with a masked e-mail only: `sent`; at level `error`
-  `sent_without_notice`, `unknown`, `failed` and `unconfigured`; at level `warn` `blocked`, `rate_limited` and
-  `rejected`.
+  `sent_without_notice`, `unknown`, `failed`, `unconfigured` and `unavailable` (the overall limit of 30 sent
+  declarations per hour was reached); at level `warn` `blocked`, `rate_limited` and `rejected`. A `failed` or
+  `unknown` line names the Graph step and HTTP status.
+- At server start, a partial setup (some of the four variables set) logs one `[env]` warning naming the missing ones.
 
 The pattern follows SkillForge's ADR 0010 (one app identity per feature scope, Exchange "RBAC for Applications"
 restricted to one mailbox, no Entra application permission) and its script `scripts/graph/exchange-rbac-calendar.ps1`.

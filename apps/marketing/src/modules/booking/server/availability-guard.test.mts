@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { test, vi } from "vitest";
 
+import { SWEEP_INTERVAL_MS } from "@/lib/sweeper";
+
 import {
   AVAILABILITY_RATE_LIMIT,
   AvailabilityRateLimiter,
   availabilityClientId,
   resolveAvailabilityDuration,
 } from "./availability-guard.ts";
-import { SWEEP_INTERVAL_MS } from "./sweeper.ts";
 
 test("duration accepts only the selected event's configured values", () => {
   const allowed = [45, 60, 90] as const;

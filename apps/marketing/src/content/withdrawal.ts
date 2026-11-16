@@ -80,6 +80,8 @@ export const withdrawalText = {
     },
   },
   submit: "Vertrag widerrufen",
+  /** Below a field whose value holds a link: the e-mails never carry one. */
+  linkError: "Bitte geben Sie hier keine Links oder Webadressen an.",
   /** Above the form once a submit found invalid fields. */
   invalid: "Bitte prüfen Sie die markierten Angaben.",
 
@@ -111,8 +113,8 @@ export const withdrawalText = {
       text: "Die Eingangsbestätigung ist per E-Mail an die angegebene Adresse unterwegs. Falls sie nicht ankommt, sehen Sie bitte auch im Spam-Ordner nach.",
     },
     notSent: {
-      title: "Widerruf nicht übermittelt",
-      text: "Ihr Widerruf konnte leider nicht automatisch übermittelt werden. Bitte senden Sie ihn per E-Mail an die folgende Adresse. Für die Frist zählt, wann Sie die E-Mail absenden.",
+      title: "Keine Eingangsbestätigung",
+      text: "Die automatische Übermittlung hat leider nicht geklappt, und wir konnten Ihnen keine Eingangsbestätigung senden. Bitte senden Sie Ihren Widerruf zur Sicherheit zusätzlich per E-Mail an die folgende Adresse.",
     },
     unknown: {
       title: "Übermittlung nicht bestätigt",
@@ -134,7 +136,6 @@ export const withdrawalText = {
       title: "Angaben unvollständig",
       text: "Ihr Widerruf wurde nicht übermittelt, weil Angaben fehlen oder ungültig sind. Bitte prüfen Sie Ihre Angaben.",
     },
-    writeEmail: "E-Mail schreiben",
     /** The subject of the fallback mailto link; never built from the visitor's input. */
     emailSubject: "Widerruf",
     confirmAgain: "Widerruf erneut bestätigen",
@@ -159,10 +160,11 @@ export const withdrawalMail = {
       sent: "Die Eingangsbestätigung wurde an die angegebene Adresse gesendet.",
       unknown:
         "Ob die Eingangsbestätigung gesendet wurde, ist unklar: Microsoft Graph hat den Versand nicht bestätigt. Bitte im Ordner „Gesendete Elemente“ prüfen und sie sonst von Hand senden.",
+      refused:
+        "Die Eingangsbestätigung wurde NICHT gesendet: Microsoft Graph hat sie abgelehnt. Bitte die Eingangsbestätigung unverzüglich von Hand senden.",
     },
   },
   receivedAt: "Eingang",
   content: "Inhalt der Widerrufserklärung",
-  provider: "Anbieter",
   providerEmail: "E-Mail",
 } as const;

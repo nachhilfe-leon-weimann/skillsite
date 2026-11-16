@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { beforeEach, test, vi } from "vitest";
 
+import { SWEEP_INTERVAL_MS } from "@/lib/sweeper";
+
 import { ANTI_SPAM } from "../model/config";
 import { createRateLimiter } from "./rate-limit";
-import { SWEEP_INTERVAL_MS } from "./sweeper";
 
 const { short, daily } = ANTI_SPAM.rateLimit;
 const MINUTE = 60_000;

@@ -8,16 +8,16 @@ import { Button } from "@skillsite/ui/primitives/button";
 import { TextLink } from "@skillsite/ui/primitives/link";
 import { Text } from "@skillsite/ui/typography/text";
 import { withdrawalFallbackEmail, withdrawalText } from "@/content/withdrawal";
-import type { WithdrawalResult as Result } from "../model/config";
+import type { WithdrawalResult } from "../model/config";
 
 const text = withdrawalText.result;
 
 /** The fallback address as a mail link; the subject is fixed, never the visitor's input. */
 const fallbackHref = `mailto:${withdrawalFallbackEmail}?subject=${encodeURIComponent(text.emailSubject)}`;
 
-type WithdrawalResultProps = {
+type WithdrawalOutcomeProps = {
   /** `null` while the declaration is being sent. */
-  result: Result | null;
+  result: WithdrawalResult | null;
   titleRef?: Ref<HTMLHeadingElement>;
   onConfirmAgain: () => void;
   onEdit: () => void;
@@ -36,12 +36,12 @@ type ResultView = {
  * other outcome says what happened and the way on, the fallback e-mail
  * address where nothing (or not surely anything) was transmitted.
  */
-export function WithdrawalResult({
+export function WithdrawalOutcome({
   result,
   titleRef,
   onConfirmAgain,
   onEdit,
-}: WithdrawalResultProps) {
+}: WithdrawalOutcomeProps) {
   const view = resultView(result, onConfirmAgain, onEdit);
   return (
     <>
@@ -82,7 +82,7 @@ function sendByEmail(message: string) {
 }
 
 function resultView(
-  result: Result | null,
+  result: WithdrawalResult | null,
   onConfirmAgain: () => void,
   onEdit: () => void,
 ): ResultView {
