@@ -10,14 +10,18 @@ import {
 import { emptyValueFor, type FieldValue } from "../model/fields";
 import { validateBookingValues } from "../model/validation";
 
-/** Initial form state: each field's declared default, otherwise empty. */
+/** Initial form state: empty per field, radios default to their first option. */
 function initialValues(
   event: BookingEventKey,
   initialSubject?: string,
 ): Record<string, FieldValue> {
   const values: Record<string, FieldValue> = {};
   for (const field of bookingEvents[event].fields) {
-    let value = field.defaultValue ?? emptyValueFor(field);
+    let value = emptyValueFor(field);
+    const firstOption = field.options?.[0];
+    if (field.kind === "radio" && firstOption) {
+      value = firstOption.value;
+    }
     if (
       field.kind === "chips" &&
       initialSubject &&

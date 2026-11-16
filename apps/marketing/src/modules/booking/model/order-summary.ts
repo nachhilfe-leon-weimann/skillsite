@@ -1,10 +1,9 @@
-import { bookerText } from "@/content/booking";
 import { bookingEvents, type BookingEventKey } from "./config";
 import { isFieldEmpty, isMultiValue, type FieldValue } from "./fields";
 import { durationLabel, formatSlotPrice } from "./pricing";
 
-/** One line of the order summary: what it names and its value. */
-export type OrderSummaryRow = { label: string; value: string };
+/** Joins the parts of a summary line. */
+const SEPARATOR = " · ";
 
 /** The labels of a field's chosen options, joined; the raw value when none matches. */
 function chosenLabels(
@@ -21,44 +20,51 @@ function chosenLabels(
 }
 
 /**
- * The essential terms of a booking as the order summary above the submit
- * button lists them: the summary fields that are filled, the slot, its length
- * and its price. Length and price come from the helpers the side panel uses.
- * A free event has no price row.
+ * The chosen labels of the event's summary fields (`inSummary`), in field
+ * order; a field left empty is left out.
  */
-export function orderSummaryRows(
+export function summaryChoices(
+  event: BookingEventKey,
+  values: Record<string, FieldValue>,
+): string[] {
+  return bookingEvents[event].fields.flatMap((field) => {
+    const value = values[field.key];
+    return field.inSummary && value !== undefined && !isFieldEmpty(value)
+      ? [chosenLabels(field.options, value)]
+      : [];
+  });
+}
+
+/** The side panel's line under the chosen slot: the summary choices and the length. */
+export function slotDetailsLine(
+  event: BookingEventKey,
+  { choices, duration }: { choices: string[]; duration: number },
+): string {
+  return [...choices, durationLabel(bookingEvents[event], duration)].join(
+    SEPARATOR,
+  );
+}
+
+/**
+ * The order summary in one line right above the submit button: the summary
+ * choices, the slot, its length and its price. Length and price come from the
+ * helpers the side panel uses; a free event has no price part.
+ */
+export function orderSummaryLine(
   event: BookingEventKey,
   {
+    choices,
     slotLabel,
     duration,
-    values,
-  }: {
-    slotLabel: string;
-    duration: number;
-    values: Record<string, FieldValue>;
-  },
-): OrderSummaryRow[] {
+  }: { choices: string[]; slotLabel: string; duration: number },
+): string {
   const config = bookingEvents[event];
-  const text = bookerText.form.orderSummary;
-  const rows: OrderSummaryRow[] = [];
-
-  for (const field of config.fields) {
-    const value = values[field.key];
-    if (!field.inSummary || value === undefined || isFieldEmpty(value)) {
-      continue;
-    }
-    rows.push({
-      label: field.shortLabel ?? field.label,
-      value: chosenLabels(field.options, value),
-    });
-  }
-
-  rows.push({ label: text.slot, value: slotLabel });
-  rows.push({
-    label: bookerText.durationLabel,
-    value: durationLabel(config, duration),
-  });
-  const price = formatSlotPrice(config, duration);
-  if (price) rows.push({ label: text.total, value: price });
-  return rows;
+  return [
+    ...choices,
+    slotLabel,
+    durationLabel(config, duration),
+    formatSlotPrice(config, duration),
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join(SEPARATOR);
 }

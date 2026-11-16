@@ -10,6 +10,7 @@ import { Heading } from "@skillsite/ui/typography/heading";
 import { Text } from "@skillsite/ui/typography/text";
 import { bookerText } from "@/content/booking";
 import { bookingEvents, type BookingEventKey } from "../model/config";
+import { slotDetailsLine } from "../model/order-summary";
 import { durationLabel, formatSlotPrice } from "../model/pricing";
 
 type BookerAsideProps = {
@@ -23,11 +24,14 @@ type BookerAsideProps = {
   durationLocked: boolean;
   /** The chosen slot, shown with its price; `null` hides it. */
   summary: string | null;
+  /** The form's chosen summary labels (e.g. the subject), shown with a paid slot. */
+  choices: string[];
 };
 
 /**
  * The booker's navy side panel: the event, how it happens, its price and
- * length, and the chosen slot with its price.
+ * length, and the chosen slot; a paid slot with the form's choices, its
+ * length, price and payment.
  */
 export function BookerAside({
   event,
@@ -37,6 +41,7 @@ export function BookerAside({
   onDurationChange,
   durationLocked,
   summary,
+  choices,
 }: BookerAsideProps) {
   const config = bookingEvents[event];
   const price = formatSlotPrice(config, duration);
@@ -94,9 +99,21 @@ export function BookerAside({
           </Eyebrow>
           <p className="mt-1.5 font-heading font-bold text-white">{summary}</p>
           {price ? (
-            <p className="mt-1 text-small font-semibold text-on-navy-soft">
-              {price}
-            </p>
+            <>
+              <Text size="small" tone="inverse-soft" className="mt-1">
+                {slotDetailsLine(event, { choices, duration })}
+              </Text>
+              <p className="mt-1 text-small font-semibold text-on-navy-soft">
+                {price}
+              </p>
+              <Text
+                size="caption"
+                tone="inherit"
+                className="mt-1 text-on-navy-muted"
+              >
+                {bookerText.aside.payment}
+              </Text>
+            </>
           ) : null}
         </Card>
       ) : null}

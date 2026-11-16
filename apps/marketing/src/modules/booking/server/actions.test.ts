@@ -69,7 +69,6 @@ const paidLesson = (agreements: BookingSubmission["agreements"]) =>
     slot: "2099-03-02T09:00:00.000Z",
     duration: 60,
     values: {
-      bookingParty: "adult-student",
       firstName: "Max",
       lastName: "Muster",
       email: "max@example.com",

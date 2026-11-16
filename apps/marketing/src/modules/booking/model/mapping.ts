@@ -31,7 +31,6 @@ export function buildCalBookingBody(
   let firstName = "";
   let lastName = "";
   let location: Record<string, unknown> | undefined;
-  const fieldMetadata: Record<string, string> = {};
 
   for (const field of config.fields) {
     const value = values[field.key];
@@ -59,11 +58,6 @@ export function buildCalBookingBody(
       case "location":
         location = { type: "integration", integration: asString(value) };
         break;
-      case "metadata":
-        if (!isFieldEmpty(value)) {
-          fieldMetadata[field.target.key] = asString(value).trim();
-        }
-        break;
     }
   }
 
@@ -89,17 +83,15 @@ export function buildCalBookingBody(
     attendee,
     bookingFieldsResponses,
   };
-  const metadata: Record<string, string> = { ...fieldMetadata };
   if (paidAgreements) {
-    Object.assign(metadata, {
+    body.metadata = {
       termsAccepted: String(paidAgreements.termsAccepted),
       earlyPerformanceRequested: String(
         paidAgreements.earlyPerformanceRequested,
       ),
       agbVersion: agbEffectiveDate.toISOString().slice(0, 10),
-    });
+    };
   }
-  if (Object.keys(metadata).length > 0) body.metadata = metadata;
   if (config.durations && submission.duration) {
     body.lengthInMinutes = submission.duration;
   }

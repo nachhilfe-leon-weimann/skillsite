@@ -11,7 +11,6 @@ const lesson = (change: Record<string, unknown> = {}) =>
     slot: "2099-03-02T09:00:00.000Z",
     duration: 45,
     values: {
-      bookingParty: "parent",
       firstName: "Testa",
       lastName: "Kundin",
       email: "testa.kundin@example.com",
@@ -49,25 +48,20 @@ test("without the express request to start early, Cal.com's policies-accepted st
   }
 });
 
+test("a paid lesson's metadata holds exactly what the privacy policy names", () => {
+  // datenschutz.tsx, Cal.com: the accepted terms, the express request, the AGB version.
+  assert.deepEqual(Object.keys(metadata(lesson())).sort(), [
+    "agbVersion",
+    "earlyPerformanceRequested",
+    "termsAccepted",
+  ]);
+});
+
 test("a paid lesson records the confirmed agreements in Cal.com's metadata", () => {
   const recorded = metadata(lesson());
   assert.equal(recorded.termsAccepted, "true");
   assert.equal(recorded.earlyPerformanceRequested, "true");
   assert.match(recorded.agbVersion ?? "", /^\d{4}-\d{2}-\d{2}$/);
-});
-
-test("who books a paid lesson goes into Cal.com's metadata, never into its booking fields", () => {
-  for (const bookingParty of [
-    "parent",
-    "adult-student",
-    "student-with-consent",
-  ]) {
-    const submission = lesson({
-      values: { ...lesson().values, bookingParty },
-    });
-    assert.equal(metadata(submission).bookingParty, bookingParty);
-    assert.equal("bookingParty" in responses(submission), false);
-  }
 });
 
 test("the metadata records the checked booleans, never a raw value that was sent", () => {
@@ -83,13 +77,11 @@ test("the metadata records the checked booleans, never a raw value that was sent
   assert.equal(recorded.earlyPerformanceRequested, "false");
 });
 
-test("the first meeting carries no agreements and no booking party", () => {
+test("the first meeting carries no agreements", () => {
   const body = buildCalBookingBody({
     event: "kennenlernen",
     slot: "2099-03-02T09:00:00.000Z",
     values: {
-      // Hand-made: the first meeting's form has no such field.
-      bookingParty: "parent",
       firstName: "Testa",
       lastName: "Kundin",
       email: "testa.kundin@example.com",

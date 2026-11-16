@@ -90,7 +90,7 @@ export function fieldValueSchema(field: FieldDef) {
   );
 
   // A single choice is one text value: a list could combine several offered
-  // values into one answer (e.g. two booking parties).
+  // values into one answer (e.g. two platforms).
   const filled = field.multiple ? z.union([text, selection]) : text;
   return preprocess(
     assertValueShape(field),

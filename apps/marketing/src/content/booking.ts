@@ -14,6 +14,8 @@ export const bookerText = {
   aside: {
     eyebrow: "Buchung",
     summaryEyebrow: "Dein Termin",
+    /** Paid lesson: under the chosen slot's price. */
+    payment: "Zahlung per Rechnung (PayPal oder Überweisung)",
     /** Shown for the paid lesson only. */
     cancellationNote:
       "Bis 24 Stunden vorher kostenfrei verschieben oder absagen.",
@@ -39,21 +41,6 @@ export const bookerText = {
      */
     honeypotLabel: "Dieses Feld bitte leer lassen",
     /**
-     * Paid lesson: who books, recorded with the booking (most bookings are a
-     * parent's for a minor). Legal-adjacent - its wording changes only on
-     * explicit request.
-     */
-    bookingParty: {
-      label: "Ich buche als",
-      /** In the open items and the rejection message. */
-      shortLabel: "Wer bucht",
-      options: {
-        parent: "Elternteil – für mein Kind",
-        "adult-student": "Volljährige:r Schüler:in – für mich",
-        "student-with-consent": "Schüler:in mit Zustimmung meiner Eltern",
-      },
-    },
-    /**
      * Every paid lesson: the express request to start before the withdrawal
      * period ends, and the acknowledgement of losing the right. Legal-adjacent
      * - its wording changes only on explicit request, and Cal.com's
@@ -76,16 +63,6 @@ export const bookerText = {
       privacyText: ". Informationen zur Datenverarbeitung findest du in der",
       privacyLink: "Datenschutzerklärung",
       end: ".",
-    },
-    /**
-     * Paid lesson: the essential terms right above the submit button. The
-     * subject row takes its label from the field, the length row `durationLabel`.
-     */
-    orderSummary: {
-      title: "Deine Buchung",
-      slot: "Termin",
-      total: "Gesamtpreis",
-      payment: "Zahlung per Rechnung (PayPal oder Überweisung)",
     },
     /** Under a disabled submit button; followed by a space and the open items. */
     openItems: "Bitte noch ausfüllen oder bestätigen:",

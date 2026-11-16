@@ -31,13 +31,7 @@ export type CalTarget =
   | { to: "attendeeName"; part: "first" | "last" }
   | { to: "attendee"; field: "email" | "phoneNumber" }
   | { to: "bookingField"; slug: string }
-  | { to: "location" }
-  /**
-   * The booking's `metadata`, never a Cal.com booking field: Cal.com stores it
-   * with the booking but asks no question for it, so the event type needs no
-   * matching field. Cal.com keeps metadata values as strings.
-   */
-  | { to: "metadata"; key: string };
+  | { to: "location" };
 
 /** A form field, declared once and reused for render, validation and mapping. */
 export type FieldDef = {
@@ -55,9 +49,7 @@ export type FieldDef = {
   autoComplete?: string;
   /** Choices for `chips` / `radio`. */
   options?: FieldOption[];
-  /** The value the form starts with; without it the field starts empty. */
-  defaultValue?: string;
-  /** Listed with its chosen option's label in the order summary above the submit button. */
+  /** Its chosen option's label joins a paid slot in the side panel and in the order summary line. */
   inSummary?: boolean;
   /** `chips` only: allow several selections (value becomes a `string[]`). */
   multiple?: boolean;

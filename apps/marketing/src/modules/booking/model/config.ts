@@ -1,4 +1,3 @@
-import { bookerText } from "@/content/booking";
 import { subjects } from "@/content/subjects";
 import type { FieldDef, FieldOption, FieldValue } from "./fields";
 
@@ -106,29 +105,6 @@ const emailField: FieldDef = {
   target: { to: "attendee", field: "email" },
 };
 
-/**
- * Who books a paid lesson, as the booking's metadata records it: a parent for
- * their child, an adult student, or a minor student with their parents'
- * consent.
- */
-type BookingParty = keyof typeof bookerText.form.bookingParty.options;
-
-const bookingPartyText = bookerText.form.bookingParty;
-
-/** Asked first, so the name and e-mail that follow are clearly the booker's. */
-const bookingPartyField: FieldDef = {
-  key: "bookingParty",
-  kind: "radio",
-  label: bookingPartyText.label,
-  shortLabel: bookingPartyText.shortLabel,
-  required: true,
-  // No default: the booker chooses actively.
-  options: (
-    Object.entries(bookingPartyText.options) as [BookingParty, string][]
-  ).map(([value, label]) => ({ value, label })),
-  target: { to: "metadata", key: "bookingParty" },
-};
-
 const noteField = (label: string): FieldDef => ({
   key: "note",
   kind: "textarea",
@@ -186,10 +162,7 @@ export const bookingEvents: Record<BookingEventKey, BookingEventConfig> = {
     pricePerHour: 30,
     priceLabel: "30 € pro 60 Minuten",
     submitLabel: "Zahlungspflichtig buchen",
-    formNote:
-      "Online über Discord oder Microsoft Teams. Bis 24 Stunden vorher kostenfrei verschiebbar oder stornierbar.",
     fields: [
-      bookingPartyField,
       ...nameFields,
       emailField,
       {
@@ -197,7 +170,6 @@ export const bookingEvents: Record<BookingEventKey, BookingEventConfig> = {
         kind: "radio",
         label: "Plattform",
         required: true,
-        defaultValue: "office365-video",
         options: [
           { value: "office365-video", label: "Microsoft Teams" },
           { value: "discord-video", label: "Discord" },

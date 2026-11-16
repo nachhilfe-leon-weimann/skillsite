@@ -15,7 +15,6 @@ const firstMeeting = {
 };
 
 const lesson = {
-  bookingParty: "parent",
   firstName: "Max",
   lastName: "Muster",
   email: "max@example.com",
@@ -126,23 +125,10 @@ test("open fields are listed in the order of the form", () => {
     }),
     ["Vorname", "Nachname", "E-Mail", "Telefonnummer", "Fächer"],
   );
-  assert.deepEqual(
-    missingInLesson({ subject: "", location: "", bookingParty: "" }),
-    ["Wer bucht", "Plattform", "Fach"],
-  );
-});
-
-test("a paid lesson needs who books, chosen from the offered parties", () => {
-  for (const bookingParty of [
-    "parent",
-    "adult-student",
-    "student-with-consent",
-  ]) {
-    assert.deepEqual(missingInLesson({ bookingParty }), []);
-  }
-  for (const bookingParty of ["", undefined, "guardian", ["parent"]]) {
-    assert.deepEqual(missingInLesson({ bookingParty }), ["Wer bucht"]);
-  }
+  assert.deepEqual(missingInLesson({ subject: "", location: "" }), [
+    "Plattform",
+    "Fach",
+  ]);
 });
 
 const FAR_SLOT = "2027-03-02T09:00:00.000Z";

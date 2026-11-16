@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type Ref } from "react";
+import { useLayoutEffect, useMemo, useState, type Ref } from "react";
 import { ArrowLeft, ArrowRight, Calendar } from "lucide-react";
 
 import { Button } from "@skillsite/ui/primitives/button";
@@ -17,8 +17,7 @@ import {
   type BookingEventKey,
 } from "../model/config";
 import { emptyValueFor, type FieldDef, type FieldValue } from "../model/fields";
-import { orderSummaryRows } from "../model/order-summary";
-import { OrderSummary } from "./order-summary";
+import { orderSummaryLine, summaryChoices } from "../model/order-summary";
 import { useBookingForm } from "./use-booking-form";
 import { TextField } from "./fields/text-field";
 import { ChipsField } from "./fields/chips-field";
@@ -76,6 +75,8 @@ type BookingFormProps = {
    */
   titleRef?: Ref<HTMLDivElement>;
   onBack: () => void;
+  /** Reports the chosen summary labels (e.g. the subject) for the side panel. */
+  onChoicesChange?: (choices: string[]) => void;
   /** Hand the assembled draft to the parent, which sends it. */
   onSubmit: (draft: BookingDraft) => void;
 };
@@ -93,6 +94,7 @@ export function BookingForm({
   initialSubject,
   titleRef,
   onBack,
+  onChoicesChange,
   onSubmit,
 }: BookingFormProps) {
   const config = bookingEvents[event];
@@ -113,6 +115,13 @@ export function BookingForm({
     useState(false);
 
   const groups = useMemo(() => groupFields(config.fields), [config.fields]);
+  const choices = useMemo(() => summaryChoices(event, values), [event, values]);
+  // The side panel lives outside the form and its state: it learns the
+  // choices after each change, including a preselected subject, before the
+  // browser paints, so it never shows a previous form's subject.
+  useLayoutEffect(() => {
+    onChoicesChange?.(choices);
+  }, [choices, onChoicesChange]);
   const readyToSubmit =
     canSubmit && (!isPaidBooking || earlyPerformanceRequested);
   const openItems = [
@@ -236,13 +245,13 @@ export function BookingForm({
       {/* The essential terms right before the order button (§ 312j Abs. 2
           BGB), also on a phone, where the side panel is far above. */}
       {isPaidBooking ? (
-        <OrderSummary
-          rows={orderSummaryRows(event, {
+        <Text size="small" className="text-center font-semibold">
+          {orderSummaryLine(event, {
+            choices,
             slotLabel,
             duration: duration ?? config.defaultDuration,
-            values,
           })}
-        />
+        </Text>
       ) : null}
 
       <Button type="submit" disabled={!readyToSubmit} className="mt-1">
