@@ -8,6 +8,8 @@ import { cn } from "../utils/cn";
 const EXTERNAL = /^https?:/;
 /** Not a route: a mail or phone link, or a jump within the page. */
 const PLAIN = /^(mailto:|tel:|#)/;
+/** A file on the site, e.g. `/rechtliches/agb.pdf`: its last path segment has an extension. */
+const FILE = /^\/[^?#]*\.[a-z0-9]+(?:[?#].*)?$/i;
 
 type SmartLinkProps = Omit<
   React.ComponentProps<"a">,
@@ -19,15 +21,15 @@ type SmartLinkProps = Omit<
 /**
  * The one link rule. A route goes through next/link (client-side navigation);
  * an http(s) address opens in a new tab with `rel="noopener noreferrer"`; a
- * mailto:, tel: or #anchor link is a plain anchor. Callers cannot set `target`
- * or `rel`.
+ * mailto:, tel: or #anchor link and a file on the site (which next/link would
+ * prefetch) are plain anchors. Callers cannot set `target` or `rel`.
  */
 export function SmartLink({ href, ...props }: SmartLinkProps) {
   if (EXTERNAL.test(href))
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" {...props} />
     );
-  if (PLAIN.test(href)) return <a href={href} {...props} />;
+  if (PLAIN.test(href) || FILE.test(href)) return <a href={href} {...props} />;
   return <NextLink href={href} {...props} />;
 }
 

@@ -1,4 +1,4 @@
-import { ExternalLink, type LucideIcon, Scale } from "lucide-react";
+import { ExternalLink, FileDown, type LucideIcon, Scale } from "lucide-react";
 
 import { Container } from "@skillsite/ui/layout/container";
 import { Card } from "@skillsite/ui/primitives/card";
@@ -49,6 +49,8 @@ type DocHeroProps = {
   title: React.ReactNode;
   lead: React.ReactNode;
   facts?: Array<{ icon: LucideIcon; label: string; children: React.ReactNode }>;
+  /** Files of the document to download, e.g. its PDFs, listed below the lead. */
+  downloads?: Array<{ label: string; href: string }>;
 };
 
 export function DocHero({
@@ -57,6 +59,7 @@ export function DocHero({
   title,
   lead,
   facts,
+  downloads,
 }: DocHeroProps) {
   return (
     <Card className="p-6 sm:p-8">
@@ -74,6 +77,17 @@ export function DocHero({
           {title}
         </Heading>
         <Lead className="mt-4 max-w-3xl">{lead}</Lead>
+        {downloads?.length ? (
+          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-prose-sm">
+            {downloads.map((download) => (
+              <li key={download.href}>
+                <DocDownloadLink href={download.href}>
+                  {download.label}
+                </DocDownloadLink>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {facts?.length ? (
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {facts.map((fact) => {
@@ -270,6 +284,27 @@ export function DocProviderLink({
         <ExternalLink className="size-3.5" aria-hidden />
       </TextLink>
     </p>
+  );
+}
+
+/** A link that downloads a file of the document, e.g. its PDF, after a download glyph. */
+export function DocDownloadLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <TextLink
+      variant="doc"
+      href={href}
+      download
+      className="inline-flex items-center gap-1.5"
+    >
+      <FileDown className="size-4 shrink-0" aria-hidden />
+      {children}
+    </TextLink>
   );
 }
 
