@@ -38,6 +38,20 @@ export const routes = {
 export type RouteKey = keyof typeof routes;
 
 /**
+ * The legal PDFs in `public/`, built by `just legal-pdfs` from `legal-pdf/`. Files, not routes: they stay out of
+ * the sitemap.
+ */
+export const legalPdfs = {
+  agb: "/rechtliches/agb.pdf",
+  withdrawal: "/rechtliches/widerrufsbelehrung.pdf",
+} as const;
+
+/** A path on the site as running text prints it: the host without the scheme, e.g. `nachhilfe.leonweimann.de/agb`. */
+export function printedAddress(path: string): string {
+  return `${SITE_URL.replace(/^https:\/\//, "")}${path}`;
+}
+
+/**
  * Routes that exist but must stay out of search: they belong to a single
  * customer or invoice, never to a visitor arriving from Google. Declaring it
  * here keeps `robots.ts` and `sitemap.ts` from contradicting each other.

@@ -40,6 +40,11 @@ dev:
 build:
     pnpm build
 
+# Rebuilds the AGB and withdrawal PDFs in apps/marketing/public/rechtliches/ from apps/marketing/legal-pdf/
+# (needs Typst); run it after every change to the AGB text, its data or the Typst sources.
+legal-pdfs:
+    node apps/marketing/legal-pdf/build.mjs
+
 # --- Testing ---
 
 test:
