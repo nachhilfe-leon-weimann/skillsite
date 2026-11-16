@@ -43,7 +43,7 @@ export const agbSections = numberedSections([
   {
     id: "widerruf",
     label: "Widerrufsrecht",
-    title: "Widerrufsrecht für Verbraucher",
+    title: "Widerrufsrecht",
   },
   {
     id: "haftung",

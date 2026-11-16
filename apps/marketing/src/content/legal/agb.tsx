@@ -7,7 +7,7 @@ import { ProseP } from "@skillsite/ui/typography/prose";
 import { TextLink } from "@skillsite/ui/primitives/link";
 import { agbContact, agbSections } from "@/content/agb";
 import { legalContact } from "@/content/legal-contact";
-import { routes } from "@/lib/routes";
+import { SITE_URL, routes } from "@/lib/routes";
 
 /** /agb around its prose: metadata and hero. */
 export const agbPage = {
@@ -43,10 +43,17 @@ function AgbSection({
 }
 
 /** Names a section in running text by its number and title, e.g. `Abschnitt 4 („Termine …“)`. */
-const sectionRef = (id: string) => {
+function sectionRef(id: string) {
   const section = agbSections.sections.find((entry) => entry.id === id);
-  return `Abschnitt ${agbSections.number(id)} („${section?.title ?? ""}“)`;
-};
+  if (!section) throw new Error(`Unknown AGB section: ${id}`);
+  return `Abschnitt ${agbSections.number(id)} („${section.title}“)`;
+}
+
+/** The provider's postal address as the withdrawal notice names it. */
+const postalAddress = `${legalContact.businessName}, ${legalContact.street}, ${legalContact.city}, ${legalContact.country}`;
+
+/** The AGB's address without the scheme, as printed in running text. */
+const agbAddress = `${SITE_URL.replace(/^https:\/\//, "")}${routes.agb}`;
 
 /** The AGB's sections, in order, as /agb renders them. */
 export function AgbProse() {
@@ -57,12 +64,15 @@ export function AgbProse() {
           Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle
           Nachhilfeleistungen, die {legalContact.businessName} (Inhaber:{" "}
           {legalContact.ownerName}, im Folgenden „Anbieter“) gegenüber seinen
-          Kundinnen und Kunden erbringt. Maßgeblich ist die bei Vertragsschluss
-          gültige Fassung.
+          Kundinnen und Kunden erbringt. Maßgeblich ist die Fassung, die mit der
+          Nachhilfevereinbarung übermittelt wurde; für online gebuchte Termine
+          die Fassung, auf die bei der Buchung hingewiesen wird. Für individuell
+          vereinbarte Termine gilt eine spätere Fassung erst, wenn die Kundin
+          oder der Kunde ihr in Textform zustimmt.
         </ProseP>
         <ProseP>
-          Kundinnen und Kunden im Sinne dieser AGB sind Verbraucher (§ 13 BGB).
-          Vertragssprache ist Deutsch.
+          Kundinnen und Kunden im Sinne dieser AGB sind Verbraucherinnen und
+          Verbraucher (§ 13 BGB). Vertragssprache ist Deutsch.
         </ProseP>
       </AgbSection>
 
@@ -72,8 +82,8 @@ export function AgbProse() {
           sorgeberechtigter Elternteil oder ein anderer gesetzlicher Vertreter,
           der den Vertrag im eigenen Namen schließt. Volljährige lernende
           Personen schließen den Vertrag selbst, sofern nicht eine andere Person
-          ihn im eigenen Namen schließt. Diese Person ist die Kundin oder der
-          Kunde.
+          ihn im eigenen Namen schließt. Wer den Vertrag schließt, ist die
+          Kundin oder der Kunde.
         </ProseP>
         <ProseP>
           Die Zusammenarbeit beginnt mit einem kostenlosen und unverbindlichen
@@ -84,43 +94,54 @@ export function AgbProse() {
           der Kunde ihr in Textform (z. B. per E-Mail) zustimmt. Sie ist ein
           Rahmenvertrag: Die einzelnen Termine werden innerhalb dieses Rahmens
           individuell vereinbart oder über die Online-Terminbuchung gebucht.
+          Jeder Termin ist ein eigener Vertrag zu den Bedingungen der
+          Nachhilfevereinbarung und dieser AGB. Ein individuell vereinbarter
+          Termin kommt zustande, wenn der Anbieter ihn in Textform (z. B. per
+          E-Mail oder Messenger-Nachricht) bestätigt.
         </ProseP>
         <ProseP>
-          Bei der Online-Terminbuchung wählt die Kundin oder der Kunde Termin,
-          Dauer und Fach und gibt die erforderlichen Daten ein. Vor dem Absenden
-          lassen sich alle Eingaben im Formular prüfen und korrigieren; über
-          „Zurück“ lässt sich auch der Termin neu wählen. Mit Klick auf
-          „Zahlungspflichtig buchen“ gibt die Kundin oder der Kunde ein
-          verbindliches Angebot über den gewählten Termin ab. Der Vertrag über
-          den Termin kommt zustande, wenn der Anbieter die Buchung per E-Mail
-          bestätigt. Diese AGB sind jederzeit unter dieser Adresse abrufbar und
-          können gespeichert oder ausgedruckt werden; einen gesonderten Zugriff
-          auf den Vertragstext bietet der Anbieter nicht an.
+          Bei der Online-Terminbuchung wählt die Kundin oder der Kunde Termin
+          und Dauer, gibt die erforderlichen Daten ein und wählt Plattform und
+          Fach. Vor dem Absenden lassen sich alle Eingaben im Formular prüfen
+          und korrigieren; über den Pfeil neben „Deine Daten“ lässt sich auch
+          der Termin neu wählen. Mit Klick auf „Zahlungspflichtig buchen“ gibt
+          die Kundin oder der Kunde ein verbindliches Angebot über den gewählten
+          Termin ab. Der Vertrag über den Termin kommt zustande, wenn der
+          Anbieter die Buchung bestätigt; die Bestätigung erscheint direkt nach
+          dem Absenden auf der Seite und kommt zusätzlich per E-Mail. Der
+          Anbieter speichert die Buchung einschließlich der einbezogenen Fassung
+          dieser AGB; die Angaben zum Termin erhält die Kundin oder der Kunde
+          mit der Bestätigung per E-Mail, einen weiteren Zugriff auf den
+          Vertragstext bietet der Anbieter nicht an. Diese AGB sind unter{" "}
+          {agbAddress} abrufbar und können gespeichert oder ausgedruckt werden.
         </ProseP>
         <ProseP>
-          Bucht eine minderjährige lernende Person Termine selbst, handelt sie
-          im Namen der Kundin oder des Kunden. Dafür müssen die
-          Sorgeberechtigten zugestimmt haben, in der Regel in der
-          Nachhilfevereinbarung. Ohne diese Zustimmung kommt der Vertrag über
-          den Termin erst zustande, wenn die Sorgeberechtigten ihn genehmigen.
+          Bucht oder vereinbart eine minderjährige lernende Person Termine
+          selbst, handelt sie als Vertreterin oder Vertreter im Namen der Kundin
+          oder des Kunden. Dafür muss die Kundin oder der Kunde sie
+          bevollmächtigt haben, in der Regel in der Nachhilfevereinbarung. Ohne
+          Vollmacht kommt der Vertrag über den Termin erst zustande, wenn die
+          Kundin oder der Kunde ihn genehmigt.
         </ProseP>
       </AgbSection>
 
       <AgbSection id="leistungen">
         <ProseP>
-          Der Anbieter erteilt Nachhilfeunterricht ausschließlich online in den
-          angebotenen Fächern, über Microsoft Teams oder Discord. Discord setzt
-          voraus, dass die Person, deren Konto genutzt wird, das Mindestalter
-          nach den Nutzungsbedingungen von Discord erreicht hat; sonst findet
-          der Unterricht über Microsoft Teams statt.
+          Der Anbieter erteilt Nachhilfeunterricht ausschließlich online und
+          live, also in Echtzeit per Video- oder Sprachverbindung über Microsoft
+          Teams oder Discord, in den angebotenen Fächern. Discord setzt voraus,
+          dass die Person, deren Konto genutzt wird, das Mindestalter nach den
+          Nutzungsbedingungen von Discord erreicht hat; sonst findet der
+          Unterricht über Microsoft Teams statt.
         </ProseP>
         <ProseP>
-          Der Umfang ergibt sich aus der Nachhilfevereinbarung und den gebuchten
-          Terminen. Notizen und Materialien zum Termin sind im Preis enthalten.
-          Kurze Fragen zwischen den Terminen beantwortet der Anbieter nach
-          Möglichkeit ohne zusätzliche Kosten. Materialien und Notizen des
-          Anbieters sind für das eigene Lernen bestimmt und dürfen nicht
-          veröffentlicht oder weiterverkauft werden.
+          Der Umfang ergibt sich aus der Nachhilfevereinbarung und den
+          vereinbarten Terminen. Notizen und Materialien ergänzen den
+          Live-Unterricht und sind im Preis enthalten. Kurze Fragen zwischen den
+          Terminen beantwortet der Anbieter nach Möglichkeit ohne zusätzliche
+          Kosten. Materialien und Notizen des Anbieters sind für das eigene
+          Lernen bestimmt und dürfen nicht veröffentlicht oder weiterverkauft
+          werden.
         </ProseP>
         <ProseP>
           Der Anbieter zeichnet den Unterricht nicht auf. Auch der Kundin oder
@@ -133,54 +154,55 @@ export function AgbProse() {
           voraus; hierfür ist die Kundin oder der Kunde verantwortlich.
         </ProseP>
         <ProseP>
-          Der Nachhilfevertrag ist ein Dienstvertrag (§ 611 BGB). Geschuldet ist
-          die fachgerechte Durchführung des Unterrichts, nicht ein bestimmter
-          Lern- oder Prüfungserfolg (etwa eine bestimmte Note).
+          Die Nachhilfevereinbarung und die Verträge über die Termine sind
+          Dienstverträge (§ 611 BGB). Geschuldet ist die fachgerechte
+          Durchführung des Unterrichts, nicht ein bestimmter Lern- oder
+          Prüfungserfolg (etwa eine bestimmte Note).
         </ProseP>
       </AgbSection>
 
       <AgbSection id="termine">
         <ProseP>
-          Termine werden individuell vereinbart oder über die
-          Online-Terminbuchung gebucht. Eine Absage oder Verschiebung ist bis 24
-          Stunden vor dem vereinbarten Beginn kostenfrei möglich, in Textform
-          (z. B. per E-Mail oder Messenger-Nachricht) oder über die
-          Absagefunktion in der Terminbestätigung. Maßgeblich ist der Zeitpunkt,
-          zu dem die Absage beim Anbieter eingeht.
+          Eine Absage oder Verschiebung ist bis 24 Stunden vor dem vereinbarten
+          Beginn kostenfrei möglich, etwa per E-Mail, Messenger-Nachricht,
+          Telefon oder über die Absagefunktion in der Terminbestätigung.
+          Maßgeblich ist der Zeitpunkt, zu dem die Absage beim Anbieter eingeht.
         </ProseP>
         <ProseP>
           Bei einer späteren Absage oder wenn die lernende Person nicht
           erscheint, bleibt das vereinbarte Honorar für den Termin geschuldet
           (Ausfallhonorar). Vergibt der Anbieter den Termin anderweitig,
-          entfällt das Ausfallhonorar. Die Kundin oder der Kunde kann
-          nachweisen, dass der Anbieter durch den Ausfall Aufwendungen erspart
-          oder anderweitig etwas erworben hat; das Ausfallhonorar ermäßigt sich
-          dann entsprechend.
+          entfällt das Ausfallhonorar. Im Übrigen ermäßigt es sich um das, was
+          der Anbieter durch den Ausfall erspart, anderweitig erwirbt oder zu
+          erwerben böswillig unterlässt (§ 615 Satz 2 BGB).
         </ProseP>
         <ProseP>
-          Kein Ausfallhonorar wird berechnet, wenn die lernende Person plötzlich
-          erkrankt oder ein vergleichbarer, nicht vorhersehbarer Notfall
-          eintritt und der Termin unverzüglich abgesagt wird. Ein ärztliches
-          Attest ist dafür nicht erforderlich.
+          Kein Ausfallhonorar wird berechnet, wenn die Absage auf einem
+          wichtigen, nicht zu vertretenden und nicht vorhersehbaren Grund
+          beruht, etwa einer plötzlichen Erkrankung der lernenden Person, und
+          der Termin unverzüglich abgesagt wird. Ein ärztliches Attest ist dafür
+          nicht erforderlich.
         </ProseP>
         <ProseP>
           Erscheint die lernende Person verspätet, endet der Termin zur
           vereinbarten Zeit, und es wird die vereinbarte Dauer berechnet.
           Verspätet sich der Anbieter oder fällt Unterricht wegen einer
           technischen Störung ganz oder teilweise aus, wird die ausgefallene
-          Zeit nachgeholt oder nicht berechnet.
+          Zeit nach Wahl der Kundin oder des Kunden nachgeholt oder nicht
+          berechnet.
         </ProseP>
         <ProseP>
-          Der Anbieter sagt einen Termin nur aus wichtigem Grund ab, etwa bei
-          Krankheit, einer technischen Störung oder höherer Gewalt, und teilt
-          dies unverzüglich mit. Er bietet nach Möglichkeit einen Ersatztermin
-          an; die Kundin oder der Kunde kann ihn annehmen oder den Termin ohne
-          Kosten entfallen lassen. Für den Termin vorausgezahlte Beträge werden
-          verrechnet oder erstattet.
+          Der Anbieter sagt einen Termin nur bei eigener Krankheit, einer
+          technischen Störung, höherer Gewalt oder einem vergleichbaren, nicht
+          vorhersehbaren Hinderungsgrund ab und teilt dies unverzüglich mit. Er
+          bietet nach Möglichkeit einen Ersatztermin an; die Kundin oder der
+          Kunde kann ihn annehmen oder den Termin ohne Kosten entfallen lassen.
+          Für den Termin vorausgezahlte Beträge werden auf Wunsch erstattet,
+          sonst mit dem Guthaben verrechnet.
         </ProseP>
         <ProseP>
-          Das gesetzliche Widerrufsrecht ({sectionRef("widerruf")}) bleibt von
-          diesen Regeln unberührt.
+          Das gesetzliche Widerrufsrecht nach {sectionRef("widerruf")} bleibt
+          von diesen Regeln unberührt.
         </ProseP>
       </AgbSection>
 
@@ -204,7 +226,7 @@ export function AgbProse() {
         <ProseP>
           Die Abrechnung erfolgt nach Erbringung der Leistung per Rechnung,
           einzeln oder gesammelt für mehrere Termine. Rechnungen sind, soweit
-          dort kein anderes Zahlungsziel angegeben ist, innerhalb von 14 Tagen
+          dort kein längeres Zahlungsziel angegeben ist, innerhalb von 14 Tagen
           ab Zugang ohne Abzug per PayPal oder Überweisung zu begleichen. Bei
           Zahlungsverzug gelten die gesetzlichen Regelungen.
         </ProseP>
@@ -212,8 +234,8 @@ export function AgbProse() {
           Wird im Einzelfall eine Vorauszahlung vereinbart, verrechnet der
           Anbieter sie mit den erbrachten Stunden und etwaigen Ausfallhonoraren
           und teilt den Stand auf Nachfrage mit. Ein Guthaben verfällt nicht.
-          Endet die Zusammenarbeit, erstattet der Anbieter ein verbleibendes
-          Guthaben innerhalb von 14 Tagen.
+          Endet die Nachhilfevereinbarung, erstattet der Anbieter ein
+          verbleibendes Guthaben innerhalb von 14 Tagen.
         </ProseP>
         <ProseP>
           Bei einer Förderung über das Bildungs- und Teilhabepaket rechnet der
@@ -226,7 +248,7 @@ export function AgbProse() {
       <AgbSection id="kuendigung">
         <ProseP>
           Es besteht keine Mindestlaufzeit. Beide Seiten können die
-          Zusammenarbeit jederzeit in Textform – etwa per E-Mail – beenden.
+          Nachhilfevereinbarung jederzeit formlos – etwa per E-Mail – kündigen.
           Bereits gebuchte Termine bleiben bestehen, soweit sie nicht nach{" "}
           {sectionRef("termine")} abgesagt werden. Gesetzliche Kündigungsrechte
           bleiben unberührt.
@@ -253,15 +275,14 @@ export function AgbProse() {
             Vertragsabschlusses.
           </ProseP>
           <ProseP>
-            Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (
-            {legalContact.businessName}, {legalContact.street},{" "}
-            {legalContact.city}, Telefon: {agbContact.phone}, E-Mail:{" "}
+            Um Ihr Widerrufsrecht auszuüben, müssen Sie uns ({postalAddress},
+            Telefon: {agbContact.phone}, E-Mail:{" "}
             <TextLink variant="doc" href={`mailto:${agbContact.email}`}>
               {agbContact.email}
             </TextLink>
             ) mittels einer eindeutigen Erklärung (z. B. ein mit der Post
-            versandter Brief oder E-Mail) über Ihren Entschluss, diesen Vertrag
-            zu widerrufen, informieren. Sie können dafür das beigefügte
+            versandter Brief oder eine E-Mail) über Ihren Entschluss, diesen
+            Vertrag zu widerrufen, informieren. Sie können dafür das beigefügte
             Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben
             ist.
           </ProseP>
@@ -299,12 +320,12 @@ export function AgbProse() {
         </DocSubSection>
         <DocSubSection title="Erlöschen des Widerrufsrechts">
           <ProseP>
-            Das Widerrufsrecht erlischt bei einem Vertrag über Dienstleistungen,
-            wenn der Anbieter die Dienstleistung vollständig erbracht hat und
-            mit der Ausführung erst begonnen hat, nachdem Sie dazu Ihre
-            ausdrückliche Zustimmung gegeben und gleichzeitig Ihre Kenntnis
-            davon bestätigt haben, dass Sie Ihr Widerrufsrecht bei vollständiger
-            Vertragserfüllung durch den Anbieter verlieren.
+            Bei einem Vertrag über Dienstleistungen erlischt das Widerrufsrecht
+            mit der vollständigen Erbringung der Dienstleistung, wenn Sie vor
+            Beginn der Erbringung ausdrücklich zugestimmt haben, dass der
+            Anbieter vor Ablauf der Widerrufsfrist mit der Erbringung beginnt,
+            und Ihre Kenntnis davon bestätigt haben, dass Ihr Widerrufsrecht mit
+            vollständiger Vertragserfüllung durch den Anbieter erlischt.
           </ProseP>
         </DocSubSection>
         <DocSubSection title="Muster-Widerrufsformular">
@@ -314,8 +335,8 @@ export function AgbProse() {
           </ProseP>
           <DocIndentBlock
             lines={[
-              `– An ${legalContact.businessName}, ${legalContact.street}, ${legalContact.city}, E-Mail: ${agbContact.email}:`,
-              "– Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über die Erbringung der folgenden Dienstleistung (*)",
+              `– An ${postalAddress}, E-Mail: ${agbContact.email}:`,
+              "– Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über den Kauf der folgenden Waren (*)/die Erbringung der folgenden Dienstleistung (*)",
               "– Bestellt am (*)/erhalten am (*)",
               "– Name des/der Verbraucher(s)",
               "– Anschrift des/der Verbraucher(s)",
@@ -347,8 +368,8 @@ export function AgbProse() {
         <ProseP>
           Es gilt das Recht der Bundesrepublik Deutschland. Hat eine
           Verbraucherin oder ein Verbraucher den gewöhnlichen Aufenthalt in
-          einem anderen Staat, bleiben die zwingenden
-          Verbraucherschutzvorschriften dieses Staates unberührt.
+          einem anderen Staat, bleibt ihr oder ihm der Schutz der zwingenden
+          Bestimmungen des Rechts dieses Staates erhalten.
         </ProseP>
         <ProseP>
           Der Anbieter ist nicht bereit und nicht verpflichtet, an
