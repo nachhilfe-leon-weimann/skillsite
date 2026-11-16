@@ -1,7 +1,7 @@
 import { legalContact } from "@/content/legal-contact";
 import { numberedSections } from "@/lib/numbered-sections";
 
-export const privacyPolicyEffectiveDate = new Date("2026-07-14");
+export const privacyPolicyEffectiveDate = new Date("2026-11-16");
 
 export const privacyContact = {
   email: legalContact.email,
@@ -26,8 +26,8 @@ export const privacySections = numberedSections([
   },
   {
     id: "hosting",
-    label: "Hosting und Server-Logfiles",
-    title: "Hosting und Server-Logfiles",
+    label: "Hosting, Cloudflare und Server-Logfiles",
+    title: "Hosting, Cloudflare und Server-Logfiles",
   },
   {
     id: "website",
@@ -117,30 +117,32 @@ export const hostingProviders = [
     shortName: "Hostinger",
     seat: "61 Lordou Vironos Str., 6023 Larnaca, Zypern",
     services:
-      "Virtueller Server (VPS) für diese Website, SkillForge und die Webanalyse Umami; Serverstandort Frankfurt am Main",
-    transferNote: `Die Verarbeitung findet innerhalb der EU statt. ${dpaSentence(
+      "Virtueller Server (VPS) für diese Website, SkillForge, SkillBot und die Webanalyse Umami einschließlich der zugehörigen Datenbanken (PostgreSQL); Serverstandort Frankfurt am Main; wöchentliche Sicherung des gesamten Servers",
+    transferNote: `Die Daten werden innerhalb der EU gespeichert. Für den Fall, dass Hostinger im Einzelfall von außerhalb des EWR auf Daten zugreift (z. B. im Support), enthält der Vertrag die EU-Standardvertragsklauseln. ${dpaSentence(
       "Hostinger International Ltd.",
     )}`,
     privacyUrl: "https://www.hostinger.com/legal/privacy-policy",
   },
   {
-    name: "Cybrancee (How About Group Ltd)",
-    shortName: "Cybrancee",
-    seat: "4th Floor, Silverstream House, 45 Fitzroy Street, London W1T 6EB, Vereinigtes Königreich",
-    services: "Hosting des Discord-Bots SkillBot",
-    transferNote: `Die Übermittlung in das Vereinigte Königreich erfolgt auf Grundlage des Angemessenheitsbeschlusses der EU-Kommission (Art. 45 DSGVO). ${dpaSentence(
-      "der How About Group Ltd",
-    )}`,
-    privacyUrl: "https://cybrancee.com/client/privacy-policy.php",
+    name: "Cloudflare, Inc.",
+    shortName: "Cloudflare",
+    seat: "101 Townsend St., San Francisco, CA 94107, USA",
+    services:
+      "DNS sowie vorgeschaltetes Netzwerk zur Auslieferung und zum Schutz vor Angriffen (Reverse Proxy, CDN) für diese Website, SkillForge und die Webanalyse Umami; außerdem Speicherung von Datensicherungen (Cloudflare R2, Speicherort EU)",
+    transferNote: `${dpaSentence(
+      "Cloudflare, Inc.",
+    )} Er ist Bestandteil der Cloudflare-Nutzungsbedingungen. Eine Verarbeitung in den USA und an weiteren Standorten des weltweiten Cloudflare-Netzwerks kann stattfinden. Die Übermittlung in die USA stützt sich auf den Angemessenheitsbeschluss der EU-Kommission zum EU-US Data Privacy Framework (Art. 45 DSGVO), unter dem Cloudflare zertifiziert ist; für davon nicht erfasste Übermittlungen enthält der Vertrag die EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO). Den Vertrag einschließlich der Standardvertragsklauseln veröffentlicht Cloudflare unter www.cloudflare.com/cloudflare-customer-dpa.`,
+    privacyUrl: "https://www.cloudflare.com/privacypolicy/",
   },
 ];
 
 export const umamiCollectedData = [
-  "aufgerufene Seiten und Zeitpunkt des Aufrufs",
+  "aufgerufene Seiten (Adresse und Seitentitel) und Zeitpunkt des Aufrufs",
   "Referrer-URL (Herkunftsseite)",
   "Browser, Betriebssystem und Gerätetyp",
   "Bildschirmauflösung und Sprache",
   "Herkunftsland (aus der IP-Adresse abgeleitet; die IP-Adresse selbst wird nicht gespeichert)",
+  "Ereignisse bei der Terminbuchung (Buchung begonnen, Termin gewählt, Buchung abgeschlossen oder fehlgeschlagen; nur Terminart, Dauer und Fehlerart, keine Formularangaben)",
 ];
 
 export const externalPlatformPrivacyLinks = [
@@ -179,18 +181,24 @@ export const skillBotDataItems = [
 ];
 
 export const dataRecipientCategories = [
-  "Auftragsverarbeiter nach Art. 28 DSGVO: Hosting (Hostinger, Cybrancee), Terminverwaltung (Cal.com), Zeiterfassung und Buchhaltung (Clockodo, sevDesk), Kommunikation (Microsoft)",
-  "eigenständig Verantwortliche: PayPal, Kreditinstitute, Kleinanzeigen sowie die verlinkten Plattformen",
+  "Auftragsverarbeiter nach Art. 28 DSGVO: Hosting (Hostinger), Auslieferung, Schutz vor Angriffen und Datensicherung (Cloudflare), Terminverwaltung (Cal.com), Zeiterfassung und Buchhaltung (Clockodo, sevDesk), Kommunikation (Microsoft)",
+  "eigenständig Verantwortliche: PayPal, Kreditinstitute, Kleinanzeigen, Discord und WhatsApp (soweit Sie diese Dienste für Unterricht oder Kommunikation nutzen) sowie Cloudflare (soweit es Daten zur Sicherheit seines Netzwerks für eigene Zwecke verarbeitet)",
   "Behörden und öffentliche Stellen, soweit eine gesetzliche Verpflichtung besteht",
 ];
 
 export const retentionItems = [
-  "Server-Logfiles: kurzfristig, automatische Rotation innerhalb weniger Tage",
-  "IP-Adressen zur Missbrauchsabwehr bei Formular- und Buchungsanfragen: höchstens 24 Stunden, ausschließlich im Arbeitsspeicher",
-  "Umami-Statistikdaten: pseudonymisiert; eine Wiedererkennung einzelner Besucher über den Monatswechsel hinaus ist ausgeschlossen",
+  "Server- und Anwendungsprotokolle: höchstens 14 Tage",
+  "IP-Adressen zur Missbrauchsabwehr bei Formular- und Buchungsanfragen: höchstens 24 Stunden nach der letzten Anfrage, ausschließlich im Arbeitsspeicher",
+  "Verbindungsdaten im Netzwerk von Cloudflare: nur so lange, wie es für Auslieferung, Sicherheit und Fehleranalyse erforderlich ist; eine feste Frist nennt Cloudflare hierfür nicht",
+  "Angaben zu abgewehrten oder geprüften Zugriffen in meinem Cloudflare-Konto: bis zu 31 Tage einsehbar",
+  "Sicherheits-Cookies von Cloudflare: kurzlebig, in der Standardeinstellung 30 Minuten",
+  "Umami-Statistikdaten: 24 Monate, danach automatische Löschung; die Daten sind pseudonymisiert, eine Wiedererkennung einzelner Besucher über den Monatswechsel hinaus ist ausgeschlossen",
   "Kontakt- und Buchungsanfragen: bis zur Erledigung, danach Löschung, sofern keine gesetzlichen Aufbewahrungspflichten bestehen",
-  "Vertrags- und Abrechnungsdaten: für die Dauer der Vertragsdurchführung, anschließend im Rahmen der gesetzlichen Aufbewahrungsfristen (§ 147 AO, § 257 HGB)",
+  "Buchungen kostenpflichtiger Stunden einschließlich der bestätigten AGB- und Widerrufshinweise: wie Vertragsdaten",
+  "Nachhilfevereinbarung und Ihre Zustimmungs-E-Mail: bis zum Ende der regelmäßigen Verjährungsfrist (drei Jahre ab Ende des Jahres, in dem die Vereinbarung endet); soweit sie steuerlich relevante Unterlagen sind, im Rahmen der gesetzlichen Aufbewahrungsfristen (§ 147 AO)",
+  "Vertrags- und Abrechnungsdaten: für die Dauer der Vertragsdurchführung, anschließend im Rahmen der gesetzlichen Aufbewahrungsfristen (§ 147 AO, § 14b UStG)",
   "Daten in SkillForge und SkillBot: für die Dauer der Zusammenarbeit, danach Löschung, sofern keine gesetzlichen Aufbewahrungspflichten bestehen",
+  "Datensicherungen (Backups): höchstens 30 Tage, danach automatische Löschung; im laufenden Betrieb bereits gelöschte Daten können bis dahin noch in einer Sicherung enthalten sein",
 ];
 
 export const userRights = [
@@ -205,8 +213,8 @@ export const userRights = [
 
 export const supervisoryAuthority = {
   name: "Der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg",
-  street: "Lautenschlagerstraße 20",
-  city: "70173 Stuttgart",
+  street: "Heilbronner Straße 35",
+  city: "70191 Stuttgart",
   phone: "+49 711 615541-0",
   email: "poststelle@lfdi.bwl.de",
   url: "https://www.baden-wuerttemberg.datenschutz.de",
