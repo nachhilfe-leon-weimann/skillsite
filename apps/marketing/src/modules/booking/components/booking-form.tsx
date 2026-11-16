@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type Ref } from "react";
+import { useLayoutEffect, useMemo, useState, type Ref } from "react";
 import { ArrowLeft, ArrowRight, Calendar } from "lucide-react";
 
 import { Button } from "@skillsite/ui/primitives/button";
@@ -13,11 +13,11 @@ import { bookerText } from "@/content/booking";
 import { routes } from "@/lib/routes";
 import {
   bookingEvents,
-  startsWithinWithdrawalPeriod,
   type BookingDraft,
   type BookingEventKey,
 } from "../model/config";
 import { emptyValueFor, type FieldDef, type FieldValue } from "../model/fields";
+import { orderSummaryLine, summaryChoices } from "../model/order-summary";
 import { useBookingForm } from "./use-booking-form";
 import { TextField } from "./fields/text-field";
 import { ChipsField } from "./fields/chips-field";
@@ -75,6 +75,8 @@ type BookingFormProps = {
    */
   titleRef?: Ref<HTMLDivElement>;
   onBack: () => void;
+  /** Reports the chosen summary labels (e.g. the subject) for the side panel. */
+  onChoicesChange?: (choices: string[]) => void;
   /** Hand the assembled draft to the parent, which sends it. */
   onSubmit: (draft: BookingDraft) => void;
 };
@@ -92,6 +94,7 @@ export function BookingForm({
   initialSubject,
   titleRef,
   onBack,
+  onChoicesChange,
   onSubmit,
 }: BookingFormProps) {
   const config = bookingEvents[event];
@@ -105,18 +108,25 @@ export function BookingForm({
     buildDraft,
   } = useBookingForm(event, initialSubject);
 
+  // Every paid lesson asks for the express request to start early, whatever
+  // its date (the reason is at `bookingSubmissionSchema`).
   const isPaidBooking = event === "nachhilfe";
-  const needsEarlyPerformanceConsent =
-    isPaidBooking && startsWithinWithdrawalPeriod(slotStart);
   const [earlyPerformanceRequested, setEarlyPerformanceRequested] =
     useState(false);
 
   const groups = useMemo(() => groupFields(config.fields), [config.fields]);
+  const choices = useMemo(() => summaryChoices(event, values), [event, values]);
+  // The side panel lives outside the form and its state: it learns the
+  // choices after each change, including a preselected subject, before the
+  // browser paints, so it never shows a previous form's subject.
+  useLayoutEffect(() => {
+    onChoicesChange?.(choices);
+  }, [choices, onChoicesChange]);
   const readyToSubmit =
-    canSubmit && (!needsEarlyPerformanceConsent || earlyPerformanceRequested);
+    canSubmit && (!isPaidBooking || earlyPerformanceRequested);
   const openItems = [
     ...missing,
-    ...(needsEarlyPerformanceConsent && !earlyPerformanceRequested
+    ...(isPaidBooking && !earlyPerformanceRequested
       ? [formText.withdrawalNoticeItem]
       : []),
   ];
@@ -202,24 +212,26 @@ export function BookingForm({
 
       {isPaidBooking ? (
         <Card surface="inset" className="flex flex-col gap-3 p-4">
-          {needsEarlyPerformanceConsent ? (
-            <label className="flex cursor-pointer items-start gap-3 text-note leading-relaxed text-ink">
-              <input
-                type="checkbox"
-                checked={earlyPerformanceRequested}
-                onChange={(formEvent) =>
-                  setEarlyPerformanceRequested(formEvent.target.checked)
-                }
-                className="mt-1 size-4 shrink-0 accent-coral"
-                required
-              />
-              <span>{formText.earlyPerformanceConsent}</span>
-            </label>
-          ) : null}
+          <label className="flex cursor-pointer items-start gap-3 text-note leading-relaxed text-ink">
+            <input
+              type="checkbox"
+              checked={earlyPerformanceRequested}
+              onChange={(formEvent) =>
+                setEarlyPerformanceRequested(formEvent.target.checked)
+              }
+              className="mt-1 size-4 shrink-0 accent-coral"
+              required
+            />
+            <span>{formText.earlyPerformanceConsent}</span>
+          </label>
           <Text size="note" tone="muted">
             {formText.legalNote.acceptTerms}{" "}
             <TextLink href={routes.agb}>
               {formText.legalNote.termsLink}
+            </TextLink>
+            {formText.legalNote.withdrawalText}{" "}
+            <TextLink href={routes.withdrawal}>
+              {formText.legalNote.withdrawalLink}
             </TextLink>
             {formText.legalNote.privacyText}{" "}
             <TextLink href={routes.datenschutz}>
@@ -228,6 +240,18 @@ export function BookingForm({
             {formText.legalNote.end}
           </Text>
         </Card>
+      ) : null}
+
+      {/* The essential terms right before the order button (§ 312j Abs. 2
+          BGB), also on a phone, where the side panel is far above. */}
+      {isPaidBooking ? (
+        <Text size="small" className="text-center font-semibold">
+          {orderSummaryLine(event, {
+            choices,
+            slotLabel,
+            duration: duration ?? config.defaultDuration,
+          })}
+        </Text>
       ) : null}
 
       <Button type="submit" disabled={!readyToSubmit} className="mt-1">

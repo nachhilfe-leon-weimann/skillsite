@@ -49,6 +49,8 @@ export type FieldDef = {
   autoComplete?: string;
   /** Choices for `chips` / `radio`. */
   options?: FieldOption[];
+  /** Its chosen option's label joins a paid slot in the side panel and in the order summary line. */
+  inSummary?: boolean;
   /** `chips` only: allow several selections (value becomes a `string[]`). */
   multiple?: boolean;
   maxLength?: number;

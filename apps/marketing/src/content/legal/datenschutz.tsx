@@ -214,8 +214,9 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             Fach beziehungsweise Fächer, bei Online-Nachhilfe die gewünschte
             Unterrichtsplattform (Microsoft Teams oder Discord) sowie
             freiwillige Angaben im Hinweisfeld. Bei einer kostenpflichtigen
-            Buchung übermittle ich außerdem die Bestätigung der AGB- und
-            Widerrufshinweise sowie die Fassung der einbezogenen AGB als
+            Buchung übermittle ich außerdem Ihre Annahme der AGB, Ihr
+            ausdrückliches Verlangen, dass der Unterricht vor Ablauf der
+            Widerrufsfrist beginnt, sowie die Fassung der einbezogenen AGB als
             Buchungsmetadaten. Zweck ist das Anlegen, Verwalten und Nachbereiten
             des Termins sowie der Nachweis der Buchungsbestätigungen.
           </ProseP>

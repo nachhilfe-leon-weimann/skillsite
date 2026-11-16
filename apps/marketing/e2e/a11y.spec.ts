@@ -554,8 +554,8 @@ test.describe("the booking choices", () => {
   }
 
   async function openForm(page: Page, path: string) {
-    // The stub serves its slot on the month's last day; early in the month it
-    // stays outside the 14-day withdrawal window, so no extra consent applies.
+    // The stub serves its slot on the month's last day, outside the regular
+    // 14-day withdrawal period; a paid lesson asks for the early start anyway.
     await freezeTime(page, new Date("2026-11-04T11:00:00Z"));
     await stubAvailability(page);
     const bodies = await holdSubmissions(page);
@@ -598,6 +598,9 @@ test.describe("the booking choices", () => {
     const submit = page.getByRole("button", {
       name: "Zahlungspflichtig buchen",
     });
+    await page
+      .getByRole("checkbox", { name: /Ich verlange ausdrücklich/ })
+      .check();
     await expect(submit).toBeEnabled();
     // Every key on a choice, with the form complete: nothing is sent.
     await radio(page, "Microsoft Teams").focus();
@@ -756,7 +759,7 @@ test("the Discord buttons are named by their text only", async ({ page }) => {
  * is booked.
  */
 test.describe("the integrated keyboard paths", () => {
-  /** 2026-11-04 12:00 in Berlin: a slot up to 18 November needs the withdrawal consent. */
+  /** 2026-11-04 12:00 in Berlin. */
   const NOVEMBER = new Date("2026-11-04T11:00:00Z");
   const FREE_DAYS = { "2026-11": ["2026-11-05", "2026-11-12"] };
 
@@ -979,6 +982,8 @@ test.describe("the integrated keyboard paths", () => {
         await expect(submit).toBeEnabled();
         await press(page, "Tab");
         await expect(focused(page)).toHaveAccessibleName("AGB");
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName("Widerrufsbelehrung");
         await press(page, "Tab");
         await expect(focused(page)).toHaveAccessibleName(
           "Datenschutzerklärung",
