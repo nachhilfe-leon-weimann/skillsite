@@ -1,7 +1,7 @@
 import { legalContact } from "@/content/legal-contact";
 import { numberedSections } from "@/lib/numbered-sections";
 
-export const agbEffectiveDate = new Date("2026-07-14");
+export const agbEffectiveDate = new Date("2026-11-16");
 
 export const agbContact = {
   email: legalContact.email,
@@ -43,7 +43,7 @@ export const agbSections = numberedSections([
   {
     id: "widerruf",
     label: "Widerrufsrecht",
-    title: "Widerrufsrecht für Verbraucher",
+    title: "Widerrufsrecht",
   },
   {
     id: "haftung",
