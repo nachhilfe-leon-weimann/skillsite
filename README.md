@@ -23,6 +23,19 @@ only local development needs.
 Everything else is in the [`justfile`](justfile). The image builds the marketing app by default;
 another app comes from `--build-arg APP=<name>`.
 
+## Legal PDFs
+
+`/agb` offers the AGB and the withdrawal notice with the model withdrawal form as PDFs
+(`apps/marketing/public/rechtliches/`). They are built from the Typst sources in
+[`apps/marketing/legal-pdf/`](apps/marketing/legal-pdf) with the site's fonts vendored there, and committed: CI
+and the image only ship them. Contact data, section headings and the effective date come from the content modules
+(`src/lib/legal-pdf/data.ts`), never from the Typst sources.
+
+After changing the AGB text, its date or contact data, change the same paragraph in `legal-pdf/` and run
+`just legal-pdfs` (needs [Typst](https://typst.app) 0.15). `just test` fails until both sides say the same
+(`src/content/legal/agb-pdf.test.tsx`) and until the PDFs are rebuilt (`legal-pdf/build-stamp.json`,
+`src/lib/legal-pdf/build-stamp.test.ts`).
+
 ## Operating the booking
 
 Every booking attempt that reaches the server leaves exactly one line in the container log

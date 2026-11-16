@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { collectErrors, isolate, stubAvailability } from "./helpers";
-import { indexablePaths, SITE_URL } from "../src/lib/routes";
+import { indexablePaths, legalPdfs, SITE_URL } from "../src/lib/routes";
 
 /** Only the home page declares the root canonical; every other page, the 404 included, must not inherit it. */
 async function expectRootCanonicalOnlyOnHome(page: Page, path: string) {
@@ -44,6 +44,14 @@ for (const path of indexablePaths) {
     expect(errors, "console errors").toEqual([]);
     await expectRootCanonicalOnlyOnHome(page, path);
     await expectHeadingOutline(page);
+  });
+}
+
+for (const pdf of Object.values(legalPdfs)) {
+  test(`${pdf} is served as a PDF`, async ({ request }) => {
+    const response = await request.get(pdf);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toBe("application/pdf");
   });
 }
 
