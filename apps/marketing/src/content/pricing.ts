@@ -21,7 +21,9 @@ export const fairConditions: Condition[] = [
     strong: "Bis 24 Stunden vorher",
     text: "kostenfrei absagen oder verschieben.",
   },
-  { text: "Bei kurzfristigen Notfällen finden wir eine faire Lösung." },
+  {
+    text: "Spätere Absagen werden berechnet – wirst du plötzlich krank, kostet es nichts.",
+  },
   { text: "Termine einzeln oder regelmäßig planen – ganz nach Bedarf." },
 ];
 
