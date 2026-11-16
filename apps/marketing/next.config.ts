@@ -61,6 +61,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // Older Cal.com booking confirmations link the withdrawal notice under this path; it lives in the AGB.
+  // Temporary on purpose: the electronic withdrawal function (§ 356a BGB) may get its own page here.
+  async redirects() {
+    return [
+      {
+        source: "/widerrufsrecht",
+        destination: "/agb#widerruf",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
