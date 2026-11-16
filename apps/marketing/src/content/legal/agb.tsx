@@ -197,8 +197,8 @@ export function AgbProse() {
           vorhersehbaren Hinderungsgrund ab und teilt dies unverzüglich mit. Er
           bietet nach Möglichkeit einen Ersatztermin an; die Kundin oder der
           Kunde kann ihn annehmen oder den Termin ohne Kosten entfallen lassen.
-          Für den Termin vorausgezahlte Beträge werden auf Wunsch erstattet,
-          sonst mit dem Guthaben verrechnet.
+          Für den Termin vorausgezahlte Beträge werden dem Guthaben
+          gutgeschrieben.
         </ProseP>
         <ProseP>
           Das gesetzliche Widerrufsrecht nach {sectionRef("widerruf")} bleibt
@@ -231,11 +231,13 @@ export function AgbProse() {
           Zahlungsverzug gelten die gesetzlichen Regelungen.
         </ProseP>
         <ProseP>
-          Wird im Einzelfall eine Vorauszahlung vereinbart, verrechnet der
-          Anbieter sie mit den erbrachten Stunden und etwaigen Ausfallhonoraren
-          und teilt den Stand auf Nachfrage mit. Ein Guthaben verfällt nicht.
-          Endet die Nachhilfevereinbarung, erstattet der Anbieter ein
-          verbleibendes Guthaben innerhalb von 14 Tagen.
+          Eine Vorauszahlung ist nur nach ausdrücklicher Absprache möglich. Der
+          Anbieter verrechnet sie mit den erbrachten Stunden und etwaigen
+          Ausfallhonoraren und teilt den Stand auf Nachfrage mit. Endet die
+          Nachhilfevereinbarung, rechnet der Anbieter das Guthaben ab und
+          erstattet den nicht verbrauchten Betrag innerhalb von 30 Tagen nach
+          Vertragsende. Gesetzliche Rückzahlungsansprüche, insbesondere nach
+          einem Widerruf, bleiben unberührt.
         </ProseP>
         <ProseP>
           Bei einer Förderung über das Bildungs- und Teilhabepaket rechnet der
