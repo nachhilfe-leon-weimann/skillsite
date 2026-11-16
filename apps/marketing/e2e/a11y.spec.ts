@@ -554,6 +554,9 @@ test.describe("the booking choices", () => {
   }
 
   async function openForm(page: Page, path: string) {
+    // The stub serves its slot on the month's last day; early in the month it
+    // stays outside the 14-day withdrawal window, so no extra consent applies.
+    await freezeTime(page, new Date("2026-11-04T11:00:00Z"));
     await stubAvailability(page);
     const bodies = await holdSubmissions(page);
     await page.goto(path);
