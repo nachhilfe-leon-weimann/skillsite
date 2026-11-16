@@ -24,6 +24,18 @@ const optional = (schema: z.ZodMiniString) =>
     z.optional(schema),
   );
 
+/** A Microsoft Entra ID: tenant or application (client) ID. */
+const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const guid = (what: string) =>
+  optional(
+    z.string().check(
+      z.regex(GUID, {
+        error: `it must be the ${what} as Entra shows it (a GUID). Set it, or leave it empty to run the withdrawal function unconfigured.`,
+      }),
+    ),
+  );
+
 const serverEnvSchema = z.object({
   /** Cal.com API key; without it the booking runs "unconfigured". */
   CAL_API_KEY: optional(
@@ -34,9 +46,44 @@ const serverEnvSchema = z.object({
       }),
     ),
   ),
+  /**
+   * Microsoft Graph app-only credentials of the withdrawal mail
+   * (`docs/withdrawal-mail.md`). The withdrawal function sends only when all
+   * four withdrawal variables are set; otherwise it runs "unconfigured".
+   */
+  GRAPH_TENANT_ID: guid("Directory (tenant) ID"),
+  GRAPH_CLIENT_ID: guid("Application (client) ID"),
+  GRAPH_CLIENT_SECRET: optional(
+    z.string().check(
+      z.regex(/^\S+$/, {
+        error:
+          "it must contain no whitespace. Set the client secret's value, or leave it empty to run the withdrawal function unconfigured.",
+      }),
+    ),
+  ),
+  /** The mailbox that sends the acknowledgement and receives the notice. */
+  WITHDRAWAL_MAILBOX: optional(
+    z.string().check(
+      z.regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, {
+        error:
+          "it must be one e-mail address. Set it, or leave it empty to run the withdrawal function unconfigured.",
+      }),
+    ),
+  ),
 });
 
-export type ServerEnv = { CAL_API_KEY?: string };
+/** The variables `parseServerEnv` reads; every one is optional. */
+const SERVER_ENV_KEYS = [
+  "CAL_API_KEY",
+  "GRAPH_TENANT_ID",
+  "GRAPH_CLIENT_ID",
+  "GRAPH_CLIENT_SECRET",
+  "WITHDRAWAL_MAILBOX",
+] as const;
+
+export type ServerEnv = Partial<
+  Record<(typeof SERVER_ENV_KEYS)[number], string>
+>;
 
 /**
  * Parse the runtime variables. Throws `EnvError` naming the variable and its
@@ -45,7 +92,9 @@ export type ServerEnv = { CAL_API_KEY?: string };
 export function parseServerEnv(
   source: Record<string, string | undefined> = process.env,
 ): ServerEnv {
-  const result = serverEnvSchema.safeParse({ CAL_API_KEY: source.CAL_API_KEY });
+  const result = serverEnvSchema.safeParse(
+    Object.fromEntries(SERVER_ENV_KEYS.map((key) => [key, source[key]])),
+  );
   if (!result.success) {
     throw new EnvError(
       result.error.issues
@@ -68,6 +117,32 @@ let parsed: ServerEnv | undefined;
 export function serverEnv(): ServerEnv {
   parsed ??= parseServerEnv();
   return parsed;
+}
+
+/** What the withdrawal function needs to send mail through Microsoft Graph. */
+export type WithdrawalMailConfig = {
+  tenantId: string;
+  clientId: string;
+  clientSecret: string;
+  /** Sender of the acknowledgement and recipient of the notice. */
+  mailbox: string;
+};
+
+/**
+ * The withdrawal mail settings, or `null` - the function is then
+ * "unconfigured" - unless all four variables are set.
+ */
+export function withdrawalMailConfig(
+  env: ServerEnv = serverEnv(),
+): WithdrawalMailConfig | null {
+  const {
+    GRAPH_TENANT_ID: tenantId,
+    GRAPH_CLIENT_ID: clientId,
+    GRAPH_CLIENT_SECRET: clientSecret,
+    WITHDRAWAL_MAILBOX: mailbox,
+  } = env;
+  if (!tenantId || !clientId || !clientSecret || !mailbox) return null;
+  return { tenantId, clientId, clientSecret, mailbox };
 }
 
 /**

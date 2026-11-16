@@ -191,3 +191,16 @@ test("after a lesson is booked, the visitor can book another one", () => {
   );
   expect(onChooseAnother).toHaveBeenCalledTimes(1);
 });
+
+test("a booked lesson links the withdrawal function; the free first meeting does not", () => {
+  renderResult({ event: "nachhilfe", phase: "confirmed" });
+  expect(
+    screen
+      .getByRole("link", { name: "Vertrag widerrufen" })
+      .getAttribute("href"),
+  ).toBe("/widerrufsrecht");
+  cleanup();
+
+  renderResult({ event: "kennenlernen", phase: "confirmed" });
+  expect(screen.queryByRole("link", { name: "Vertrag widerrufen" })).toBe(null);
+});

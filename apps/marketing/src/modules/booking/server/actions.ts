@@ -1,9 +1,10 @@
 "use server";
 
-import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 
 import { bookerText } from "@/content/booking";
+import { detectSpamSignal } from "@/lib/anti-spam";
+import { clientIp } from "@/lib/client-ip";
 
 import {
   ANTI_SPAM,
@@ -11,27 +12,11 @@ import {
   type BookingSubmission,
   type SubmitResult,
 } from "../model/config";
-import { detectSpamSignal } from "../model/anti-spam";
 import { checkRateLimit } from "./rate-limit";
 import { checkBookingSubmission, type BookingIssue } from "../model/schema";
 import { buildCalBookingBody } from "../model/mapping";
 import { createCalBooking } from "./cal-client";
 import { describeAttempt, logBooking } from "./log";
-
-/**
- * Real client IP behind Traefik (Dokploy). Traefik sets `x-forwarded-for` and
- * strips client-spoofed values as long as the app is only reachable via Traefik;
- * the first entry is the original client.
- */
-async function clientIp(): Promise<string> {
-  const headerList = await headers();
-  const forwarded = headerList.get("x-forwarded-for");
-  if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  return headerList.get("x-real-ip")?.trim() || "unknown";
-}
 
 const GENERIC_FAILURE: SubmitResult = {
   ok: false,

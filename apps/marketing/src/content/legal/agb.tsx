@@ -55,6 +55,9 @@ const postalAddress = `${legalContact.businessName}, ${legalContact.street}, ${l
 /** The AGB's address without the scheme, as printed in running text. */
 const agbAddress = `${SITE_URL.replace(/^https:\/\//, "")}${routes.agb}`;
 
+/** The withdrawal function's address, as Gestaltungshinweis [3] of Anlage 1 EGBGB asks for it. */
+const withdrawalFunctionAddress = `${SITE_URL.replace(/^https:\/\//, "")}${routes.withdrawalFunction}`;
+
 /** The AGB's sections, in order, as /agb renders them. */
 export function AgbProse() {
   return (
@@ -295,6 +298,17 @@ export function AgbProse() {
             Vertrag zu widerrufen, informieren. Sie können dafür das beigefügte
             Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben
             ist.
+          </ProseP>
+          <ProseP>
+            Sie können Ihr Widerrufsrecht auch online unter{" "}
+            <TextLink variant="doc" href={routes.withdrawalFunction}>
+              {withdrawalFunctionAddress}
+            </TextLink>{" "}
+            ausüben. Wenn Sie diese Online-Funktion nutzen, übermitteln wir
+            Ihnen auf einem dauerhaften Datenträger (z. B. durch eine E-Mail)
+            unverzüglich eine Eingangsbestätigung mit Informationen zum Inhalt
+            der Widerrufserklärung sowie dem Datum und der Uhrzeit ihres
+            Eingangs.
           </ProseP>
           <ProseP>
             Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die

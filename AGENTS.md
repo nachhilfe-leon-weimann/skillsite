@@ -9,11 +9,12 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | When you ...                                | Read                                                                                                                                                                                                                     |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                              |
-| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                 |
+| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`, `withdrawal/`)                  |
 | change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`                                                                                                                                |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
 | decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
 | write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                      |
+| set up or debug the withdrawal mail         | [`docs/withdrawal-mail.md`](docs/withdrawal-mail.md) - Entra app, Exchange scope, the four variables                                                                                                                     |
 | brief an agent or write a handoff           | the [agent work guide][agent-work] in skillforge                                                                                                                                                                         |
 | rely on a Next.js API                       | `apps/marketing/node_modules/next/dist/docs/` - Next.js 16 differs from older versions                                                                                                                                   |
 
@@ -45,7 +46,7 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   `ease-flow`, `ease-soft`, `duration-quick|base|slow`, the `lift` utility and `Reveal`.
 - A refactor changes nothing a visitor sees. A bug gets its own `fix:` PR describing the visible change, even when
   the look changes. If it is unclear whether something is a bug or a design choice, stop and ask.
-- Booking and payment are modules, `apps/marketing/src/modules/<domain>/` ([module rules][module-rules]): outside a
+- Booking, payment and withdrawal are modules, `apps/marketing/src/modules/<domain>/` ([module rules][module-rules]): outside a
   module, import only its `index.ts` (client-safe) or `server.ts` (server entry); its `index.ts`, `model/` and
   `components/` never import server code, except that `components/` may import `server/actions.ts`, a
   `"use server"` module. The `import/no-restricted-paths` zones of `packages/config/eslint/boundaries.mjs` enforce
@@ -74,6 +75,10 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   `CAL_API_KEY= just dev` (`build`, `smoke`, `check`): turbo passes the empty value through, Next keeps a variable
   that is set, and availability says `unconfigured`. Never send a booking request to a server holding the key, nor
   to `just docker-run`: its container gets the env file.
+- **No real e-mail from an agent session.** The withdrawal function (`/widerrufsrecht`) sends through Microsoft
+  Graph once `GRAPH_*` and `WITHDRAWAL_MAILBOX` are set ([`docs/withdrawal-mail.md`](docs/withdrawal-mail.md)).
+  Tests mock `fetch`; run its flows as `WITHDRAWAL_MAILBOX= just dev` (`unconfigured`), and never confirm a
+  withdrawal on a server that may hold the credentials. Success only on Graph's `202` for the acknowledgement.
 - **Booking:** success only once Cal.com confirmed it; an anti-spam hit is a visible error. Never compare client and
   server clocks (the client sends a duration); honeypot names never sound like profile data (company, website,
   name); one `[booking] <outcome>` log line per attempt, with a masked e-mail only.

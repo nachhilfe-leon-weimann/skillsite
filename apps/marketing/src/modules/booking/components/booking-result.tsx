@@ -8,8 +8,10 @@ import { Button } from "@skillsite/ui/primitives/button";
 import { Card } from "@skillsite/ui/primitives/card";
 import { InfoRow } from "@skillsite/ui/primitives/info-row";
 import { CenteredState } from "@skillsite/ui/layout/centered-state";
+import { TextLink } from "@skillsite/ui/primitives/link";
 import { Text } from "@skillsite/ui/typography/text";
 import { bookerText } from "@/content/booking";
+import { withdrawalLink } from "@/content/withdrawal";
 import { routes } from "@/lib/routes";
 import type { BookingEventKey } from "../model/config";
 import type { BookingError, BookingPhase } from "./use-booking-submission";
@@ -131,9 +133,21 @@ function resultView({
               </InfoRow>
             </Card>
           ) : null}
-          <Text tone="muted" className="mb-6">
+          <Text
+            tone="muted"
+            className={event === "nachhilfe" ? "mb-3" : "mb-6"}
+          >
             {bookerText.result.confirmed.text[event]}
           </Text>
+          {/* § 356a BGB: a paid booking can be withdrawn online. */}
+          {event === "nachhilfe" ? (
+            <Text size="note" tone="muted" className="mb-6">
+              {withdrawalLink.bookingHint}{" "}
+              <TextLink href={routes.withdrawalFunction}>
+                {withdrawalLink.label}
+              </TextLink>
+            </Text>
+          ) : null}
           <Button variant="outline" onClick={onChooseAnother}>
             {bookerText.result.confirmed.action[event]}
           </Button>
