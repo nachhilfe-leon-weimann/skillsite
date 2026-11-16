@@ -20,8 +20,6 @@ export const appDir = path.join(
 /** The Typst sources, fonts and build script of the PDFs. */
 export const legalPdfDir = path.join(appDir, "legal-pdf");
 
-/** What the build writes into `legal-pdf/`: not an input. */
-const generatedDir = "generated";
 export const buildStampFile = "build-stamp.json";
 
 /** The data file the Typst documents read, as `just legal-pdfs` writes it. */
@@ -29,7 +27,27 @@ export function legalPdfDataJson(): string {
   return `${JSON.stringify(legalPdfData(), null, 2)}\n`;
 }
 
-/** Every input file below `legal-pdf/`, relative and sorted, without the build's own output and dotfiles. */
+/**
+ * The Typst arguments that compile a document: only the vendored fonts, never the machine's. Part of the
+ * fingerprint, so a changed build recipe rebuilds too.
+ */
+export function typstCompileArgs(source: string, target: string): string[] {
+  return [
+    "compile",
+    "--root",
+    legalPdfDir,
+    "--font-path",
+    path.join(legalPdfDir, "fonts"),
+    "--ignore-system-fonts",
+    path.join(legalPdfDir, source),
+    target,
+  ];
+}
+
+/** An input of the PDFs: a Typst source or a font. Anything else below `legal-pdf/` (previews, backups) is not. */
+const INPUT = /^(?:[\w-]+\/)*[\w-]+\.typ$|^fonts\/[\w-]+\.ttf$/;
+
+/** Every input file below `legal-pdf/`, relative and sorted. */
 export function legalPdfSourceFiles(): string[] {
   return readdirSync(legalPdfDir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
@@ -39,16 +57,11 @@ export function legalPdfSourceFiles(): string[] {
         .split(path.sep)
         .join("/"),
     )
-    .filter(
-      (file) =>
-        file !== buildStampFile &&
-        !file.startsWith(`${generatedDir}/`) &&
-        !file.split("/").some((part) => part.startsWith(".")),
-    )
+    .filter((file) => INPUT.test(file))
     .sort();
 }
 
-/** The fingerprint of the PDFs' inputs: every source file and the generated data. */
+/** The fingerprint of the PDFs' inputs: Typst sources, fonts, the generated data and the compile arguments. */
 export function legalPdfSourceHash(): string {
   const hash = createHash("sha256");
   for (const file of legalPdfSourceFiles()) {
@@ -56,7 +69,13 @@ export function legalPdfSourceHash(): string {
     hash.update(readFileSync(path.join(legalPdfDir, file)));
     hash.update("\0");
   }
-  hash.update(`${generatedDir}/data.json\0${legalPdfDataJson()}`);
+  hash.update(`generated/data.json\0${legalPdfDataJson()}\0`);
+  // Relative, so the fingerprint is the same in every checkout.
+  hash.update(
+    typstCompileArgs("<source>", "<target>")
+      .map((arg) => arg.replace(legalPdfDir, "legal-pdf"))
+      .join(" "),
+  );
   return hash.digest("hex");
 }
 

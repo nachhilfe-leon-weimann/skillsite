@@ -1,9 +1,9 @@
 {
-  "sources": "dcebcb065374c4d3bb3af6b586534fc69e2f314f8013decf48f1a6bb45b22a3b",
+  "sources": "c84ec57ba058452f608beaf6062b7f59b3b1942733f013bbfbcbdb264029f44a",
   "effectiveDate": "2026-11-16",
   "typst": "typst 0.15.1 (unknown commit)",
   "pdfs": {
-    "/rechtliches/agb.pdf": "444e3e43637d4688f81dcf73f9c7b3916e55cdb3cbba3149cd33fee189e6f236",
-    "/rechtliches/widerrufsbelehrung.pdf": "1c13501a4010a9d4e32808c434ab05eaa5932265a4aa1f98cbf15d784db29114"
+    "/rechtliches/agb.pdf": "b6538539e09448180a48bca2b17aefc05b7978febe4838cf7c9d0a6995d86659",
+    "/rechtliches/widerrufsbelehrung.pdf": "1f60ea61fcfea44bfb1f1d0fa3b3edb97cc93fc64f465d99769a0985a21deba8"
   }
 }

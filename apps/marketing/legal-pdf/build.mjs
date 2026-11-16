@@ -48,6 +48,7 @@ const {
   legalPdfDir,
   legalPdfSourceHash,
   publicFile,
+  typstCompileArgs,
 } = await importApp("src/lib/legal-pdf/sources.ts");
 
 mkdirSync(path.join(legalPdfDir, "generated"), { recursive: true });
@@ -60,16 +61,7 @@ const pdfs = {};
 for (const { source, output } of legalPdfDocuments) {
   const target = publicFile(output);
   mkdirSync(path.dirname(target), { recursive: true });
-  typst(
-    "compile",
-    "--root",
-    legalPdfDir,
-    "--font-path",
-    path.join(legalPdfDir, "fonts"),
-    "--ignore-system-fonts",
-    path.join(legalPdfDir, source),
-    target,
-  );
+  typst(...typstCompileArgs(source, target));
   // The image runs as a non-root user: a file only its owner may read would be missing on the site.
   chmodSync(target, 0o644);
   pdfs[output] = fileHash(target);

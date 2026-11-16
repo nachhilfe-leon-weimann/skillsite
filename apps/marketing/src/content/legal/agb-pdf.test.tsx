@@ -21,12 +21,22 @@ afterEach(cleanup);
 const normalize = (text: string) =>
   text.replace(/­/g, "").replace(/\s+/g, " ").trim();
 
-/** The paragraphs of /agb's prose: headings, paragraphs and the lines of the model form, in order. */
+/** The elements that hold a paragraph of /agb's prose: headings, paragraphs, list and table cells. */
+const BLOCKS = "h2, h3, h4, p, li, dt, dd, th, td";
+
+/** The paragraphs of /agb's prose in order, the innermost block of each text; no text may sit outside a block. */
 function siteParagraphs(scope?: string): string[] {
   const { container } = render(<AgbProse />);
   const root = scope ? container.querySelector(scope) : container;
   if (!root) throw new Error(`No ${scope} in the AGB`);
-  return [...root.querySelectorAll("h2, h3, p")]
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode())
+    if (node.textContent?.trim() && !node.parentElement?.closest(BLOCKS))
+      throw new Error(
+        `"${node.textContent.trim()}" sits outside ${BLOCKS}: extend BLOCKS`,
+      );
+  return [...root.querySelectorAll(BLOCKS)]
+    .filter((element) => !element.querySelector(BLOCKS))
     .map((element) => normalize(element.textContent ?? ""))
     .filter(Boolean);
 }
@@ -47,21 +57,31 @@ const siteOnly = {
   withdrawalHeading: agbSections.heading("widerruf"),
 };
 
-/** Lines the PDFs show that /agb leaves out: none. Title, subtitle, "Stand" and footer come from the template. */
+/**
+ * Lines the PDFs show that /agb leaves out: none among the compared paragraphs. The PDF-only text is the template's
+ * (title, subtitle, "Stand", footer), which the reader never sees, and the address `#web-link` prints after a
+ * linked word, which the reader drops.
+ */
 const pdfOnly: string[] = [];
 
 const without = (paragraphs: string[], drop: string[]) =>
   paragraphs.filter((paragraph) => !drop.includes(paragraph));
 
+const fix =
+  "Change the same paragraph in apps/marketing/legal-pdf/ (agb.typ or parts/withdrawal-*.typ), then run `just legal-pdfs`";
+
 describe("the legal PDFs say what /agb says", () => {
   test("the AGB PDF has every paragraph of /agb, in order, and no other", () => {
-    expect(without(pdfParagraphs("agb.typ"), pdfOnly)).toEqual(
+    expect(without(pdfParagraphs("agb.typ"), pdfOnly), fix).toEqual(
       without(siteParagraphs(), [siteOnly.formPdfLink]),
     );
   });
 
   test("the withdrawal PDF has every paragraph of the withdrawal section, in order, and no other", () => {
-    expect(without(pdfParagraphs("widerrufsbelehrung.typ"), pdfOnly)).toEqual(
+    expect(
+      without(pdfParagraphs("widerrufsbelehrung.typ"), pdfOnly),
+      fix,
+    ).toEqual(
       without(siteParagraphs("#widerruf"), [
         siteOnly.formPdfLink,
         siteOnly.withdrawalHeading,

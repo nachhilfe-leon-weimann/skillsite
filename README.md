@@ -36,6 +36,14 @@ After changing the AGB text, its date or contact data, change the same paragraph
 (`src/content/legal/agb-pdf.test.tsx`) and until the PDFs are rebuilt (`legal-pdf/build-stamp.json`,
 `src/lib/legal-pdf/build-stamp.test.ts`).
 
+To preview while editing, run `just legal-pdfs` once (it writes `legal-pdf/generated/data.json`), then watch a
+document into a file outside `legal-pdf/`:
+
+```bash
+typst watch --root apps/marketing/legal-pdf --font-path apps/marketing/legal-pdf/fonts --ignore-system-fonts \
+  apps/marketing/legal-pdf/agb.typ /tmp/agb.pdf
+```
+
 ## Operating the booking
 
 Every booking attempt that reaches the server leaves exactly one line in the container log

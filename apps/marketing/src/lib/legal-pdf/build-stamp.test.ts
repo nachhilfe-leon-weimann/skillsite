@@ -5,7 +5,8 @@ import { describe, expect, test } from "vitest";
 
 import { agbEffectiveDate } from "@/content/agb";
 import { legalContact } from "@/content/legal-contact";
-import { legalPdfData, legalPdfDocuments } from "./data";
+import { printedAddress } from "@/lib/routes";
+import { legalPdfDocuments } from "./data";
 import {
   fileHash,
   legalPdfDir,
@@ -48,14 +49,14 @@ describe("the legal PDFs are built from the current sources", () => {
   });
 
   test("the PDFs carry the AGB's effective date", () => {
-    const day = agbEffectiveDate.toISOString().slice(0, 10);
-    expect(legalPdfData().agb.effectiveDate).toBe(day);
-    expect(readBuildStamp().effectiveDate, rebuild).toBe(day);
+    expect(readBuildStamp().effectiveDate, rebuild).toBe(
+      agbEffectiveDate.toISOString().slice(0, 10),
+    );
   });
 
   test("no Typst source writes a date of its own", () => {
     const date =
-      /\d{4}-\d{2}-\d{2}|\d{1,2}\.\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)/;
+      /\d{4}-\d{2}-\d{2}|\d{1,2}\.\s*\d{1,2}\.\s*\d{2,4}|\d{1,2}\.\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)/;
     for (const [file, source] of typstSources())
       expect(
         source,
@@ -63,19 +64,21 @@ describe("the legal PDFs are built from the current sources", () => {
       ).not.toMatch(date);
   });
 
-  test("no Typst source copies the contact data", () => {
+  test("no Typst source copies the contact data or the site's address", () => {
     for (const [file, source] of typstSources())
       // Not the country: "Deutschland" is also a word of the AGB text.
       for (const value of [
         legalContact.businessName,
+        legalContact.ownerName,
         legalContact.street,
         legalContact.city,
         legalContact.email,
         legalContact.phone,
+        printedAddress(""),
       ])
         expect(
           source,
-          `${file} hard-codes "${value}": read it from #provider`,
+          `${file} hard-codes "${value}": read it from #provider or #site`,
         ).not.toContain(value);
   });
 });

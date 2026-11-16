@@ -15,4 +15,4 @@
 
 #pagebreak()
 
-#notice-box(breakable: false, include "parts/withdrawal-form.typ")
+#notice-box(include "parts/withdrawal-form.typ")
