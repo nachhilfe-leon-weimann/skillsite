@@ -82,13 +82,28 @@ test("an invalid payment link renders a page instead of redirecting", async ({
   await expectRootCanonicalOnlyOnHome(page, path);
 });
 
-// Cal.com booking confirmations already sent link the withdrawal notice under /widerrufsrecht.
-test("the withdrawal notice link redirects to the AGB section", async ({
-  request,
+// § 356a BGB: the withdrawal function is reachable from every page's footer. Cal.com booking
+// confirmations already sent link /widerrufsrecht for the withdrawal notice, which the page links.
+// Never submits: the form would send e-mail.
+test("the footer leads to the withdrawal function, which links the withdrawal notice", async ({
+  page,
 }) => {
-  const response = await request.get("/widerrufsrecht", { maxRedirects: 0 });
-  expect(response.status()).toBe(307);
-  expect(response.headers()["location"]).toBe("/agb#widerruf");
+  await isolate(page);
+  await page.goto("/preise");
+  await page
+    .locator("footer")
+    .getByRole("link", { name: "Vertrag widerrufen" })
+    .click();
+  await expect(page).toHaveURL(/\/widerrufsrecht$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Vertrag widerrufen" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Vertrag widerrufen" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Widerrufsbelehrung" }),
+  ).toHaveAttribute("href", "/agb#widerruf");
 });
 
 test("an unknown route answers 404", async ({ page }) => {

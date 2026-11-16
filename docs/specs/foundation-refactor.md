@@ -164,14 +164,16 @@ apps/marketing/src/
     booking/
       components/             booker parts, booking form, fields
       server/                 actions, cal client, availability, rate limit, log
-      model/                  config, fields, zod schemas, mapping, dates, anti-spam, pricing
+      model/                  config, fields, zod schemas, mapping, dates, pricing
       index.ts                public API, client-safe
       server.ts               server entry, starts with import "server-only"
     payment/                  same shape (invoice link, log)
+    withdrawal/               same shape (form, schema, mails, Graph mail, rate limit, log)
   components/
     sections/                 blocks used by two or more pages
   content/                    all visible text
-  lib/                        cross-cutting: env, routes, metadata, seo, analytics, health
+  lib/                        cross-cutting: env, routes, metadata, seo, analytics, health, log, anti-spam,
+                              client IP, rate limiter
   instrumentation.ts          env validation at server start
 
 packages/ui/

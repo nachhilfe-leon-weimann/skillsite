@@ -48,3 +48,19 @@ test("the Edge runtime never reads the env module", async () => {
   expect(error).not.toHaveBeenCalled();
   expect(exit).not.toHaveBeenCalled();
 });
+
+test("a partial withdrawal mail setup starts, with one [env] warning naming what is missing", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  // Synthetic values only.
+  vi.stubEnv("GRAPH_TENANT_ID", "00000000-0000-4000-8000-000000000001");
+  vi.stubEnv("GRAPH_CLIENT_ID", "00000000-0000-4000-8000-000000000002");
+  vi.stubEnv("GRAPH_CLIENT_SECRET", "synthetic-secret");
+  vi.stubEnv("WITHDRAWAL_MAILBOX", "");
+  await start("nodejs");
+
+  expect(exit).not.toHaveBeenCalled();
+  expect(warn).toHaveBeenCalledExactlyOnceWith(
+    "[env] the withdrawal function runs unconfigured: WITHDRAWAL_MAILBOX not set.",
+  );
+  expect(String(warn.mock.calls[0]?.[0])).not.toContain("synthetic-secret");
+});

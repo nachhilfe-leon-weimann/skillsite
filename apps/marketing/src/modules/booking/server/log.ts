@@ -10,7 +10,7 @@
  * notes or IP addresses.
  */
 
-import { compact, createLogger, loggable } from "@/lib/log";
+import { compact, createLogger, loggable, maskEmail } from "@/lib/log";
 
 export type BookingOutcome =
   /** Cal.com confirmed the booking. */
@@ -32,15 +32,6 @@ export const logBooking = createLogger<BookingOutcome>("booking", {
   rejected: "warn",
   failed: "error",
 });
-
-/** `test.kunde@example.com` -> `te***@example.com`. */
-export function maskEmail(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const email = value.trim();
-  const at = email.lastIndexOf("@");
-  if (at < 1 || at === email.length - 1) return undefined;
-  return loggable(`${email.slice(0, Math.min(2, at))}***${email.slice(at)}`);
-}
 
 /**
  * Log context identifying an attempt. Takes the raw, untrusted submission -

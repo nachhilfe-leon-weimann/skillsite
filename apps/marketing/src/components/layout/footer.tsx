@@ -16,6 +16,7 @@ import { cn } from "@skillsite/ui/utils/cn";
 import { brand, primaryNav, platformNav } from "@/content/site";
 import { socials, type SocialKey } from "@/content/socials";
 import { contactDetails } from "@/content/contact";
+import { withdrawalLink } from "@/content/withdrawal";
 import { Eyebrow } from "@skillsite/ui/typography/eyebrow";
 import { routes } from "@/lib/routes";
 
@@ -118,6 +119,10 @@ export function Footer() {
             </TextLink>
             <TextLink variant="inverse" href={contactDetails.eMail.href}>
               E-Mail
+            </TextLink>
+            {/* § 356a BGB: the withdrawal function on every page, in the footer's main link size. */}
+            <TextLink variant="inverse" href={routes.withdrawalFunction}>
+              {withdrawalLink.label}
             </TextLink>
           </FooterColumn>
         </div>
