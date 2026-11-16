@@ -234,9 +234,16 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             ausschließlich in meinem Auftrag.
           </ProseP>
           <ProseP>
-            Sicherungen werden nach 30 Tagen automatisch gelöscht. Daten, die
-            ich im laufenden Betrieb lösche, können bis dahin noch in einer
-            Sicherung enthalten sein.
+            Zusätzlich erstellt mein Hosting-Anbieter Hostinger in meinem
+            Auftrag wöchentlich eine Sicherung des gesamten Servers. Davon
+            werden höchstens zwei vorgehalten; die jeweils älteste wird durch
+            die neue ersetzt.
+          </ProseP>
+          <ProseP>
+            Die Sicherungen bei Cloudflare werden nach 30 Tagen automatisch
+            gelöscht, die Server-Sicherungen bei Hostinger spätestens nach drei
+            Wochen ersetzt. Daten, die ich im laufenden Betrieb lösche, können
+            bis dahin noch in einer Sicherung enthalten sein.
           </ProseP>
           <DocLegalBasis>
             Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am Schutz vor
@@ -262,9 +269,8 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             />
           </DocDetailGrid>
           <ProseP>
-            Die Logfiles werden automatisch rotiert und überschrieben, sobald
-            eine festgelegte Größe erreicht ist; die Zugriffsdaten führe ich
-            nicht mit anderen Daten zusammen.
+            Die Logfiles werden nach höchstens 14 Tagen gelöscht; die
+            Zugriffsdaten führe ich nicht mit anderen Daten zusammen.
           </ProseP>
           <ProseP>
             Zusätzlich protokolliert die Anwendung zu jedem Buchungsversuch die
@@ -278,6 +284,7 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             und Hinweistext aus dem Formular sowie IP-Adressen werden dabei
             nicht protokolliert. Die Einträge dienen dazu, fehlgeschlagene oder
             irrtümlich abgewiesene Buchungen und Zahlungen nachzuvollziehen.
+            Auch diese Einträge werden nach höchstens 14 Tagen gelöscht.
           </ProseP>
           <DocLegalBasis>
             Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer sicheren
@@ -288,10 +295,10 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
         <DocSubSection title="Schutz vor Missbrauch (Rate-Limiting)">
           <ProseP>
             Bei Formular- und Buchungsanfragen verarbeite ich Ihre IP-Adresse
-            für höchstens 24 Stunden ausschließlich im Arbeitsspeicher des
-            Servers, um Missbrauch (z. B. automatisierte Massenanfragen) zu
-            verhindern. Diese Daten werden nicht dauerhaft gespeichert und nicht
-            an Dritte weitergegeben.
+            für höchstens 24 Stunden nach der letzten Anfrage ausschließlich im
+            Arbeitsspeicher des Servers, um Missbrauch (z. B. automatisierte
+            Massenanfragen) zu verhindern. Diese Daten werden nicht dauerhaft
+            gespeichert und nicht an Dritte weitergegeben.
           </ProseP>
           <DocLegalBasis>
             Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren
@@ -633,19 +640,22 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           ihnen erhalte ich auch die Daten der Lernenden.
         </ProseP>
         <ProseP>
-          Die Daten der Lernenden verarbeite ich, um den mit den
-          Erziehungsberechtigten geschlossenen Vertrag zu erfüllen und den
-          Unterricht durchzuführen. Ich stütze keine Datenverarbeitung auf die
-          Einwilligung Minderjähriger; Angebote wie der Discord-Server werden
-          nur in Abstimmung mit den Erziehungsberechtigten genutzt.
+          Bei minderjährigen Lernenden schließe ich den Nachhilfevertrag stets
+          mit den Erziehungsberechtigten. Die Daten der Lernenden verarbeite
+          ich, um den mit den Erziehungsberechtigten geschlossenen Vertrag zu
+          erfüllen und den Unterricht durchzuführen. Ich stütze keine
+          Datenverarbeitung auf die Einwilligung Minderjähriger; Angebote wie
+          der Discord-Server werden nur in Abstimmung mit den
+          Erziehungsberechtigten genutzt.
         </ProseP>
         <DocLegalBasis>
           Art. 6 Abs. 1 lit. b DSGVO, soweit es um die Daten der
           Erziehungsberechtigten als Vertragspartner geht; für die Daten der
           Lernenden Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse daran,
           den mit den Erziehungsberechtigten geschlossenen Nachhilfevertrag zu
-          erfüllen und den Unterricht durchzuführen). Sind Lernende selbst
-          Vertragspartner, gilt auch für ihre Daten Art. 6 Abs. 1 lit. b DSGVO.
+          erfüllen und den Unterricht durchzuführen). Schließen volljährige
+          Lernende den Vertrag selbst, gilt für ihre Daten Art. 6 Abs. 1 lit. b
+          DSGVO.
         </DocLegalBasis>
       </PrivacySection>
 

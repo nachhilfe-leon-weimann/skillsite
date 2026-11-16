@@ -117,7 +117,7 @@ export const hostingProviders = [
     shortName: "Hostinger",
     seat: "61 Lordou Vironos Str., 6023 Larnaca, Zypern",
     services:
-      "Virtueller Server (VPS) für diese Website, SkillForge, SkillBot und die Webanalyse Umami einschließlich der zugehörigen Datenbanken (PostgreSQL); Serverstandort Frankfurt am Main",
+      "Virtueller Server (VPS) für diese Website, SkillForge, SkillBot und die Webanalyse Umami einschließlich der zugehörigen Datenbanken (PostgreSQL); Serverstandort Frankfurt am Main; wöchentliche Sicherung des gesamten Servers",
     transferNote: `Die Daten werden innerhalb der EU gespeichert. Für den Fall, dass Hostinger im Einzelfall von außerhalb des EWR auf Daten zugreift (z. B. im Support), enthält der Vertrag die EU-Standardvertragsklauseln. ${dpaSentence(
       "Hostinger International Ltd.",
     )}`,
@@ -187,8 +187,8 @@ export const dataRecipientCategories = [
 ];
 
 export const retentionItems = [
-  "Server- und Anwendungsprotokolle: bis zum automatischen Überschreiben; die Protokolle sind in der Größe begrenzt, ältere Einträge werden laufend überschrieben",
-  "IP-Adressen zur Missbrauchsabwehr bei Formular- und Buchungsanfragen: höchstens 24 Stunden, ausschließlich im Arbeitsspeicher",
+  "Server- und Anwendungsprotokolle: höchstens 14 Tage",
+  "IP-Adressen zur Missbrauchsabwehr bei Formular- und Buchungsanfragen: höchstens 24 Stunden nach der letzten Anfrage, ausschließlich im Arbeitsspeicher",
   "Verbindungsdaten im Netzwerk von Cloudflare: nur so lange, wie es für Auslieferung, Sicherheit und Fehleranalyse erforderlich ist; eine feste Frist nennt Cloudflare hierfür nicht",
   "Angaben zu abgewehrten oder geprüften Zugriffen in meinem Cloudflare-Konto: bis zu 31 Tage einsehbar",
   "Sicherheits-Cookies von Cloudflare: kurzlebig, in der Standardeinstellung 30 Minuten",
@@ -197,7 +197,7 @@ export const retentionItems = [
   "Buchungen kostenpflichtiger Stunden einschließlich der bestätigten AGB- und Widerrufshinweise: wie Vertragsdaten",
   "Vertrags- und Abrechnungsdaten: für die Dauer der Vertragsdurchführung, anschließend im Rahmen der gesetzlichen Aufbewahrungsfristen (§ 147 AO, § 14b UStG)",
   "Daten in SkillForge und SkillBot: für die Dauer der Zusammenarbeit, danach Löschung, sofern keine gesetzlichen Aufbewahrungspflichten bestehen",
-  "Datensicherungen (Backups): 30 Tage, danach automatische Löschung; im laufenden Betrieb bereits gelöschte Daten können bis dahin noch in einer Sicherung enthalten sein",
+  "Datensicherungen (Backups): höchstens 30 Tage, danach automatische Löschung; im laufenden Betrieb bereits gelöschte Daten können bis dahin noch in einer Sicherung enthalten sein",
 ];
 
 export const userRights = [
