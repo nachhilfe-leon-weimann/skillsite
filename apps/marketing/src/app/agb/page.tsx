@@ -1,10 +1,6 @@
 import { DocHero, DocShell } from "@/components/docs/doc-components";
 import { TextLink } from "@skillsite/ui/primitives/link";
-import {
-  agbContact,
-  agbEffectiveDateLabel,
-  agbSections,
-} from "@/content/agb";
+import { agbContact, agbEffectiveDateLabel, agbSections } from "@/content/agb";
 import { AgbProse, agbPage } from "@/content/legal/agb";
 import { pageMetadata } from "@/lib/metadata";
 import { CalendarDays, Mail, ScrollText } from "lucide-react";

@@ -57,13 +57,13 @@ test("reads paragraphs, headings, data, includes and wrappers as the PDF prints 
 
 test("refuses markup it cannot read instead of dropping its text", () => {
   expect(() =>
-    typstParagraphs("doc.typ", read({ "doc.typ": "Text #emph[wichtig]" }), data),
-  ).toThrow(/Unsupported Typst markup "#emph"/);
-  expect(() =>
     typstParagraphs(
       "doc.typ",
-      read({ "doc.typ": "An #provider.phone" }),
+      read({ "doc.typ": "Text #emph[wichtig]" }),
       data,
     ),
+  ).toThrow(/Unsupported Typst markup "#emph"/);
+  expect(() =>
+    typstParagraphs("doc.typ", read({ "doc.typ": "An #provider.phone" }), data),
   ).toThrow(/#provider.phone names no text/);
 });

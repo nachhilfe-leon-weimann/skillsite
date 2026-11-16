@@ -263,8 +263,8 @@ export function AgbProse() {
           Es besteht keine Mindestlaufzeit. Beide Seiten können die
           Nachhilfevereinbarung jederzeit formlos – etwa per E-Mail – kündigen.
           Bereits gebuchte Termine bleiben bestehen, soweit sie nicht nach{" "}
-          {agbSectionRef("termine")} abgesagt werden. Gesetzliche Kündigungsrechte
-          bleiben unberührt.
+          {agbSectionRef("termine")} abgesagt werden. Gesetzliche
+          Kündigungsrechte bleiben unberührt.
         </ProseP>
       </AgbSection>
 
