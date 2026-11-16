@@ -82,6 +82,15 @@ test("an invalid payment link renders a page instead of redirecting", async ({
   await expectRootCanonicalOnlyOnHome(page, path);
 });
 
+// Cal.com booking confirmations already sent link the withdrawal notice under /widerrufsrecht.
+test("the withdrawal notice link redirects to the AGB section", async ({
+  request,
+}) => {
+  const response = await request.get("/widerrufsrecht", { maxRedirects: 0 });
+  expect(response.status()).toBe(307);
+  expect(response.headers()["location"]).toBe("/agb#widerruf");
+});
+
 test("an unknown route answers 404", async ({ page }) => {
   await isolate(page);
   const errors = collectErrors(page);
