@@ -195,6 +195,7 @@ export const retentionItems = [
   "Umami-Statistikdaten: pseudonymisiert; eine Wiedererkennung einzelner Besucher über den Monatswechsel hinaus ist ausgeschlossen",
   "Kontakt- und Buchungsanfragen: bis zur Erledigung, danach Löschung, sofern keine gesetzlichen Aufbewahrungspflichten bestehen",
   "Buchungen kostenpflichtiger Stunden einschließlich der bestätigten AGB- und Widerrufshinweise: wie Vertragsdaten",
+  "Nachhilfevereinbarung und Ihre Zustimmungs-E-Mail: bis zum Ende der regelmäßigen Verjährungsfrist (drei Jahre ab Ende des Jahres, in dem die Vereinbarung endet); soweit sie steuerlich relevante Unterlagen sind, im Rahmen der gesetzlichen Aufbewahrungsfristen (§ 147 AO)",
   "Vertrags- und Abrechnungsdaten: für die Dauer der Vertragsdurchführung, anschließend im Rahmen der gesetzlichen Aufbewahrungsfristen (§ 147 AO, § 14b UStG)",
   "Daten in SkillForge und SkillBot: für die Dauer der Zusammenarbeit, danach Löschung, sofern keine gesetzlichen Aufbewahrungspflichten bestehen",
   "Datensicherungen (Backups): höchstens 30 Tage, danach automatische Löschung; im laufenden Betrieb bereits gelöschte Daten können bis dahin noch in einer Sicherung enthalten sein",

@@ -449,6 +449,19 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           Fächer, Termine, Abrechnungsdaten). Dafür setze ich die folgenden
           Dienste ein.
         </ProseP>
+        <ProseP>
+          Nach dem Erstgespräch sende ich Ihnen die Nachhilfevereinbarung mit
+          den Eckdaten der Nachhilfe (Vertragspartner mit Anschrift, Name und
+          Klasse der lernenden Person, Fächer, Umfang, Preis, gegebenenfalls
+          Vorauszahlung) per E-Mail. Ihre Antwort-E-Mail mit der Zustimmung und
+          dem ausdrücklichen Verlangen nach Beginn vor Ablauf der Widerrufsfrist
+          bewahre ich als Vertragsnachweis auf.
+        </ProseP>
+        <DocLegalBasis>
+          {lawfulBasisContract}; für die Aufbewahrung der Zustimmungs-E-Mail als
+          Nachweis Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse daran, den
+          Vertragsschluss nachweisen und Ansprüche abwehren zu können).
+        </DocLegalBasis>
 
         <DocGroup title="Abrechnung und Buchhaltung">
           <DocSubSection title="Zeiterfassung und Abrechnung (Clockodo)">
@@ -646,7 +659,10 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           erfüllen und den Unterricht durchzuführen. Ich stütze keine
           Datenverarbeitung auf die Einwilligung Minderjähriger; Angebote wie
           der Discord-Server werden nur in Abstimmung mit den
-          Erziehungsberechtigten genutzt.
+          Erziehungsberechtigten genutzt. Buchen Lernende mit Vollmacht ihrer
+          Eltern selbst Termine, handeln sie in deren Namen; ihre Angaben im
+          Buchungsformular verarbeite ich dann auf derselben Grundlage wie die
+          übrigen Daten der Lernenden.
         </ProseP>
         <DocLegalBasis>
           Art. 6 Abs. 1 lit. b DSGVO, soweit es um die Daten der
@@ -730,12 +746,13 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
         <ProseP>
           Das betrifft insbesondere die Server-Logfiles, die Auslieferung und
           den Schutz über Cloudflare, die Datensicherungen, den Schutz vor
-          Missbrauch, die Webanalyse mit Umami sowie die Daten von Lernenden,
-          deren Erziehungsberechtigte Vertragspartner sind. Nach einem
-          Widerspruch verarbeite ich die Daten nicht mehr, es sei denn, ich kann
-          zwingende schutzwürdige Gründe für die Verarbeitung nachweisen, die
-          Ihre Interessen, Rechte und Freiheiten überwiegen, oder die
-          Verarbeitung dient der Geltendmachung, Ausübung oder Verteidigung von
+          Missbrauch, die Webanalyse mit Umami, die Aufbewahrung von
+          Vertragsnachweisen sowie die Daten von Lernenden, deren
+          Erziehungsberechtigte Vertragspartner sind. Nach einem Widerspruch
+          verarbeite ich die Daten nicht mehr, es sei denn, ich kann zwingende
+          schutzwürdige Gründe für die Verarbeitung nachweisen, die Ihre
+          Interessen, Rechte und Freiheiten überwiegen, oder die Verarbeitung
+          dient der Geltendmachung, Ausübung oder Verteidigung von
           Rechtsansprüchen. Direktwerbung betreibe ich nicht. Ein formloser
           Widerspruch an{" "}
           <TextLink variant="doc" href={`mailto:${privacyContact.email}`}>
