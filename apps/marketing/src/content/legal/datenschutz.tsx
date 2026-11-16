@@ -128,10 +128,10 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
       </PrivacySection>
 
       <PrivacySection id="hosting">
-        <DocSubSection title="Hosting-Anbieter">
+        <DocSubSection title="Anbieter für Hosting und Auslieferung">
           <ProseP>
-            Meine Website und Anwendungen werden bei den folgenden Anbietern
-            betrieben:
+            Meine Website und Anwendungen betreibe ich mit Hilfe der folgenden
+            Anbieter:
           </ProseP>
           {hostingProviders.map((provider) => (
             <div key={provider.name} className="not-first:mt-5">
@@ -148,11 +148,102 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           ))}
         </DocSubSection>
 
+        <DocSubSection title="Auslieferung und Schutz über Cloudflare">
+          <ProseP>
+            Alle Aufrufe dieser Website, der Webanalyse ({analyticsDomain}) und
+            von SkillForge laufen über das Netzwerk von Cloudflare. Cloudflare
+            beantwortet die DNS-Anfragen für meine Domains und ist meinem Server
+            als Schutz- und Auslieferungsschicht vorgeschaltet (Reverse Proxy):
+            Ihr Browser verbindet sich mit einem Rechenzentrum von Cloudflare,
+            in der Regel in Ihrer Nähe, das die Anfrage prüft und an meinen
+            Server in Frankfurt am Main weiterleitet.
+          </ProseP>
+          <ProseP>
+            Dabei verarbeitet Cloudflare in meinem Auftrag Ihre IP-Adresse,
+            technische Verbindungsdaten (Datum und Uhrzeit, aufgerufene Adresse,
+            Referrer, Browser und Betriebssystem) sowie die übertragenen Inhalte
+            – also auch Angaben, die Sie in ein Formular eingeben. Die
+            Verbindung ist sowohl zwischen Ihrem Browser und Cloudflare als auch
+            zwischen Cloudflare und meinem Server verschlüsselt; zur Prüfung und
+            Weiterleitung werden die Daten in den Systemen von Cloudflare
+            kurzzeitig entschlüsselt verarbeitet.
+          </ProseP>
+          <ProseP>
+            Zweck ist der Schutz von Website und Anwendungen vor Angriffen und
+            Überlastung (z. B. DDoS-Angriffe, automatisierte Zugriffe durch
+            Bots, Spam) sowie eine schnelle und ausfallsichere Auslieferung.
+            Dazu kann Cloudflare statische Inhalte wie Bilder, Schriftarten und
+            Skripte zwischenspeichern und die ausgelieferten Seiten technisch
+            anpassen, etwa E-Mail-Adressen im Quelltext zum Schutz vor
+            Spam-Programmen verschleiern oder das Laden von Skripten optimieren;
+            dafür bindet Cloudflare kleine Hilfsskripte ein, die ebenfalls über
+            Cloudflare ausgeliefert werden.
+          </ProseP>
+          <ProseP>
+            Zur Abwehr automatisierter Zugriffe kann Cloudflare außerdem prüfen,
+            ob eine Anfrage von einem Menschen oder von einem Programm stammt.
+            Dazu können technische Merkmale Ihres Browsers ausgewertet werden;
+            bei auffälligen Zugriffen kann vor der Seite eine kurze, meist
+            automatisch ablaufende Sicherheitsprüfung erscheinen (Challenge,
+            Cloudflare Turnstile). In diesem Zusammenhang kann Cloudflare
+            technisch notwendige Cookies setzen (siehe{" "}
+            <SectionRef id="website" />
+            ).
+          </ProseP>
+          <ProseP>
+            Aus den über Cloudflare laufenden Anfragen stellt mir Cloudflare
+            zusammengefasste Statistiken zum Datenverkehr und zur Sicherheit
+            bereit (z. B. Zahl der Anfragen, übertragene Datenmenge,
+            Herkunftsländer, abgewehrte Zugriffe). Zu abgewehrten oder geprüften
+            Zugriffen kann ich außerdem bis zu 31 Tage lang Einzelangaben wie
+            IP-Adresse, aufgerufene Adresse und Browserkennung einsehen. Ich
+            nutze diese Angaben ausschließlich, um den Betrieb zu überwachen und
+            Angriffe zu erkennen; in Ihrem Browser wird dafür nichts gespeichert
+            oder ausgelesen.
+          </ProseP>
+          <ProseP>
+            Protokolldaten zu den Verbindungen, insbesondere IP-Adressen,
+            verarbeitet Cloudflare für begrenzte Zeit auch in Rechenzentren in
+            den USA und in Europa. Die Grundlagen dieser Übermittlung sind oben
+            beim Anbieter genannt.
+          </ProseP>
+          <DocLegalBasis>
+            Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem
+            sicheren, stabilen und schnellen Betrieb von Website und Anwendungen
+            einschließlich der Auswertung von Zugriffs- und
+            Sicherheitsstatistiken); für technisch notwendige Cookies und die
+            Prüfung Ihres Browsers § 25 Abs. 2 Nr. 2 TDDDG.
+          </DocLegalBasis>
+        </DocSubSection>
+
+        <DocSubSection title="Datensicherungen (Backups)">
+          <ProseP>
+            Um Datenverlust vorzubeugen, erstelle ich regelmäßig
+            Sicherungskopien der Datenbanken auf meinem Server (SkillForge,
+            SkillBot und Webanalyse Umami). Die Sicherungen werden bereits auf
+            meinem Server verschlüsselt und anschließend im Speicherdienst
+            Cloudflare R2 abgelegt, und zwar in einem Speicherbereich, für den
+            Cloudflare die Speicherung innerhalb der Europäischen Union
+            zusichert. Die Schlüssel liegen allein bei mir; Cloudflare kann die
+            Inhalte der Sicherungen nicht lesen.
+          </ProseP>
+          <ProseP>
+            Sicherungen werden nach 30 Tagen automatisch gelöscht. Daten, die
+            ich im laufenden Betrieb lösche, können bis dahin noch in einer
+            Sicherung enthalten sein.
+          </ProseP>
+          <DocLegalBasis>
+            Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am Schutz vor
+            Datenverlust und an der Wiederherstellbarkeit der Daten); zugleich
+            eine Sicherheitsmaßnahme nach Art. 32 DSGVO.
+          </DocLegalBasis>
+        </DocSubSection>
+
         <DocSubSection title="Server-Logfiles">
           <ProseP>
-            Beim Aufrufen meiner Website {siteDomain} werden durch Ihren Browser
-            automatisch Informationen an den Server gesendet und dort kurzzeitig
-            in Logfiles gespeichert:
+            Beim Aufrufen meiner Website {siteDomain} sendet Ihr Browser
+            automatisch Informationen, die über Cloudflare an meinen Server
+            gelangen und dort kurzzeitig in Logfiles gespeichert werden:
           </ProseP>
           <DocDetailGrid>
             <DocDetailList
@@ -236,21 +327,41 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
 
         <DocSubSection title="Cookies und lokale Speicherung">
           <ProseP>
-            Diese Website setzt keine Cookies ein und bindet keine
-            einwilligungspflichtigen Inhalte Dritter ein. Lediglich technisch
-            notwendige Einstellungen – etwa Ihre gewählte Darstellung (helles
-            oder dunkles Design) – werden lokal in Ihrem Browser gespeichert,
-            damit sie bei Ihrem nächsten Besuch erhalten bleiben. Diese
-            Speicherung erfordert keine Einwilligung.
+            Ich setze auf dieser Website keine Cookies zu Analyse-, Werbe- oder
+            Marketingzwecken ein und binde keine einwilligungspflichtigen
+            Inhalte Dritter ein. Technisch notwendige Einstellungen – etwa Ihre
+            gewählte Darstellung (helles oder dunkles Design) – werden lokal in
+            Ihrem Browser gespeichert, damit sie bei Ihrem nächsten Besuch
+            erhalten bleiben.
           </ProseP>
           <ProseP>
-            Schriftarten und Bilder liegen auf meinem eigenen Server; Ihr
-            Browser baut beim Besuch der Website keine Verbindung zu Servern
-            Dritter auf (auch nicht zu Google Fonts).
+            Zum Schutz vor Angriffen und automatisierten Zugriffen kann der
+            vorgeschaltete Dienst Cloudflare (siehe <SectionRef id="hosting" />)
+            auf dieser Website und den zugehörigen Domains technisch notwendige
+            Cookies setzen, insbesondere „__cf_bm“ (Erkennung automatisierter
+            Zugriffe, Laufzeit 30 Minuten) und „cf_clearance“ (Nachweis einer
+            bestandenen Sicherheitsprüfung, Laufzeit in der Standardeinstellung
+            30 Minuten). Diese Cookies dienen ausschließlich der Sicherheit und
+            werden nicht für Analyse- oder Werbezwecke verwendet; nach Angaben
+            von Cloudflare werden Nutzer damit nicht über verschiedene Websites
+            hinweg verfolgt.
+          </ProseP>
+          <ProseP>
+            Diese Speicherungen und Zugriffe sind unbedingt erforderlich, um die
+            Website sicher und in der von Ihnen gewünschten Form
+            bereitzustellen; eine Einwilligung ist dafür nicht erforderlich.
+          </ProseP>
+          <ProseP>
+            Schriftarten und Bilder liegen auf meinem eigenen Server und werden
+            wie die gesamte Website über Cloudflare ausgeliefert. Darüber hinaus
+            baut Ihr Browser beim Besuch der Website keine Verbindung zu Servern
+            anderer Anbieter auf (auch nicht zu Google Fonts).
           </ProseP>
           <DocLegalBasis>
-            § 25 Abs. 2 TDDDG sowie Art. 6 Abs. 1 lit. f DSGVO für technisch
-            notwendige Speicherungen.
+            § 25 Abs. 2 Nr. 2 TDDDG für technisch notwendige Speicherungen und
+            Zugriffe auf Ihrem Endgerät; Art. 6 Abs. 1 lit. f DSGVO für die
+            damit verbundene Datenverarbeitung (berechtigtes Interesse an einer
+            sicheren und nutzerfreundlichen Website).
           </DocLegalBasis>
         </DocSubSection>
 
@@ -270,8 +381,10 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           Ich nutze die Webanalyse-Software Umami, um die Nutzung meiner Website
           statistisch auszuwerten und mein Angebot zu verbessern. Umami betreibe
           ich selbst auf meinem eigenen Server ({analyticsDomain}, Hostinger-VPS
-          in Frankfurt am Main); es werden keine Daten an einen externen
-          Analysedienst übertragen. Erfasst werden:
+          in Frankfurt am Main). Umami überträgt keine Daten an einen externen
+          Analysedienst. Die Aufrufe laufen wie bei der Website über Cloudflare
+          (siehe <SectionRef id="hosting" />
+          ). Erfasst werden:
         </ProseP>
         <DocList items={umamiCollectedData} />
         <ProseP>
@@ -449,9 +562,13 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           </ProseP>
           <DocList items={skillForgeDataItems} />
           <ProseP>
-            SkillForge läuft auf meinem eigenen virtuellen Server bei Hostinger
-            in Frankfurt am Main (siehe <SectionRef id="hosting" />
-            ); die Daten verbleiben innerhalb der EU.
+            SkillForge und die zugehörige Datenbank (PostgreSQL) laufen auf
+            meinem eigenen virtuellen Server bei Hostinger in Frankfurt am Main;
+            die Daten werden damit innerhalb der EU gespeichert. Der Zugriff auf
+            SkillForge läuft über Cloudflare, verschlüsselte Sicherungen der
+            Datenbank liegen bei Cloudflare R2 in der EU (jeweils siehe{" "}
+            <SectionRef id="hosting" />
+            ).
           </ProseP>
         </DocSubSection>
 
@@ -463,11 +580,11 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           </ProseP>
           <DocList items={skillBotDataItems} />
           <ProseP>
-            SkillBot wird bei Cybrancee (How About Group Ltd, Vereinigtes
-            Königreich) gehostet. Die Übermittlung in das Vereinigte Königreich
-            ist durch den Angemessenheitsbeschluss der EU-Kommission abgesichert
-            (Art. 45 DSGVO); die Regelungen zur Auftragsverarbeitung nach Art.
-            28 DSGVO finden Sie unter <SectionRef id="hosting" />.
+            SkillBot läuft ebenfalls auf meinem eigenen virtuellen Server bei
+            Hostinger in Frankfurt am Main. Seine Daten liegen in der dortigen
+            Datenbank und werden wie die übrigen Daten verschlüsselt gesichert
+            (siehe <SectionRef id="hosting" />
+            ).
           </ProseP>
         </DocSubSection>
 
@@ -504,11 +621,15 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
         <DocList items={dataRecipientCategories} />
         <ProseP>
           Eine Verarbeitung außerhalb der EU bzw. des EWR findet nur wie oben
-          beschrieben statt: in den USA (Cal.com auf Grundlage der
-          EU-Standardvertragsklauseln; Microsoft, Discord und WhatsApp/Meta auf
-          Grundlage des EU-US Data Privacy Frameworks) sowie im Vereinigten
-          Königreich (Cybrancee auf Grundlage des Angemessenheitsbeschlusses der
-          EU-Kommission nach Art. 45 DSGVO).
+          beschrieben statt, und zwar in den USA: bei Cal.com auf Grundlage der
+          EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO), bei
+          Cloudflare, Microsoft, Discord und WhatsApp/Meta auf Grundlage des
+          EU-US Data Privacy Frameworks (Art. 45 DSGVO). Cloudflare kann
+          Anfragen außerdem in weiteren Rechenzentren seines weltweiten
+          Netzwerks verarbeiten, insbesondere wenn Sie die Website von außerhalb
+          der EU aufrufen; für Übermittlungen, die nicht vom Data Privacy
+          Framework erfasst sind, enthält der Vertrag mit Cloudflare die
+          EU-Standardvertragsklauseln.
         </ProseP>
       </PrivacySection>
 
@@ -560,9 +681,9 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           zwingende schutzwürdige Gründe für die Verarbeitung nachweisen, die
           Ihre Interessen, Rechte und Freiheiten überwiegen, oder die
           Verarbeitung dient der Geltendmachung, Ausübung oder Verteidigung von
-          Rechtsansprüchen. Das betrifft insbesondere die Server-Logfiles und
-          die Webanalyse mit Umami. Direktwerbung betreibe ich nicht. Ein
-          formloser Widerspruch an{" "}
+          Rechtsansprüchen. Das betrifft insbesondere die Server-Logfiles, die
+          Auslieferung und den Schutz über Cloudflare sowie die Webanalyse mit
+          Umami. Direktwerbung betreibe ich nicht. Ein formloser Widerspruch an{" "}
           <TextLink variant="doc" href={`mailto:${privacyContact.email}`}>
             {privacyContact.email}
           </TextLink>{" "}
@@ -575,7 +696,9 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           Ich nutze technische und organisatorische Sicherheitsmaßnahmen, um
           Ihre Daten gegen Verlust, Zerstörung und unbefugten Zugriff zu
           schützen. Die Übertragung von Daten an diese Website erfolgt
-          ausschließlich TLS-verschlüsselt (HTTPS).
+          ausschließlich TLS-verschlüsselt (HTTPS), sowohl zwischen Ihrem
+          Browser und Cloudflare als auch zwischen Cloudflare und meinem Server.
+          Datensicherungen werden verschlüsselt, bevor sie ausgelagert werden.
         </ProseP>
       </PrivacySection>
 
