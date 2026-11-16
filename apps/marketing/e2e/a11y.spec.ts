@@ -1086,6 +1086,8 @@ test.describe("the integrated keyboard paths", () => {
         page.getByRole("textbox", { name: "Worum geht’s?" }),
       ).toBeFocused();
       await press(page, "Tab");
+      await expect(focused(page)).toHaveAccessibleName("Datenschutzerklärung");
+      await press(page, "Tab");
       await expect(submit).toBeFocused();
 
       expect(await settledRequests(page, stub.requests)).toEqual([

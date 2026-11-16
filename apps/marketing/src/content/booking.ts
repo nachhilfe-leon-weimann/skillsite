@@ -58,6 +58,16 @@ export const bookerText = {
       privacyLink: "Datenschutzerklärung",
       end: ".",
     },
+    /**
+     * First meeting (free): the pointer to the privacy policy. `text` is
+     * followed by a space and the link, `end` follows the link. Legal-adjacent -
+     * its wording changes only on explicit request.
+     */
+    privacyNote: {
+      text: "Informationen zur Datenverarbeitung findest du in der",
+      link: "Datenschutzerklärung",
+      end: ".",
+    },
     /** Under a disabled submit button; followed by a space and the open items. */
     openItems: "Bitte noch ausfüllen oder bestätigen:",
     /** The open item while the early-performance consent is unchecked. */

@@ -212,6 +212,18 @@ test("a subject passed in from the contact link is already chosen in the form", 
   ).toBe("false");
 });
 
+test("the first-meeting form links to the privacy policy", async () => {
+  answerAvailability(freeDay);
+  renderBooker("kennenlernen");
+
+  fireEvent.click(await screen.findByRole("button", { name: "10:00 Uhr" }));
+  expect(
+    screen
+      .getByRole("link", { name: "Datenschutzerklärung" })
+      .getAttribute("href"),
+  ).toBe("/datenschutz");
+});
+
 test("without online booking the visitor is sent to the contact page", async () => {
   answerAvailability({
     status: "unconfigured",
