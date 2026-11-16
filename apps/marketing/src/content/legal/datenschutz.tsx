@@ -424,7 +424,7 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           wird und deren Bestandteile monatlich wechseln – eine Wiedererkennung
           über Monatsgrenzen hinweg oder eine Rückrechnung auf Ihre IP-Adresse
           ist nicht möglich. Ein seitenübergreifendes Tracking findet nicht
-          statt.
+          statt. Nach 24 Monaten werden die Daten automatisch gelöscht.
         </ProseP>
         <ProseP>
           Umami setzt keine Cookies und legt keine Kennung oder andere

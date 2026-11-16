@@ -192,7 +192,7 @@ export const retentionItems = [
   "Verbindungsdaten im Netzwerk von Cloudflare: nur so lange, wie es für Auslieferung, Sicherheit und Fehleranalyse erforderlich ist; eine feste Frist nennt Cloudflare hierfür nicht",
   "Angaben zu abgewehrten oder geprüften Zugriffen in meinem Cloudflare-Konto: bis zu 31 Tage einsehbar",
   "Sicherheits-Cookies von Cloudflare: kurzlebig, in der Standardeinstellung 30 Minuten",
-  "Umami-Statistikdaten: pseudonymisiert; eine Wiedererkennung einzelner Besucher über den Monatswechsel hinaus ist ausgeschlossen",
+  "Umami-Statistikdaten: 24 Monate, danach automatische Löschung; die Daten sind pseudonymisiert, eine Wiedererkennung einzelner Besucher über den Monatswechsel hinaus ist ausgeschlossen",
   "Kontakt- und Buchungsanfragen: bis zur Erledigung, danach Löschung, sofern keine gesetzlichen Aufbewahrungspflichten bestehen",
   "Buchungen kostenpflichtiger Stunden einschließlich der bestätigten AGB- und Widerrufshinweise: wie Vertragsdaten",
   "Nachhilfevereinbarung und Ihre Zustimmungs-E-Mail: bis zum Ende der regelmäßigen Verjährungsfrist (drei Jahre ab Ende des Jahres, in dem die Vereinbarung endet); soweit sie steuerlich relevante Unterlagen sind, im Rahmen der gesetzlichen Aufbewahrungsfristen (§ 147 AO)",
