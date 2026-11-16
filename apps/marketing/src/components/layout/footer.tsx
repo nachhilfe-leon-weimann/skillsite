@@ -120,6 +120,10 @@ export function Footer() {
             <TextLink variant="inverse" href={contactDetails.eMail.href}>
               E-Mail
             </TextLink>
+            {/* § 356a BGB: the withdrawal function on every page, in the footer's main link size. */}
+            <TextLink variant="inverse" href={routes.withdrawalFunction}>
+              {withdrawalLink.label}
+            </TextLink>
           </FooterColumn>
         </div>
 
@@ -134,14 +138,6 @@ export function Footer() {
             </TextLink>
             <TextLink variant="inverse-muted" href={routes.agb}>
               AGB
-            </TextLink>
-            {/* § 356a BGB: the withdrawal function, prominent on every page. */}
-            <TextLink
-              variant="inverse"
-              href={routes.withdrawalFunction}
-              className="font-semibold"
-            >
-              {withdrawalLink.label}
             </TextLink>
             <ThemeToggle />
           </div>

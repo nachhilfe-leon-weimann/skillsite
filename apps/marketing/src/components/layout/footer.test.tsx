@@ -5,13 +5,13 @@ import { Footer } from "./footer";
 
 afterEach(cleanup);
 
-test("every page's footer links the withdrawal function next to the legal links", () => {
+test("every page's footer links the withdrawal function under contact", () => {
   render(<Footer />);
   const footer = screen.getByRole("contentinfo");
   const link = within(footer).getByRole("link", { name: "Vertrag widerrufen" });
   expect(link.getAttribute("href")).toBe("/widerrufsrecht");
-  // In the same row as the legal links.
+  // In the contact column, next to the other ways to reach the provider.
   expect(
-    within(link.parentElement!).getByRole("link", { name: "AGB" }),
+    within(link.parentElement!).getByRole("link", { name: "E-Mail" }),
   ).toBeTruthy();
 });
