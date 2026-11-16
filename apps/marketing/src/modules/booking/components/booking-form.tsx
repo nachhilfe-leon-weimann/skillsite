@@ -13,11 +13,12 @@ import { bookerText } from "@/content/booking";
 import { routes } from "@/lib/routes";
 import {
   bookingEvents,
-  startsWithinWithdrawalPeriod,
   type BookingDraft,
   type BookingEventKey,
 } from "../model/config";
 import { emptyValueFor, type FieldDef, type FieldValue } from "../model/fields";
+import { orderSummaryRows } from "../model/order-summary";
+import { OrderSummary } from "./order-summary";
 import { useBookingForm } from "./use-booking-form";
 import { TextField } from "./fields/text-field";
 import { ChipsField } from "./fields/chips-field";
@@ -105,18 +106,18 @@ export function BookingForm({
     buildDraft,
   } = useBookingForm(event, initialSubject);
 
+  // Every paid lesson asks for the express request to start early, whatever
+  // its date (the reason is at `bookingSubmissionSchema`).
   const isPaidBooking = event === "nachhilfe";
-  const needsEarlyPerformanceConsent =
-    isPaidBooking && startsWithinWithdrawalPeriod(slotStart);
   const [earlyPerformanceRequested, setEarlyPerformanceRequested] =
     useState(false);
 
   const groups = useMemo(() => groupFields(config.fields), [config.fields]);
   const readyToSubmit =
-    canSubmit && (!needsEarlyPerformanceConsent || earlyPerformanceRequested);
+    canSubmit && (!isPaidBooking || earlyPerformanceRequested);
   const openItems = [
     ...missing,
-    ...(needsEarlyPerformanceConsent && !earlyPerformanceRequested
+    ...(isPaidBooking && !earlyPerformanceRequested
       ? [formText.withdrawalNoticeItem]
       : []),
   ];
@@ -202,24 +203,26 @@ export function BookingForm({
 
       {isPaidBooking ? (
         <Card surface="inset" className="flex flex-col gap-3 p-4">
-          {needsEarlyPerformanceConsent ? (
-            <label className="flex cursor-pointer items-start gap-3 text-note leading-relaxed text-ink">
-              <input
-                type="checkbox"
-                checked={earlyPerformanceRequested}
-                onChange={(formEvent) =>
-                  setEarlyPerformanceRequested(formEvent.target.checked)
-                }
-                className="mt-1 size-4 shrink-0 accent-coral"
-                required
-              />
-              <span>{formText.earlyPerformanceConsent}</span>
-            </label>
-          ) : null}
+          <label className="flex cursor-pointer items-start gap-3 text-note leading-relaxed text-ink">
+            <input
+              type="checkbox"
+              checked={earlyPerformanceRequested}
+              onChange={(formEvent) =>
+                setEarlyPerformanceRequested(formEvent.target.checked)
+              }
+              className="mt-1 size-4 shrink-0 accent-coral"
+              required
+            />
+            <span>{formText.earlyPerformanceConsent}</span>
+          </label>
           <Text size="note" tone="muted">
             {formText.legalNote.acceptTerms}{" "}
             <TextLink href={routes.agb}>
               {formText.legalNote.termsLink}
+            </TextLink>
+            {formText.legalNote.withdrawalText}{" "}
+            <TextLink href={routes.withdrawal}>
+              {formText.legalNote.withdrawalLink}
             </TextLink>
             {formText.legalNote.privacyText}{" "}
             <TextLink href={routes.datenschutz}>
@@ -228,6 +231,18 @@ export function BookingForm({
             {formText.legalNote.end}
           </Text>
         </Card>
+      ) : null}
+
+      {/* The essential terms right before the order button (§ 312j Abs. 2
+          BGB), also on a phone, where the side panel is far above. */}
+      {isPaidBooking ? (
+        <OrderSummary
+          rows={orderSummaryRows(event, {
+            slotLabel,
+            duration: duration ?? config.defaultDuration,
+            values,
+          })}
+        />
       ) : null}
 
       <Button type="submit" disabled={!readyToSubmit} className="mt-1">

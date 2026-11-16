@@ -511,6 +511,9 @@ for (const timezoneId of [
         { now: new Date("2026-10-20T10:00:00Z") },
       );
       await slot(page).click();
+      await page
+        .getByRole("radio", { name: "Elternteil – für mein Kind" })
+        .click();
       await page.getByRole("textbox", { name: "Vorname" }).fill("Erika");
       await page.getByRole("textbox", { name: "Nachname" }).fill("Beispiel");
       await page

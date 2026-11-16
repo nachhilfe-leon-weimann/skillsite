@@ -15,6 +15,7 @@ const firstMeeting = {
 };
 
 const lesson = {
+  bookingParty: "parent",
   firstName: "Max",
   lastName: "Muster",
   email: "max@example.com",
@@ -116,13 +117,25 @@ test("open fields are listed in the order of the form", () => {
     }),
     ["Vorname", "Nachname", "E-Mail", "Telefonnummer", "Fächer"],
   );
-  assert.deepEqual(missingInLesson({ subject: "", location: "" }), [
-    "Plattform",
-    "Fach",
-  ]);
+  assert.deepEqual(
+    missingInLesson({ subject: "", location: "", bookingParty: "" }),
+    ["Wer bucht", "Plattform", "Fach"],
+  );
 });
 
-const NOW = Date.parse("2026-11-05T10:00:00.000Z");
+test("a paid lesson needs who books, chosen from the offered parties", () => {
+  for (const bookingParty of [
+    "parent",
+    "adult-student",
+    "student-with-consent",
+  ]) {
+    assert.deepEqual(missingInLesson({ bookingParty }), []);
+  }
+  for (const bookingParty of ["", undefined, "guardian", ["parent"]]) {
+    assert.deepEqual(missingInLesson({ bookingParty }), ["Wer bucht"]);
+  }
+});
+
 const FAR_SLOT = "2027-03-02T09:00:00.000Z";
 const NEAR_SLOT = "2026-11-07T09:00:00.000Z";
 
@@ -134,23 +147,17 @@ const lessonSubmission = (
     slot: FAR_SLOT,
     duration: 60,
     values: lesson,
-    agreements: { termsAccepted: true, earlyPerformanceRequested: false },
+    agreements: { termsAccepted: true, earlyPerformanceRequested: true },
     fillDurationMs: 5_000,
     ...change,
   }) as BookingSubmission;
 
 const check = (change?: Partial<Record<keyof BookingSubmission, unknown>>) =>
-  checkBookingSubmission(lessonSubmission(change), NOW);
+  checkBookingSubmission(lessonSubmission(change));
 
 test("a complete paid booking passes", () => {
   assert.equal(check(), null);
-  assert.equal(
-    check({
-      slot: NEAR_SLOT,
-      agreements: { termsAccepted: true, earlyPerformanceRequested: true },
-    }),
-    null,
-  );
+  assert.equal(check({ slot: NEAR_SLOT }), null);
 });
 
 test("an unknown event or a missing slot asks for a slot", () => {
@@ -185,16 +192,13 @@ test("a lesson is booked only for a duration it offers", () => {
 
 test("a fixed-length first meeting accepts no other duration", () => {
   const meeting = (duration: unknown) =>
-    checkBookingSubmission(
-      {
-        event: "kennenlernen",
-        slot: FAR_SLOT,
-        duration,
-        values: firstMeeting,
-        fillDurationMs: 5_000,
-      } as BookingSubmission,
-      NOW,
-    );
+    checkBookingSubmission({
+      event: "kennenlernen",
+      slot: FAR_SLOT,
+      duration,
+      values: firstMeeting,
+      fillDurationMs: 5_000,
+    } as BookingSubmission);
   assert.equal(meeting(undefined), null);
   assert.equal(meeting(15), null);
   for (const duration of [60, 90, "15"]) {
@@ -222,28 +226,28 @@ test("a paid lesson without accepted terms is turned down", () => {
   }
 });
 
-test("a lesson within the withdrawal period needs the early start confirmed", () => {
-  assert.deepEqual(check({ slot: NEAR_SLOT }), { check: "withdrawal_notice" });
-  assert.deepEqual(
-    check({
-      slot: NEAR_SLOT,
-      agreements: { termsAccepted: true, earlyPerformanceRequested: "yes" },
-    }),
-    { check: "withdrawal_notice" },
-  );
+test("every paid lesson needs the express request to start early, however far ahead it lies", () => {
+  for (const slot of [NEAR_SLOT, FAR_SLOT]) {
+    for (const earlyPerformanceRequested of [false, "yes", "true", 1]) {
+      assert.deepEqual(
+        check({
+          slot,
+          agreements: { termsAccepted: true, earlyPerformanceRequested },
+        }),
+        { check: "withdrawal_notice" },
+      );
+    }
+  }
 });
 
 test("the free first meeting never needs agreements", () => {
   assert.equal(
-    checkBookingSubmission(
-      {
-        event: "kennenlernen",
-        slot: NEAR_SLOT,
-        values: firstMeeting,
-        fillDurationMs: 5_000,
-      },
-      NOW,
-    ),
+    checkBookingSubmission({
+      event: "kennenlernen",
+      slot: NEAR_SLOT,
+      values: firstMeeting,
+      fillDurationMs: 5_000,
+    }),
     null,
   );
 });
@@ -272,6 +276,9 @@ test("the checks run in order: slot, duration, fields, terms, withdrawal notice"
   );
   assert.deepEqual(check({ slot: NEAR_SLOT, agreements: {} }), {
     check: "terms",
+  });
+  assert.deepEqual(check({ agreements: { termsAccepted: true } }), {
+    check: "withdrawal_notice",
   });
 });
 

@@ -31,6 +31,7 @@ export function buildCalBookingBody(
   let firstName = "";
   let lastName = "";
   let location: Record<string, unknown> | undefined;
+  const fieldMetadata: Record<string, string> = {};
 
   for (const field of config.fields) {
     const value = values[field.key];
@@ -58,6 +59,11 @@ export function buildCalBookingBody(
       case "location":
         location = { type: "integration", integration: asString(value) };
         break;
+      case "metadata":
+        if (!isFieldEmpty(value)) {
+          fieldMetadata[field.target.key] = asString(value).trim();
+        }
+        break;
     }
   }
 
@@ -69,7 +75,10 @@ export function buildCalBookingBody(
     submission.event === "nachhilfe"
       ? readAgreements(submission.agreements)
       : null;
-  if (paidAgreements?.termsAccepted) {
+  // Cal.com's `policies-accepted` field is labelled with the express request to
+  // start early, and its confirmation e-mail repeats that sentence: send it only
+  // when the customer checked exactly that box.
+  if (paidAgreements?.earlyPerformanceRequested) {
     bookingFieldsResponses["policies-accepted"] = true;
   }
 
@@ -80,15 +89,17 @@ export function buildCalBookingBody(
     attendee,
     bookingFieldsResponses,
   };
+  const metadata: Record<string, string> = { ...fieldMetadata };
   if (paidAgreements) {
-    body.metadata = {
+    Object.assign(metadata, {
       termsAccepted: String(paidAgreements.termsAccepted),
       earlyPerformanceRequested: String(
         paidAgreements.earlyPerformanceRequested,
       ),
       agbVersion: agbEffectiveDate.toISOString().slice(0, 10),
-    };
+    });
   }
+  if (Object.keys(metadata).length > 0) body.metadata = metadata;
   if (config.durations && submission.duration) {
     body.lengthInMinutes = submission.duration;
   }

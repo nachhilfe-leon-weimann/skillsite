@@ -1,7 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 
+import { agbSections } from "@/content/agb";
 import { disallowedPaths, indexablePaths, routes } from "@/lib/routes";
+
+test("the link to the withdrawal information lands on its section of the AGB", () => {
+  const [path, anchor] = routes.withdrawal.split("#");
+  assert.equal(path, routes.agb);
+  assert.ok(
+    agbSections.sections.some((section) => section.id === anchor),
+    `the AGB have no section #${anchor}`,
+  );
+});
 
 test("the payment link is disallowed and never offered to search engines", () => {
   // robots.txt and sitemap.xml must not contradict each other: submitting a

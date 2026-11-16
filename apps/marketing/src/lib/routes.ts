@@ -33,6 +33,7 @@ export const routes = {
   impressum: "/impressum",
   datenschutz: "/datenschutz",
   agb: "/agb",
+  withdrawal: "/agb#widerruf",
 } as const;
 
 export type RouteKey = keyof typeof routes;

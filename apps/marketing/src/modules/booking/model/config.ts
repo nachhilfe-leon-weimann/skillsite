@@ -1,45 +1,8 @@
+import { bookerText } from "@/content/booking";
 import { subjects } from "@/content/subjects";
 import type { FieldDef, FieldOption, FieldValue } from "./fields";
 
 export const BOOKING_TIMEZONE = "Europe/Berlin";
-
-const bookingDateFormatter = new Intl.DateTimeFormat("en", {
-  timeZone: BOOKING_TIMEZONE,
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-function bookingDateKey(date: Date): string {
-  const parts = bookingDateFormatter.formatToParts(date);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((entry) => entry.type === type)?.value ?? "";
-  return [part("year"), part("month"), part("day")].join("-");
-}
-
-function addCalendarDays(dateKey: string, days: number): string {
-  const [year = NaN, month = NaN, day = NaN] = dateKey.split("-").map(Number);
-  const result = new Date(Date.UTC(year, month - 1, day + days));
-  return [
-    result.getUTCFullYear(),
-    String(result.getUTCMonth() + 1).padStart(2, "0"),
-    String(result.getUTCDate()).padStart(2, "0"),
-  ].join("-");
-}
-
-/**
- * Whether a paid lesson falls on or before the final calendar day of the
- * regular 14-day withdrawal period. Invalid dates stay on the safe side.
- */
-export function startsWithinWithdrawalPeriod(
-  slotStart: string,
-  now = Date.now(),
-): boolean {
-  const start = new Date(slotStart);
-  if (!Number.isFinite(start.getTime())) return true;
-  const cutoff = addCalendarDays(bookingDateKey(new Date(now)), 14);
-  return bookingDateKey(start) <= cutoff;
-}
 
 /** Cache tag for the Cal.com slots fetch - revalidated after every booking. */
 export const CAL_SLOTS_TAG = "cal-slots";
@@ -143,6 +106,29 @@ const emailField: FieldDef = {
   target: { to: "attendee", field: "email" },
 };
 
+/**
+ * Who books a paid lesson, as the booking's metadata records it: a parent for
+ * their child, an adult student, or a minor student with their parents'
+ * consent.
+ */
+export type BookingParty = keyof typeof bookerText.form.bookingParty.options;
+
+const bookingPartyText = bookerText.form.bookingParty;
+
+/** Asked first, so the name and e-mail that follow are clearly the booker's. */
+const bookingPartyField: FieldDef = {
+  key: "bookingParty",
+  kind: "radio",
+  label: bookingPartyText.label,
+  shortLabel: bookingPartyText.shortLabel,
+  required: true,
+  // No default: the booker chooses actively.
+  options: (
+    Object.entries(bookingPartyText.options) as [BookingParty, string][]
+  ).map(([value, label]) => ({ value, label })),
+  target: { to: "metadata", key: "bookingParty" },
+};
+
 const noteField = (label: string): FieldDef => ({
   key: "note",
   kind: "textarea",
@@ -203,6 +189,7 @@ export const bookingEvents: Record<BookingEventKey, BookingEventConfig> = {
     formNote:
       "Online über Discord oder Microsoft Teams. Bis 24 Stunden vorher kostenfrei verschiebbar oder stornierbar.",
     fields: [
+      bookingPartyField,
       ...nameFields,
       emailField,
       {
@@ -210,6 +197,7 @@ export const bookingEvents: Record<BookingEventKey, BookingEventConfig> = {
         kind: "radio",
         label: "Plattform",
         required: true,
+        defaultValue: "office365-video",
         options: [
           { value: "office365-video", label: "Microsoft Teams" },
           { value: "discord-video", label: "Discord" },
@@ -223,6 +211,7 @@ export const bookingEvents: Record<BookingEventKey, BookingEventConfig> = {
         shortLabel: "Fach",
         multiple: false,
         required: true,
+        inSummary: true,
         options: subjectOptions,
         target: { to: "bookingField", slug: "subject" },
       },

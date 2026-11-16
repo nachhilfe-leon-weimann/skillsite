@@ -83,13 +83,29 @@ const type = (label: string, value: string) =>
     target: { value },
   });
 
-async function fillLessonForm() {
+const earlyStart = () =>
+  screen.getByRole("checkbox", { name: /Ich verlange ausdrücklich/ });
+const submitButton = () =>
+  screen.getByRole("button", { name: "Zahlungspflichtig buchen" });
+const openItems = () =>
+  screen.getByText("Bitte noch ausfüllen oder bestätigen:", { exact: false });
+
+/** Every field and the express request, but not who books. */
+async function fillLessonFormButParty() {
   fireEvent.click(await screen.findByRole("button", { name: "10:00 Uhr" }));
   type("Vorname", "Max");
   type("Nachname", "Mustermann");
   type("E-Mail", "max@example.test");
   fireEvent.click(screen.getByRole("radio", { name: "Discord" }));
   fireEvent.click(screen.getByRole("radio", { name: /Mathematik/ }));
+  fireEvent.click(earlyStart());
+}
+
+async function fillLessonForm() {
+  await fillLessonFormButParty();
+  fireEvent.click(
+    screen.getByRole("radio", { name: "Elternteil – für mein Kind" }),
+  );
 }
 
 test("a lesson is booked from a free time to the confirmation", async () => {
@@ -120,13 +136,14 @@ test("a lesson is booked from a free time to the confirmation", async () => {
     slot: "2026-11-25T10:00:00.000+01:00",
     duration: 60,
     values: {
+      bookingParty: "parent",
       firstName: "Max",
       lastName: "Mustermann",
       email: "max@example.test",
       location: "discord-video",
       subject: "Mathematik",
     },
-    agreements: { termsAccepted: true, earlyPerformanceRequested: false },
+    agreements: { termsAccepted: true, earlyPerformanceRequested: true },
   });
   // The server's time-trap reads how long the form was open; a send without it
   // would count as too fast.
@@ -144,6 +161,106 @@ test("a lesson is booked from a free time to the confirmation", async () => {
     "slot-selected",
     "booking-confirmed",
   ]);
+});
+
+test("a paid lesson beyond the 14-day withdrawal period still needs the express request to start early", async () => {
+  // The free day lies 20 days after today: the request is asked for anyway.
+  answerAvailability(freeDay);
+  renderBooker("nachhilfe");
+
+  await fillLessonForm();
+  fireEvent.click(earlyStart());
+  const checkbox = earlyStart() as HTMLInputElement;
+  expect(checkbox.checked).toBe(false);
+  expect(checkbox.required).toBe(true);
+  expect((submitButton() as HTMLButtonElement).disabled).toBe(true);
+  expect(openItems().textContent).toBe(
+    "Bitte noch ausfüllen oder bestätigen: Widerrufshinweis",
+  );
+
+  fireEvent.click(checkbox);
+  expect((submitButton() as HTMLButtonElement).disabled).toBe(false);
+});
+
+test("a paid lesson is sent only once the booker says who books", async () => {
+  answerAvailability(freeDay);
+  sendBooking.mockResolvedValueOnce({ ok: true });
+  renderBooker("nachhilfe");
+
+  await fillLessonFormButParty();
+  const party = screen.getByRole("radiogroup", { name: "Ich buche als" });
+  expect(party.getAttribute("aria-required")).toBe("true");
+  expect(
+    within(party)
+      .getAllByRole("radio")
+      .map((radio) => radio.textContent),
+  ).toEqual([
+    "Elternteil – für mein Kind",
+    "Volljährige:r Schüler:in – für mich",
+    "Schüler:in mit Zustimmung meiner Eltern",
+  ]);
+  // Nothing is chosen for the booker.
+  expect(within(party).queryByRole("radio", { checked: true })).toBeNull();
+  expect((submitButton() as HTMLButtonElement).disabled).toBe(true);
+  expect(openItems().textContent).toBe(
+    "Bitte noch ausfüllen oder bestätigen: Wer bucht",
+  );
+
+  fireEvent.click(
+    within(party).getByRole("radio", {
+      name: "Schüler:in mit Zustimmung meiner Eltern",
+    }),
+  );
+  fireEvent.click(submitButton());
+  expect(sendBooking.mock.calls[0]?.[0].values).toMatchObject({
+    bookingParty: "student-with-consent",
+  });
+});
+
+test("the order summary with subject, slot, length, price and payment sits right before the submit button", async () => {
+  answerAvailability(freeDay);
+  renderBooker("nachhilfe");
+
+  await fillLessonForm();
+  const summary = screen.getByText("Deine Buchung").parentElement!;
+  expect(summary.nextElementSibling).toBe(submitButton());
+  const terms = within(summary);
+  for (const [label, value] of [
+    ["Fach", "Mathematik"],
+    ["Termin", "Mi., 25. November – 10:00 Uhr"],
+    ["Dauer", "60 Minuten"],
+    ["Gesamtpreis", "30,00 €"],
+  ]) {
+    expect(terms.getByText(label!).nextElementSibling?.textContent).toBe(value);
+  }
+  expect(
+    terms.getByText("Zahlung per Rechnung (PayPal oder Überweisung)"),
+  ).toBeDefined();
+});
+
+test("the legal note links the terms, the withdrawal information and the privacy policy", async () => {
+  answerAvailability(freeDay);
+  renderBooker("nachhilfe");
+
+  await fillLessonForm();
+  const href = (name: string) =>
+    screen.getByRole("link", { name }).getAttribute("href");
+  expect(href("AGB")).toBe("/agb");
+  expect(href("Widerrufsbelehrung")).toBe("/agb#widerruf");
+  expect(href("Datenschutzerklärung")).toBe("/datenschutz");
+});
+
+test("the free first meeting asks neither who books nor for an early start, and shows no order summary", async () => {
+  answerAvailability(freeDay);
+  renderBooker("kennenlernen");
+
+  fireEvent.click(await screen.findByRole("button", { name: "10:00 Uhr" }));
+  expect(screen.getByText("Deine Daten")).toBeDefined();
+  expect(
+    screen.queryByRole("radiogroup", { name: "Ich buche als" }),
+  ).toBeNull();
+  expect(screen.queryByRole("checkbox")).toBeNull();
+  expect(screen.queryByText("Deine Buchung")).toBeNull();
 });
 
 test("a booking whose request fails can be sent again", async () => {

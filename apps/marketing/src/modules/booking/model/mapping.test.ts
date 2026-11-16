@@ -11,6 +11,7 @@ const lesson = (change: Record<string, unknown> = {}) =>
     slot: "2099-03-02T09:00:00.000Z",
     duration: 45,
     values: {
+      bookingParty: "parent",
       firstName: "Testa",
       lastName: "Kundin",
       email: "testa.kundin@example.com",
@@ -25,10 +26,27 @@ const lesson = (change: Record<string, unknown> = {}) =>
 const metadata = (submission: BookingSubmission) =>
   buildCalBookingBody(submission).metadata as Record<string, string>;
 
-test("a paid lesson tells Cal.com the policies were accepted", () => {
-  const responses = buildCalBookingBody(lesson())
-    .bookingFieldsResponses as Record<string, unknown>;
-  assert.equal(responses["policies-accepted"], true);
+const responses = (submission: BookingSubmission) =>
+  buildCalBookingBody(submission).bookingFieldsResponses as Record<
+    string,
+    unknown
+  >;
+
+test("a paid lesson with the express request to start early ticks Cal.com's policies-accepted", () => {
+  assert.equal(responses(lesson())["policies-accepted"], true);
+});
+
+test("without the express request to start early, Cal.com's policies-accepted stays unset, even with accepted terms", () => {
+  // Cal.com's confirmation e-mail repeats that field's label: it must never
+  // show a request the customer did not make.
+  for (const earlyPerformanceRequested of [false, "true", undefined]) {
+    const sent = responses(
+      lesson({
+        agreements: { termsAccepted: true, earlyPerformanceRequested },
+      }),
+    );
+    assert.equal("policies-accepted" in sent, false);
+  }
 });
 
 test("a paid lesson records the confirmed agreements in Cal.com's metadata", () => {
@@ -36,6 +54,20 @@ test("a paid lesson records the confirmed agreements in Cal.com's metadata", () 
   assert.equal(recorded.termsAccepted, "true");
   assert.equal(recorded.earlyPerformanceRequested, "true");
   assert.match(recorded.agbVersion ?? "", /^\d{4}-\d{2}-\d{2}$/);
+});
+
+test("who books a paid lesson goes into Cal.com's metadata, never into its booking fields", () => {
+  for (const bookingParty of [
+    "parent",
+    "adult-student",
+    "student-with-consent",
+  ]) {
+    const submission = lesson({
+      values: { ...lesson().values, bookingParty },
+    });
+    assert.equal(metadata(submission).bookingParty, bookingParty);
+    assert.equal("bookingParty" in responses(submission), false);
+  }
 });
 
 test("the metadata records the checked booleans, never a raw value that was sent", () => {
@@ -70,19 +102,14 @@ test("the first meeting carries no agreements", () => {
   assert.equal("policies-accepted" in responses, false);
 });
 
-test("a lesson whose terms were not accepted gets no policies-accepted", () => {
-  const body = buildCalBookingBody(
+test("the metadata records terms that were not accepted as such", () => {
+  const recorded = metadata(
     lesson({
-      agreements: { termsAccepted: false, earlyPerformanceRequested: true },
+      agreements: { termsAccepted: false, earlyPerformanceRequested: false },
     }),
   );
-  const responses = body.bookingFieldsResponses as Record<string, unknown>;
-  assert.equal("policies-accepted" in responses, false);
-  // The metadata still records what was (not) confirmed.
-  assert.equal(
-    (body.metadata as Record<string, string>).termsAccepted,
-    "false",
-  );
+  assert.equal(recorded.termsAccepted, "false");
+  assert.equal(recorded.earlyPerformanceRequested, "false");
 });
 
 test("a lesson asks Cal.com for the chosen length", () => {

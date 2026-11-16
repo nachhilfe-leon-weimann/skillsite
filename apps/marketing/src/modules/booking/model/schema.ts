@@ -2,7 +2,6 @@ import * as z from "zod/mini";
 
 import {
   bookingEvents,
-  startsWithinWithdrawalPeriod,
   type BookingEventKey,
   type BookingSubmission,
 } from "./config";
@@ -90,7 +89,9 @@ export function fieldValueSchema(field: FieldDef) {
     z.refine((entries) => entries.every(isOffered)),
   );
 
-  const filled = z.union([text, selection]);
+  // A single choice is one text value: a list could combine several offered
+  // values into one answer (e.g. two booking parties).
+  const filled = field.multiple ? z.union([text, selection]) : text;
   return preprocess(
     assertValueShape(field),
     field.required ? filled : z.union([empty, filled]),
@@ -196,9 +197,12 @@ function isOfferedDuration(event: BookingEventKey, duration: unknown): boolean {
 /**
  * What the server action checks before a submission may reach Cal.com, in its
  * order: an offered event with a chosen slot, then an offered duration, then the
- * event's fields, then the terms for a paid lesson. The withdrawal notice
- * depends on the clock, so `checkBookingSubmission` adds it. Everything else
- * (the anti-spam fields, unknown keys) passes through untouched.
+ * event's fields, then for a paid lesson the terms and the express request to
+ * start before the withdrawal period ends. Every paid lesson needs that
+ * request, whatever its date: the period may be extended (a weekend or holiday
+ * at its end) or not yet running (no withdrawal information in text form), and
+ * a rescheduled lesson may move into it. Everything else (the anti-spam fields,
+ * unknown keys) passes through untouched.
  */
 export const bookingSubmissionSchema = z
   .looseObject({
@@ -234,14 +238,19 @@ export const bookingSubmissionSchema = z
       }
     }),
     z.superRefine((submission, ctx) => {
-      if (
-        submission.event === "nachhilfe" &&
-        !submission.agreements.termsAccepted
-      ) {
+      if (submission.event !== "nachhilfe") return;
+      if (!submission.agreements.termsAccepted) {
         ctx.addIssue({
           code: "custom",
           path: ["agreements", "termsAccepted"],
           message: "A paid lesson needs the accepted terms.",
+        });
+      }
+      if (!submission.agreements.earlyPerformanceRequested) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["agreements", "earlyPerformanceRequested"],
+          message: "A paid lesson needs the express request to start early.",
         });
       }
     }),
@@ -261,41 +270,32 @@ export type BookingIssue =
  */
 export function checkBookingSubmission(
   submission: BookingSubmission,
-  now: number = Date.now(),
 ): BookingIssue | null {
   const result = bookingSubmissionSchema.safeParse(submission);
+  if (result.success) return null;
 
-  if (!result.success) {
-    const { issues } = result.error;
-    switch (issues[0]?.path[0]) {
-      case "values":
-        return {
-          check: "fields",
-          fields: fieldLabels(
-            submission.event,
-            new Set(
-              issues
-                .filter((issue) => issue.path[0] === "values")
-                .map((issue) => issue.path[1]),
-            ),
+  const { issues } = result.error;
+  const [first] = issues;
+  switch (first?.path[0]) {
+    case "values":
+      return {
+        check: "fields",
+        fields: fieldLabels(
+          submission.event,
+          new Set(
+            issues
+              .filter((issue) => issue.path[0] === "values")
+              .map((issue) => issue.path[1]),
           ),
-        };
-      case "duration":
-        return { check: "duration" };
-      case "agreements":
-        return { check: "terms" };
-      default:
-        return { check: "slot" };
-    }
+        ),
+      };
+    case "duration":
+      return { check: "duration" };
+    case "agreements":
+      return first.path[1] === "earlyPerformanceRequested"
+        ? { check: "withdrawal_notice" }
+        : { check: "terms" };
+    default:
+      return { check: "slot" };
   }
-
-  const { event, slot, agreements } = result.data;
-  if (
-    event === "nachhilfe" &&
-    startsWithinWithdrawalPeriod(slot, now) &&
-    !agreements.earlyPerformanceRequested
-  ) {
-    return { check: "withdrawal_notice" };
-  }
-  return null;
 }

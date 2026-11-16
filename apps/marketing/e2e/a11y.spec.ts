@@ -554,8 +554,8 @@ test.describe("the booking choices", () => {
   }
 
   async function openForm(page: Page, path: string) {
-    // The stub serves its slot on the month's last day; early in the month it
-    // stays outside the 14-day withdrawal window, so no extra consent applies.
+    // The stub serves its slot on the month's last day, outside the regular
+    // 14-day withdrawal period; a paid lesson asks for the early start anyway.
     await freezeTime(page, new Date("2026-11-04T11:00:00Z"));
     await stubAvailability(page);
     const bodies = await holdSubmissions(page);
@@ -593,11 +593,17 @@ test.describe("the booking choices", () => {
     page,
   }) => {
     const bodies = await openForm(page, "/termin");
+    await radio(page, "Elternteil – für mein Kind").click();
     await fillContact(page);
     await radio(page, "Physik").click();
     const submit = page.getByRole("button", {
       name: "Zahlungspflichtig buchen",
     });
+    // Beyond the regular withdrawal period, the early start is still asked for.
+    await expect(submit).toBeDisabled();
+    await page
+      .getByRole("checkbox", { name: /Ich verlange ausdrücklich/ })
+      .check();
     await expect(submit).toBeEnabled();
     // Every key on a choice, with the form complete: nothing is sent.
     await radio(page, "Microsoft Teams").focus();
@@ -633,6 +639,7 @@ test.describe("the booking choices", () => {
     await submit.click();
     await expect.poll(() => bodies.length).toBe(1);
     expect(draftValues(bodies[0]!)).toMatchObject({
+      bookingParty: "parent",
       location: "discord-video",
       subject: "Physik",
     });
@@ -756,7 +763,7 @@ test("the Discord buttons are named by their text only", async ({ page }) => {
  * is booked.
  */
 test.describe("the integrated keyboard paths", () => {
-  /** 2026-11-04 12:00 in Berlin: a slot up to 18 November needs the withdrawal consent. */
+  /** 2026-11-04 12:00 in Berlin. */
   const NOVEMBER = new Date("2026-11-04T11:00:00Z");
   const FREE_DAYS = { "2026-11": ["2026-11-05", "2026-11-12"] };
 
@@ -918,6 +925,15 @@ test.describe("the integrated keyboard paths", () => {
         await expect(formTitle(page)).toBeFocused();
         await press(page, "Shift+Tab");
         await expect(back(page)).toBeFocused();
+        // Who books comes first, with nothing chosen: Tab enters at the first option.
+        await press(page, "Tab");
+        const parent = radio(page, "Elternteil – für mein Kind");
+        await expect(parent).toBeFocused();
+        await expect(parent).toHaveAttribute("aria-checked", "false");
+        await expect(openItems(page)).toContainText("Wer bucht");
+        await press(page, "Space");
+        await expect(parent).toHaveAttribute("aria-checked", "true");
+        await expect(openItems(page)).not.toContainText("Wer bucht");
         await press(page, "Tab");
         await expect(textbox(page, "Vorname")).toBeFocused();
         await page.keyboard.type("Erika");
@@ -979,6 +995,8 @@ test.describe("the integrated keyboard paths", () => {
         await expect(submit).toBeEnabled();
         await press(page, "Tab");
         await expect(focused(page)).toHaveAccessibleName("AGB");
+        await press(page, "Tab");
+        await expect(focused(page)).toHaveAccessibleName("Widerrufsbelehrung");
         await press(page, "Tab");
         await expect(focused(page)).toHaveAccessibleName(
           "Datenschutzerklärung",
@@ -1106,6 +1124,7 @@ test.describe("the integrated keyboard paths", () => {
       await press(page, "Tab");
       await expect(slot(page)).toBeFocused();
       await press(page, "Enter");
+      await radio(page, "Volljährige:r Schüler:in – für mich").click();
       await textbox(page, "Vorname").fill("Erika");
       await textbox(page, "Nachname").fill("Beispiel");
       await textbox(page, "E-Mail").fill("erika@example.com");
@@ -1139,7 +1158,11 @@ test.describe("the integrated keyboard paths", () => {
         event: "nachhilfe",
         duration: 90,
         slot: "2026-11-12T10:00:00.000+01:00",
-        values: { location: "discord-video", subject: "Physik" },
+        values: {
+          bookingParty: "adult-student",
+          location: "discord-video",
+          subject: "Physik",
+        },
         agreements: { termsAccepted: true, earlyPerformanceRequested: true },
       });
 
@@ -1190,9 +1213,14 @@ test.describe("the integrated keyboard paths", () => {
         await expect(title).toHaveText(
           /^Deine Daten\s*Do\., 5\. November – 10:00 Uhr$/,
         );
-        // The title is no tab stop: Tab goes on into the form, Shift+Tab to Back.
+        // The title is no tab stop: Tab goes on into the form (the paid lesson
+        // asks who books first), Shift+Tab to Back.
         await press(page, "Tab");
-        await expect(textbox(page, "Vorname")).toBeFocused();
+        await expect(
+          path === "/termin"
+            ? radio(page, "Elternteil – für mein Kind")
+            : textbox(page, "Vorname"),
+        ).toBeFocused();
         await press(page, "Shift+Tab");
         await expect(back(page)).toBeFocused();
 
@@ -1213,6 +1241,7 @@ test.describe("the integrated keyboard paths", () => {
       const { submissions } = await openBooker(page, "/termin");
       await slot(page).focus();
       await press(page, "Enter");
+      await radio(page, "Elternteil – für mein Kind").click();
       await textbox(page, "Vorname").fill("Erika");
       await textbox(page, "Nachname").fill("Beispiel");
       await textbox(page, "E-Mail").fill("erika@example.com");
