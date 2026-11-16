@@ -187,9 +187,11 @@ export function AgbProse() {
           Erscheint die lernende Person verspätet, endet der Termin zur
           vereinbarten Zeit, und es wird die vereinbarte Dauer berechnet.
           Verspätet sich der Anbieter oder fällt Unterricht wegen einer
-          technischen Störung ganz oder teilweise aus, wird die ausgefallene
-          Zeit nach Wahl der Kundin oder des Kunden nachgeholt oder nicht
-          berechnet.
+          technischen Störung aufseiten des Anbieters oder der genutzten
+          Plattform ganz oder teilweise aus, wird die ausgefallene Zeit nach
+          Wahl der Kundin oder des Kunden nachgeholt oder nicht berechnet; das
+          gilt auch, wenn sich nicht feststellen lässt, auf welcher Seite die
+          Störung liegt.
         </ProseP>
         <ProseP>
           Der Anbieter sagt einen Termin nur bei eigener Krankheit, einer
@@ -197,8 +199,11 @@ export function AgbProse() {
           vorhersehbaren Hinderungsgrund ab und teilt dies unverzüglich mit. Er
           bietet nach Möglichkeit einen Ersatztermin an; die Kundin oder der
           Kunde kann ihn annehmen oder den Termin ohne Kosten entfallen lassen.
-          Für den Termin vorausgezahlte Beträge werden dem Guthaben
-          gutgeschrieben.
+          Ein Guthaben aus einer Vorauszahlung wird für den abgesagten Termin
+          nicht belastet. Wurde der Termin bereits bezahlt, wird der Betrag auf
+          einen angenommenen Ersatztermin angerechnet; entfällt der Termin,
+          erstattet der Anbieter den Betrag unverzüglich oder schreibt ihn auf
+          Wunsch der Kundin oder des Kunden dem Guthaben gut.
         </ProseP>
         <ProseP>
           Das gesetzliche Widerrufsrecht nach {sectionRef("widerruf")} bleibt
@@ -262,7 +267,10 @@ export function AgbProse() {
           Verbraucherinnen und Verbrauchern steht bei Verträgen, die im
           Fernabsatz (z. B. per E-Mail, Telefon, Videoanruf oder online)
           geschlossen werden, ein Widerrufsrecht nach Maßgabe der folgenden
-          Widerrufsbelehrung zu.
+          Widerrufsbelehrung zu. Das Widerrufsrecht besteht für die
+          Nachhilfevereinbarung und für jeden Termin gesondert; die
+          Widerrufsfrist beginnt jeweils mit Abschluss des betreffenden
+          Vertrags.
         </ProseP>
         <DocSubSection title="Widerrufsbelehrung">
           <ProseP>
@@ -363,6 +371,10 @@ export function AgbProse() {
           ermöglicht und auf deren Einhaltung die Kundin oder der Kunde
           regelmäßig vertraut). In diesem Fall ist die Haftung auf den
           vertragstypischen, vorhersehbaren Schaden begrenzt.
+        </ProseP>
+        <ProseP>
+          Die Haftung nach zwingenden gesetzlichen Vorschriften, insbesondere
+          nach dem Produkthaftungsgesetz, bleibt unberührt.
         </ProseP>
       </AgbSection>
 
