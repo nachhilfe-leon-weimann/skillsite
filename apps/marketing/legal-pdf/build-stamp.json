@@ -1,0 +1,9 @@
+{
+  "sources": "dcebcb065374c4d3bb3af6b586534fc69e2f314f8013decf48f1a6bb45b22a3b",
+  "effectiveDate": "2026-11-16",
+  "typst": "typst 0.15.1 (unknown commit)",
+  "pdfs": {
+    "/rechtliches/agb.pdf": "444e3e43637d4688f81dcf73f9c7b3916e55cdb3cbba3149cd33fee189e6f236",
+    "/rechtliches/widerrufsbelehrung.pdf": "1c13501a4010a9d4e32808c434ab05eaa5932265a4aa1f98cbf15d784db29114"
+  }
+}

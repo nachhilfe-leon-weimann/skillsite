@@ -1,6 +1,10 @@
 import { DocHero, DocShell } from "@/components/docs/doc-components";
 import { TextLink } from "@skillsite/ui/primitives/link";
-import { agbContact, agbEffectiveDate, agbSections } from "@/content/agb";
+import {
+  agbContact,
+  agbEffectiveDateLabel,
+  agbSections,
+} from "@/content/agb";
 import { AgbProse, agbPage } from "@/content/legal/agb";
 import { pageMetadata } from "@/lib/metadata";
 import { CalendarDays, Mail, ScrollText } from "lucide-react";
@@ -12,11 +16,6 @@ export const metadata = pageMetadata({
 
 export default function AgbPage() {
   const { hero } = agbPage;
-  const effectiveDate = agbEffectiveDate.toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 
   return (
     <DocShell
@@ -27,11 +26,12 @@ export default function AgbPage() {
           icon={ScrollText}
           title={hero.title}
           lead={hero.lead}
+          downloads={hero.downloads}
           facts={[
             {
               icon: CalendarDays,
               label: hero.facts.effectiveDate,
-              children: <>{effectiveDate}</>,
+              children: <>{agbEffectiveDateLabel}</>,
             },
             {
               icon: Mail,

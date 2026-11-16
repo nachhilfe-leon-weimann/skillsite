@@ -26,6 +26,9 @@ build/
 # turborepo
 .turbo/
 
+# legal PDFs: the data `just legal-pdfs` generates for Typst
+apps/marketing/legal-pdf/generated/
+
 # storybook
 storybook-static/
 *storybook.log

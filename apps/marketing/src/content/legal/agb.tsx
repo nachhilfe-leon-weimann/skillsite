@@ -1,13 +1,14 @@
 import {
+  DocDownloadLink,
   DocIndentBlock,
   DocSection,
   DocSubSection,
 } from "@/components/docs/doc-components";
 import { ProseP } from "@skillsite/ui/typography/prose";
 import { TextLink } from "@skillsite/ui/primitives/link";
-import { agbContact, agbSections } from "@/content/agb";
+import { agbContact, agbSectionRef, agbSections } from "@/content/agb";
 import { legalContact } from "@/content/legal-contact";
-import { SITE_URL, routes } from "@/lib/routes";
+import { legalPdfs, printedAddress, routes } from "@/lib/routes";
 
 /** /agb around its prose: metadata and hero. */
 export const agbPage = {
@@ -24,6 +25,18 @@ export const agbPage = {
       effectiveDate: "Stand",
       contact: "Kontakt",
     },
+    downloads: [
+      { label: "AGB als PDF", href: legalPdfs.agb },
+      {
+        label: "Widerrufsbelehrung und Formular als PDF",
+        href: legalPdfs.withdrawal,
+      },
+    ],
+  },
+  /** Below the model withdrawal form; the withdrawal PDF holds the form on its last page. */
+  formPdf: {
+    label: "Muster-Widerrufsformular als PDF",
+    href: legalPdfs.withdrawal,
   },
 };
 
@@ -42,18 +55,11 @@ function AgbSection({
   );
 }
 
-/** Names a section in running text by its number and title, e.g. `Abschnitt 4 („Termine …“)`. */
-function sectionRef(id: string) {
-  const section = agbSections.sections.find((entry) => entry.id === id);
-  if (!section) throw new Error(`Unknown AGB section: ${id}`);
-  return `Abschnitt ${agbSections.number(id)} („${section.title}“)`;
-}
-
 /** The provider's postal address as the withdrawal notice names it. */
 const postalAddress = `${legalContact.businessName}, ${legalContact.street}, ${legalContact.city}, ${legalContact.country}`;
 
 /** The AGB's address without the scheme, as printed in running text. */
-const agbAddress = `${SITE_URL.replace(/^https:\/\//, "")}${routes.agb}`;
+const agbAddress = printedAddress(routes.agb);
 
 /** The AGB's sections, in order, as /agb renders them. */
 export function AgbProse() {
@@ -206,7 +212,7 @@ export function AgbProse() {
           Wunsch der Kundin oder des Kunden dem Guthaben gut.
         </ProseP>
         <ProseP>
-          Das gesetzliche Widerrufsrecht nach {sectionRef("widerruf")} bleibt
+          Das gesetzliche Widerrufsrecht nach {agbSectionRef("widerruf")} bleibt
           von diesen Regeln unberührt.
         </ProseP>
       </AgbSection>
@@ -257,7 +263,7 @@ export function AgbProse() {
           Es besteht keine Mindestlaufzeit. Beide Seiten können die
           Nachhilfevereinbarung jederzeit formlos – etwa per E-Mail – kündigen.
           Bereits gebuchte Termine bleiben bestehen, soweit sie nicht nach{" "}
-          {sectionRef("termine")} abgesagt werden. Gesetzliche Kündigungsrechte
+          {agbSectionRef("termine")} abgesagt werden. Gesetzliche Kündigungsrechte
           bleiben unberührt.
         </ProseP>
       </AgbSection>
@@ -355,6 +361,11 @@ export function AgbProse() {
             ]}
             footnote="(*) Unzutreffendes streichen."
           />
+          <ProseP>
+            <DocDownloadLink href={agbPage.formPdf.href}>
+              {agbPage.formPdf.label}
+            </DocDownloadLink>
+          </ProseP>
         </DocSubSection>
       </AgbSection>
 
