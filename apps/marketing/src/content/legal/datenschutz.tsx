@@ -166,7 +166,11 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             Verbindung ist sowohl zwischen Ihrem Browser und Cloudflare als auch
             zwischen Cloudflare und meinem Server verschlüsselt; zur Prüfung und
             Weiterleitung werden die Daten in den Systemen von Cloudflare
-            kurzzeitig entschlüsselt verarbeitet.
+            kurzzeitig entschlüsselt verarbeitet. Daneben nutzt Cloudflare nach
+            eigenen Angaben aus dem Datenverkehr abgeleitete Informationen, etwa
+            Einschätzungen zu IP-Adressen als mögliche Angriffsquelle, in
+            eigener Verantwortung, um sein Netzwerk zu betreiben und vor
+            Angriffen zu schützen.
           </ProseP>
           <ProseP>
             Zweck ist der Schutz von Website und Anwendungen vor Angriffen und
@@ -220,12 +224,12 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           <ProseP>
             Um Datenverlust vorzubeugen, erstelle ich regelmäßig
             Sicherungskopien der Datenbanken auf meinem Server (SkillForge,
-            SkillBot und Webanalyse Umami). Die Sicherungen werden bereits auf
-            meinem Server verschlüsselt und anschließend im Speicherdienst
-            Cloudflare R2 abgelegt, und zwar in einem Speicherbereich, für den
+            SkillBot und Webanalyse Umami) und lege sie im Speicherdienst
+            Cloudflare R2 ab, und zwar in einem Speicherbereich, für den
             Cloudflare die Speicherung innerhalb der Europäischen Union
-            zusichert. Die Schlüssel liegen allein bei mir; Cloudflare kann die
-            Inhalte der Sicherungen nicht lesen.
+            zusichert. Die Sicherungen werden verschlüsselt übertragen und von
+            Cloudflare verschlüsselt gespeichert; Cloudflare verarbeitet sie
+            ausschließlich in meinem Auftrag.
           </ProseP>
           <ProseP>
             Sicherungen werden nach 30 Tagen automatisch gelöscht. Daten, die
@@ -256,9 +260,9 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             />
           </DocDetailGrid>
           <ProseP>
-            Die Logfiles werden automatisch rotiert und innerhalb weniger Tage
-            überschrieben; eine Zusammenführung mit anderen Daten findet nicht
-            statt.
+            Die Logfiles werden automatisch rotiert und überschrieben, sobald
+            eine festgelegte Größe erreicht ist; eine Zusammenführung mit
+            anderen Daten findet nicht statt.
           </ProseP>
           <DocLegalBasis>
             Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer sicheren
@@ -339,12 +343,12 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             vorgeschaltete Dienst Cloudflare (siehe <SectionRef id="hosting" />)
             auf dieser Website und den zugehörigen Domains technisch notwendige
             Cookies setzen, insbesondere „__cf_bm“ (Erkennung automatisierter
-            Zugriffe, Laufzeit 30 Minuten) und „cf_clearance“ (Nachweis einer
-            bestandenen Sicherheitsprüfung, Laufzeit in der Standardeinstellung
-            30 Minuten). Diese Cookies dienen ausschließlich der Sicherheit und
-            werden nicht für Analyse- oder Werbezwecke verwendet; nach Angaben
-            von Cloudflare werden Nutzer damit nicht über verschiedene Websites
-            hinweg verfolgt.
+            Zugriffe, Laufzeit 30 Minuten nach dem letzten Aufruf) und
+            „cf_clearance“ (Nachweis einer bestandenen Sicherheitsprüfung,
+            Laufzeit in der Standardeinstellung 30 Minuten). Diese Cookies
+            dienen ausschließlich der Sicherheit und werden nicht für Analyse-
+            oder Werbezwecke verwendet; nach Angaben von Cloudflare werden Sie
+            damit nicht über verschiedene Websites hinweg verfolgt.
           </ProseP>
           <ProseP>
             Diese Speicherungen und Zugriffe sind unbedingt erforderlich, um die
@@ -382,8 +386,8 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           statistisch auszuwerten und mein Angebot zu verbessern. Umami betreibe
           ich selbst auf meinem eigenen Server ({analyticsDomain}, Hostinger-VPS
           in Frankfurt am Main). Umami überträgt keine Daten an einen externen
-          Analysedienst. Die Aufrufe laufen wie bei der Website über Cloudflare
-          (siehe <SectionRef id="hosting" />
+          Analysedienst. Die Anfragen an Umami laufen wie alle Aufrufe der
+          Website über Cloudflare (siehe <SectionRef id="hosting" />
           ). Erfasst werden:
         </ProseP>
         <DocList items={umamiCollectedData} />
@@ -565,8 +569,8 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             SkillForge und die zugehörige Datenbank (PostgreSQL) laufen auf
             meinem eigenen virtuellen Server bei Hostinger in Frankfurt am Main;
             die Daten werden damit innerhalb der EU gespeichert. Der Zugriff auf
-            SkillForge läuft über Cloudflare, verschlüsselte Sicherungen der
-            Datenbank liegen bei Cloudflare R2 in der EU (jeweils siehe{" "}
+            SkillForge läuft über Cloudflare, Sicherungen der Datenbank liegen
+            bei Cloudflare R2 in der EU (jeweils siehe{" "}
             <SectionRef id="hosting" />
             ).
           </ProseP>
@@ -582,8 +586,8 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           <ProseP>
             SkillBot läuft ebenfalls auf meinem eigenen virtuellen Server bei
             Hostinger in Frankfurt am Main. Seine Daten liegen in der dortigen
-            Datenbank und werden wie die übrigen Daten verschlüsselt gesichert
-            (siehe <SectionRef id="hosting" />
+            Datenbank und werden wie die übrigen Daten gesichert (siehe{" "}
+            <SectionRef id="hosting" />
             ).
           </ProseP>
         </DocSubSection>
@@ -621,14 +625,14 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
         <DocList items={dataRecipientCategories} />
         <ProseP>
           Eine Verarbeitung außerhalb der EU bzw. des EWR findet nur wie oben
-          beschrieben statt, und zwar in den USA: bei Cal.com auf Grundlage der
-          EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO), bei
-          Cloudflare, Microsoft, Discord und WhatsApp/Meta auf Grundlage des
-          EU-US Data Privacy Frameworks (Art. 45 DSGVO). Cloudflare kann
-          Anfragen außerdem in weiteren Rechenzentren seines weltweiten
-          Netzwerks verarbeiten, insbesondere wenn Sie die Website von außerhalb
-          der EU aufrufen; für Übermittlungen, die nicht vom Data Privacy
-          Framework erfasst sind, enthält der Vertrag mit Cloudflare die
+          beschrieben statt, und zwar vor allem in den USA: bei Cal.com auf
+          Grundlage der EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c
+          DSGVO), bei Cloudflare, Microsoft, Discord und WhatsApp/Meta auf
+          Grundlage des EU-US Data Privacy Frameworks (Art. 45 DSGVO).
+          Cloudflare kann Anfragen außerdem in weiteren Rechenzentren seines
+          weltweiten Netzwerks verarbeiten, insbesondere wenn Sie die Website
+          von außerhalb der EU aufrufen; für Übermittlungen, die nicht vom Data
+          Privacy Framework erfasst sind, enthält der Vertrag mit Cloudflare die
           EU-Standardvertragsklauseln.
         </ProseP>
       </PrivacySection>
@@ -698,7 +702,8 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           schützen. Die Übertragung von Daten an diese Website erfolgt
           ausschließlich TLS-verschlüsselt (HTTPS), sowohl zwischen Ihrem
           Browser und Cloudflare als auch zwischen Cloudflare und meinem Server.
-          Datensicherungen werden verschlüsselt, bevor sie ausgelagert werden.
+          Datensicherungen werden verschlüsselt übertragen und verschlüsselt
+          gespeichert.
         </ProseP>
       </PrivacySection>
 

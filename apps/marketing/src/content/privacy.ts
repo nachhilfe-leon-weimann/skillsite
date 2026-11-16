@@ -117,7 +117,7 @@ export const hostingProviders = [
     shortName: "Hostinger",
     seat: "61 Lordou Vironos Str., 6023 Larnaca, Zypern",
     services:
-      "Virtueller Server (VPS) für diese Website, SkillForge und SkillBot einschließlich ihrer Datenbank (PostgreSQL) sowie für die Webanalyse Umami; Serverstandort Frankfurt am Main",
+      "Virtueller Server (VPS) für diese Website, SkillForge, SkillBot und die Webanalyse Umami einschließlich der zugehörigen Datenbanken (PostgreSQL); Serverstandort Frankfurt am Main",
     transferNote: `Die Verarbeitung findet innerhalb der EU statt. ${dpaSentence(
       "Hostinger International Ltd.",
     )}`,
@@ -128,10 +128,10 @@ export const hostingProviders = [
     shortName: "Cloudflare",
     seat: "101 Townsend St., San Francisco, CA 94107, USA",
     services:
-      "DNS sowie vorgeschaltetes Netzwerk zur Auslieferung und zum Schutz vor Angriffen (Reverse Proxy, CDN) für diese Website, SkillForge und die Webanalyse Umami; außerdem Speicherung verschlüsselter Datensicherungen (Cloudflare R2, Speicherort EU)",
+      "DNS sowie vorgeschaltetes Netzwerk zur Auslieferung und zum Schutz vor Angriffen (Reverse Proxy, CDN) für diese Website, SkillForge und die Webanalyse Umami; außerdem Speicherung von Datensicherungen (Cloudflare R2, Speicherort EU)",
     transferNote: `${dpaSentence(
       "Cloudflare, Inc.",
-    )} Er ist Bestandteil der Cloudflare-Nutzungsbedingungen. Eine Verarbeitung in den USA und an weiteren Standorten des weltweiten Cloudflare-Netzwerks kann stattfinden. Die Übermittlung in die USA stützt sich auf den Angemessenheitsbeschluss der EU-Kommission zum EU-US Data Privacy Framework (Art. 45 DSGVO), unter dem Cloudflare zertifiziert ist; für davon nicht erfasste Übermittlungen enthält der Vertrag die EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).`,
+    )} Er ist Bestandteil der Cloudflare-Nutzungsbedingungen. Eine Verarbeitung in den USA und an weiteren Standorten des weltweiten Cloudflare-Netzwerks kann stattfinden. Die Übermittlung in die USA stützt sich auf den Angemessenheitsbeschluss der EU-Kommission zum EU-US Data Privacy Framework (Art. 45 DSGVO), unter dem Cloudflare zertifiziert ist; für davon nicht erfasste Übermittlungen enthält der Vertrag die EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO). Den Vertrag einschließlich der Standardvertragsklauseln veröffentlicht Cloudflare unter www.cloudflare.com/cloudflare-customer-dpa.`,
     privacyUrl: "https://www.cloudflare.com/privacypolicy/",
   },
 ];
@@ -181,14 +181,15 @@ export const skillBotDataItems = [
 
 export const dataRecipientCategories = [
   "Auftragsverarbeiter nach Art. 28 DSGVO: Hosting (Hostinger), Auslieferung, Schutz vor Angriffen und Datensicherung (Cloudflare), Terminverwaltung (Cal.com), Zeiterfassung und Buchhaltung (Clockodo, sevDesk), Kommunikation (Microsoft)",
-  "eigenständig Verantwortliche: PayPal, Kreditinstitute, Kleinanzeigen sowie die verlinkten Plattformen",
+  "eigenständig Verantwortliche: PayPal, Kreditinstitute, Kleinanzeigen, Cloudflare (soweit es Daten zur Sicherheit seines Netzwerks für eigene Zwecke verarbeitet) sowie die verlinkten Plattformen",
   "Behörden und öffentliche Stellen, soweit eine gesetzliche Verpflichtung besteht",
 ];
 
 export const retentionItems = [
-  "Server-Logfiles: kurzfristig, automatische Rotation innerhalb weniger Tage",
+  "Server-Logfiles: kurzfristig, automatische Rotation nach Größe",
   "IP-Adressen zur Missbrauchsabwehr bei Formular- und Buchungsanfragen: höchstens 24 Stunden, ausschließlich im Arbeitsspeicher",
-  "Verbindungsdaten im Netzwerk von Cloudflare: nur so lange, wie es für Auslieferung, Sicherheit und Fehleranalyse erforderlich ist; eine feste Frist nennt Cloudflare hierfür nicht. Angaben zu abgewehrten oder geprüften Zugriffen sind in meinem Cloudflare-Konto bis zu 31 Tage einsehbar",
+  "Verbindungsdaten im Netzwerk von Cloudflare: nur so lange, wie es für Auslieferung, Sicherheit und Fehleranalyse erforderlich ist; eine feste Frist nennt Cloudflare hierfür nicht",
+  "Angaben zu abgewehrten oder geprüften Zugriffen in meinem Cloudflare-Konto: bis zu 31 Tage einsehbar",
   "Sicherheits-Cookies von Cloudflare: kurzlebig, in der Standardeinstellung 30 Minuten",
   "Umami-Statistikdaten: pseudonymisiert; eine Wiedererkennung einzelner Besucher über den Monatswechsel hinaus ist ausgeschlossen",
   "Kontakt- und Buchungsanfragen: bis zur Erledigung, danach Löschung, sofern keine gesetzlichen Aufbewahrungspflichten bestehen",
