@@ -3,6 +3,7 @@ import { beforeEach, test, vi } from "vitest";
 
 import { ANTI_SPAM } from "../model/config";
 import { createRateLimiter } from "./rate-limit";
+import { SWEEP_INTERVAL_MS } from "./sweeper";
 
 const { short, daily } = ANTI_SPAM.rateLimit;
 const MINUTE = 60_000;
@@ -131,6 +132,27 @@ test("a recorded attempt of a known address pushes no other address out", () => 
   // "a" still counts its attempt at 0.
   assert.deepEqual(limiter.check("a", 250), { ok: true });
   assert.equal(limiter.check("a", 260).ok, false);
+});
+
+test("an address is forgotten after the longest window without another request", () => {
+  vi.useFakeTimers();
+  try {
+    const limiter = createRateLimiter({
+      windows: [short, daily],
+      maxClients: ANTI_SPAM.rateLimit.maxClients,
+    });
+    limiter.check("192.0.2.20");
+    assert.equal(limiter.trackedClients(), 1);
+
+    vi.advanceTimersByTime(daily.windowMs - 1);
+    assert.equal(limiter.trackedClients(), 1);
+
+    // No further check(): only the sweep can forget it.
+    vi.advanceTimersByTime(1 + SWEEP_INTERVAL_MS);
+    assert.equal(limiter.trackedClients(), 0);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 test("an oversized address header is tracked under a bounded key", () => {
