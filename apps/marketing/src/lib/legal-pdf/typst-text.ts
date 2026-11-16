@@ -1,27 +1,32 @@
 /*
  * Reads the paragraphs of a legal PDF from its Typst source, so a test can compare them with /agb without Typst
- * (which CI does not have). It understands exactly the markup legal-pdf/ uses and throws on anything else, so a new
- * construct cannot drop text silently:
+ * (which CI does not have). It understands exactly the markup legal-pdf/ uses and throws on anything else, so no
+ * construct can print text the comparison does not see:
  *
- * - paragraphs separated by blank lines; `= ` and `== ` headings
- * - `#include "<file>"`, also inside a call such as `#notice-box(include "<file>")`: the file's paragraphs
+ * - paragraphs separated by blank lines; `= ` and `== ` headings; `//` comments
  * - `#<name>.<field>...`: a value of the generated data (`#provider.email`, `#agb.sections.termine.heading`)
  * - `#web-link(<address>)[<text>]`: the text; the address the PDF prints after it is PDF-only
  * - `#box-title[...]`, `#form-note[...]`: their text
  * - `#fill-line`, `#write-line`: lines to write on, no text
  * - `*strong*` and the escape `\*`
- * - whole lines of layout: `//` comments, `#import`, `#show`, `#set`, `#let`, `#v(...)`, `#pagebreak()`, also
- *   when their parentheses span several lines
+ * - lines of their own: `#include "<file>"` or `#notice-box(include "<file>")`, which stand for the file's
+ *   paragraphs; `#import "<file>": *`; `#v(<length>)`; `#pagebreak()`; `#set ...(...)` and the document's
+ *   `#show: ...(...)`, whose parentheses may span several lines
+ *
+ * Show rules with a selector (`#show "Anbieter": ...`) and `#let` belong in template.typ, which this does not read.
  */
 
 /** Calls whose content block is text. */
 const TEXT_WRAPPERS = ["box-title", "form-note"];
 /** Values without text. */
 const LAYOUT_ATOMS = ["fill-line", "write-line"];
-const LAYOUT_LINE = /^#(import|show|set|let|v|pagebreak)\b/;
-const INCLUDE = /\binclude "([^"]+)"/;
+/** Whole lines without text. */
+const LAYOUT_LINE = /^#(?:import "[^"]+": \*|v\([^()]*\)|pagebreak\(\))$/;
+/** The start of a `#set` rule or the document's show-everything rule; it ends where its brackets close. */
+const RULE_START = /^#(?:set [\w.-]+\(|show: [\w.-]+\()/;
+const INCLUDE_LINE = /^#(?:include "([^"]+)"|notice-box\(include "([^"]+)"\))$/;
 
-/** Counts unclosed parentheses and brackets, to find where a multi-line layout line ends. */
+/** Counts unclosed parentheses and brackets. */
 function openBrackets(line: string): number {
   let depth = 0;
   for (const char of line) {
@@ -29,6 +34,12 @@ function openBrackets(line: string): number {
     if (char === ")" || char === "]") depth -= 1;
   }
   return depth;
+}
+
+/** A line without its `//` comment (at the start or after a space). */
+function stripComment(line: string): string {
+  const comment = /(^|\s)\/\//.exec(line);
+  return (comment ? line.slice(0, comment.index) : line).trim();
 }
 
 /** Looks up `provider.email` or `agb.sections.termine.ref` in the generated data. */
@@ -59,7 +70,7 @@ function resolveInline(markup: string, data: unknown): string {
     .replace(/#([a-zA-Z]\w*(?:\.[a-zA-Z]\w*)+)/g, (_, reference: string) =>
       lookUp(data, reference),
     );
-  const unknown = /#[\w-]+/.exec(text);
+  const unknown = /#[\w-]*/.exec(text);
   if (unknown)
     throw new Error(
       `Unsupported Typst markup "${unknown[0]}" in: ${markup}. Teach src/lib/legal-pdf/typst-text.ts what it prints.`,
@@ -88,37 +99,53 @@ export function typstParagraphs(
     : "";
   const paragraphs: string[] = [];
   let block: string[] = [];
-  let layoutDepth = 0;
+  let ruleDepth = 0;
 
   const flush = () => {
     const text = resolveInline(block.join(" "), data);
     if (text) paragraphs.push(text);
     block = [];
   };
+  const fail = (line: string, reason: string): never => {
+    throw new Error(`${file}: ${reason}: ${line}`);
+  };
 
   for (const rawLine of read(file).split("\n")) {
-    const line = rawLine.trim();
-    if (layoutDepth > 0) {
-      layoutDepth += openBrackets(line);
+    const line = stripComment(rawLine);
+    if (ruleDepth > 0) {
+      ruleDepth += openBrackets(line);
+      if (ruleDepth < 0 || (ruleDepth === 0 && !/[)\]]$/.test(line)))
+        fail(line, "text after a rule");
       continue;
     }
-    if (line.startsWith("//")) continue;
-    if (LAYOUT_LINE.test(line)) {
-      layoutDepth = Math.max(0, openBrackets(line));
-      // `#v(0.8em)` may share its line with nothing else; a layout line never carries text.
+    if (line === "") {
+      if (rawLine.trim() === "") flush();
       continue;
     }
-    const include = INCLUDE.exec(line);
+    if (LAYOUT_LINE.test(line)) continue;
+    if (RULE_START.test(line)) {
+      ruleDepth = openBrackets(line);
+      if (ruleDepth === 0 && !line.endsWith(")"))
+        fail(line, "text after a rule");
+      continue;
+    }
+    const include = INCLUDE_LINE.exec(line);
     if (include) {
       flush();
       paragraphs.push(
-        ...typstParagraphs(`${directory}${include[1]}`, read, data),
+        ...typstParagraphs(
+          `${directory}${include[1] ?? include[2]}`,
+          read,
+          data,
+        ),
       );
       continue;
     }
-    if (line === "") flush();
-    else block.push(line);
+    if (/^#(?:show|let|set|import|include)\b|\binclude\b/.test(line))
+      fail(line, "markup this reader cannot follow");
+    block.push(line);
   }
+  if (ruleDepth !== 0) throw new Error(`${file}: a rule is never closed`);
   flush();
   return paragraphs;
 }

@@ -28,6 +28,8 @@ build/
 
 # legal PDFs: the data `just legal-pdfs` generates for Typst
 apps/marketing/legal-pdf/generated/
+# Typst previews (`typst watch`) next to the sources; the built PDFs live in public/rechtliches/
+apps/marketing/legal-pdf/**/*.pdf
 
 # storybook
 storybook-static/

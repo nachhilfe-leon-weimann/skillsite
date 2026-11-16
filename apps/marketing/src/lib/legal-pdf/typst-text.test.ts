@@ -31,8 +31,8 @@ test("reads paragraphs, headings, data, includes and wrappers as the PDF prints 
       "",
       "Siehe #web-link(site.prices)[Preise] und (\\*) *fett*.",
       "",
-      "#v(1em)",
-      '#notice-box(breakable: false, include "parts/part.typ")',
+      "#v(1em) // a gap (before the form",
+      '#notice-box(include "parts/part.typ")',
     ].join("\n"),
     "parts/part.typ": [
       '#import "../template.typ": *',
@@ -66,4 +66,26 @@ test("refuses markup it cannot read instead of dropping its text", () => {
   expect(() =>
     typstParagraphs("doc.typ", read({ "doc.typ": "An #provider.phone" }), data),
   ).toThrow(/#provider.phone names no text/);
+});
+
+test("refuses lines that would print text the comparison does not see", () => {
+  const paragraphs = (source: string) =>
+    typstParagraphs(
+      "doc.typ",
+      read({ "doc.typ": source, "part.typ": "Teil" }),
+      data,
+    );
+  for (const source of [
+    "#v(0.8em) Zusätzlich gilt: nichts.",
+    "#pagebreak() Text",
+    "#set par(justify: false) Text",
+    '#show "Anbieter": "Auftragnehmer"',
+    "#let extra = [Text]",
+    '#notice-box(title: [Extra], include "part.typ")',
+    'Text #include "part.typ"',
+    "#set par(\n  justify: false,\n) Text",
+  ])
+    expect(() => paragraphs(source), source).toThrow();
+  expect(() => paragraphs("#set par(justify: false")).toThrow(/never closed/);
+  expect(paragraphs('#notice-box(include "part.typ")')).toEqual(["Teil"]);
 });

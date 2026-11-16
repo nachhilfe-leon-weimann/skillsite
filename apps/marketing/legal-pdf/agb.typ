@@ -43,9 +43,9 @@ Bei einer späteren Absage oder wenn die lernende Person nicht erscheint, bleibt
 
 Kein Ausfallhonorar wird berechnet, wenn die Absage auf einem wichtigen, nicht zu vertretenden und nicht vorhersehbaren Grund beruht, etwa einer plötzlichen Erkrankung der lernenden Person, und der Termin unverzüglich abgesagt wird. Ein ärztliches Attest ist dafür nicht erforderlich.
 
-Erscheint die lernende Person verspätet, endet der Termin zur vereinbarten Zeit, und es wird die vereinbarte Dauer berechnet. Verspätet sich der Anbieter oder fällt Unterricht wegen einer technischen Störung ganz oder teilweise aus, wird die ausgefallene Zeit nach Wahl der Kundin oder des Kunden nachgeholt oder nicht berechnet.
+Erscheint die lernende Person verspätet, endet der Termin zur vereinbarten Zeit, und es wird die vereinbarte Dauer berechnet. Verspätet sich der Anbieter oder fällt Unterricht wegen einer technischen Störung aufseiten des Anbieters oder der genutzten Plattform ganz oder teilweise aus, wird die ausgefallene Zeit nach Wahl der Kundin oder des Kunden nachgeholt oder nicht berechnet; das gilt auch, wenn sich nicht feststellen lässt, auf welcher Seite die Störung liegt.
 
-Der Anbieter sagt einen Termin nur bei eigener Krankheit, einer technischen Störung, höherer Gewalt oder einem vergleichbaren, nicht vorhersehbaren Hinderungsgrund ab und teilt dies unverzüglich mit. Er bietet nach Möglichkeit einen Ersatztermin an; die Kundin oder der Kunde kann ihn annehmen oder den Termin ohne Kosten entfallen lassen. Für den Termin vorausgezahlte Beträge werden dem Guthaben gutgeschrieben.
+Der Anbieter sagt einen Termin nur bei eigener Krankheit, einer technischen Störung, höherer Gewalt oder einem vergleichbaren, nicht vorhersehbaren Hinderungsgrund ab und teilt dies unverzüglich mit. Er bietet nach Möglichkeit einen Ersatztermin an; die Kundin oder der Kunde kann ihn annehmen oder den Termin ohne Kosten entfallen lassen. Ein Guthaben aus einer Vorauszahlung wird für den abgesagten Termin nicht belastet. Wurde der Termin bereits bezahlt, wird der Betrag auf einen angenommenen Ersatztermin angerechnet; entfällt der Termin, erstattet der Anbieter den Betrag unverzüglich oder schreibt ihn auf Wunsch der Kundin oder des Kunden dem Guthaben gut.
 
 Das gesetzliche Widerrufsrecht nach #agb.sections.widerruf.ref bleibt von diesen Regeln unberührt.
 
@@ -74,13 +74,15 @@ Es besteht keine Mindestlaufzeit. Beide Seiten können die Nachhilfevereinbarung
 #include "parts/withdrawal-expiry.typ"
 
 #v(0.8em)
-#notice-box(breakable: false, include "parts/withdrawal-form.typ")
+#notice-box(include "parts/withdrawal-form.typ")
 
 = #agb.sections.haftung.heading
 
 Der Anbieter haftet unbeschränkt für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit sowie für Schäden, die auf Vorsatz oder grober Fahrlässigkeit beruhen.
 
 Bei einfacher Fahrlässigkeit haftet der Anbieter nur für die Verletzung einer wesentlichen Vertragspflicht (Pflicht, deren Erfüllung die ordnungsgemäße Durchführung des Vertrags überhaupt erst ermöglicht und auf deren Einhaltung die Kundin oder der Kunde regelmäßig vertraut). In diesem Fall ist die Haftung auf den vertragstypischen, vorhersehbaren Schaden begrenzt.
+
+Die Haftung nach zwingenden gesetzlichen Vorschriften, insbesondere nach dem Produkthaftungsgesetz, bleibt unberührt.
 
 = #agb.sections.schluss.heading
 

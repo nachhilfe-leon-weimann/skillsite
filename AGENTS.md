@@ -10,7 +10,7 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                              |
 | change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                 |
-| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`                                                                                                                                |
+| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`; the AGB also as Typst in `apps/marketing/legal-pdf/` (`just legal-pdfs`)                                                      |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
 | decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
 | write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                      |
@@ -23,13 +23,15 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 - `just check` - the full suite, green before every push; run `just format` first, then `CAL_API_KEY= just check`.
 - `just build` - production build and type check of `apps/marketing`; `just typecheck` covers the other packages;
   `just docker-build` / `just docker-run` - the production image.
+- `just legal-pdfs` - rebuilds the AGB and withdrawal PDFs after a change to the AGB text (needs Typst).
 - `just smoke` - smoke test on the production build; `just widgets` - Storybook keyboard checks. Both need, once,
   `pnpm --filter @skillsite/marketing exec playwright install chromium`.
 
 ## Conventions
 
 - English in code, comments, identifiers, specs and commits; German only in visible content, which lives in
-  `apps/marketing/src/content/*.ts`, legal prose as JSX in `content/legal/*.tsx`, not in components. Developer
+  `apps/marketing/src/content/*.ts`, legal prose as JSX in `content/legal/*.tsx`, not in components; the AGB
+  PDFs repeat it in `apps/marketing/legal-pdf/*.typ`, which a test keeps equal. Developer
   artifacts name no person: write "the maintainer".
 - Clean, modular, schema-driven structures, no quick fixes. Pages use `@skillsite/ui` and the type scale
   (`text-display` ... `text-caption`): no arbitrary values (`text-[...]`, inline `color-mix(...)`, hand-tuned

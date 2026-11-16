@@ -41,7 +41,9 @@
   show heading.where(level: 1): it => block(above: 1.4em, below: 0.7em, text(size: 12pt, weight: "bold", it.body))
   show heading.where(level: 2): it => block(above: 1.1em, below: 0.6em, text(size: 10.5pt, weight: "bold", it.body))
 
-  text(font: heading-font, size: 17pt, weight: "bold", title)
+  // Tagged as the document's title, for screen readers.
+  show std.title: set text(font: heading-font, size: 17pt, weight: "bold")
+  std.title()
   if subtitle != none {
     v(0.2em)
     text(size: 10pt, fill: muted, subtitle)
@@ -52,18 +54,18 @@
   body
 }
 
-// A framed block: the withdrawal notice and the model withdrawal form, which must not break across pages.
-#let notice-box(breakable: true, body) = block(
+// A framed block: the withdrawal notice and the model withdrawal form. Each fits on a page and never splits.
+#let notice-box(body) = block(
   stroke: 0.6pt + luma(150),
   inset: 12pt,
   radius: 3pt,
   width: 100%,
-  breakable: breakable,
+  breakable: false,
   body,
 )
 
-// The title line inside a notice box.
-#let box-title(body) = text(font: heading-font, size: 11pt, weight: "bold", body)
+// The title of a notice box: a level-2 heading, as on the site.
+#let box-title(body) = heading(level: 2, body)
 
 // A link to a page of the site. The site links the word; the PDF prints the address after it.
 #let web-link(address, body) = [#link("https://" + address, body) (#address)]
