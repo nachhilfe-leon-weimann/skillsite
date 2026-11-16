@@ -2,7 +2,9 @@
 
 The website of Nachhilfe Leon Weimann - marketing pages, appointment booking through Cal.com and the
 payment links printed on invoices - as a pnpm/Turborepo workspace with the Next.js app in
-[`apps/marketing`](apps/marketing) and shared packages in [`packages/`](packages).
+[`apps/marketing`](apps/marketing), the portal in [`apps/portal`](apps/portal) and shared packages in
+[`packages/`](packages). The portal's first area is the admin helper
+([`docs/specs/admin-helper.md`](docs/specs/admin-helper.md)); it is not deployed yet.
 
 ## Development
 
@@ -16,12 +18,12 @@ only local development needs.
 
 | Command                                 |                                                                                           |
 | --------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `just dev`                              | run the site                                                                              |
+| `just dev`                              | run the site (`localhost:3000`) and the portal (`localhost:3001`)                         |
 | `just check`                            | the full suite, green before every push; CI scopes pull requests to the areas they change |
 | `just docker-build` / `just docker-run` | build and run the production image locally                                                |
 
 Everything else is in the [`justfile`](justfile). The image builds the marketing app by default;
-another app comes from `--build-arg APP=<name>`.
+another app comes from `--build-arg APP=<name>` (`just docker-build <image> portal`).
 
 ## Operating the booking
 

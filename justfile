@@ -30,10 +30,12 @@ check: static-checks test build smoke widgets
 # `check` with every browser test three times, to surface flaky tests (CI on the release PR).
 check-repeat: static-checks test build
     pnpm --filter @skillsite/marketing e2e --repeat-each=3
+    pnpm --filter @skillsite/portal e2e --repeat-each=3
     pnpm --filter @skillsite/ui widgets --repeat-each=3
 
-# --- Site ---
+# --- Apps ---
 
+# Both apps: the site on http://localhost:3000, the portal on http://localhost:3001.
 dev:
     pnpm dev
 
@@ -46,7 +48,7 @@ test:
     pnpm test
     node --test .claude/hooks/
 
-# Functional smoke test against the production build (needs `playwright install chromium` once).
+# Functional smoke test of both apps against their production builds (needs `playwright install chromium` once).
 smoke:
     pnpm smoke
 
@@ -56,9 +58,9 @@ widgets:
 
 # --- Docker ---
 
-# Builds the marketing app; another app via `--build-arg APP=<name>`.
-docker-build image="skillsite:local":
-    docker build -t {{ image }} .
+# Builds the marketing app; the portal via `just docker-build skillsite-portal:local portal`.
+docker-build image="skillsite:local" app="marketing":
+    docker build --build-arg APP={{ app }} -t {{ image }} .
 
 docker-run image="skillsite:local":
     docker run --rm --env-file apps/marketing/.env -p 3000:3000 {{ image }}
