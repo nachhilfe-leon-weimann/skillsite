@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import { test } from "vitest";
+import { test, vi } from "vitest";
 
 import {
+  AVAILABILITY_RATE_LIMIT,
   AvailabilityRateLimiter,
   availabilityClientId,
   resolveAvailabilityDuration,
 } from "./availability-guard.ts";
+import { SWEEP_INTERVAL_MS } from "./sweeper.ts";
 
 test("duration accepts only the selected event's configured values", () => {
   const allowed = [45, 60, 90] as const;
@@ -89,4 +91,43 @@ test("rate limiter keeps client memory within its configured cap", () => {
   assert.equal(limiter.trackedClients, 2);
   assert.deepEqual(limiter.check("first", 1), { ok: true });
   assert.equal(limiter.trackedClients, 2);
+});
+
+test("rate limiter forgets a client after its window without another request", () => {
+  vi.useFakeTimers();
+  try {
+    const limiter = new AvailabilityRateLimiter(AVAILABILITY_RATE_LIMIT);
+    limiter.check("client");
+    assert.equal(limiter.trackedClients, 1);
+
+    vi.advanceTimersByTime(AVAILABILITY_RATE_LIMIT.windowMs - 1);
+    assert.equal(limiter.trackedClients, 1);
+
+    // No further check(): only the sweep can forget it.
+    vi.advanceTimersByTime(1 + SWEEP_INTERVAL_MS);
+    assert.equal(limiter.trackedClients, 0);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("the sweep keeps a client that is still inside its window", () => {
+  vi.useFakeTimers();
+  try {
+    const windowMs = 3 * SWEEP_INTERVAL_MS;
+    const limiter = new AvailabilityRateLimiter({
+      ...AVAILABILITY_RATE_LIMIT,
+      windowMs,
+    });
+    limiter.check("client");
+
+    // Two sweeps run, the window is not over yet.
+    vi.advanceTimersByTime(2 * SWEEP_INTERVAL_MS);
+    assert.equal(limiter.trackedClients, 1);
+
+    vi.advanceTimersByTime(windowMs);
+    assert.equal(limiter.trackedClients, 0);
+  } finally {
+    vi.useRealTimers();
+  }
 });
