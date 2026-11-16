@@ -228,7 +228,15 @@ export function BookingForm({
             {formText.legalNote.end}
           </Text>
         </Card>
-      ) : null}
+      ) : (
+        <Text size="note" tone="muted">
+          {formText.privacyNote.text}{" "}
+          <TextLink href={routes.datenschutz}>
+            {formText.privacyNote.link}
+          </TextLink>
+          {formText.privacyNote.end}
+        </Text>
+      )}
 
       <Button type="submit" disabled={!readyToSubmit} className="mt-1">
         {config.submitLabel} <ArrowRight className="size-4" />
