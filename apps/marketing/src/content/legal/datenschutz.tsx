@@ -117,7 +117,10 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           beziehungsweise Fächer erforderlich. Beim kostenlosen Erstgespräch
           benötige ich zusätzlich eine Telefonnummer, bei einer Nachhilfestunde
           die gewünschte Unterrichtsplattform. Nur ausdrücklich als freiwillig
-          gekennzeichnete Angaben sind optional.
+          gekennzeichnete Angaben sind optional. Gesetzlich verpflichtet sind
+          Sie zu keiner dieser Angaben. Ohne die erforderlichen Angaben kann ich
+          jedoch keinen Termin vergeben und keinen Nachhilfevertrag schließen
+          oder durchführen.
         </ProseP>
         <ProseP>
           Die Daten erhalte ich in der Regel direkt von Ihnen. Bei
@@ -188,10 +191,9 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             ob eine Anfrage von einem Menschen oder von einem Programm stammt.
             Dazu können technische Merkmale Ihres Browsers ausgewertet werden;
             bei auffälligen Zugriffen kann vor der Seite eine kurze, meist
-            automatisch ablaufende Sicherheitsprüfung erscheinen (Challenge,
-            Cloudflare Turnstile). In diesem Zusammenhang kann Cloudflare
-            technisch notwendige Cookies setzen (siehe{" "}
-            <SectionRef id="website" />
+            automatisch ablaufende Sicherheitsprüfung erscheinen (Challenge). In
+            diesem Zusammenhang kann Cloudflare technisch notwendige Cookies
+            setzen (siehe <SectionRef id="website" />
             ).
           </ProseP>
           <ProseP>
@@ -247,7 +249,7 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           <ProseP>
             Beim Aufrufen meiner Website {siteDomain} sendet Ihr Browser
             automatisch Informationen, die über Cloudflare an meinen Server
-            gelangen und dort kurzzeitig in Logfiles gespeichert werden:
+            gelangen und dort in Logfiles gespeichert werden:
           </ProseP>
           <DocDetailGrid>
             <DocDetailList
@@ -261,8 +263,21 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           </DocDetailGrid>
           <ProseP>
             Die Logfiles werden automatisch rotiert und überschrieben, sobald
-            eine festgelegte Größe erreicht ist; eine Zusammenführung mit
-            anderen Daten findet nicht statt.
+            eine festgelegte Größe erreicht ist; die Zugriffsdaten führe ich
+            nicht mit anderen Daten zusammen.
+          </ProseP>
+          <ProseP>
+            Zusätzlich protokolliert die Anwendung zu jedem Buchungsversuch die
+            Terminart, den gewählten Termin, die Dauer, die Zeit bis zum
+            Absenden des Formulars, das Ergebnis und eine gekürzte
+            E-Mail-Adresse (z. B. „ma***@beispiel.de“), bei erfolgreicher
+            Buchung außerdem die Buchungsnummer von Cal.com, bei einem Fehler
+            technische Fehlerangaben und, falls der Spamschutz anschlägt, den
+            Inhalt des versteckten Prüffelds. Beim Aufruf eines Zahlungslinks
+            protokolliert sie Rechnungsnummer und Betrag. Name, Telefonnummer
+            und Hinweistext aus dem Formular sowie IP-Adressen werden dabei
+            nicht protokolliert. Die Einträge dienen dazu, fehlgeschlagene oder
+            irrtümlich abgewiesene Buchungen und Zahlungen nachzuvollziehen.
           </ProseP>
           <DocLegalBasis>
             Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer sicheren
@@ -305,9 +320,9 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           <ProseP>
             Zur Buchung übermittle ich nach Absenden des Formulars die
             eingegebenen Daten an Cal.com: Vor- und Nachname, E-Mail-Adresse,
-            Telefonnummer (nur beim kostenlosen Erstgespräch), gewählter Termin,
-            Fach beziehungsweise Fächer, bei Online-Nachhilfe die gewünschte
-            Unterrichtsplattform (Microsoft Teams oder Discord) sowie
+            Telefonnummer (nur beim kostenlosen Erstgespräch), gewählter Termin
+            und Dauer, Fach beziehungsweise Fächer, bei Online-Nachhilfe die
+            gewünschte Unterrichtsplattform (Microsoft Teams oder Discord) sowie
             freiwillige Angaben im Hinweisfeld. Bei einer kostenpflichtigen
             Buchung übermittle ich außerdem die Bestätigung der AGB- und
             Widerrufshinweise sowie die Fassung der einbezogenen AGB als
@@ -315,10 +330,14 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
             des Termins sowie der Nachweis der Buchungsbestätigungen.
           </ProseP>
           <ProseP>
-            {dpaSentence("Cal.com")} Eine Verarbeitung personenbezogener Daten
-            in den USA kann stattfinden. Die Drittlandübermittlung erfolgt auf
-            Grundlage der EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c
-            DSGVO), die Teil dieses Vertrags sind.
+            {dpaSentence("Cal.com")} Er ist Bestandteil der
+            Cal.com-Nutzungsbedingungen. Cal.com verarbeitet die Daten in den
+            USA. Die Übermittlung stützt sich auf den Angemessenheitsbeschluss
+            der EU-Kommission zum EU-US Data Privacy Framework (Art. 45 DSGVO),
+            unter dem Cal.com zertifiziert ist; für davon nicht erfasste
+            Übermittlungen sieht der Vertrag die EU-Standardvertragsklauseln vor
+            (Art. 46 Abs. 2 lit. c DSGVO). Vertrag und Standardvertragsklauseln
+            veröffentlicht Cal.com unter cal.com/dpa und cal.com/dpa-scc.
           </ProseP>
           <DocProviderLink href="https://cal.com/privacy">
             Datenschutzerklärung von Cal.com
@@ -392,17 +411,20 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
         </ProseP>
         <DocList items={umamiCollectedData} />
         <ProseP>
-          Die Daten werden ausschließlich pseudonymisiert und aggregiert
-          gespeichert. Zur Unterscheidung von Besuchern dient eine Kennung, die
-          als Hash aus technischen Merkmalen gebildet wird und deren
-          Bestandteile monatlich wechseln – eine Wiedererkennung über
-          Monatsgrenzen hinweg oder eine Rückrechnung auf Ihre IP-Adresse ist
-          nicht möglich. Ein seitenübergreifendes Tracking findet nicht statt.
+          Die Daten werden pseudonymisiert gespeichert und nur in
+          zusammengefasster Form ausgewertet. Zur Unterscheidung von Besuchern
+          dient eine Kennung, die als Hash aus technischen Merkmalen gebildet
+          wird und deren Bestandteile monatlich wechseln – eine Wiedererkennung
+          über Monatsgrenzen hinweg oder eine Rückrechnung auf Ihre IP-Adresse
+          ist nicht möglich. Ein seitenübergreifendes Tracking findet nicht
+          statt.
         </ProseP>
         <ProseP>
-          Umami setzt keine Cookies und speichert oder liest keine Informationen
-          auf Ihrem Endgerät; eine Einwilligung nach § 25 TDDDG ist daher nicht
-          erforderlich.
+          Umami setzt keine Cookies und legt keine Kennung oder andere
+          Informationen auf Ihrem Endgerät ab. Das Analyse-Skript liest
+          Bildschirmgröße und Browsersprache aus, prüft einen Eintrag im lokalen
+          Speicher Ihres Browsers, mit dem sich die Erfassung abschalten lässt,
+          und übermittelt die oben genannten Angaben an meinen Server.
         </ProseP>
         <DocLegalBasis>
           Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der
@@ -438,11 +460,11 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           <DocSubSection title="Buchhaltung (sevDesk)">
             <ProseP>
               Zur Abwicklung meiner Buchhaltung nutze ich sevDesk (sevDesk GmbH,
-              Hauptstraße 115, 77652 Offenburg). Dabei werden Kundendaten (Name,
-              Adresse, Rechnungsdaten) verarbeitet.{" "}
+              Im Unteren Angel 1, 77652 Offenburg). Dabei werden Kundendaten
+              (Name, Adresse, Rechnungsdaten) verarbeitet.{" "}
               {dpaSentence("der sevDesk GmbH")} Rechnungs- und Buchungsdaten
-              unterliegen den gesetzlichen Aufbewahrungsfristen (§ 147 AO, § 257
-              HGB).
+              unterliegen den gesetzlichen Aufbewahrungsfristen (§ 147 AO, § 14b
+              UStG).
             </ProseP>
             <DocProviderLink href="https://sevdesk.de/datenschutz/">
               Datenschutzerklärung von sevDesk
@@ -481,7 +503,7 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           <DocSubSection title="Kommunikation (WhatsApp Business)">
             <ProseP>
               Ich biete zur Kontaktaufnahme WhatsApp an (WhatsApp Ireland
-              Limited, Dublin / Meta Platforms Inc., USA). Dabei werden
+              Limited, Dublin / Meta Platforms, Inc., USA). Dabei werden
               Telefonnummern und Nachrichteninhalte verarbeitet. Soweit dabei
               eine Übermittlung in die USA stattfindet, stützt sich WhatsApp
               Ireland auf das EU-US Data Privacy Framework, unter dem die
@@ -500,11 +522,11 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
 
           <DocSubSection title="Kontaktanfragen (Kleinanzeigen)">
             <ProseP>
-              Ich nutze die Plattform Kleinanzeigen (Kleinanzeigen GmbH, Berlin)
-              für die Kontaktaufnahme. Bei Anfragen werden dort Name,
-              Kontaktdaten und Nachrichteninhalte verarbeitet. Verantwortlich
-              für die Datenverarbeitung auf der Plattform ist die Kleinanzeigen
-              GmbH.
+              Ich nutze die Plattform Kleinanzeigen (kleinanzeigen.de GmbH,
+              Dernburgstraße 50, 14057 Berlin) für die Kontaktaufnahme. Bei
+              Anfragen werden dort Name, Kontaktdaten und Nachrichteninhalte
+              verarbeitet. Verantwortlich für die Datenverarbeitung auf der
+              Plattform ist die kleinanzeigen.de GmbH.
             </ProseP>
             <DocProviderLink href="https://themen.kleinanzeigen.de/datenschutzerklaerung/">
               Datenschutzerklärung von Kleinanzeigen
@@ -517,11 +539,16 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
 
           <DocSubSection title="Online-Unterricht (Discord)">
             <ProseP>
-              Für Online-Nachhilfe nutze ich einen Discord-Server (Discord Inc.,
-              San Francisco, USA). Dabei werden Benutzernamen,
-              Kommunikationsinhalte und Nutzungsdaten verarbeitet. Soweit dabei
-              eine Übermittlung in die USA stattfindet, ist Discord unter dem
-              EU-US Data Privacy Framework zertifiziert.
+              Für Online-Nachhilfe nutze ich einen Discord-Server. Anbieter ist
+              für Personen im Europäischen Wirtschaftsraum die Discord
+              Netherlands B.V., Schiphol Boulevard 195, 1118 BG Schiphol,
+              Niederlande; sie ist für die Datenverarbeitung auf der Plattform
+              eigenständig verantwortlich. Verarbeitet werden Benutzernamen,
+              Kommunikationsinhalte und Nutzungsdaten. Discord speichert die
+              Daten nach eigenen Angaben auf Servern der Discord Inc. in den
+              USA; die Übermittlung stützt Discord auf
+              EU-Standardvertragsklauseln und das EU-US Data Privacy Framework,
+              unter dem die Discord Inc. zertifiziert ist.
             </ProseP>
             <DocProviderLink href="https://discord.com/privacy">
               Datenschutzerklärung von Discord
@@ -534,8 +561,9 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           <DocSubSection title="Zahlung (PayPal)">
             <ProseP>
               Bei Zahlung per PayPal werden Zahlungsdaten an PayPal (Europe) S.à
-              r.l. et Cie, Luxemburg, übermittelt. PayPal ist dabei eigenständig
-              datenschutzrechtlich verantwortlich.
+              r.l. et Cie, S.C.A., 22–24 Boulevard Royal, L-2449 Luxemburg,
+              übermittelt. PayPal ist dabei eigenständig datenschutzrechtlich
+              verantwortlich.
             </ProseP>
             <DocProviderLink href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full">
               Datenschutzerklärung von PayPal
@@ -605,15 +633,19 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           ihnen erhalte ich auch die Daten der Lernenden.
         </ProseP>
         <ProseP>
-          Die Verarbeitung der Daten der Lernenden erfolgt zur Durchführung des
-          mit den Erziehungsberechtigten geschlossenen Vertrags. Ich stütze
-          keine Datenverarbeitung auf die Einwilligung Minderjähriger; Angebote
-          wie der Discord-Server werden nur in Abstimmung mit den
-          Erziehungsberechtigten genutzt.
+          Die Daten der Lernenden verarbeite ich, um den mit den
+          Erziehungsberechtigten geschlossenen Vertrag zu erfüllen und den
+          Unterricht durchzuführen. Ich stütze keine Datenverarbeitung auf die
+          Einwilligung Minderjähriger; Angebote wie der Discord-Server werden
+          nur in Abstimmung mit den Erziehungsberechtigten genutzt.
         </ProseP>
         <DocLegalBasis>
-          Art. 6 Abs. 1 lit. b DSGVO (Durchführung des mit den
-          Erziehungsberechtigten geschlossenen Vertrags).
+          Art. 6 Abs. 1 lit. b DSGVO, soweit es um die Daten der
+          Erziehungsberechtigten als Vertragspartner geht; für die Daten der
+          Lernenden Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse daran,
+          den mit den Erziehungsberechtigten geschlossenen Nachhilfevertrag zu
+          erfüllen und den Unterricht durchzuführen). Sind Lernende selbst
+          Vertragspartner, gilt auch für ihre Daten Art. 6 Abs. 1 lit. b DSGVO.
         </DocLegalBasis>
       </PrivacySection>
 
@@ -625,15 +657,15 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
         <DocList items={dataRecipientCategories} />
         <ProseP>
           Eine Verarbeitung außerhalb der EU bzw. des EWR findet nur wie oben
-          beschrieben statt, und zwar vor allem in den USA: bei Cal.com auf
-          Grundlage der EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c
-          DSGVO), bei Cloudflare, Microsoft, Discord und WhatsApp/Meta auf
-          Grundlage des EU-US Data Privacy Frameworks (Art. 45 DSGVO).
-          Cloudflare kann Anfragen außerdem in weiteren Rechenzentren seines
-          weltweiten Netzwerks verarbeiten, insbesondere wenn Sie die Website
-          von außerhalb der EU aufrufen; für Übermittlungen, die nicht vom Data
-          Privacy Framework erfasst sind, enthält der Vertrag mit Cloudflare die
-          EU-Standardvertragsklauseln.
+          beschrieben statt, und zwar vor allem in den USA: bei Cal.com,
+          Cloudflare, Microsoft, Discord und WhatsApp/Meta auf Grundlage des
+          Angemessenheitsbeschlusses der EU-Kommission zum EU-US Data Privacy
+          Framework (Art. 45 DSGVO). Für Übermittlungen, die davon nicht erfasst
+          sind, enthalten die Verträge mit Cal.com und Cloudflare die
+          EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO). Cloudflare
+          kann Anfragen außerdem in weiteren Rechenzentren seines weltweiten
+          Netzwerks verarbeiten, insbesondere wenn Sie die Website von außerhalb
+          der EU aufrufen.
         </ProseP>
       </PrivacySection>
 
@@ -649,6 +681,11 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
       <PrivacySection id="rechte">
         <ProseP>Sie haben jederzeit das Recht,</ProseP>
         <DocList items={userRights} />
+        <ProseP>
+          Zur Ausübung Ihrer Rechte genügt eine formlose Nachricht an die oben
+          genannten Kontaktdaten. Für minderjährige Lernende können die
+          Erziehungsberechtigten die Rechte ausüben.
+        </ProseP>
         <DocSubSection title="Zuständige Aufsichtsbehörde">
           <ProseP>
             {supervisoryAuthority.name}
@@ -677,17 +714,20 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
         <ProseP className="font-medium">
           Sie haben das Recht, aus Gründen, die sich aus Ihrer besonderen
           Situation ergeben, jederzeit gegen die Verarbeitung Sie betreffender
-          personenbezogener Daten zu widersprechen, die auf Grundlage von Art. 6
-          Abs. 1 lit. f DSGVO erfolgt (Art. 21 Abs. 1 DSGVO).
+          personenbezogener Daten, die auf Grundlage von Art. 6 Abs. 1 lit. f
+          DSGVO erfolgt, Widerspruch einzulegen (Art. 21 Abs. 1 DSGVO).
         </ProseP>
         <ProseP>
-          Ich verarbeite die Daten dann nicht mehr, es sei denn, ich kann
+          Das betrifft insbesondere die Server-Logfiles, die Auslieferung und
+          den Schutz über Cloudflare, die Datensicherungen, den Schutz vor
+          Missbrauch, die Webanalyse mit Umami sowie die Daten von Lernenden,
+          deren Erziehungsberechtigte Vertragspartner sind. Nach einem
+          Widerspruch verarbeite ich die Daten nicht mehr, es sei denn, ich kann
           zwingende schutzwürdige Gründe für die Verarbeitung nachweisen, die
           Ihre Interessen, Rechte und Freiheiten überwiegen, oder die
           Verarbeitung dient der Geltendmachung, Ausübung oder Verteidigung von
-          Rechtsansprüchen. Das betrifft insbesondere die Server-Logfiles, die
-          Auslieferung und den Schutz über Cloudflare sowie die Webanalyse mit
-          Umami. Direktwerbung betreibe ich nicht. Ein formloser Widerspruch an{" "}
+          Rechtsansprüchen. Direktwerbung betreibe ich nicht. Ein formloser
+          Widerspruch an{" "}
           <TextLink variant="doc" href={`mailto:${privacyContact.email}`}>
             {privacyContact.email}
           </TextLink>{" "}
@@ -702,8 +742,8 @@ export function PrivacyProse({ effectiveDate }: { effectiveDate: string }) {
           schützen. Die Übertragung von Daten an diese Website erfolgt
           ausschließlich TLS-verschlüsselt (HTTPS), sowohl zwischen Ihrem
           Browser und Cloudflare als auch zwischen Cloudflare und meinem Server.
-          Datensicherungen werden verschlüsselt übertragen und verschlüsselt
-          gespeichert.
+          Datensicherungen werden verschlüsselt übertragen und bei Cloudflare
+          verschlüsselt gespeichert; die Schlüssel verwaltet Cloudflare.
         </ProseP>
       </PrivacySection>
 

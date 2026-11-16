@@ -118,7 +118,7 @@ export const hostingProviders = [
     seat: "61 Lordou Vironos Str., 6023 Larnaca, Zypern",
     services:
       "Virtueller Server (VPS) für diese Website, SkillForge, SkillBot und die Webanalyse Umami einschließlich der zugehörigen Datenbanken (PostgreSQL); Serverstandort Frankfurt am Main",
-    transferNote: `Die Verarbeitung findet innerhalb der EU statt. ${dpaSentence(
+    transferNote: `Die Daten werden innerhalb der EU gespeichert. Für den Fall, dass Hostinger im Einzelfall von außerhalb des EWR auf Daten zugreift (z. B. im Support), enthält der Vertrag die EU-Standardvertragsklauseln. ${dpaSentence(
       "Hostinger International Ltd.",
     )}`,
     privacyUrl: "https://www.hostinger.com/legal/privacy-policy",
@@ -137,11 +137,12 @@ export const hostingProviders = [
 ];
 
 export const umamiCollectedData = [
-  "aufgerufene Seiten und Zeitpunkt des Aufrufs",
+  "aufgerufene Seiten (Adresse und Seitentitel) und Zeitpunkt des Aufrufs",
   "Referrer-URL (Herkunftsseite)",
   "Browser, Betriebssystem und Gerätetyp",
   "Bildschirmauflösung und Sprache",
   "Herkunftsland (aus der IP-Adresse abgeleitet; die IP-Adresse selbst wird nicht gespeichert)",
+  "Ereignisse bei der Terminbuchung (Buchung begonnen, Termin gewählt, Buchung abgeschlossen oder fehlgeschlagen; nur Terminart, Dauer und Fehlerart, keine Formularangaben)",
 ];
 
 export const externalPlatformPrivacyLinks = [
@@ -181,19 +182,20 @@ export const skillBotDataItems = [
 
 export const dataRecipientCategories = [
   "Auftragsverarbeiter nach Art. 28 DSGVO: Hosting (Hostinger), Auslieferung, Schutz vor Angriffen und Datensicherung (Cloudflare), Terminverwaltung (Cal.com), Zeiterfassung und Buchhaltung (Clockodo, sevDesk), Kommunikation (Microsoft)",
-  "eigenständig Verantwortliche: PayPal, Kreditinstitute, Kleinanzeigen, Cloudflare (soweit es Daten zur Sicherheit seines Netzwerks für eigene Zwecke verarbeitet) sowie die verlinkten Plattformen",
+  "eigenständig Verantwortliche: PayPal, Kreditinstitute, Kleinanzeigen, Discord und WhatsApp (soweit Sie diese Dienste für Unterricht oder Kommunikation nutzen) sowie Cloudflare (soweit es Daten zur Sicherheit seines Netzwerks für eigene Zwecke verarbeitet)",
   "Behörden und öffentliche Stellen, soweit eine gesetzliche Verpflichtung besteht",
 ];
 
 export const retentionItems = [
-  "Server-Logfiles: kurzfristig, automatische Rotation nach Größe",
+  "Server- und Anwendungsprotokolle: bis zum automatischen Überschreiben; die Protokolle sind in der Größe begrenzt, ältere Einträge werden laufend überschrieben",
   "IP-Adressen zur Missbrauchsabwehr bei Formular- und Buchungsanfragen: höchstens 24 Stunden, ausschließlich im Arbeitsspeicher",
   "Verbindungsdaten im Netzwerk von Cloudflare: nur so lange, wie es für Auslieferung, Sicherheit und Fehleranalyse erforderlich ist; eine feste Frist nennt Cloudflare hierfür nicht",
   "Angaben zu abgewehrten oder geprüften Zugriffen in meinem Cloudflare-Konto: bis zu 31 Tage einsehbar",
   "Sicherheits-Cookies von Cloudflare: kurzlebig, in der Standardeinstellung 30 Minuten",
   "Umami-Statistikdaten: pseudonymisiert; eine Wiedererkennung einzelner Besucher über den Monatswechsel hinaus ist ausgeschlossen",
   "Kontakt- und Buchungsanfragen: bis zur Erledigung, danach Löschung, sofern keine gesetzlichen Aufbewahrungspflichten bestehen",
-  "Vertrags- und Abrechnungsdaten: für die Dauer der Vertragsdurchführung, anschließend im Rahmen der gesetzlichen Aufbewahrungsfristen (§ 147 AO, § 257 HGB)",
+  "Buchungen kostenpflichtiger Stunden einschließlich der bestätigten AGB- und Widerrufshinweise: wie Vertragsdaten",
+  "Vertrags- und Abrechnungsdaten: für die Dauer der Vertragsdurchführung, anschließend im Rahmen der gesetzlichen Aufbewahrungsfristen (§ 147 AO, § 14b UStG)",
   "Daten in SkillForge und SkillBot: für die Dauer der Zusammenarbeit, danach Löschung, sofern keine gesetzlichen Aufbewahrungspflichten bestehen",
   "Datensicherungen (Backups): 30 Tage, danach automatische Löschung; im laufenden Betrieb bereits gelöschte Daten können bis dahin noch in einer Sicherung enthalten sein",
 ];
@@ -210,8 +212,8 @@ export const userRights = [
 
 export const supervisoryAuthority = {
   name: "Der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg",
-  street: "Lautenschlagerstraße 20",
-  city: "70173 Stuttgart",
+  street: "Heilbronner Straße 35",
+  city: "70191 Stuttgart",
   phone: "+49 711 615541-0",
   email: "poststelle@lfdi.bwl.de",
   url: "https://www.baden-wuerttemberg.datenschutz.de",

@@ -537,7 +537,7 @@ an unmerged one.
 - Security follow-ups of the booking action (decision S): the duration allow-list, the POST timeout, redacted
   Cal.com errors, the bounded rate-limit map and checked `agreements` in the Cal.com metadata are done (#238);
   open: `cal-api-version` and the hardening list (`poweredByHeader`, CSP).
-- Privacy text vs. reality: the booking/payment log lines, "IP at most 24 hours".
+- Privacy text vs. reality: "IP at most 24 hours".
 - Alerting channel for `blocked`/`failed` bookings; a test booking and an Umami cross-check after the phantom fix.
 - #65 (images) and #83 (navigation animations) - scope first.
 
