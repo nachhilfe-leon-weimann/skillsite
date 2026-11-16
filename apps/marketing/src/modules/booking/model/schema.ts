@@ -52,8 +52,8 @@ function assertValueShape(field: FieldDef) {
 
 /**
  * The rules of one field. Empty is a missing value, a blank string or an empty
- * selection; it passes only on an optional field. A filled value is text or a
- * selection either way: `maxLength` bounds the raw text, `format` checks the
+ * selection; it passes only on an optional field. A filled value is text, or on
+ * a `multiple` field also a selection: `maxLength` bounds the raw text, `format` checks the
  * trimmed text (a selection never matches a format), and `options` is the
  * whitelist every selected entry must be part of - arbitrary values never reach
  * Cal.com.

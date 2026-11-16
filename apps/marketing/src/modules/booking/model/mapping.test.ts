@@ -83,11 +83,13 @@ test("the metadata records the checked booleans, never a raw value that was sent
   assert.equal(recorded.earlyPerformanceRequested, "false");
 });
 
-test("the first meeting carries no agreements", () => {
+test("the first meeting carries no agreements and no booking party", () => {
   const body = buildCalBookingBody({
     event: "kennenlernen",
     slot: "2099-03-02T09:00:00.000Z",
     values: {
+      // Hand-made: the first meeting's form has no such field.
+      bookingParty: "parent",
       firstName: "Testa",
       lastName: "Kundin",
       email: "testa.kundin@example.com",

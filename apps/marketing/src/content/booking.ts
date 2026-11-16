@@ -79,12 +79,11 @@ export const bookerText = {
     },
     /**
      * Paid lesson: the essential terms right above the submit button. The
-     * subject row takes its label from the field.
+     * subject row takes its label from the field, the length row `durationLabel`.
      */
     orderSummary: {
       title: "Deine Buchung",
       slot: "Termin",
-      duration: "Dauer",
       total: "Gesamtpreis",
       payment: "Zahlung per Rechnung (PayPal oder Überweisung)",
     },

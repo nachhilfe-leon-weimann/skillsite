@@ -599,8 +599,6 @@ test.describe("the booking choices", () => {
     const submit = page.getByRole("button", {
       name: "Zahlungspflichtig buchen",
     });
-    // Beyond the regular withdrawal period, the early start is still asked for.
-    await expect(submit).toBeDisabled();
     await page
       .getByRole("checkbox", { name: /Ich verlange ausdrücklich/ })
       .check();
@@ -925,15 +923,13 @@ test.describe("the integrated keyboard paths", () => {
         await expect(formTitle(page)).toBeFocused();
         await press(page, "Shift+Tab");
         await expect(back(page)).toBeFocused();
-        // Who books comes first, with nothing chosen: Tab enters at the first option.
+        // Who books comes first, with nothing chosen: Tab enters at the first
+        // option, Space chooses it.
         await press(page, "Tab");
         const parent = radio(page, "Elternteil – für mein Kind");
         await expect(parent).toBeFocused();
-        await expect(parent).toHaveAttribute("aria-checked", "false");
-        await expect(openItems(page)).toContainText("Wer bucht");
         await press(page, "Space");
         await expect(parent).toHaveAttribute("aria-checked", "true");
-        await expect(openItems(page)).not.toContainText("Wer bucht");
         await press(page, "Tab");
         await expect(textbox(page, "Vorname")).toBeFocused();
         await page.keyboard.type("Erika");

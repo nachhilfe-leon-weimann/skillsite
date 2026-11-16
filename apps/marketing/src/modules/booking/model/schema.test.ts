@@ -106,6 +106,15 @@ test("several subjects pass only when every one is offered", () => {
   assert.deepEqual(missingInFirstMeeting({ subjects: [] }), ["Fächer"]);
 });
 
+test("a single choice is one offered value, never a list of them", () => {
+  assert.deepEqual(missingInLesson({ subject: ["Mathematik", "Physik"] }), [
+    "Fach",
+  ]);
+  assert.deepEqual(missingInLesson({ location: ["discord-video"] }), [
+    "Plattform",
+  ]);
+});
+
 test("open fields are listed in the order of the form", () => {
   assert.deepEqual(
     missingInFirstMeeting({

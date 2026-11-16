@@ -54,7 +54,10 @@ export function orderSummaryRows(
   }
 
   rows.push({ label: text.slot, value: slotLabel });
-  rows.push({ label: text.duration, value: durationLabel(config, duration) });
+  rows.push({
+    label: bookerText.durationLabel,
+    value: durationLabel(config, duration),
+  });
   const price = formatSlotPrice(config, duration);
   if (price) rows.push({ label: text.total, value: price });
   return rows;

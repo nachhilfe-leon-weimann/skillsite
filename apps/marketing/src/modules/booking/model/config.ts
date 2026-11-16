@@ -111,7 +111,7 @@ const emailField: FieldDef = {
  * their child, an adult student, or a minor student with their parents'
  * consent.
  */
-export type BookingParty = keyof typeof bookerText.form.bookingParty.options;
+type BookingParty = keyof typeof bookerText.form.bookingParty.options;
 
 const bookingPartyText = bookerText.form.bookingParty;
 

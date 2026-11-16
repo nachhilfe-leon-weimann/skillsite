@@ -182,6 +182,19 @@ test("a paid lesson beyond the 14-day withdrawal period still needs the express 
   expect((submitButton() as HTMLButtonElement).disabled).toBe(false);
 });
 
+test("a paid lesson's form preselects Microsoft Teams, but never who books", async () => {
+  answerAvailability(freeDay);
+  renderBooker("nachhilfe");
+
+  fireEvent.click(await screen.findByRole("button", { name: "10:00 Uhr" }));
+  const checkedIn = (name: string) =>
+    within(screen.getByRole("radiogroup", { name }))
+      .queryAllByRole("radio", { checked: true })
+      .map((radio) => radio.textContent);
+  expect(checkedIn("Plattform")).toEqual(["Microsoft Teams"]);
+  expect(checkedIn("Ich buche als")).toEqual([]);
+});
+
 test("a paid lesson is sent only once the booker says who books", async () => {
   answerAvailability(freeDay);
   sendBooking.mockResolvedValueOnce({ ok: true });
