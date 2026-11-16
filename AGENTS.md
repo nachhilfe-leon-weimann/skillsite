@@ -46,9 +46,9 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   `ease-flow`, `ease-soft`, `duration-quick|base|slow`, the `lift` utility and `Reveal`.
 - A refactor changes nothing a visitor sees. A bug gets its own `fix:` PR describing the visible change, even when
   the look changes. If it is unclear whether something is a bug or a design choice, stop and ask.
-- Booking, payment and withdrawal are modules, `apps/marketing/src/modules/<domain>/` ([module rules][module-rules]): outside a
-  module, import only its `index.ts` (client-safe) or `server.ts` (server entry); its `index.ts`, `model/` and
-  `components/` never import server code, except that `components/` may import `server/actions.ts`, a
+- Booking, payment and withdrawal are modules, `apps/marketing/src/modules/<domain>/` ([module rules][module-rules]):
+  outside a module, import only its `index.ts` (client-safe) or `server.ts` (server entry); its `index.ts`, `model/`
+  and `components/` never import server code, except that `components/` may import `server/actions.ts`, a
   `"use server"` module. The `import/no-restricted-paths` zones of `packages/config/eslint/boundaries.mjs` enforce
   this. A block one page uses lives in `app/<route>/_components/`, one that several pages use in
   `components/sections/`.

@@ -6,7 +6,7 @@ import { Card } from "@skillsite/ui/primitives/card";
 
 import { useWithdrawal } from "./use-withdrawal";
 import { WithdrawalEdit } from "./withdrawal-edit";
-import { WithdrawalResult } from "./withdrawal-result";
+import { WithdrawalOutcome } from "./withdrawal-outcome";
 import { WithdrawalReview } from "./withdrawal-review";
 
 /**
@@ -47,7 +47,7 @@ export function WithdrawalForm() {
           onEdit={flow.edit}
         />
       ) : (
-        <WithdrawalResult
+        <WithdrawalOutcome
           result={step.kind === "done" ? step.result : null}
           titleRef={titleRef}
           onConfirmAgain={() => void flow.confirm()}

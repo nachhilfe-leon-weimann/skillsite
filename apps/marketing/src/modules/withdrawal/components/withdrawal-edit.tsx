@@ -12,6 +12,7 @@ import {
   type WithdrawalFieldKey,
   type WithdrawalValues,
 } from "../model/config";
+import { containsLink } from "../model/schema";
 
 const fieldId = (key: WithdrawalFieldKey) => `withdrawal-${key}`;
 
@@ -46,7 +47,7 @@ export function WithdrawalEdit({
   return (
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
       <Heading
-        as="h3"
+        as="h2"
         size="h4"
         ref={titleRef}
         tabIndex={-1}
@@ -103,7 +104,13 @@ export function WithdrawalEdit({
             htmlFor={shared.id}
             hint={field.hint}
             description={field.description}
-            error={invalidFields.includes(field.key) ? field.error : undefined}
+            error={
+              invalidFields.includes(field.key)
+                ? containsLink(values[field.key])
+                  ? withdrawalText.linkError
+                  : field.error
+                : undefined
+            }
             required={field.required}
           >
             {field.kind === "textarea" ? (

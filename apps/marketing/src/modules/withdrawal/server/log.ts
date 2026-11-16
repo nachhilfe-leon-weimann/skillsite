@@ -25,6 +25,8 @@ export type WithdrawalOutcome =
   /** An anti-spam signal stopped the attempt - may be a real person. */
   | "blocked"
   | "rate_limited"
+  /** The overall limit refused a valid declaration: the function is down for everyone. */
+  | "unavailable"
   /** Server-side validation failed although the form validates the same schema. */
   | "rejected";
 
@@ -34,6 +36,7 @@ export const logWithdrawal = createLogger<WithdrawalOutcome>("withdrawal", {
   unknown: "error",
   failed: "error",
   unconfigured: "error",
+  unavailable: "error",
   blocked: "warn",
   rate_limited: "warn",
   rejected: "warn",

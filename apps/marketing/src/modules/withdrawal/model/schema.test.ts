@@ -41,7 +41,8 @@ test("the required fields are named in form order when missing", () => {
 });
 
 test("the optional note may be absent", () => {
-  const { note: _note, ...withoutNote } = valid;
+  const withoutNote: Partial<typeof valid> = { ...valid };
+  delete withoutNote.note;
   assert.deepEqual(checkWithdrawalValues(withoutNote), {
     ok: true,
     declaration: valid,
@@ -78,13 +79,26 @@ test("values beyond their length limit are refused", () => {
   );
 });
 
-test("a name that reads like a link is refused", () => {
-  for (const name of ["https://spam.example", "www.spam.example", "a://b"]) {
-    assert.deepEqual(checkWithdrawalValues({ ...valid, name }), {
-      ok: false,
-      fields: ["name"],
-    });
+test("no field may carry a link: the acknowledgement would relay it", () => {
+  for (const link of ["https://spam.example", "www.spam.example", "a://b"]) {
+    assert.deepEqual(
+      checkWithdrawalValues({
+        ...valid,
+        name: link,
+        contract: `Termin, siehe ${link}`,
+        note: link,
+      }),
+      { ok: false, fields: ["name", "contract", "note"] },
+    );
   }
+  // An e-mail address in free text is no link.
+  assert.equal(
+    checkWithdrawalValues({
+      ...valid,
+      note: "Antwort gern an erika@example.com",
+    }).ok,
+    true,
+  );
 });
 
 test("values of another shape are invalid fields, never a crash", () => {

@@ -127,7 +127,7 @@ test("a confirmed withdrawal shows its receipt once the action reports it sent",
 });
 
 test.each<[string, WithdrawalResult, string]>([
-  ["not sent", { outcome: "not_sent" }, "Widerruf nicht übermittelt"],
+  ["not sent", { outcome: "not_sent" }, "Keine Eingangsbestätigung"],
   ["unknown", { outcome: "unknown" }, "Übermittlung nicht bestätigt"],
   [
     "rate limited",

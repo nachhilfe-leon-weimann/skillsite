@@ -137,6 +137,8 @@ export async function sendMail(
     if (error instanceof DisallowedHostError) throw error;
     return { state: "unknown", failure: { step, cause: cause(error) } };
   }
+  // The body is never read: release the connection.
+  await response.body?.cancel().catch(() => {});
   // Graph answers a queued message with 202 and nothing else.
   if (response.status === 202) return { state: "sent" };
   const failure = { step, status: response.status };

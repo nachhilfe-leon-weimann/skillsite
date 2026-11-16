@@ -17,7 +17,7 @@ import {
 import { checkWithdrawalValues } from "../model/schema";
 import { requestToken, sendMail } from "./graph-mail";
 import { describeAttempt, logWithdrawal } from "./log";
-import { checkWithdrawalRateLimit } from "./rate-limit";
+import { checkClientLimit, checkOverallLimit } from "./rate-limit";
 
 /**
  * Submit a withdrawal declaration (§ 356a BGB): send the acknowledgement to the
@@ -45,14 +45,17 @@ export async function submitWithdrawal(
   }
 }
 
-/** Rate limit -> anti-spam -> validation -> configuration -> token -> mails. */
+/**
+ * Client limit -> anti-spam -> validation -> overall limit -> configuration ->
+ * token -> acknowledgement -> notice.
+ */
 async function processWithdrawal(
   submission: WithdrawalSubmission,
   attempt: Record<string, unknown>,
 ): Promise<WithdrawalResult> {
-  const limit = checkWithdrawalRateLimit(await clientIp());
-  if (!limit.ok) {
-    logWithdrawal("rate_limited", { ...attempt, scope: limit.scope });
+  // Per address first: it counts every attempt, the blocked ones included.
+  if (!checkClientLimit(await clientIp()).ok) {
+    logWithdrawal("rate_limited", attempt);
     return { outcome: "rejected", reason: "rate_limited" };
   }
 
@@ -76,6 +79,13 @@ async function processWithdrawal(
   }
   const { declaration } = checked;
 
+  // Over all addresses last: only declarations that would be sent count, so
+  // junk requests cannot use the budget up for real consumers.
+  if (!checkOverallLimit().ok) {
+    logWithdrawal("unavailable", attempt);
+    return { outcome: "rejected", reason: "rate_limited" };
+  }
+
   // The receipt is the server's clock at the confirmation, in German time.
   const receivedAt = formatReceivedAt(new Date());
 
@@ -98,13 +108,9 @@ async function processWithdrawal(
     declaration.email,
     acknowledgementMail(declaration, receivedAt),
   );
-  if (acknowledgement.state === "refused") {
-    logWithdrawal("failed", { ...attempt, graph: acknowledgement.failure });
-    return { outcome: "not_sent" };
-  }
 
-  // The notice follows a sent and an unknown acknowledgement alike: then the
-  // provider learns of the withdrawal and can acknowledge it by hand.
+  // The notice follows every acknowledgement, a refused one included: the
+  // provider then holds the declaration and can acknowledge it by hand.
   const notice = await sendMail(
     config,
     token.token,
@@ -115,20 +121,28 @@ async function processWithdrawal(
   const noticeLog =
     notice.state === "sent"
       ? { notice: "sent" }
-      : { notice: notice.state, graph: notice.failure };
+      : { notice: notice.state, noticeGraph: notice.failure };
 
-  if (acknowledgement.state === "unknown") {
-    logWithdrawal("unknown", {
-      ...attempt,
-      acknowledgement: acknowledgement.failure,
-      ...noticeLog,
-    });
-    return { outcome: "unknown" };
+  switch (acknowledgement.state) {
+    case "refused":
+      logWithdrawal("failed", {
+        ...attempt,
+        graph: acknowledgement.failure,
+        ...noticeLog,
+      });
+      return { outcome: "not_sent" };
+    case "unknown":
+      logWithdrawal("unknown", {
+        ...attempt,
+        graph: acknowledgement.failure,
+        ...noticeLog,
+      });
+      return { outcome: "unknown" };
+    case "sent":
+      logWithdrawal(notice.state === "sent" ? "sent" : "sent_without_notice", {
+        ...attempt,
+        ...noticeLog,
+      });
+      return { outcome: "sent", receivedAt };
   }
-
-  logWithdrawal(notice.state === "sent" ? "sent" : "sent_without_notice", {
-    ...attempt,
-    ...noticeLog,
-  });
-  return { outcome: "sent", receivedAt };
 }

@@ -84,7 +84,11 @@ export const WITHDRAWAL_ANTI_SPAM = {
   rateLimit: {
     /** Per client address: a person withdraws once, perhaps twice. */
     perClient: { max: 5, windowMs: 60 * 60 * 1_000 },
-    /** All clients together: bounds the mail a flood of addresses can send. */
+    /**
+     * All declarations about to be sent, together: bounds the mail a flood of
+     * addresses can send. Junk requests (spam signals, invalid values) never
+     * count against it.
+     */
     overall: { max: 30, windowMs: 60 * 60 * 1_000 },
     /** Most client addresses tracked at once. */
     maxClients: 1_000,

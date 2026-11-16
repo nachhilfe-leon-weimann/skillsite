@@ -145,6 +145,23 @@ export function withdrawalMailConfig(
   return { tenantId, clientId, clientSecret, mailbox };
 }
 
+const WITHDRAWAL_KEYS = [
+  "GRAPH_TENANT_ID",
+  "GRAPH_CLIENT_ID",
+  "GRAPH_CLIENT_SECRET",
+  "WITHDRAWAL_MAILBOX",
+] as const;
+
+/**
+ * The withdrawal variables that are missing while others are set: a partial
+ * setup leaves the function unconfigured, which `instrumentation.ts` reports
+ * at start. Empty when all or none are set. Names only, never values.
+ */
+export function missingWithdrawalVariables(env: ServerEnv): string[] {
+  const missing = WITHDRAWAL_KEYS.filter((key) => !env[key]);
+  return missing.length === WITHDRAWAL_KEYS.length ? [] : missing;
+}
+
 /**
  * The released version, inlined at build time by `next.config.ts` (the literal
  * member access is what Next replaces); `"unknown"` for a build without one.

@@ -177,7 +177,7 @@ test("a refused token sends nothing and is never reported as sent", async () => 
   assert.match(outcomeLine().line, /^\[withdrawal\] failed .*"status":401/);
 });
 
-test("a refused acknowledgement is never reported as sent, and no notice follows", async () => {
+test("a refused acknowledgement is never reported as sent; the notice asks the provider to acknowledge by hand", async () => {
   const { mails } = stubGraph({
     acknowledgement: () => new Response("{}", { status: 403 }),
   });
@@ -186,9 +186,35 @@ test("a refused acknowledgement is never reported as sent, and no notice follows
   });
   assert.deepEqual(
     mails.map(({ to }) => to),
-    ["erika@example.com"],
+    ["erika@example.com", config.mailbox],
   );
-  assert.match(outcomeLine().line, /^\[withdrawal\] failed /);
+  const notice = mails[1]!.body;
+  assert.ok(notice.includes("NICHT gesendet"));
+  assert.ok(notice.includes(values.contract));
+  assert.match(outcomeLine().line, /^\[withdrawal\] failed .*"status":403/);
+});
+
+test("the overall limit counts only declarations about to be sent", async () => {
+  const { mails } = stubGraph();
+  // Junk from many addresses never uses the budget up.
+  for (let junk = 0; junk < 40; junk += 1) {
+    await submitWithdrawal(submission({ honeypot: "x" }));
+    await submitWithdrawal(submission({ values: { ...values, email: "x" } }));
+  }
+  assert.equal((await submitWithdrawal(submission())).outcome, "sent");
+
+  for (let sent = 1; sent < 30; sent += 1) {
+    await submitWithdrawal(submission());
+  }
+  logs.length = 0;
+  assert.deepEqual(await submitWithdrawal(submission()), {
+    outcome: "rejected",
+    reason: "rate_limited",
+  });
+  const { level, line } = outcomeLine();
+  assert.equal(level, "error");
+  assert.match(line, /^\[withdrawal\] unavailable /);
+  assert.equal(mails.length, 30 * 2);
 });
 
 test("an acknowledgement without Graph's 202 is unknown, and the notice tells the provider", async () => {

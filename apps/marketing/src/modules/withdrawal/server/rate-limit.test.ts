@@ -1,66 +1,54 @@
 import assert from "node:assert/strict";
-import { afterEach, test, vi } from "vitest";
+import { beforeEach, test, vi } from "vitest";
 
-import { createWithdrawalLimiter } from "./rate-limit";
+import { WITHDRAWAL_ANTI_SPAM } from "../model/config";
+import { clientKey } from "./rate-limit";
 
-const HOUR = 60 * 60 * 1_000;
+const { perClient, overall } = WITHDRAWAL_ANTI_SPAM.rateLimit;
 
-afterEach(() => {
-  vi.useRealTimers();
+// The limits live at module scope: every test imports a fresh copy.
+beforeEach(() => {
+  vi.resetModules();
 });
 
-const limiter = () =>
-  createWithdrawalLimiter({
-    perClient: { max: 2, windowMs: HOUR },
-    overall: { max: 3, windowMs: HOUR },
-    maxClients: 10,
-  });
+const fresh = async () => import("./rate-limit");
 
-test("an address over its limit is refused until its window has passed", () => {
-  const limit = limiter();
-  assert.deepEqual(limit.check("192.0.2.1", 0), { ok: true });
-  assert.deepEqual(limit.check("192.0.2.1", 1_000), { ok: true });
-  assert.deepEqual(limit.check("192.0.2.1", 2_000), {
-    ok: false,
-    scope: "client",
-  });
-  assert.deepEqual(limit.check("192.0.2.1", HOUR + 1_000), { ok: true });
-});
-
-test("all addresses together are capped, without storing one more address", () => {
-  const limit = limiter();
-  for (const ip of ["192.0.2.1", "192.0.2.2", "192.0.2.3"]) {
-    assert.deepEqual(limit.check(ip, 0), { ok: true });
+test("an address over its limit is refused until its window has passed", async () => {
+  const { checkClientLimit } = await fresh();
+  for (let attempt = 0; attempt < perClient.max; attempt += 1) {
+    assert.equal(checkClientLimit("192.0.2.1", attempt).ok, true);
   }
-  assert.deepEqual(limit.check("192.0.2.4", 1), {
-    ok: false,
-    scope: "overall",
-  });
-  assert.equal(limit.trackedClients(), 3);
+  assert.equal(checkClientLimit("192.0.2.1", perClient.max).ok, false);
+  assert.equal(checkClientLimit("192.0.2.2", perClient.max).ok, true);
+  assert.equal(checkClientLimit("192.0.2.1", perClient.windowMs).ok, true);
 });
 
-test("an address is forgotten once its window passed, without another request", () => {
-  vi.useFakeTimers();
-  const limit = limiter();
-  limit.check("192.0.2.1", Date.now());
-  assert.equal(limit.trackedClients(), 1);
-  vi.advanceTimersByTime(HOUR - 1);
-  assert.equal(limit.trackedClients(), 1);
-  vi.advanceTimersByTime(1);
-  assert.equal(limit.trackedClients(), 0);
+test("the addresses of one IPv6 /64 share one limit", async () => {
+  const { checkClientLimit } = await fresh();
+  for (let host = 1; host <= perClient.max; host += 1) {
+    assert.equal(checkClientLimit(`2001:db8:1:2::${host}`, 0).ok, true);
+  }
+  assert.equal(checkClientLimit("2001:db8:1:2:ffff::9", 1).ok, false);
+  assert.equal(checkClientLimit("2001:db8:1:3::1", 1).ok, true);
 });
 
-test("at most maxClients addresses are kept; the oldest goes first", () => {
-  const limit = createWithdrawalLimiter({
-    perClient: { max: 2, windowMs: HOUR },
-    overall: { max: 100, windowMs: HOUR },
-    maxClients: 2,
-  });
-  limit.check("192.0.2.1", 0);
-  limit.check("192.0.2.2", 1);
-  limit.check("192.0.2.3", 2);
-  assert.equal(limit.trackedClients(), 2);
-  // The first address was pushed out, so it starts afresh.
-  assert.deepEqual(limit.check("192.0.2.1", 3), { ok: true });
-  assert.deepEqual(limit.check("192.0.2.1", 4), { ok: true });
+test("all declarations about to be sent are capped together", async () => {
+  const { checkOverallLimit } = await fresh();
+  for (let sent = 0; sent < overall.max; sent += 1) {
+    assert.equal(checkOverallLimit(0).ok, true);
+  }
+  assert.equal(checkOverallLimit(1).ok, false);
+  assert.equal(checkOverallLimit(overall.windowMs).ok, true);
+});
+
+test.each([
+  ["192.0.2.1", "192.0.2.1"],
+  ["::ffff:192.0.2.1", "192.0.2.1"],
+  ["2001:db8:1:2::5", "2001:db8:1:2::/64"],
+  ["2001:0DB8:0001:0002:aaaa:bbbb:cccc:dddd", "2001:db8:1:2::/64"],
+  ["2001:db8::1", "2001:db8:0:0::/64"],
+  ["::1", "0:0:0:0::/64"],
+  ["unknown", "unknown"],
+])("%s is limited as %s", (ip, key) => {
+  assert.equal(clientKey(ip), key);
 });
