@@ -52,7 +52,7 @@ export function availabilityClientId(headers: Headers): string {
  * Bounded, per-process sliding-window limiter. Production currently runs one
  * app replica; multiple replicas should replace this with a shared edge/store
  * limiter. Oldest client buckets are evicted once the explicit cap is reached.
- * A client is forgotten once its last attempt has left the window: when capacity
+ * A client is forgotten once its last allowed attempt has left the window: when capacity
  * runs out and on a periodic sweep (`SWEEP_INTERVAL_MS`), so it is held at most
  * the window plus one sweep interval, with or without further traffic.
  */

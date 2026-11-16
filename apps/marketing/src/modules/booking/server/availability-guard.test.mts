@@ -110,3 +110,24 @@ test("rate limiter forgets a client after its window without another request", (
     vi.useRealTimers();
   }
 });
+
+test("the sweep keeps a client that is still inside its window", () => {
+  vi.useFakeTimers();
+  try {
+    const windowMs = 3 * SWEEP_INTERVAL_MS;
+    const limiter = new AvailabilityRateLimiter({
+      ...AVAILABILITY_RATE_LIMIT,
+      windowMs,
+    });
+    limiter.check("client");
+
+    // Two sweeps run, the window is not over yet.
+    vi.advanceTimersByTime(2 * SWEEP_INTERVAL_MS);
+    assert.equal(limiter.trackedClients, 1);
+
+    vi.advanceTimersByTime(windowMs);
+    assert.equal(limiter.trackedClients, 0);
+  } finally {
+    vi.useRealTimers();
+  }
+});

@@ -1,5 +1,5 @@
 import { ANTI_SPAM } from "../model/config";
-import { createSweeper } from "./sweeper";
+import { SWEEP_INTERVAL_MS, createSweeper } from "./sweeper";
 
 export type RateLimitResult =
   { ok: true } | { ok: false; retryAfterMs: number };
@@ -19,9 +19,12 @@ const MAX_CLIENT_KEY_LENGTH = 128;
  * A per-client limiter over several sliding windows, holding at most
  * `maxClients` addresses. An address is forgotten once its last recorded attempt
  * has left the longest window - it would start afresh anyway. That happens on
- * every `check()` and on a periodic sweep (`SWEEP_INTERVAL_MS`), so an address
- * is held at most the longest window plus one sweep interval after its last
- * recorded attempt, with or without further traffic. At the bound, a
+ * every `check()` and on a periodic sweep (`SWEEP_INTERVAL_MS`). The sweep looks
+ * one interval ahead, so an address is held at most the longest window after its
+ * last recorded attempt, with or without further traffic. The trade-off: once
+ * that attempt is within one interval of the longest window, the sweep may forget
+ * the address up to one interval early, so the longest window may count slightly
+ * fewer attempts then (shorter windows are untouched). At the bound, a
  * new address then pushes out the one whose last recorded attempt is the oldest.
  * Below the bound, nothing that still counts is dropped. Module scope persists
  * per Node process, so this is correct only for a single replica; scaling to >1
@@ -42,9 +45,10 @@ export function createRateLimiter({ windows, maxClients }: RateLimitOptions) {
     }
   }
 
-  // The sweep reuses `forgetExpired`; it starts with the first recorded address.
+  // The sweep reuses `forgetExpired` and looks one interval ahead, so no address
+  // outlives the longest window; it starts with the first recorded address.
   const sweeper = createSweeper({
-    sweep: () => forgetExpired(Date.now()),
+    sweep: () => forgetExpired(Date.now() + SWEEP_INTERVAL_MS),
     isEmpty: () => attempts.size === 0,
   });
 
@@ -77,6 +81,7 @@ export function createRateLimiter({ windows, maxClients }: RateLimitOptions) {
         if (inWindow.length >= window.max) {
           // Over the limit: keep the pruned list in place, don't record this attempt.
           attempts.set(client, recent);
+          sweeper.ensureRunning();
           const oldest = Math.min(...inWindow);
           return { ok: false, retryAfterMs: window.windowMs - (now - oldest) };
         }
