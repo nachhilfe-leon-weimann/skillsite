@@ -1,3 +1,5 @@
+import { isIPv4, isIPv6 } from "node:net";
+
 /** Longest client key kept: the address comes from a request header. */
 const MAX_CLIENT_ID_LENGTH = 128;
 
@@ -18,6 +20,8 @@ const MAX_CLIENT_ID_LENGTH = 128;
  * request that reaches the server directly, not through Cloudflare, chooses its
  * own key. The limits hold only while the origin accepts nothing but Cloudflare
  * (authenticated origin pulls, or a firewall on Cloudflare's ranges).
+ * An IPv6 address is keyed by its /64, the block one connection usually gets:
+ * otherwise a visitor could rotate through it and start afresh on every request.
  * The key is bounded, so header size never becomes map memory.
  */
 export function clientIdFromHeaders(headers: Headers): string {
@@ -28,7 +32,51 @@ export function clientIdFromHeaders(headers: Headers): string {
   ];
   for (const candidate of candidates) {
     const trimmed = candidate?.trim();
-    if (trimmed) return trimmed.slice(0, MAX_CLIENT_ID_LENGTH);
+    if (trimmed)
+      return ipv6Prefix(trimmed) ?? trimmed.slice(0, MAX_CLIENT_ID_LENGTH);
   }
   return "unknown";
+}
+
+/**
+ * The /64 of an IPv6 address as `a:b:c:d::/64` (lowercase, no leading zeros),
+ * or the IPv4 address an IPv4-mapped one carries; `null` for anything else.
+ */
+function ipv6Prefix(value: string): string | null {
+  const address = value.split("%", 1)[0] ?? "";
+  if (!isIPv6(address)) return null;
+
+  const groups = expandIPv6(address.toLowerCase());
+  if (
+    groups.slice(0, 5).every((group) => group === 0) &&
+    groups[5] === 0xffff
+  ) {
+    const [high = 0, low = 0] = groups.slice(6);
+    return [high >> 8, high & 0xff, low >> 8, low & 0xff].join(".");
+  }
+  return `${groups
+    .slice(0, 4)
+    .map((group) => group.toString(16))
+    .join(":")}::/64`;
+}
+
+/** The eight 16-bit groups of a valid IPv6 address, `::` and a dotted tail expanded. */
+function expandIPv6(address: string): number[] {
+  const toGroups = (part: string): number[] =>
+    part === ""
+      ? []
+      : part.split(":").flatMap((piece) => {
+          if (!isIPv4(piece)) return [Number.parseInt(piece, 16)];
+          const [a = 0, b = 0, c = 0, d = 0] = piece.split(".").map(Number);
+          return [(a << 8) | b, (c << 8) | d];
+        });
+
+  const [head = "", tail] = address.split("::");
+  const headGroups = toGroups(head);
+  if (tail === undefined) return headGroups;
+  const tailGroups = toGroups(tail);
+  const zeros = new Array<number>(
+    8 - headGroups.length - tailGroups.length,
+  ).fill(0);
+  return [...headGroups, ...zeros, ...tailGroups];
 }
