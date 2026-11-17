@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 import { getAvailability } from "./availability";
 import {
   AvailabilityRateLimiter,
-  availabilityClientId,
   resolveAvailabilityDuration,
 } from "./availability-guard";
+import { clientIdFromHeaders } from "./client-id";
 import { bookingEvents, type BookingEventKey } from "../model/config";
 
 const availabilityRateLimiter = new AvailabilityRateLimiter();
@@ -18,7 +18,7 @@ export async function handleAvailabilityRequest(
   request: Request,
 ): Promise<Response> {
   const rateLimit = availabilityRateLimiter.check(
-    availabilityClientId(request.headers),
+    clientIdFromHeaders(request.headers),
   );
   if (!rateLimit.ok) {
     return NextResponse.json(

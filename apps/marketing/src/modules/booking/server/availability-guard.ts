@@ -33,22 +33,6 @@ export function resolveAvailabilityDuration(
 }
 
 /**
- * Derive the client identity set by Traefik while keeping attacker-controlled
- * header size from becoming attacker-controlled map memory.
- */
-export function availabilityClientId(headers: Headers): string {
-  const normalize = (value: string | null) => {
-    const trimmed = value?.trim();
-    return trimmed ? trimmed.slice(0, 128) : null;
-  };
-
-  const forwarded = headers.get("x-forwarded-for")?.split(",", 1)[0] ?? null;
-  return (
-    normalize(forwarded) ?? normalize(headers.get("x-real-ip")) ?? "unknown"
-  );
-}
-
-/**
  * Bounded, per-process sliding-window limiter. Production currently runs one
  * app replica; multiple replicas should replace this with a shared edge/store
  * limiter. Oldest client buckets are evicted once the explicit cap is reached.
