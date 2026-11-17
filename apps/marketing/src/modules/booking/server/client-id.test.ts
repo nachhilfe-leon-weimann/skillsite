@@ -89,6 +89,8 @@ test("an IPv6 visitor is keyed by its /64, so rotating within it keeps one key",
   );
   assert.equal(id("2001:db8::7"), "2001:db8:0:0::/64");
   assert.equal(id("2001:db8:12:34:5::"), "2001:db8:12:34::/64");
+  // The groups after `::` reach into the first 64 bits.
+  assert.equal(id("2001:db8::34:5:6:7:8"), "2001:db8:0:34::/64");
   assert.equal(id("::1"), "0:0:0:0::/64");
   // A different /64 is a different visitor.
   assert.notEqual(id("2001:db8:12:35::1"), id("2001:db8:12:34::1"));
@@ -99,10 +101,14 @@ test("IPv6 with a zone or an embedded IPv4 is keyed like any other", () => {
     clientIdFromHeaders(new Headers({ "x-forwarded-for": address }));
 
   assert.equal(id("fe80::1%eth0"), "fe80:0:0:0::/64");
-  assert.equal(id("64:ff9b::192.0.2.33"), "64:ff9b:0:0::/64");
-  // An IPv4-mapped address (Node's socket form) is the IPv4 visitor itself.
+  // An IPv4-mapped (Node's socket form) or NAT64 address is the IPv4 visitor itself.
   assert.equal(id("::ffff:192.0.2.33"), "192.0.2.33");
   assert.equal(id("::FFFF:c000:221"), "192.0.2.33");
+  assert.equal(id("::ffff:192.0.2.33%eth0"), "192.0.2.33");
+  assert.equal(id("64:ff9b::192.0.2.33"), "192.0.2.33");
+  // Only the exact prefixes carry an IPv4 host.
+  assert.equal(id("0:0:0:0:1:ffff:c000:221"), "0:0:0:0::/64");
+  assert.equal(id("64:ff9b:1::c000:221"), "64:ff9b:1:0::/64");
 });
 
 test("an IPv4 address and anything unparsable stay as they are", () => {
