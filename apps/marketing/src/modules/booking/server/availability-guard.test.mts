@@ -3,7 +3,6 @@ import { test } from "vitest";
 
 import {
   AvailabilityRateLimiter,
-  availabilityClientId,
   resolveAvailabilityDuration,
 } from "./availability-guard.ts";
 
@@ -34,28 +33,6 @@ test("fixed events accept only their default duration", () => {
   assert.equal(resolveAvailabilityDuration(null, 15, null), 15);
   assert.equal(resolveAvailabilityDuration("15", 15, null), 15);
   assert.equal(resolveAvailabilityDuration("60", 15, null), null);
-});
-
-test("client identity prefers the proxy chain and bounds the key", () => {
-  assert.equal(
-    availabilityClientId(
-      new Headers({
-        "x-forwarded-for": "203.0.113.4, 10.0.0.2",
-        "x-real-ip": "198.51.100.2",
-      }),
-    ),
-    "203.0.113.4",
-  );
-  assert.equal(
-    availabilityClientId(new Headers({ "x-real-ip": "198.51.100.2" })),
-    "198.51.100.2",
-  );
-  assert.equal(availabilityClientId(new Headers()), "unknown");
-  assert.equal(
-    availabilityClientId(new Headers({ "x-forwarded-for": "a".repeat(256) }))
-      .length,
-    128,
-  );
 });
 
 test("rate limiter blocks the next request and resets after the window", () => {

@@ -13,25 +13,11 @@ import {
 } from "../model/config";
 import { detectSpamSignal } from "../model/anti-spam";
 import { checkRateLimit } from "./rate-limit";
+import { clientIdFromHeaders } from "./client-id";
 import { checkBookingSubmission, type BookingIssue } from "../model/schema";
 import { buildCalBookingBody } from "../model/mapping";
 import { createCalBooking } from "./cal-client";
 import { describeAttempt, logBooking } from "./log";
-
-/**
- * Real client IP behind Traefik (Dokploy). Traefik sets `x-forwarded-for` and
- * strips client-spoofed values as long as the app is only reachable via Traefik;
- * the first entry is the original client.
- */
-async function clientIp(): Promise<string> {
-  const headerList = await headers();
-  const forwarded = headerList.get("x-forwarded-for");
-  if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  return headerList.get("x-real-ip")?.trim() || "unknown";
-}
 
 const GENERIC_FAILURE: SubmitResult = {
   ok: false,
@@ -82,7 +68,7 @@ async function processBooking(
   attempt: Record<string, unknown>,
 ): Promise<SubmitResult> {
   // Layer 1 - per-IP rate limit (counts every attempt, including ones blocked below).
-  const ip = await clientIp();
+  const ip = clientIdFromHeaders(await headers());
   if (!checkRateLimit(ip).ok) {
     logBooking("rate_limited", attempt);
     return {
