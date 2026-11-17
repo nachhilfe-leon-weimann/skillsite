@@ -5,11 +5,16 @@ const { createCalBooking } = vi.hoisted(() => ({
   createCalBooking: vi.fn(),
 }));
 
-// Every request comes from its own address, so the rate limit never interferes.
+// Every request comes from its own address, so the rate limit never interferes,
+// unless a test sets the visitor address Cloudflare reports.
 let request = 0;
+let cloudflareVisitor: string | undefined;
 vi.mock("next/headers", () => ({
   headers: async () =>
-    new Headers({ "x-forwarded-for": `192.0.2.${(request += 1)}` }),
+    new Headers({
+      "x-forwarded-for": `192.0.2.${(request += 1)}`,
+      ...(cloudflareVisitor && { "cf-connecting-ip": cloudflareVisitor }),
+    }),
 }));
 vi.mock("next/cache", () => ({ updateTag: () => {} }));
 vi.mock("./cal-client", () => ({ createCalBooking }));
@@ -185,4 +190,22 @@ test("a duration the lesson does not offer never reaches Cal.com", async () => {
     vi.mocked(console.warn).mock.calls[0]?.[0] as string,
     /^\[booking\] rejected \{"check":"duration",.*"duration":600/,
   );
+});
+
+test("behind Cloudflare, the rate limit counts the visitor, not the forwarded chain", async () => {
+  // A changing forwarded chain must not reset the count of one visitor.
+  cloudflareVisitor = "203.0.113.50";
+  try {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      assert.deepEqual(await requestBooking(firstMeeting(validValues)), {
+        ok: true,
+      });
+    }
+    const refused = await requestBooking(firstMeeting(validValues));
+    assert.equal(refused.ok, false);
+    assert.equal(!refused.ok && refused.reason, "rate_limited");
+    assert.equal(createCalBooking.mock.calls.length, 4);
+  } finally {
+    cloudflareVisitor = undefined;
+  }
 });
