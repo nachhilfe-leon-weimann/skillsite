@@ -22,7 +22,7 @@ export const fairConditions: Condition[] = [
     text: "kostenfrei absagen oder verschieben.",
   },
   {
-    text: "Spätere Absagen werden berechnet – wirst du plötzlich krank und sagst sofort ab, kostet es nichts.",
+    text: "Spätere Absagen werden berechnet – bei plötzlicher Krankheit natürlich nicht.",
   },
   { text: "Termine einzeln oder regelmäßig planen – ganz nach Bedarf." },
 ];
