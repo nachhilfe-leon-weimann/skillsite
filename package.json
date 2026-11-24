@@ -19,9 +19,9 @@
     "@skillsite/config": "workspace:*",
     "js-yaml": "^5.5.0",
     "picomatch": "^4.0.7",
-    "prettier": "^3.9.10",
-    "turbo": "^2.11.9",
-    "vite": "^8.3.6",
-    "vitest": "^5.1.0"
+    "prettier": "^3.10.1",
+    "turbo": "^2.11.13",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
   }
 }
