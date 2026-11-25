@@ -41,13 +41,24 @@ const serverEnvSchema = z.object({
       }),
     ),
   ),
-  /** SkillForge's origin, without `/api/v1`, as in the portal. */
+  /**
+   * SkillForge's origin, without `/api/v1`, as in the portal. Over https: the
+   * client credentials travel as Basic auth, so plain http is for a SkillForge
+   * on this machine only (local development, the e2e stub).
+   */
   SKILLFORGE_API_URL: optional(
     z.string().check(
       z.regex(/^https?:\/\/[^\s/?#]+\/?$/, {
         error:
           "it must be an http(s) origin without a path, such as http://localhost:8000.",
       }),
+      z.regex(
+        /^(?:https:\/\/|http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/|$))/,
+        {
+          error:
+            "it must use https; plain http is allowed only for localhost or 127.0.0.1.",
+        },
+      ),
     ),
   ),
   /** The site's client ID at SkillForge, for the payment lookup. */
