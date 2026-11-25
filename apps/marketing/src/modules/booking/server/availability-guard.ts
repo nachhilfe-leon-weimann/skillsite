@@ -1,3 +1,5 @@
+import { createSweeper } from "./sweeper";
+
 export const AVAILABILITY_RATE_LIMIT = {
   maxAttempts: 30,
   windowMs: 60_000,
@@ -50,10 +52,18 @@ export function availabilityClientId(headers: Headers): string {
  * Bounded, per-process sliding-window limiter. Production currently runs one
  * app replica; multiple replicas should replace this with a shared edge/store
  * limiter. Oldest client buckets are evicted once the explicit cap is reached.
+ * A client is forgotten once its last allowed attempt has left the window: when capacity
+ * runs out and on a periodic sweep (`SWEEP_INTERVAL_MS`), so it is held at most
+ * the window plus one sweep interval, with or without further traffic.
  */
 export class AvailabilityRateLimiter {
   private readonly attempts = new Map<string, number[]>();
   private readonly options: AvailabilityRateLimitOptions;
+  // Starts with the first stored client, never at import time.
+  private readonly sweeper = createSweeper({
+    sweep: () => this.forgetExpired(Date.now()),
+    isEmpty: () => this.attempts.size === 0,
+  });
 
   constructor(options: AvailabilityRateLimitOptions = AVAILABILITY_RATE_LIMIT) {
     this.options = options;
@@ -92,15 +102,20 @@ export class AvailabilityRateLimiter {
     if (!this.attempts.has(clientId)) this.ensureCapacity(now);
     this.attempts.delete(clientId);
     this.attempts.set(clientId, recent);
+    this.sweeper.ensureRunning();
+  }
+
+  private forgetExpired(now: number): void {
+    const cutoff = now - this.options.windowMs;
+    for (const [clientId, timestamps] of this.attempts) {
+      if ((timestamps.at(-1) ?? 0) <= cutoff) this.attempts.delete(clientId);
+    }
   }
 
   private ensureCapacity(now: number): void {
     if (this.attempts.size < this.options.maxClients) return;
 
-    const cutoff = now - this.options.windowMs;
-    for (const [clientId, timestamps] of this.attempts) {
-      if ((timestamps.at(-1) ?? 0) <= cutoff) this.attempts.delete(clientId);
-    }
+    this.forgetExpired(now);
 
     while (this.attempts.size >= this.options.maxClients) {
       const oldestClient = this.attempts.keys().next().value;
