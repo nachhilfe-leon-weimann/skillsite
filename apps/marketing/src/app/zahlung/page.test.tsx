@@ -104,9 +104,28 @@ test("a malformed number keeps today's page and logs `rejected`", async () => {
   expect(logPayment).toHaveBeenCalledTimes(1);
   expect(logPayment).toHaveBeenCalledWith("rejected", {
     reason: "invoice",
-    re: "RE/1840",
-    betrag: "90,00 EUR",
+    length: 7,
+    link: true,
   });
+});
+
+test("typed text that is no number never reaches the log", async () => {
+  // Synthetic: a parent typing an e-mail address or a name into the field.
+  for (const re of ["erika.mustermann@example.com", "Erika Mustermann"]) {
+    vi.mocked(logPayment).mockReset();
+    await renderPage({ re });
+    cleanup();
+
+    expect(logPayment).toHaveBeenCalledTimes(1);
+    expect(logPayment).toHaveBeenCalledWith("rejected", {
+      reason: "invoice",
+      length: re.length,
+      link: false,
+    });
+    expect(JSON.stringify(vi.mocked(logPayment).mock.calls)).not.toMatch(
+      /erika|mustermann|example\.com/i,
+    );
+  }
 });
 
 test("a repeated number is malformed, not guessed", async () => {
@@ -114,7 +133,11 @@ test("a repeated number is malformed, not guessed", async () => {
 
   expect(title()).toBe("Dieser Zahlungslink führt nicht weiter.");
   expect(lookupInvoice).not.toHaveBeenCalled();
-  expect(logPayment).toHaveBeenCalledWith("rejected", { reason: "invoice" });
+  expect(logPayment).toHaveBeenCalledWith("rejected", {
+    reason: "invoice",
+    length: 0,
+    link: false,
+  });
 });
 
 test("an open invoice goes to PayPal with SkillForge's amount", async () => {

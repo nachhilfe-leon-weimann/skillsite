@@ -5,13 +5,15 @@
  *
  *   [payment] redirected {"invoice":"RE-1840","amount":"90.00"}
  *   [payment] unavailable {"invoice":"RE-1840"}
- *   [payment] rejected {"reason":"invoice","re":"RE/1840","betrag":"90,00 EUR"}
+ *   [payment] rejected {"reason":"invoice","length":7,"link":true}
  *
- * Privacy: an invoice number and an amount, nothing about the person - the link
- * carries no name, no e-mail and no IP address, and no SkillForge token.
+ * Privacy: an invoice number and an amount, nothing about the person - no
+ * name, no e-mail, no IP address and no SkillForge token. A rejected number is
+ * whatever a visitor typed into the field, so it is never logged, only its
+ * shape.
  */
 
-import { compact, createLogger, loggable } from "@/lib/log";
+import { createLogger } from "@/lib/log";
 
 export type PaymentOutcome =
   /** The customer was sent to PayPal's checkout. */
@@ -37,14 +39,24 @@ export const logPayment = createLogger<PaymentOutcome>("payment", {
 });
 
 /**
- * Log context for a rejected link: the raw parameters as they arrived, so a
- * broken sevDesk template is recognisable from the log alone. Takes untrusted
- * input, so nothing about its shape is assumed and unreadable parts are left
- * out.
+ * Log context for a rejected number: its shape, never its text. `re` may be
+ * anything a visitor typed - a name, an e-mail address, an IBAN - so only its
+ * length is kept (0 unless it arrived once, as a string). `link` marks a
+ * request that carried `betrag`, which only our invoice links do: a run of
+ * those points at a broken sevDesk template. Takes untrusted input, so nothing
+ * about its shape is assumed.
  */
-export function describeLink(input: unknown): Record<string, unknown> {
-  if (typeof input !== "object" || input === null) return {};
+export function describeRejectedLink(input: unknown): {
+  length: number;
+  link: boolean;
+} {
+  if (typeof input !== "object" || input === null) {
+    return { length: 0, link: false };
+  }
   const { re, betrag } = input as Record<string, unknown>;
 
-  return compact({ re: loggable(re), betrag: loggable(betrag) });
+  return {
+    length: typeof re === "string" ? re.length : 0,
+    link: betrag !== undefined,
+  };
 }

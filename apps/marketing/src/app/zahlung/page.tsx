@@ -11,7 +11,7 @@ import {
   type PaymentPageState,
 } from "@/modules/payment";
 import {
-  describeLink,
+  describeRejectedLink,
   logPayment,
   lookupInvoice,
 } from "@/modules/payment/server";
@@ -62,7 +62,10 @@ export default async function PaymentPage({
         />
       );
     }
-    logPayment("rejected", { reason: parsed.reason, ...describeLink(params) });
+    logPayment("rejected", {
+      reason: parsed.reason,
+      ...describeRejectedLink(params),
+    });
     return <PaymentStatus {...paymentPage.malformed} />;
   }
 
