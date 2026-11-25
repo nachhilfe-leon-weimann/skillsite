@@ -188,7 +188,7 @@ test("a paid invoice says so, without a lead", async () => {
   expect(logPayment).toHaveBeenCalledWith("paid", { invoice: "RE-1003" });
 });
 
-test("an unknown invoice offers the field again, below the contact ways", async () => {
+test("an unknown invoice offers the field again, before the contact ways", async () => {
   vi.mocked(lookupInvoice).mockResolvedValue({ kind: "not_payable" });
 
   await renderPage({ re: "RE-1004" });
@@ -201,9 +201,9 @@ test("an unknown invoice offers the field again, below the contact ways", async 
   ).toBeTruthy();
   expectContactWays();
   const field = screen.getByRole("textbox", { name: "Rechnungsnummer" });
-  const contacts = screen.getByRole("link", { name: "Alle Kontaktwege" });
+  const eMail = screen.getByRole("link", { name: "E-Mail schreiben" });
   expect(
-    contacts.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING,
+    field.compareDocumentPosition(eMail) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
   expect(redirect).not.toHaveBeenCalled();
   expect(logPayment).toHaveBeenCalledTimes(1);

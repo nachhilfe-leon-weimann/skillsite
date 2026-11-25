@@ -10,12 +10,12 @@ import { routes } from "@/lib/routes";
 type PaymentStatusProps = {
   title: string;
   lead?: string;
-  /** Below the contact ways, e.g. the field again. */
-  children?: React.ReactNode;
+  /** The field again, on its own line before the contact buttons. */
+  form?: React.ReactNode;
 };
 
 /** A status of /zahlung that does not redirect: what happened, then the ways to reach the maintainer. */
-export function PaymentStatus({ title, lead, children }: PaymentStatusProps) {
+export function PaymentStatus({ title, lead, form }: PaymentStatusProps) {
   return (
     <StatusPage
       eyebrow={paymentPage.eyebrow}
@@ -23,6 +23,10 @@ export function PaymentStatus({ title, lead, children }: PaymentStatusProps) {
       lead={lead}
       actions={
         <>
+          {/* Full width in the wrapping row, so the buttons start a line below it. */}
+          {form ? (
+            <div className="flex w-full justify-center">{form}</div>
+          ) : null}
           <Button asChild variant="primary" size="lg">
             <SmartLink href={contactDetails.eMail.href}>
               {paymentPage.actions.eMail}
@@ -45,7 +49,6 @@ export function PaymentStatus({ title, lead, children }: PaymentStatusProps) {
           {paymentPage.allContacts}
         </TextLink>
       </Text>
-      {children}
     </StatusPage>
   );
 }

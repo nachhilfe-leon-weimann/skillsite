@@ -31,7 +31,7 @@ export const paymentPage = {
   paid: {
     title: "Diese Rechnung ist schon bezahlt. Danke!",
   },
-  /** No payable invoice under the number; the field follows the contact ways. */
+  /** No payable invoice under the number; the field again, before the contact ways. */
   notPayable: {
     title: "Diese Rechnung finde ich nicht.",
     lead: "Prüf die Nummer auf deiner Rechnung oder schreib mir kurz.",

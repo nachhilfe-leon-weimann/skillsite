@@ -24,8 +24,8 @@ export const metadata: Metadata = pageMetadata({
   unlisted: true,
 });
 
-// The answer depends entirely on the query and every call has to leave its own
-// log line, so this page is never served from a cache.
+// The answer depends entirely on the query and every lookup has to run fresh
+// and leave its own log line, so this page is never served from a cache.
 export const dynamic = "force-dynamic";
 
 type PaymentSearchParams = Promise<
@@ -95,9 +95,7 @@ function StateStatus({ state }: { state: StatusState }) {
       return <PaymentStatus {...paymentPage.paid} />;
     case "not_payable":
       return (
-        <PaymentStatus {...paymentPage.notPayable}>
-          <InvoiceForm className="mt-8" />
-        </PaymentStatus>
+        <PaymentStatus {...paymentPage.notPayable} form={<InvoiceForm />} />
       );
     case "unavailable":
       return <PaymentStatus {...paymentPage.unavailable} />;
