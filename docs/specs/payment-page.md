@@ -15,7 +15,8 @@ Since 2026-11-18 every invoice uses one sevDesk layout. It always prints the Gir
 https://nachhilfe.leonweimann.de/zahlung?re={{data.object.invoice_number}}&betrag={{data.object.total}}
 ```
 
-Dunning letters carry the same link with `betrag={{data.object.reminder_remaining_amount}}`.
+Dunning letters carry the same link with `betrag={{data.object.reminder_remaining_amount}}`. Dunning stays in sevDesk:
+the lookup serves invoices only, so a dunning's number ends on the "not found" page (the maintainer, 2026-11-25).
 
 `/zahlung` today trusts that link: it validates `re` and `betrag` and redirects to PayPal's checkout
 (`apps/marketing/src/modules/payment/model/invoice-link.ts`). That no longer fits:
@@ -127,7 +128,7 @@ invoice.
 - _Acceptance criteria:_
   - [ ] `invoice-link.test.mts` covers `30`, `22.5`, `22,5`, `1234.5`; `1.234,5` stays refused.
 
-**P1 - The lookup in the payment module.** _(after SkillForge's `SF-PAY` is merged; stacks on
+**P1 - The lookup in the payment module.** _(once SkillForge's `SF-PAY` PR fixes the route; stacks on
 `@skillsite/api-client`, #272)_
 
 - _Technique:_ contract sync; `service-token.ts`, `server/lookup.ts`, `model/payment-state.ts`, the env variables
@@ -152,7 +153,8 @@ invoice.
 
 ## Timeline / phasing
 
-P0 now. P1 waits for SkillForge's `SF-PAY` to be merged (it needs the route in the contract) and stacks on #272.
+P0 now. P1 starts once SkillForge's `SF-PAY` PR fixes the route: the contract is synced from that branch and
+again from `main` after its merge; P1 stacks on #272.
 P2 follows P1. The release that carries P2 ships only after SkillForge's release with `SF-PAY` is live and the
 production settings below are set. Shared files: `env.ts` and `content/status.ts` (P1, P2).
 

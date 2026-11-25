@@ -15,7 +15,7 @@ a redirect.
 `@skillsite/api-client`, `zod/mini`, Vitest, Playwright.
 
 **Spec:** [`docs/specs/payment-page.md`](../specs/payment-page.md) - slices P1 and P2. It starts once SkillForge's `SF-PAY`
-(planned in its `billing.md`) is merged.
+PR (planned in its `billing.md`) fixes the route; Task 1 syncs from that branch, and again from `main` after the merge.
 
 ## Global Constraints
 
@@ -60,7 +60,7 @@ a redirect.
 
 - Produces: `paths["/api/v1/billing/payment-requests/{invoice_number}"]["get"]` in the typed client.
 
-- [ ] **Step 1:** `pnpm --filter @skillsite/api-client sync ../skillforge` (SkillForge checkout at `SF-PAY`'s merge).
+- [ ] **Step 1:** `pnpm --filter @skillsite/api-client sync ../skillforge` (SkillForge checkout on the `SF-PAY` branch; again on `main` after its merge).
 - [ ] **Step 2:** `pnpm --filter @skillsite/api-client test` - PASS (freshness test sees the new contract).
 - [ ] **Step 3:** add the dependency and `transpilePackages`; `pnpm install`; `just build` - PASS.
 - [ ] **Step 4:** commit `build(marketing): sync the SkillForge contract and add the API client`.
