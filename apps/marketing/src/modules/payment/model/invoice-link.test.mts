@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 
-import { buildPaypalUrl, parsePaymentRequest } from "./invoice-link.ts";
+import {
+  buildPaypalUrl,
+  formatPaypalAmount,
+  parseInvoiceNumber,
+  parsePaymentRequest,
+} from "./invoice-link.ts";
 
 /** The shape sevDesk prints on an invoice. */
 const SEVDESK = { re: "RE-1840", betrag: "90,00 EUR" };
@@ -195,4 +200,70 @@ test("the invoice number is the only part of the link input controls", () => {
   assert.equal(url.searchParams.get("invoice"), "2026-RE-0007");
   assert.equal(url.searchParams.get("amount"), "1234.56");
   assert.equal(url.searchParams.get("business"), "rechnung@leonweimann.de");
+});
+
+test("reads the invoice number a visitor types, in any case", () => {
+  assert.deepEqual(parseInvoiceNumber(" re-1001 "), {
+    ok: true,
+    invoice: "RE-1001",
+  });
+  assert.deepEqual(parseInvoiceNumber("RE-1001"), {
+    ok: true,
+    invoice: "RE-1001",
+  });
+  assert.deepEqual(parseInvoiceNumber("R".repeat(32)), {
+    ok: true,
+    invoice: "R".repeat(32),
+  });
+});
+
+test("rejects an invoice number that cannot be a path segment", () => {
+  // The number becomes a path segment of SkillForge's route, so `/` is out.
+  for (const re of [
+    "RE/1001",
+    ["RE-1", "RE-2"],
+    "R".repeat(33),
+    "-RE-1001",
+    "RE 1001",
+    "RE%2F1001",
+    "../RE-1001",
+    "RE-1001?x=1",
+  ]) {
+    assert.deepEqual(
+      parseInvoiceNumber(re),
+      { ok: false, reason: "invoice" },
+      `expected ${JSON.stringify(re)} to be rejected`,
+    );
+  }
+});
+
+test("reports an absent or empty invoice number as missing", () => {
+  for (const re of [undefined, "", "   "]) {
+    assert.deepEqual(
+      parseInvoiceNumber(re),
+      { ok: false, reason: "missing" },
+      `expected ${JSON.stringify(re)} to be missing`,
+    );
+  }
+});
+
+test("formats cents in PayPal's notation without float drift", () => {
+  const cases: Array<[number, string]> = [
+    [2250, "22.50"],
+    [9000, "90.00"],
+    [1, "0.01"],
+    [10, "0.10"],
+    [99, "0.99"],
+    [123456, "1234.56"],
+    [500_000, "5000.00"],
+  ];
+  for (const [cents, amount] of cases) {
+    assert.equal(formatPaypalAmount(cents), amount, `${cents} cents`);
+  }
+});
+
+test("refuses to format a sum that is not whole cents", () => {
+  for (const cents of [-1, 0.5, 22.505, Number.NaN, Infinity]) {
+    assert.throws(() => formatPaypalAmount(cents), RangeError, `${cents}`);
+  }
 });
