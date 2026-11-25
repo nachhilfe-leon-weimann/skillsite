@@ -1,6 +1,6 @@
 # Spec: Payment page (`/zahlung` looks the invoice up in SkillForge)
 
-> Status: Draft, 2026-11-25 - P0 open as a `fix:` PR (#297).
+> Status: In review, 2026-11-25 - P0 #297, P1 #299, P2 #300 (stacked on the portal stack, #273).
 > Builds on SkillForge's [billing spec][billing], slice `SF-PAY` (the payment-request lookup), on the
 > `client_credentials` grant of [`user-authentication.md`][auth] and on the admin helper's typed client
 > (`@skillsite/api-client`, AH-8). This spec covers skillsite only; what SkillForge reads from sevDesk, the blocked
@@ -126,19 +126,19 @@ invoice.
 - _Technique:_ `AMOUNT_PATTERNS` in `invoice-link.ts` accepts `^\d+[.,]\d$`.
 - _Check:_ `/zahlung?re=RE-1&betrag=22.5` redirects to PayPal with `22.50`.
 - _Acceptance criteria:_
-  - [ ] `invoice-link.test.mts` covers `30`, `22.5`, `22,5`, `1234.5`; `1.234,5` stays refused.
+  - [x] `invoice-link.test.mts` covers `30`, `22.5`, `22,5`, `1234.5`; `1.234,5` stays refused.
 
 **P1 - The lookup in the payment module.** _(once SkillForge's `SF-PAY` PR fixes the route; stacks on
-`@skillsite/api-client`, #272)_
+`@skillsite/api-client` through the portal stack, #273)_
 
 - _Technique:_ contract sync; `service-token.ts`, `server/lookup.ts`, `model/payment-state.ts`, the env variables
   in `env.ts`, the log outcomes. `page.tsx` unchanged.
 - _Check:_ none visible.
 - _Plan:_ [task plan](../plans/payment-page.md), Tasks 1-4.
 - _Acceptance criteria:_
-  - [ ] Unit tests map every answer of the contract table, a timeout and a malformed body to a state; anything
+  - [x] Unit tests map every answer of the contract table, a timeout and a malformed body to a state; anything
         unexpected is `unavailable`; an unconfigured runtime never makes a request.
-  - [ ] A malformed variable stops the server at start (`instrumentation.ts`).
+  - [x] A malformed variable stops the server at start (`instrumentation.ts`).
 
 **P2 - The page.** _(after P1)_
 
@@ -148,13 +148,13 @@ invoice.
   dark, phone and desktop, against the SkillForge stub of the e2e tests, never production.
 - _Plan:_ [task plan](../plans/payment-page.md), Tasks 5-6.
 - _Acceptance criteria:_
-  - [ ] Playwright: no params shows the field; submitting it lands on `?re=`; the stub drives each state.
-  - [ ] `betrag` in an old link changes nothing.
+  - [x] Playwright: no params shows the field; submitting it lands on `?re=`; the stub drives each state.
+  - [x] `betrag` in an old link changes nothing.
 
 ## Timeline / phasing
 
 P0 now. P1 starts once SkillForge's `SF-PAY` PR fixes the route: the contract is synced from that branch and
-again from `main` after its merge; P1 stacks on #272.
+again from `main` after its merge; P1 stacks on #273 (the portal stack is linear; #272 sits below #273).
 P2 follows P1. The release that carries P2 ships only after SkillForge's release with `SF-PAY` is live and the
 production settings below are set. Shared files: `env.ts` and `content/status.ts` (P1, P2).
 
