@@ -37,8 +37,8 @@ Dunning letters carry the same link with `betrag={{data.object.reminder_remainin
 ## Non-goals
 
 - **Protection against trying invoice numbers.** Decided by the maintainer (P-03): whoever pays an invoice may.
-- **A rate limit in skillsite.** SkillForge limits its lookups (`billing.md`, `SF-PAY`); skillsite stores no client
-  address for this page.
+- **A rate limit.** Neither skillsite nor SkillForge limits the lookups in v1 (`billing.md`, `SF-PAY`); a sevDesk
+  throttle surfaces as SkillForge's `502` and the page shows "not reachable". skillsite stores no client address.
 - **Detecting the payment** or marking the invoice paid; sevDesk and the maintainer do that.
 - **A PayPal API.** The redirect stays the hosted-button URL without credentials.
 
