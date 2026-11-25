@@ -14,8 +14,8 @@ a redirect.
 **Tech Stack:** Next.js 16 (App Router, server components), TypeScript, `openapi-fetch` through
 `@skillsite/api-client`, `zod/mini`, Vitest, Playwright.
 
-**Spec:** [`docs/specs/payment-page.md`](../specs/payment-page.md) - slices P2 and P3. The SkillForge half (P1a,
-P1b) is planned in SkillForge's `billing.md` by P1a; this plan starts once P1b is merged in SkillForge.
+**Spec:** [`docs/specs/payment-page.md`](../specs/payment-page.md) - slices P1 and P2. It starts once SkillForge's `SF-PAY`
+(planned in its `billing.md`) is merged.
 
 ## Global Constraints
 
@@ -46,7 +46,7 @@ P1b) is planned in SkillForge's `billing.md` by P1a; this plan starts once P1b i
 
 ---
 
-## Slice P2 - the lookup (one PR, stacked on #272 `build/api-client`)
+## Slice P1 - the lookup (one PR, stacked on #272 `build/api-client`)
 
 ### Task 1: Sync the contract and wire the client into the marketing app
 
@@ -60,7 +60,7 @@ P1b) is planned in SkillForge's `billing.md` by P1a; this plan starts once P1b i
 
 - Produces: `paths["/api/v1/billing/payment-requests/{invoice_number}"]["get"]` in the typed client.
 
-- [ ] **Step 1:** `pnpm --filter @skillsite/api-client sync ../skillforge` (SkillForge checkout at P1b's merge).
+- [ ] **Step 1:** `pnpm --filter @skillsite/api-client sync ../skillforge` (SkillForge checkout at `SF-PAY`'s merge).
 - [ ] **Step 2:** `pnpm --filter @skillsite/api-client test` - PASS (freshness test sees the new contract).
 - [ ] **Step 3:** add the dependency and `transpilePackages`; `pnpm install`; `just build` - PASS.
 - [ ] **Step 4:** commit `build(marketing): sync the SkillForge contract and add the API client`.
@@ -217,10 +217,10 @@ timeout` (fake timers, `timeoutMs: 50`); `a second 401 ends unavailable without 
 - [ ] **Step 3:** implement; `lookupInvoice` builds one client and one token source per process (module-level,
       created on first use, like `serverEnv()`).
 - [ ] **Step 4:** tests PASS; `CAL_API_KEY= just check` PASS.
-- [ ] **Step 5:** commit `feat(payment): look an invoice up in SkillForge`; open P2's PR (stacked on #272), tick
-      P2's boxes in the spec.
+- [ ] **Step 5:** commit `feat(payment): look an invoice up in SkillForge`; open P1's PR (stacked on #272), tick
+      P1's boxes in the spec.
 
-## Slice P3 - the page (one PR, stacked on P2)
+## Slice P2 - the page (one PR, stacked on P1)
 
 ### Task 5: Texts, the form and the page
 
@@ -232,7 +232,7 @@ timeout` (fake timers, `timeoutMs: 50`); `a second 401 ends unavailable without 
 - Modify: `packages/ui/src/layout/status-page.tsx` (+ story, test) - `lead` becomes optional and renders nothing
   when absent (the `paid` state has none)
 - Remove from `invoice-link.ts`: `parsePaymentRequest`, `normalizeAmount`, `AMOUNT_PATTERNS`, `CURRENCY_SUFFIX` and
-  their tests - `betrag` is ignored now (P-02)
+  their tests - `betrag` is ignored now (P-01, P-05)
 
 **Interfaces:**
 
@@ -282,7 +282,7 @@ timeout` (fake timers, `timeoutMs: 50`); `a second 401 ends unavailable without 
 - [ ] **Step 2:** `just smoke` - FAIL before the stub and config exist.
 - [ ] **Step 3:** add the stub and the config.
 - [ ] **Step 4:** `CAL_API_KEY= just check` PASS (counts for the PR); `just smoke` PASS three times in a row.
-- [ ] **Step 5:** commit `test(payment): drive the payment page against a SkillForge stub`; open P3's PR (stacked
-      on P2) with _How to check_ from the spec's P3 _Check_ (against `node apps/marketing/e2e/stubs/skillforge.mjs`),
-      tick P3's boxes. _For the maintainer_: P-07 and the three variables must be set in production before the release
-      that carries P3.
+- [ ] **Step 5:** commit `test(payment): drive the payment page against a SkillForge stub`; open P2's PR (stacked
+      on P1) with _How to check_ from the spec's P2 _Check_ (against `node apps/marketing/e2e/stubs/skillforge.mjs`),
+      tick P2's boxes. _For the maintainer_: SkillForge's `SF-PAY` live, skillsite's client and the three variables
+      (`SKILLFORGE_API_URL=https://api.leonweimann.de`) set in production before the release that carries P2.
