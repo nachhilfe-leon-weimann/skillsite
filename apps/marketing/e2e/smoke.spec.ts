@@ -56,24 +56,78 @@ for (const path of ["/termin", "/kontakt"]) {
   });
 }
 
-test("without SkillForge, a payment link stays on the page instead of redirecting", async ({
-  page,
+// The payment page runs against the SkillForge stub (`e2e/stubs/skillforge.mjs`), which the Playwright config starts
+// with the app: synthetic invoices only, one per answer the lookup can get.
+
+test("an old link pays sevDesk's amount, not the link's", async ({
+  request,
 }) => {
-  // The suite runs SkillForge unconfigured: no lookup, so no PayPal, whatever `betrag` says.
-  await isolate(page);
-  const errors = collectErrors(page);
-  const response = await page.goto("/zahlung?re=RE-1001&betrag=90,00%20EUR");
-  expect(response?.status()).toBe(200);
-  expect(new URL(page.url()).hostname).not.toContain("paypal");
-  await page.waitForLoadState("networkidle");
-  await expect(
-    page.getByRole("heading", {
-      level: 1,
-      name: "Die Zahlung ist gerade nicht erreichbar.",
-    }),
-  ).toBeVisible();
-  expect(errors, "console errors").toEqual([]);
+  const response = await request.get("/zahlung?re=RE-1001&betrag=90,00%20EUR", {
+    maxRedirects: 0,
+  });
+  expect(response.status()).toBe(307);
+  const location = response.headers()["location"] ?? "";
+  expect(location).toMatch(/^https:\/\/www\.paypal\.com\//);
+  expect(location).toContain("amount=22.50&invoice=RE-1001");
 });
+
+test("the form leads to the lookup", async ({ page }) => {
+  await isolate(page);
+  // PayPal itself is never loaded: the request leaving for it is the result.
+  await page.route("https://www.paypal.com/**", (route) => route.abort());
+  await page.goto("/zahlung");
+  await page.getByLabel("Rechnungsnummer").fill("re-1001");
+  const toPaypal = page.waitForRequest(/^https:\/\/www\.paypal\.com\//);
+  await page.getByRole("button", { name: "Weiter zu PayPal" }).click();
+  expect(new URL((await toPaypal).url()).searchParams.get("invoice")).toBe(
+    "RE-1001",
+  );
+});
+
+const paymentStates = [
+  {
+    invoice: "RE-1002",
+    state: "blocked",
+    title: "Bitte per Überweisung zahlen.",
+    lead: "RE-1002",
+  },
+  {
+    invoice: "RE-1003",
+    state: "paid",
+    title: "Diese Rechnung ist schon bezahlt. Danke!",
+  },
+  {
+    invoice: "RE-1004",
+    state: "not payable",
+    title: "Diese Rechnung finde ich nicht.",
+    field: true,
+  },
+  {
+    invoice: "RE-1005",
+    state: "unavailable",
+    title: "Die Zahlung ist gerade nicht erreichbar.",
+  },
+];
+
+for (const { invoice, state, title, lead, field } of paymentStates) {
+  test(`${invoice} (${state}) renders its page without a redirect`, async ({
+    page,
+  }) => {
+    await isolate(page);
+    const errors = collectErrors(page);
+    const path = `/zahlung?re=${invoice}`;
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(200);
+    expect(response?.request().redirectedFrom(), "redirect").toBeNull();
+    expect(new URL(page.url()).pathname).toBe("/zahlung");
+    await page.waitForLoadState("networkidle");
+    const heading = page.getByRole("heading", { level: 1, name: title });
+    await expect(heading).toBeVisible();
+    if (lead) await expect(page.getByText(lead)).toBeVisible();
+    if (field) await expect(page.getByLabel("Rechnungsnummer")).toBeVisible();
+    expect(errors, "console errors").toEqual([]);
+  });
+}
 
 test("an invalid payment link renders a page instead of redirecting", async ({
   page,

@@ -1,6 +1,11 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalPassThroughEnv": ["CAL_API_KEY"],
+  "globalPassThroughEnv": [
+    "CAL_API_KEY",
+    "SKILLFORGE_API_URL",
+    "SKILLFORGE_CLIENT_ID",
+    "SKILLFORGE_CLIENT_SECRET"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
