@@ -1,0 +1,5 @@
+# Built and vendored files are binary: no text diff, no text merge, no line-ending conversion.
+*.pdf binary
+*.ttf binary
+# Typst sources are hashed into legal-pdf/build-stamp.json: keep their line endings the same everywhere.
+*.typ text eol=lf

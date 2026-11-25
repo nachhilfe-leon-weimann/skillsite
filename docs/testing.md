@@ -27,7 +27,7 @@ Each behaviour is guarded on the cheapest layer that can see it, and on one laye
 
 ## Page layer
 
-- **Smoke:** every route renders without console errors; the 404 too.
+- **Smoke:** every route renders without console errors; the 404 too; the legal PDFs are served as PDFs.
 - **Wiring:** the current page is marked; the 1080px breakpoint hands over between mobile and desktop navigation;
   client navigation leaves no overlay behind; the platform popover and the duration list are never open together.
 - **Booking:** the whole keyboard path to a valid form, never submitting; the availability states (days, empty,

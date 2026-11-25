@@ -3,6 +3,12 @@ import { numberedSections } from "@/lib/numbered-sections";
 
 export const agbEffectiveDate = new Date("2026-11-16");
 
+/** The effective date as /agb and the PDFs print it, e.g. `16. November 2026`, in any time zone. */
+export const agbEffectiveDateLabel = agbEffectiveDate.toLocaleDateString(
+  "de-DE",
+  { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" },
+);
+
 export const agbContact = {
   email: legalContact.email,
   phone: legalContact.phone,
@@ -56,3 +62,10 @@ export const agbSections = numberedSections([
     title: "Schlussbestimmungen",
   },
 ]);
+
+/** Names a section in running text by its number and title, e.g. `Abschnitt 4 („Termine …“)`. */
+export function agbSectionRef(id: string): string {
+  const section = agbSections.sections.find((entry) => entry.id === id);
+  if (!section) throw new Error(`Unknown AGB section: ${id}`);
+  return `Abschnitt ${agbSections.number(id)} („${section.title}“)`;
+}

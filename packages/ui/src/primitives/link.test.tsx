@@ -13,10 +13,14 @@ vi.mock("next/link", () => ({
 
 afterEach(cleanup);
 
-test("the link rule: routes, web addresses and plain anchors", () => {
+test("the link rule: routes, web addresses, files and plain anchors", () => {
   render(
     <>
       <SmartLink href="/preise">Preise</SmartLink>
+      <SmartLink href="/faecher#mathematik">Mathematik</SmartLink>
+      <SmartLink href="/rechtliches/agb.pdf" download>
+        AGB
+      </SmartLink>
       <SmartLink href="https://discord.gg/x">Discord</SmartLink>
       <SmartLink href="mailto:a@b.de">E-Mail</SmartLink>
       <SmartLink href="tel:+49">Telefon</SmartLink>
@@ -27,6 +31,11 @@ test("the link rule: routes, web addresses and plain anchors", () => {
   const attributes = (name: string) =>
     [...link(name).attributes].map((a) => `${a.name}=${a.value}`).sort();
   expect(attributes("Preise")).toEqual(["data-next-link=", "href=/preise"]);
+  expect(attributes("Mathematik")).toEqual([
+    "data-next-link=",
+    "href=/faecher#mathematik",
+  ]);
+  expect(attributes("AGB")).toEqual(["download=", "href=/rechtliches/agb.pdf"]);
   expect(attributes("Discord")).toEqual([
     "href=https://discord.gg/x",
     "rel=noopener noreferrer",
