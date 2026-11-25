@@ -5,7 +5,7 @@ export const startSteps: Step[] = [
   {
     n: "1",
     title: "Kostenloses Erstgespräch",
-    text: "Wir klären Fach, Ziel, aktuelle Probleme und ob die Zusammenarbeit passt.",
+    text: "Wir klären Fach, Ziel und ob es passt. Anschließend bekommst du alles Wichtige per E-Mail.",
   },
   {
     n: "2",

@@ -41,7 +41,7 @@ export const processFaq: Faq[] = [
   {
     question: "Wie sage ich ab?",
     answer:
-      "Bis 24 Stunden vorher kannst du kostenfrei verschieben oder absagen. Bei kurzfristigen Notfällen finden wir eine faire Lösung.",
+      "Bis 24 Stunden vorher kannst du kostenfrei verschieben oder absagen – per Nachricht, E-Mail oder Anruf. Danach wird die Stunde berechnet. Wirst du plötzlich krank, sag einfach sofort Bescheid – dann kostet die Absage natürlich nichts.",
   },
   {
     question: "Können Eltern beim Erstgespräch dabei sein?",
