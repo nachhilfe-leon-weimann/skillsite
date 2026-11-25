@@ -37,6 +37,13 @@ test("a malformed key stops the server with a message that never shows the key",
 test("the environment is parsed once", async () => {
   vi.resetModules();
   vi.stubEnv("CAL_API_KEY", "cal_live_test123");
+  // Absent, whatever the shell running the tests holds: a partial set would stop the parse.
+  for (const name of [
+    "SKILLFORGE_API_URL",
+    "SKILLFORGE_CLIENT_ID",
+    "SKILLFORGE_CLIENT_SECRET",
+  ])
+    vi.stubEnv(name, undefined);
   const { serverEnv } = await import("@/lib/env");
   const first = serverEnv();
   vi.stubEnv("CAL_API_KEY", "");

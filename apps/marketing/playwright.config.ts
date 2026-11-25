@@ -15,7 +15,16 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   reporter: process.env.CI ? "github" : "list",
-  use: { baseURL: `http://127.0.0.1:${port}` },
+  use: {
+    baseURL: `http://127.0.0.1:${port}`,
+    // The safety net under `isolate`: a non-local request that slips past every route (one that follows a redirect,
+    // say) fails to resolve instead of leaving the machine.
+    launchOptions: {
+      args: [
+        "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost",
+      ],
+    },
+  },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     // A local SkillForge with synthetic invoices (e2e/stubs/skillforge.mjs) for the payment page.

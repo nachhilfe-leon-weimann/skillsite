@@ -73,15 +73,24 @@ test("an old link pays sevDesk's amount, not the link's", async ({
 
 test("the form leads to the lookup", async ({ page }) => {
   await isolate(page);
-  // PayPal itself is never loaded: the request leaving for it is the result.
-  await page.route("https://www.paypal.com/**", (route) => route.abort());
+  // The form's own request is routed and answered locally: the page's redirect is read, never followed. A request
+  // the browser makes by following a redirect bypasses every route, so PayPal would load for real.
+  let formQuery: URLSearchParams | undefined;
+  let location: string | undefined;
+  await page.route(/\/zahlung\?re=/, async (route) => {
+    formQuery = new URL(route.request().url()).searchParams;
+    const response = await route.fetch({ maxRedirects: 0 });
+    location = response.headers()["location"];
+    // An empty page commits the navigation the click waits for; a 204 would leave it pending.
+    await route.fulfill({ status: 200, contentType: "text/html", body: "" });
+  });
   await page.goto("/zahlung");
   await page.getByLabel("Rechnungsnummer").fill("re-1001");
-  const toPaypal = page.waitForRequest(/^https:\/\/www\.paypal\.com\//);
   await page.getByRole("button", { name: "Weiter zu PayPal" }).click();
-  expect(new URL((await toPaypal).url()).searchParams.get("invoice")).toBe(
-    "RE-1001",
-  );
+  await expect.poll(() => location, "the page's redirect").toBeDefined();
+  expect(formQuery?.get("re")).toBe("re-1001");
+  expect(location).toMatch(/^https:\/\/www\.paypal\.com\//);
+  expect(new URL(location!).searchParams.get("invoice")).toBe("RE-1001");
 });
 
 const paymentStates = [
