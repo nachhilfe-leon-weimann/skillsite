@@ -78,6 +78,10 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   `CAL_API_KEY= just dev` (`build`, `smoke`, `check`): turbo passes the empty value through, Next keeps a variable
   that is set, and availability says `unconfigured`. Never send a booking request to a server holding the key, nor
   to `just docker-run`: its container gets the env file.
+- **No real SkillForge lookups from an agent session.** Every `/zahlung?re=` asks SkillForge. Run it as
+  `SKILLFORGE_API_URL= SKILLFORGE_CLIENT_ID= SKILLFORGE_CLIENT_SECRET= just dev` (as with `CAL_API_KEY=`), or
+  against `e2e/stubs/skillforge.mjs` with its synthetic client; never against `just docker-run`. Never follow the
+  redirect to PayPal: the e2e tests read only its `location`.
 - **Booking:** success only once Cal.com confirmed it; an anti-spam hit is a visible error. Never compare client and
   server clocks (the client sends a duration); honeypot names never sound like profile data (company, website,
   name); one `[booking] <outcome>` log line per attempt, with a masked e-mail only.
