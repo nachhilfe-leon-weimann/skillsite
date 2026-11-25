@@ -41,14 +41,36 @@ test("accepts the amount spellings an invoice template can produce", () => {
   }
 });
 
+test("accepts the raw invoice total the sevDesk layout puts into the link", () => {
+  // The layout writes `{{data.object.total}}`: whole euros without decimals,
+  // anything else with as few decimals as needed - 22,50 EUR arrives as `22.5`.
+  const accepted: Array<[string, string]> = [
+    ["30", "30.00"],
+    ["22.5", "22.50"],
+    ["37.5", "37.50"],
+    ["1234.5", "1234.50"],
+    ["22,5", "22.50"],
+    ["90,0", "90.00"],
+  ];
+
+  for (const [betrag, amount] of accepted) {
+    assert.deepEqual(
+      parsePaymentRequest({ ...SEVDESK, betrag }),
+      { ok: true, invoice: "RE-1840", amount },
+      `expected ${betrag} to parse as ${amount}`,
+    );
+  }
+});
+
 test("rejects an amount that is not an unambiguous euro figure", () => {
   const rejected = [
     // Ambiguous: German thousands or English decimals? Never guess money.
     "1.234",
     "1,234",
     "90,000",
-    "90,0",
     "90,005",
+    "1.234,5",
+    "1,234.5",
     "0,00",
     "-90,00",
     "+90,00",
