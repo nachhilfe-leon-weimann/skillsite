@@ -8,13 +8,13 @@ test("every outcome is one greppable line at the matching level", () => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
   logPayment("redirected", { invoice: "RE-1840", amount: "90.00" });
-  logPayment("rejected", { reason: "amount", betrag: "90,00 USD" });
+  logPayment("rejected", { reason: "invoice", re: "RE/1840" });
 
   assert.deepEqual(info.mock.calls[0], [
     '[payment] redirected {"invoice":"RE-1840","amount":"90.00"}',
   ]);
   assert.deepEqual(warn.mock.calls[0], [
-    '[payment] rejected {"reason":"amount","betrag":"90,00 USD"}',
+    '[payment] rejected {"reason":"invoice","re":"RE/1840"}',
   ]);
 });
 

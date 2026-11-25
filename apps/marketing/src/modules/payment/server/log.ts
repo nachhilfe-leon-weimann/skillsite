@@ -5,7 +5,7 @@
  *
  *   [payment] redirected {"invoice":"RE-1840","amount":"90.00"}
  *   [payment] unavailable {"invoice":"RE-1840"}
- *   [payment] rejected {"reason":"amount","re":"RE-1840","betrag":"90,00 USD"}
+ *   [payment] rejected {"reason":"invoice","re":"RE/1840","betrag":"90,00 EUR"}
  *
  * Privacy: an invoice number and an amount, nothing about the person - the link
  * carries no name, no e-mail and no IP address, and no SkillForge token.

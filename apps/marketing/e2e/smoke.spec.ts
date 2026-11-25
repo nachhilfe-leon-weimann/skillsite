@@ -56,16 +56,23 @@ for (const path of ["/termin", "/kontakt"]) {
   });
 }
 
-test("a valid payment link redirects to the PayPal checkout", async ({
-  request,
+test("without SkillForge, a payment link stays on the page instead of redirecting", async ({
+  page,
 }) => {
-  const response = await request.get("/zahlung?re=RE-1840&betrag=90,00%20EUR", {
-    maxRedirects: 0,
-  });
-  expect(response.status()).toBe(307);
-  expect(response.headers()["location"]).toMatch(
-    /^https:\/\/www\.paypal\.com\/cgi-bin\/webscr\?/,
-  );
+  // The suite runs SkillForge unconfigured: no lookup, so no PayPal, whatever `betrag` says.
+  await isolate(page);
+  const errors = collectErrors(page);
+  const response = await page.goto("/zahlung?re=RE-1001&betrag=90,00%20EUR");
+  expect(response?.status()).toBe(200);
+  expect(new URL(page.url()).hostname).not.toContain("paypal");
+  await page.waitForLoadState("networkidle");
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Die Zahlung ist gerade nicht erreichbar.",
+    }),
+  ).toBeVisible();
+  expect(errors, "console errors").toEqual([]);
 });
 
 test("an invalid payment link renders a page instead of redirecting", async ({
@@ -73,11 +80,17 @@ test("an invalid payment link renders a page instead of redirecting", async ({
 }) => {
   await isolate(page);
   const errors = collectErrors(page);
-  const path = "/zahlung?re=x&betrag=abc";
+  const path = "/zahlung?re=RE%2F1840&betrag=abc";
   const response = await page.goto(path);
   expect(response?.status()).toBe(200);
   await page.waitForLoadState("networkidle");
   await expect(page.locator("main#main")).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Dieser Zahlungslink führt nicht weiter.",
+    }),
+  ).toBeVisible();
   expect(errors, "console errors").toEqual([]);
   await expectRootCanonicalOnlyOnHome(page, path);
 });

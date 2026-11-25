@@ -2,15 +2,22 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { StatusPage } from "@skillsite/ui/layout/status-page";
-import { Button } from "@skillsite/ui/primitives/button";
-import { SmartLink, TextLink } from "@skillsite/ui/primitives/link";
-import { Text } from "@skillsite/ui/typography/text";
-import { contactDetails } from "@/content/contact";
 import { paymentPage } from "@/content/status";
-import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/metadata";
-import { buildPaypalUrl, parsePaymentRequest } from "@/modules/payment";
-import { describeLink, logPayment } from "@/modules/payment/server";
+import {
+  buildPaypalUrl,
+  parseInvoiceNumber,
+  toPageState,
+  type PaymentPageState,
+} from "@/modules/payment";
+import {
+  describeLink,
+  logPayment,
+  lookupInvoice,
+} from "@/modules/payment/server";
+
+import { InvoiceForm } from "./_components/invoice-form";
+import { PaymentStatus } from "./_components/payment-status";
 
 export const metadata: Metadata = pageMetadata({
   ...paymentPage.metadata,
@@ -25,10 +32,15 @@ type PaymentSearchParams = Promise<
   Record<string, string | string[] | undefined>
 >;
 
+/** A state that ends on this page instead of at PayPal. */
+type StatusState = Exclude<PaymentPageState, { kind: "redirect" }>;
+
 /**
- * The payment link printed on our invoices: `/zahlung?re=RE-1840&betrag=90,00 EUR`
- * sends the customer straight to PayPal's checkout with amount and invoice
- * number prefilled. An unusable link ends here with a way to reach us instead.
+ * The payment link printed on our invoices: `/zahlung?re=RE-1840` looks the
+ * invoice up in SkillForge and sends the customer to PayPal's checkout with the
+ * open amount SkillForge confirmed. `betrag` in an older link is ignored.
+ * Without a number the page asks for one; every other answer ends on a status
+ * page with a way to reach us - never at PayPal without a fresh lookup.
  */
 export default async function PaymentPage({
   searchParams,
@@ -36,47 +48,58 @@ export default async function PaymentPage({
   searchParams: PaymentSearchParams;
 }) {
   const params = await searchParams;
-  const request = parsePaymentRequest(params);
+  const parsed = parseInvoiceNumber(params.re);
 
-  if (request.ok) {
-    logPayment("redirected", {
-      invoice: request.invoice,
-      amount: request.amount,
-    });
-    redirect(buildPaypalUrl(request));
+  if (!parsed.ok) {
+    // No number yet is not a payment request: the field, and no log line.
+    if (parsed.reason === "missing") {
+      return (
+        <StatusPage
+          eyebrow={paymentPage.eyebrow}
+          title={paymentPage.form.title}
+          lead={paymentPage.form.lead}
+          actions={<InvoiceForm />}
+        />
+      );
+    }
+    logPayment("rejected", { reason: parsed.reason, ...describeLink(params) });
+    return <PaymentStatus {...paymentPage.malformed} />;
   }
 
-  logPayment("rejected", { reason: request.reason, ...describeLink(params) });
-
-  return (
-    <StatusPage
-      eyebrow={paymentPage.eyebrow}
-      title={paymentPage.title}
-      lead={paymentPage.lead}
-      actions={
-        <>
-          <Button asChild variant="primary" size="lg">
-            <SmartLink href={contactDetails.eMail.href}>
-              {paymentPage.actions.eMail}
-            </SmartLink>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            {/* Same tab on purpose: intended by the maintainer; `SmartLink` would open a new tab */}
-            <a href={contactDetails.whatsapp.href}>
-              {paymentPage.actions.whatsapp}
-            </a>
-          </Button>
-        </>
-      }
-    >
-      <Text size="small" tone="muted" className="mt-6">
-        {contactDetails.eMail.content} · {contactDetails.whatsapp.content}
-      </Text>
-      <Text size="small" tone="muted" className="mt-2">
-        <TextLink variant="underline" href={routes.contact}>
-          {paymentPage.allContacts}
-        </TextLink>
-      </Text>
-    </StatusPage>
+  const state = toPageState(
+    parsed.invoice,
+    await lookupInvoice(parsed.invoice),
   );
+
+  if (state.kind === "redirect") {
+    const { invoice, amount } = state.request;
+    // `redirect` throws to end the render: the line has to come first.
+    logPayment("redirected", { invoice, amount });
+    redirect(buildPaypalUrl(state.request));
+  }
+
+  logPayment(state.kind, { invoice: state.invoice });
+  return <StateStatus state={state} />;
+}
+
+function StateStatus({ state }: { state: StatusState }) {
+  switch (state.kind) {
+    case "blocked":
+      return (
+        <PaymentStatus
+          title={paymentPage.blocked.title}
+          lead={paymentPage.blocked.lead(state.invoice)}
+        />
+      );
+    case "paid":
+      return <PaymentStatus {...paymentPage.paid} />;
+    case "not_payable":
+      return (
+        <PaymentStatus {...paymentPage.notPayable}>
+          <InvoiceForm className="mt-8" />
+        </PaymentStatus>
+      );
+    case "unavailable":
+      return <PaymentStatus {...paymentPage.unavailable} />;
+  }
 }

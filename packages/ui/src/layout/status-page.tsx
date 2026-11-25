@@ -7,7 +7,8 @@ type StatusPageProps = {
   eyebrow: React.ReactNode;
   /** The page's h1. */
   title: React.ReactNode;
-  lead: React.ReactNode;
+  /** The line below the title; without it, the actions follow the title. */
+  lead?: React.ReactNode;
   /** The buttons below the lead. */
   actions: React.ReactNode;
   /** Lines below the actions. */
@@ -28,9 +29,11 @@ export function StatusPage({
       <Heading as="h1" size="h1" className="mt-4">
         {title}
       </Heading>
-      <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
-        {lead}
-      </Text>
+      {lead ? (
+        <Text size="lead" tone="muted" className="mt-4 max-w-measure-34">
+          {lead}
+        </Text>
+      ) : null}
       <div className="mt-8 flex flex-wrap justify-center gap-3.5">
         {actions}
       </div>
