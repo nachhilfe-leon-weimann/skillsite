@@ -35,6 +35,7 @@ const AMOUNT_PATTERNS = [
   /^\d+,\d{2}$/, // 90,00
   /^\d{1,3}(?:,\d{3})+\.\d{2}$/, // 1,234.56
   /^\d+\.\d{2}$/, // 90.00
+  /^\d+[.,]\d$/, // 22.5, 22,5 - the raw total of the sevDesk layout
   /^\d+$/, // 90
 ];
 
