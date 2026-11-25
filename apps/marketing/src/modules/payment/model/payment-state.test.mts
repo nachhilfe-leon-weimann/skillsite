@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 
-import { toPageState } from "./payment-state.ts";
+import { toPageState, type PaymentLookup } from "./payment-state.ts";
 
 const INVOICE = "RE-1001";
 
@@ -66,5 +66,22 @@ test("paid, not payable and unavailable keep their kind with the invoice", () =>
       kind,
       invoice: INVOICE,
     });
+  }
+});
+
+test("an open invoice whose PayPal flag is neither value never redirects", () => {
+  // The gate in front of PayPal must fail closed if the contract grows a value
+  // or a body slips through untyped: only `allowed` may redirect.
+  for (const paypal of [undefined, "ALLOWED", "review", ""]) {
+    const lookup = {
+      kind: "open",
+      amountCents: 2250,
+      paypal,
+    } as unknown as PaymentLookup;
+    assert.deepEqual(
+      toPageState(INVOICE, lookup),
+      { kind: "unavailable", invoice: INVOICE },
+      `expected paypal ${JSON.stringify(paypal)} to be unavailable`,
+    );
   }
 });

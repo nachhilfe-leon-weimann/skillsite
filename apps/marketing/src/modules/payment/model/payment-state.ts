@@ -39,6 +39,8 @@ export function toPageState(
   if (amountCents === 0) return { kind: "paid", invoice };
   // Transfer only, whatever the sum: the page never reaches PayPal.
   if (paypal === "blocked") return { kind: "blocked", invoice };
+  // Only an explicit `allowed` may reach PayPal; any other flag fails closed.
+  if (paypal !== "allowed") return { kind: "unavailable", invoice };
   if (amountCents < AMOUNT_LIMITS.min || amountCents > AMOUNT_LIMITS.max) {
     return { kind: "unavailable", invoice };
   }
