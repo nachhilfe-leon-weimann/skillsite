@@ -76,6 +76,8 @@ test("sends HTTP Basic and the client_credentials grant", async () => {
     "application/x-www-form-urlencoded",
   );
   expect(bodies).toEqual(["grant_type=client_credentials"]);
+  // A redirect is never followed: fetch would send the credentials on to wherever it points.
+  expect(request?.redirect).toBe("error");
 });
 
 test("returns null on a refusal, a broken body and a network error", async () => {
@@ -98,5 +100,36 @@ test("fetches anew after invalidate", async () => {
   source.invalidate();
   await source.token();
 
+  expect(requests).toHaveLength(2);
+});
+
+test.each([
+  ["an empty access_token", { access_token: "", expires_in: 3600 }],
+  ["a zero lifetime", { access_token: "synthetic-token", expires_in: 0 }],
+  ["a negative lifetime", { access_token: "synthetic-token", expires_in: -1 }],
+  [
+    "a fractional lifetime",
+    { access_token: "synthetic-token", expires_in: 1.5 },
+  ],
+  [
+    "a lifetime that is a string",
+    { access_token: "synthetic-token", expires_in: "3600" },
+  ],
+])("returns null for %s", async (_name, body) => {
+  const { source } = setup(() => Response.json(body));
+
+  expect(await source.token()).toBeNull();
+});
+
+test("recovers after a failed request: nothing of the failure is kept", async () => {
+  let calls = 0;
+  const { source, requests } = setup(() =>
+    ++calls === 1
+      ? Response.json({ code: "invalid_client" }, { status: 401 })
+      : issued(),
+  );
+
+  expect(await source.token()).toBeNull();
+  expect(await source.token()).toBe("synthetic-token");
   expect(requests).toHaveLength(2);
 });
