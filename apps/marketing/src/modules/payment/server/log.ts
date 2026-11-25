@@ -4,10 +4,11 @@
  * customer reach PayPal?":
  *
  *   [payment] redirected {"invoice":"RE-1840","amount":"90.00"}
+ *   [payment] unavailable {"invoice":"RE-1840"}
  *   [payment] rejected {"reason":"amount","re":"RE-1840","betrag":"90,00 USD"}
  *
  * Privacy: an invoice number and an amount, nothing about the person - the link
- * carries no name, no e-mail and no IP address.
+ * carries no name, no e-mail and no IP address, and no SkillForge token.
  */
 
 import { compact, createLogger, loggable } from "@/lib/log";
@@ -15,11 +16,23 @@ import { compact, createLogger, loggable } from "@/lib/log";
 export type PaymentOutcome =
   /** The customer was sent to PayPal's checkout. */
   | "redirected"
+  /** SkillForge says the invoice is paid by transfer only. */
+  | "blocked"
+  /** SkillForge says nothing is left to pay. */
+  | "paid"
+  /** SkillForge knows no payable invoice under the number. */
+  | "not_payable"
+  /** SkillForge is unconfigured, unreachable or answered off its contract. */
+  | "unavailable"
   /** The link was unusable - an error page was shown instead. */
   | "rejected";
 
 export const logPayment = createLogger<PaymentOutcome>("payment", {
   redirected: "info",
+  blocked: "info",
+  paid: "info",
+  not_payable: "warn",
+  unavailable: "error",
   rejected: "warn",
 });
 

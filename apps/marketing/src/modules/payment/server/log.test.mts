@@ -18,6 +18,28 @@ test("every outcome is one greppable line at the matching level", () => {
   ]);
 });
 
+test("each lookup outcome logs at the level its urgency asks for", () => {
+  const info = vi.spyOn(console, "info").mockImplementation(() => {});
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+  logPayment("blocked", { invoice: "RE-1002" });
+  logPayment("paid", { invoice: "RE-1003" });
+  logPayment("not_payable", { invoice: "RE-1004" });
+  logPayment("unavailable", { invoice: "RE-1005" });
+
+  assert.deepEqual(info.mock.calls, [
+    ['[payment] blocked {"invoice":"RE-1002"}'],
+    ['[payment] paid {"invoice":"RE-1003"}'],
+  ]);
+  assert.deepEqual(warn.mock.calls, [
+    ['[payment] not_payable {"invoice":"RE-1004"}'],
+  ]);
+  assert.deepEqual(error.mock.calls, [
+    ['[payment] unavailable {"invoice":"RE-1005"}'],
+  ]);
+});
+
 test("a rejected link is logged verbatim so a broken template is fixable", () => {
   assert.deepEqual(describeLink({ re: "RE-1840", betrag: "90,00 USD" }), {
     re: "RE-1840",
