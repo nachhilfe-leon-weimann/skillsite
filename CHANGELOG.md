@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.6](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.5...v1.2.6) (2026-11-25)
+
+
+### Bug Fixes
+
+* **booking:** forget client addresses on a schedule, not only on the next request ([#283](https://github.com/nachhilfe-leon-weimann/skillsite/issues/283)) ([40adc0e](https://github.com/nachhilfe-leon-weimann/skillsite/commit/40adc0e3708f7c303259572343bca6796725e82f))
+* **booking:** link the privacy policy on the first-meeting form ([#284](https://github.com/nachhilfe-leon-weimann/skillsite/issues/284)) ([0eeabed](https://github.com/nachhilfe-leon-weimann/skillsite/commit/0eeabedd2453591caf03948849ce37239e92a3d1))
+* **payment:** accept the invoice total with one decimal ([#297](https://github.com/nachhilfe-leon-weimann/skillsite/issues/297)) ([396a6c4](https://github.com/nachhilfe-leon-weimann/skillsite/commit/396a6c4275a09aa1520e6a67bee90fd1eebc2a69))
+
 ## [1.2.5](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.4...v1.2.5) (2026-11-14)
 
 
