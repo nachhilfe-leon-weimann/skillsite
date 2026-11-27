@@ -23,3 +23,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    labels:
+      # Authenticated Origin Pulls: the HTTPS router accepts only Cloudflare (see #292).
+      # Dokploy generates this router name from the domain entry; re-check it after changing the domain there.
+      - "traefik.http.routers.skillplatform-skillsite-yfea4x-1-websecure.tls.options=cloudflare-origin-pull@file"
