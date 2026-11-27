@@ -4,8 +4,8 @@
  * Dokploy strips every label that targets a router it generates for a domain entry and writes its
  * own, so a label that only adjusts such a router (say, its TLS options) is dropped at deploy time
  * without a trace. These tests keep the routing self-contained: every router the labels touch is
- * defined here, HTTPS requires Cloudflare's client certificate (Authenticated Origin Pulls), and
- * plain HTTP only redirects.
+ * defined here and points at a service of the app's port, HTTPS requires Cloudflare's client
+ * certificate (Authenticated Origin Pulls), and plain HTTP only redirects.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { load } from "js-yaml";
 import { test } from "vitest";
 
-type Service = { labels?: string[]; networks?: string[] };
+type Service = { labels?: string[]; networks?: string[]; expose?: string[] };
 type Compose = {
   services: Record<string, Service>;
   networks?: Record<string, { external?: boolean }>;
@@ -42,8 +42,11 @@ for (const [key, value] of labels) {
   routers.set(router, (routers.get(router) ?? new Map()).set(setting, value));
 }
 const onEntrypoint = (entrypoint: string) =>
-  [...routers.values()].filter(
-    (settings) => settings.get("entrypoints") === entrypoint,
+  [...routers.values()].filter((settings) =>
+    (settings.get("entrypoints") ?? "")
+      .split(",")
+      .map((name) => name.trim())
+      .includes(entrypoint),
   );
 
 test("every router the labels touch is defined in compose.yml", () => {
@@ -55,10 +58,23 @@ test("every router the labels touch is defined in compose.yml", () => {
   }
 });
 
+test("every router sends traffic to a service on the app's exposed port", () => {
+  for (const [router, settings] of routers) {
+    const service = settings.get("service");
+    const port = labels.get(
+      `traefik.http.services.${service}.loadbalancer.server.port`,
+    );
+    assert.ok(port, `router ${router} names undefined service ${service}`);
+    assert.ok(app.expose?.includes(port), `port ${port} is not exposed`);
+  }
+});
+
 test("every HTTPS router requires Cloudflare's client certificate", () => {
   const secure = onEntrypoint("websecure");
   assert.ok(secure.length > 0);
   for (const settings of secure) {
+    // Traefik picks a router's TLS options by SNI, which it reads from a plain Host() rule.
+    assert.match(settings.get("rule") ?? "", /^Host\(`[^`]+`\)$/);
     assert.equal(settings.get("tls"), "true");
     assert.equal(settings.get("tls.options"), "cloudflare-origin-pull@file");
   }

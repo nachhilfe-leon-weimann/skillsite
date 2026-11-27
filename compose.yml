@@ -26,7 +26,9 @@ services:
     # Routing lives here, not in a Dokploy domain: Dokploy strips every label aimed at the routers it
     # generates, so a domain entry there could not require Cloudflare's client certificate.
     # `cloudflare-origin-pull@file` (Authenticated Origin Pulls) and `redirect-to-https@file` are
-    # defined in Traefik's dynamic config on the server.
+    # defined in Traefik's dynamic config on the server. Never add a Dokploy domain for this host:
+    # two routers with different TLS options for one host make Traefik fall back to its defaults,
+    # which silently drops the client-certificate check.
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
