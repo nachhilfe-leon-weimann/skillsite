@@ -23,7 +23,27 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    # Routing lives here, not in a Dokploy domain: Dokploy strips every label aimed at the routers it
+    # generates, so a domain entry there could not require Cloudflare's client certificate.
+    # `cloudflare-origin-pull@file` (Authenticated Origin Pulls) and `redirect-to-https@file` are
+    # defined in Traefik's dynamic config on the server.
     labels:
-      # Authenticated Origin Pulls: the HTTPS router accepts only Cloudflare (see #292).
-      # Dokploy generates this router name from the domain entry; re-check it after changing the domain there.
-      - "traefik.http.routers.skillplatform-skillsite-yfea4x-1-websecure.tls.options=cloudflare-origin-pull@file"
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      - "traefik.http.services.skillsite.loadbalancer.server.port=3000"
+      - "traefik.http.routers.skillsite-web.rule=Host(`nachhilfe.leonweimann.de`)"
+      - "traefik.http.routers.skillsite-web.entrypoints=web"
+      - "traefik.http.routers.skillsite-web.middlewares=redirect-to-https@file"
+      - "traefik.http.routers.skillsite-web.service=skillsite"
+      - "traefik.http.routers.skillsite-websecure.rule=Host(`nachhilfe.leonweimann.de`)"
+      - "traefik.http.routers.skillsite-websecure.entrypoints=websecure"
+      - "traefik.http.routers.skillsite-websecure.tls=true"
+      - "traefik.http.routers.skillsite-websecure.tls.options=cloudflare-origin-pull@file"
+      - "traefik.http.routers.skillsite-websecure.service=skillsite"
+    networks:
+      - dokploy-network
+      - default
+
+networks:
+  dokploy-network:
+    external: true

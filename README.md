@@ -74,7 +74,9 @@ docker logs <container> 2>&1 | grep -F "[payment] rejected"
 
 Merging the release PR (`chore(main): release X.Y.Z`) is the release: tag, image and deploy follow.
 Never bump the version or tag by hand - the conventional commits on `main` (`feat`, `fix`, `!`) drive
-both, and [`compose.yml`](compose.yml) records the version prod runs.
+both, and [`compose.yml`](compose.yml) records the version prod runs. It also owns the Traefik routing
+(host, HTTPS redirect, Cloudflare's client certificate): the Dokploy app has no domain entry, as
+Dokploy strips every label aimed at the routers it generates.
 
 The platform's one flow, documented in skillforge:
 [`release-flow.md`](https://github.com/Nachhilfe-Leon-Weimann/skillforge/blob/main/docs/specs/release-flow.md)
