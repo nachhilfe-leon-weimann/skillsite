@@ -159,13 +159,14 @@ export function DocList({
   items,
   className,
 }: {
-  items: string[];
+  items: React.ReactNode[];
   className?: string;
 }) {
   return (
     <ul className={cn("my-4 space-y-2 leading-7 text-ink", className)}>
-      {items.map((item) => (
-        <li key={item} className="flex gap-3">
+      {items.map((item, index) => (
+        // The items are a fixed text: their order is their identity.
+        <li key={index} className="flex gap-3">
           <span
             className="mt-list-bullet size-1.5 shrink-0 rounded-full bg-ink/40"
             aria-hidden
@@ -185,14 +186,15 @@ export function DocIndentBlock({
   lines,
   footnote,
 }: {
-  lines: string[];
-  footnote?: string;
+  lines: React.ReactNode[];
+  footnote?: React.ReactNode;
 }) {
   return (
     <div className="my-4 pl-4 sm:pl-6">
       <div className="space-y-2">
-        {lines.map((line) => (
-          <p key={line} className="leading-7 text-ink">
+        {lines.map((line, index) => (
+          // The lines are a fixed text: their order is their identity.
+          <p key={index} className="leading-7 text-ink">
             {line}
           </p>
         ))}
@@ -204,6 +206,11 @@ export function DocIndentBlock({
   );
 }
 
+/** One entry of a list of blocks, such as a hosting provider. */
+export function DocEntry({ children }: { children: React.ReactNode }) {
+  return <div className="not-first:mt-5">{children}</div>;
+}
+
 export function DocDetailGrid({ children }: { children: React.ReactNode }) {
   return <div className="my-5 grid gap-4 sm:grid-cols-2">{children}</div>;
 }
@@ -213,7 +220,7 @@ export function DocDetailList({
   items,
 }: {
   title: string;
-  items: string[];
+  items: React.ReactNode[];
 }) {
   return (
     <Card surface="doc" radius="xl" className="p-4">
@@ -273,12 +280,23 @@ export function DocProviderLink({
   );
 }
 
-export function DocLegalBasis({ children }: { children: React.ReactNode }) {
+/**
+ * A legal-basis box. `label` is the document tree's (`labels.legalBasis` of
+ * `@skillsite/documents`); the privacy policy's JSX relies on the default
+ * until it moves to Markdown (spec `docs/specs/documents.md`, A2).
+ */
+export function DocLegalBasis({
+  label = "Rechtsgrundlage:",
+  children,
+}: {
+  label?: string;
+  children: React.ReactNode;
+}) {
   return (
     <Card surface="doc" radius="xl" className="mt-4 flex gap-3 p-3">
       <Scale className="mt-1 size-4 shrink-0 text-ink-soft" aria-hidden />
       <p className="text-prose-sm leading-6 text-ink-soft">
-        <span className="font-medium text-ink">Rechtsgrundlage: </span>
+        <span className="font-medium text-ink">{`${label} `}</span>
         {children}
       </p>
     </Card>

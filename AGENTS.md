@@ -6,17 +6,17 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 
 ## Where to look
 
-| When you ...                                | Read                                                                                                                                                                                                                     |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                              |
-| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                 |
-| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`                                                                                                                                |
-| change the legal-text pipeline              | `packages/documents/` (`@skillsite/documents`): `src/schema/` (node registry), `src/parse/`, `src/build.ts` (`content/*.md` -> `dist/`); provider data and legal labels in `src/`                                        |
-| build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
-| decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
-| write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                      |
-| brief an agent or write a handoff           | the [agent work guide][agent-work] in skillforge                                                                                                                                                                         |
-| rely on a Next.js API                       | `apps/marketing/node_modules/next/dist/docs/` - Next.js 16 differs from older versions                                                                                                                                   |
+| When you ...                                | Read                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                                                                                                                    |
+| change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                                                                                                       |
+| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal text in `packages/documents/content/` (Markdown, shared sections in `partials/`; the AGB; the privacy policy and the Impressum are still JSX in `content/legal/*.tsx`)                                                                             |
+| change the legal-text pipeline              | `packages/documents/` (`@skillsite/documents`): `src/schema/` (node registry), `src/parse/`, `src/build.ts` (`content/*.md` -> `dist/`), `src/text.ts` (a tree's text, for the wording tests); provider data and legal labels in `src/`; the web renderer in `apps/marketing/src/components/docs/document.tsx` |
+| build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets                                                                                       |
+| decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                                                                                                           |
+| write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                                                                                                            |
+| brief an agent or write a handoff           | the [agent work guide][agent-work] in skillforge                                                                                                                                                                                                                                                               |
+| rely on a Next.js API                       | `apps/marketing/node_modules/next/dist/docs/` - Next.js 16 differs from older versions                                                                                                                                                                                                                         |
 
 ## Commands
 
@@ -30,8 +30,10 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 ## Conventions
 
 - English in code, comments, identifiers, specs and commits; German only in visible content, which lives in
-  `apps/marketing/src/content/*.ts`, legal prose as JSX in `content/legal/*.tsx`, provider data and legal labels in
-  `packages/documents/src/`, not in components. Developer artifacts name no person: write "the maintainer".
+  `apps/marketing/src/content/*.ts`, legal text in `packages/documents/content/` (Markdown, shared sections in
+  `partials/`; the AGB so far; the privacy policy and the Impressum are still JSX in `content/legal/*.tsx`), its
+  labels and the provider data in `packages/documents/src/`, not in components. Developer artifacts name no person:
+  write "the maintainer".
 - Clean, modular, schema-driven structures, no quick fixes. Pages use `@skillsite/ui` and the type scale
   (`text-display` ... `text-caption`): no arbitrary values (`text-[...]`, inline `color-mix(...)`, hand-tuned
   `clamp()`), no hand-built copies of existing components.
@@ -155,6 +157,12 @@ Every PR states `Review: deep | evidence`, telling the maintainer how closely to
 ## Traps
 
 - Bulk edits over German files only with UTF-8-safe tools (`perl -CSD -pi -e ...`); plain `sed`/`perl` break ä, ß.
+- Legal Markdown (`packages/documents/content/`) is the parser's format; Prettier skips it. One sentence per line; a
+  blank line around every directive fence, list and heading; a container fence has more colons than every fence
+  inside it, and its closing fence repeats the count; attribute values quoted; a literal `(*)` is `(\*)`. A colon
+  right before a letter starts a directive: a bare unknown one stays text (`Hinweis:Text`), but one followed by
+  `[…]` or `{…}`, or with a registered name (`:value`, `:ref`, …), is a directive and fails the build when wrong;
+  a literal colon there is `\:`.
 - `next dev` serving stale CSS: delete `apps/marketing/.next` and restart.
 - Tailwind v4 `translate-*` / `scale-*` set `translate` / `scale`, not `transform`: write
   `transition-[opacity,translate,scale]`, and verify motion in a browser (`apps/marketing/e2e/motion.spec.ts`).

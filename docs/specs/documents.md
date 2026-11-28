@@ -1,6 +1,6 @@
 # Spec: Documents (legal texts from one Markdown source, for the website and as PDF)
 
-> Status: Accepted, 2026-11-28 - A0 and A1a in review. The maintainer accepted every decision and answered the open
+> Status: Accepted, 2026-11-28 - A0, A1a and A1b in review. The maintainer accepted every decision and answered the open
 > questions on 2026-11-28.
 > Builds on [`foundation-refactor.md`](foundation-refactor.md): its module rules, foundation E-12 (the manual look
 > check) and V7, which this arc supersedes for legal prose. This spec is also the decision record for the arc. Its
@@ -136,8 +136,11 @@ packages/documents/                 @skillsite/documents
   src/parse/                        remark pipeline, directive guard, placeholder/ref/partial/date resolution
   src/build.ts                      content -> dist/documents.json (every tree, by slug) + dist/meta.json;
                                     from A4 also dist/<slug>.pdf
+  src/text.ts                       a tree's text, one line per block: what tree-equals-page and
+                                    tree-equals-PDF compare with
   src/pdf.ts                        `pnpm documents:pdf [--out <dir>] [--png]` (A3b)
-  src/index.ts                      export ".": getDocument(slug), node types; starts with import "server-only"
+  src/index.ts                      export ".": getDocument(slug), webMeta(meta), documentTextLines(body),
+                                    node types; starts with import "server-only"
   src/meta.ts                       export ./meta: versions and dates from dist/meta.json (E-15)
   typst/document.typ                walker: json(sys.inputs.doc) -> print-kit
   typst/nodes.typ                   one Typst function per node type; the dispatch fails on an unknown type
@@ -161,7 +164,7 @@ only (open question 4).
 
 | Field           | Meaning                                                                                                                                                                                                                                                 |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`         | the h1 and the PDF title. It may hold U+00AD (today's `Geschäfts&shy;bedingungen`). The Typst walker drops U+00AD when it sets the title.                                                                                                               |
+| `title`         | the h1 and the PDF title. It may hold U+00AD, written as YAML's `\u00AD` escape so that a diff shows it (today's `Geschäfts&shy;bedingungen`). The Typst walker drops U+00AD when it sets the title.                                                    |
 | `shortTitle`    | the `<title>` segment ("AGB", "Datenschutz", "Impressum")                                                                                                                                                                                               |
 | `badge`         | the hero pill, and the PDF's eyebrow                                                                                                                                                                                                                    |
 | `lead`          | the hero lead, and the PDF's subtitle                                                                                                                                                                                                                   |
@@ -301,7 +304,8 @@ This table is the public record of the brand's document design. A3a builds it; t
 **A1b - The AGB from Markdown.** _(after A1a)_
 
 - _Technique:_
-  - Add the React renderer `components/docs/document.tsx` for the node types the AGB needs.
+  - Add the React renderer `components/docs/document.tsx`. Its map is typed over the registry (E-04), so it renders
+    every registered type from the start: the AGB's and, through their components, the types A2 needs.
   - Write `agb.md` and `partials/widerruf.md`, and add the `.prettierignore` entry (E-16).
   - `app/agb/page.tsx` reads `getDocument("agb")`.
   - `modules/booking/model/mapping.ts` reads `version` from `./meta` (E-15). `mapping.test.ts` asserts the literal
@@ -315,24 +319,26 @@ This table is the public record of the brand's document design. A3a builds it; t
   - the withdrawal section with its form
   - the link to `/preise` and the `mailto:` links
 - _Acceptance criteria:_
-  - [ ] The fixture test is green on the last commit (Markdown).
-  - [ ] A lasting test asserts that the text of `/agb`'s `<article>` equals the text of the AGB tree.
-  - [ ] `renderers` covers every registered type, enforced by the type check and by a test.
-  - [ ] The form's first line contains no `<a>`.
-  - [ ] Mutation probes, each failing and then restored:
+  - [x] The fixture test is green on the last commit (Markdown).
+  - [x] A lasting test asserts that the text of `/agb`'s `<article>` equals the text of the AGB tree.
+  - [x] `renderers` covers every registered type, enforced by the type check and by a test.
+  - [x] The form's first line contains no `<a>`.
+  - [x] Mutation probes, each failing and then restored:
     - one character changed in `agb.md` fails the fixture test
     - a space between two words deleted fails the fixture test
     - a renderer that drops one link's text fails tree-equals-article
     - another `version` in `agb.md` fails `mapping.test.ts`
-  - [ ] The markup comparison of `/agb` shows no difference, or the PR explains each one.
-  - [ ] Before/after screenshots per open question 6.
-  - [ ] No legal sentence of the AGB is left in `apps/marketing/src`.
+  - [x] The markup comparison of `/agb` shows no difference, or the PR explains each one.
+  - [x] Before/after screenshots per open question 6.
+  - [x] No legal sentence of the AGB is left in `apps/marketing/src`, except in the wording fixture (open question
+        1).
 
 **A2 - Privacy policy and Impressum.** _(after A1b)_
 
 - _Technique:_
-  - **Renderers:** the remaining node types: `group`, `entry`, `detailGrid`/`detailList`, `linkList`,
-    `contactAddress`, `legalBasis`, `providerLink` and the `mt-6` rule.
+  - **Renderers:** A1b's map renders every type already (E-04). A2 proves the remaining ones on its pages: `group`,
+    `entry`, `detailGrid`/`detailList`, `linkList`, `contactAddress`, `legalBasis`, `providerLink` and the `mt-6`
+    rule. `DocLegalBasis` then takes its label from the tree only.
   - **Fixtures first**, as in A1a, for `/datenschutz` and `/impressum`.
   - **Content:** write `datenschutz.md` and `impressum.md`. The date in "hat den Stand …" is
     `:value[document.effectiveDate]`.
@@ -356,7 +362,7 @@ This table is the public record of the brand's document design. A3a builds it; t
     - a `legalBasis` renderer that drops its children
   - [ ] The markup comparison shows no difference, or the PR explains each one. Before/after screenshots.
   - [ ] `apps/marketing/src/content/legal/` no longer exists, and `grep` finds none of the moved sentences in
-        `apps/marketing/src`.
+        `apps/marketing/src`, except in the wording fixtures (open question 1).
 
 **A3a - Print kit.** _(after A2)_
 

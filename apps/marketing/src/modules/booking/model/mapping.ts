@@ -5,7 +5,7 @@ import {
   type BookingSubmission,
 } from "./config";
 import { isFieldEmpty, isMultiValue, type FieldValue } from "./fields";
-import { agbEffectiveDate } from "@/content/agb";
+import { documentVersions } from "@skillsite/documents/meta";
 import { readAgreements } from "./schema";
 import { toE164 } from "./validation";
 
@@ -86,7 +86,8 @@ export function buildCalBookingBody(
       earlyPerformanceRequested: String(
         paidAgreements.earlyPerformanceRequested,
       ),
-      agbVersion: agbEffectiveDate.toISOString().slice(0, 10),
+      // The AGB version the visitor accepted: `version` of packages/documents/content/agb.md (E-15).
+      agbVersion: documentVersions.agb.version,
     };
   }
   if (config.durations && submission.duration) {

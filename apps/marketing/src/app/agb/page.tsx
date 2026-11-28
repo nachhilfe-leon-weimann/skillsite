@@ -1,43 +1,44 @@
-import { DocHero, DocShell } from "@/components/docs/doc-components";
-import { TextLink } from "@skillsite/ui/primitives/link";
-import { agbContact, agbEffectiveDate, agbSections } from "@/content/agb";
-import { AgbProse, agbPage } from "@/content/legal/agb";
-import { pageMetadata } from "@/lib/metadata";
 import { CalendarDays, Mail, ScrollText } from "lucide-react";
 
+import { getDocument, webMeta } from "@skillsite/documents";
+import { TextLink } from "@skillsite/ui/primitives/link";
+import { DocHero, DocShell } from "@/components/docs/doc-components";
+import { DocumentBody } from "@/components/docs/document";
+import { legalContact } from "@/content/legal-contact";
+import { pageMetadata } from "@/lib/metadata";
+
+/** The AGB from `packages/documents/content/agb.md`. */
+const agb = getDocument("agb");
+const meta = webMeta(agb.meta);
+
 export const metadata = pageMetadata({
-  ...agbPage.metadata,
+  title: meta.shortTitle,
+  description: meta.description,
   canonical: "/agb",
 });
 
 export default function AgbPage() {
-  const { hero } = agbPage;
-  const effectiveDate = agbEffectiveDate.toLocaleDateString("de-DE", {
-    month: "long",
-    year: "numeric",
-  });
-
   return (
     <DocShell
-      sections={agbSections.sections}
+      sections={agb.nav}
       hero={
         <DocHero
-          badge={hero.badge}
+          badge={meta.badge}
           icon={ScrollText}
-          title={hero.title}
-          lead={hero.lead}
+          title={meta.title}
+          lead={meta.lead}
           facts={[
             {
               icon: CalendarDays,
-              label: hero.facts.effectiveDate,
-              children: <>{effectiveDate}</>,
+              label: agb.labels.effectiveDate,
+              children: meta.effectiveDateLabel,
             },
             {
               icon: Mail,
-              label: hero.facts.contact,
+              label: agb.labels.contact,
               children: (
-                <TextLink variant="doc" href={`mailto:${agbContact.email}`}>
-                  {agbContact.email}
+                <TextLink variant="doc" href={`mailto:${legalContact.email}`}>
+                  {legalContact.email}
                 </TextLink>
               ),
             },
@@ -45,7 +46,7 @@ export default function AgbPage() {
         />
       }
     >
-      <AgbProse />
+      <DocumentBody body={agb.body} />
     </DocShell>
   );
 }
