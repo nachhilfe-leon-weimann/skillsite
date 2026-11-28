@@ -1,6 +1,6 @@
 # Spec: Documents (legal texts from one Markdown source, for the website and as PDF)
 
-> Status: Accepted, 2026-11-28 - A0 in review. The maintainer accepted every decision and answered the open
+> Status: Accepted, 2026-11-28 - A0 and A1a in review. The maintainer accepted every decision and answered the open
 > questions on 2026-11-28.
 > Builds on [`foundation-refactor.md`](foundation-refactor.md): its module rules, foundation E-12 (the manual look
 > check) and V7, which this arc supersedes for legal prose. This spec is also the decision record for the arc. Its
@@ -286,17 +286,17 @@ This table is the public record of the brand's document design. A3a builds it; t
   - `/agb` is unchanged; all parser tests use synthetic Markdown.
 - _Check:_ none visible. `/agb` still renders from JSX.
 - _Acceptance criteria:_
-  - [ ] The fixture test is green on the first commit.
-  - [ ] Every build error under _Rules_ has a test with a synthetic document.
-  - [ ] `16:00 Uhr`, `1:2:3` and `Hinweis:Text` stay text, while `::contact-adress`, `:::panle` and `:mailtoo[x]`
+  - [x] The fixture test is green on the first commit.
+  - [x] Every build error under _Rules_ has a test with a synthetic document.
+  - [x] `16:00 Uhr`, `1:2:3` and `Hinweis:Text` stay text, while `::contact-adress`, `:::panle` and `:mailtoo[x]`
         fail with file and line.
-  - [ ] A two-line paragraph gives one `text` node joined by a single space. `a\` + newline + `b` gives text,
+  - [x] A two-line paragraph gives one `text` node joined by a single space. `a\` + newline + `b` gives text,
         break, text.
-  - [ ] `effectiveDateLabel` of a synthetic `2026-07-14` is "Juli 2026".
-  - [ ] Every directive form in _Node types_ parses in a synthetic document.
-  - [ ] `just build` passes, with the navbar importing `brand` from `./provider`. A client import of the root
+  - [x] `effectiveDateLabel` of a synthetic `2026-07-14` is "Juli 2026".
+  - [x] Every directive form in _Node types_ parses in a synthetic document.
+  - [x] `just build` passes, with the navbar importing `brand` from `./provider`. A client import of the root
         entry fails the build through `server-only`.
-  - [ ] The markup comparison (`just markup-compare`) of every prerendered page shows no difference.
+  - [x] The markup comparison (`just markup-compare`) of every prerendered page shows no difference.
 
 **A1b - The AGB from Markdown.** _(after A1a)_
 
