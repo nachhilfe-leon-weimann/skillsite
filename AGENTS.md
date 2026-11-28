@@ -10,7 +10,7 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                                                                                                                    |
 | change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                                                                                                       |
-| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal text in `packages/documents/content/*.md` (the AGB; the privacy policy and the Impressum are still JSX in `content/legal/*.tsx`)                                                                                                                   |
+| change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal text in `packages/documents/content/` (Markdown, shared sections in `partials/`; the AGB; the privacy policy and the Impressum are still JSX in `content/legal/*.tsx`)                                                                             |
 | change the legal-text pipeline              | `packages/documents/` (`@skillsite/documents`): `src/schema/` (node registry), `src/parse/`, `src/build.ts` (`content/*.md` -> `dist/`), `src/text.ts` (a tree's text, for the wording tests); provider data and legal labels in `src/`; the web renderer in `apps/marketing/src/components/docs/document.tsx` |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets                                                                                       |
 | decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                                                                                                           |
@@ -30,9 +30,10 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 ## Conventions
 
 - English in code, comments, identifiers, specs and commits; German only in visible content, which lives in
-  `apps/marketing/src/content/*.ts`, legal text in `packages/documents/content/*.md` (the AGB so far; the privacy
-  policy and the Impressum are still JSX in `content/legal/*.tsx`), its labels and the provider data in
-  `packages/documents/src/`, not in components. Developer artifacts name no person: write "the maintainer".
+  `apps/marketing/src/content/*.ts`, legal text in `packages/documents/content/` (Markdown, shared sections in
+  `partials/`; the AGB so far; the privacy policy and the Impressum are still JSX in `content/legal/*.tsx`), its
+  labels and the provider data in `packages/documents/src/`, not in components. Developer artifacts name no person:
+  write "the maintainer".
 - Clean, modular, schema-driven structures, no quick fixes. Pages use `@skillsite/ui` and the type scale
   (`text-display` ... `text-caption`): no arbitrary values (`text-[...]`, inline `color-mix(...)`, hand-tuned
   `clamp()`), no hand-built copies of existing components.

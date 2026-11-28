@@ -164,7 +164,7 @@ only (open question 4).
 
 | Field           | Meaning                                                                                                                                                                                                                                                 |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`         | the h1 and the PDF title. It may hold U+00AD (today's `Geschäfts&shy;bedingungen`). The Typst walker drops U+00AD when it sets the title.                                                                                                               |
+| `title`         | the h1 and the PDF title. It may hold U+00AD, written as YAML's `\u00AD` escape so that a diff shows it (today's `Geschäfts&shy;bedingungen`). The Typst walker drops U+00AD when it sets the title.                                                    |
 | `shortTitle`    | the `<title>` segment ("AGB", "Datenschutz", "Impressum")                                                                                                                                                                                               |
 | `badge`         | the hero pill, and the PDF's eyebrow                                                                                                                                                                                                                    |
 | `lead`          | the hero lead, and the PDF's subtitle                                                                                                                                                                                                                   |
@@ -362,7 +362,7 @@ This table is the public record of the brand's document design. A3a builds it; t
     - a `legalBasis` renderer that drops its children
   - [ ] The markup comparison shows no difference, or the PR explains each one. Before/after screenshots.
   - [ ] `apps/marketing/src/content/legal/` no longer exists, and `grep` finds none of the moved sentences in
-        `apps/marketing/src`.
+        `apps/marketing/src`, except in the wording fixtures (open question 1).
 
 **A3a - Print kit.** _(after A2)_
 
