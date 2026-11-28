@@ -306,6 +306,9 @@ importers:
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
+      '@types/unist':
+        specifier: ^3.0.3
+        version: 3.0.3
       eslint:
         specifier: ^10.13.0
         version: 10.14.0(jiti@2.7.0)(supports-color@7.2.0)

@@ -22,6 +22,7 @@
     "@skillsite/config": "workspace:*",
     "@types/mdast": "^4.0.4",
     "@types/node": "^26.6.6",
+    "@types/unist": "^3.0.3",
     "eslint": "^10.13.0",
     "mdast-util-directive": "3.2.1",
     "remark-directive": "^4.0.0",
