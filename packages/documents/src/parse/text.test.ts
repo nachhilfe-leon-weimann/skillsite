@@ -72,6 +72,15 @@ describe("line ends are not text", () => {
       },
     ]);
   });
+
+  test("in the body, &shy; is a soft hyphen, while YAML's \\u00AD escape stays literal text", () => {
+    expect(paragraphOf("Ge&shy;schäft").children).toEqual([
+      { type: "text", value: "Ge\u00ADschäft" },
+    ]);
+    expect(paragraphOf("Ge\\u00ADschäft").children).toEqual([
+      { type: "text", value: "Ge\\u00ADschäft" },
+    ]);
+  });
 });
 
 describe("paragraph weight", () => {
