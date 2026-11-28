@@ -54,6 +54,10 @@ smoke:
 widgets:
     pnpm widgets
 
+# PR evidence for docs/specs/documents.md: diffs every prerendered page against a base ref (default origin/main).
+markup-compare *args:
+    node scripts/markup-compare.mjs {{ args }}
+
 # --- Docker ---
 
 # Builds the marketing app; another app via `--build-arg APP=<name>`.

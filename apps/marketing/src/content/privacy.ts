@@ -1,3 +1,5 @@
+import { domains } from "@skillsite/documents/provider";
+
 import { legalContact } from "@/content/legal-contact";
 import { numberedSections } from "@/lib/numbered-sections";
 
@@ -8,9 +10,9 @@ export const privacyContact = {
   phone: legalContact.phone,
 };
 
-/** Own domains – kept central so they render identically everywhere. */
-export const siteDomain = "nachhilfe.leonweimann.de";
-export const analyticsDomain = "insights.leonweimann.de";
+/** Own domains – kept central (`@skillsite/documents/provider`) so they render identically everywhere. */
+export const siteDomain = domains.site;
+export const analyticsDomain = domains.analytics;
 
 /** Section registry of the privacy policy: order, numbering, navigation labels and headings. */
 export const privacySections = numberedSections([

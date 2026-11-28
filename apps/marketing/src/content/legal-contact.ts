@@ -1,9 +1,2 @@
-export const legalContact = {
-  businessName: "Nachhilfe Leon Weimann",
-  ownerName: "Leon Weimann",
-  street: "Friedhofstraße 11",
-  city: "77963 Schwanau",
-  country: "Deutschland",
-  email: "nachhilfe@leonweimann.de",
-  phone: "+49 7824 6190305",
-};
+// The provider data lives in `@skillsite/documents/provider` (E-12 of docs/specs/documents.md).
+export { provider as legalContact } from "@skillsite/documents/provider";

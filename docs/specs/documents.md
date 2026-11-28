@@ -1,6 +1,6 @@
 # Spec: Documents (legal texts from one Markdown source, for the website and as PDF)
 
-> Status: Accepted, 2026-11-28 - A0 in review. The maintainer accepted every decision and answered the open
+> Status: Accepted, 2026-11-28 - A0 and A1a in review. The maintainer accepted every decision and answered the open
 > questions on 2026-11-28.
 > Builds on [`foundation-refactor.md`](foundation-refactor.md): its module rules, foundation E-12 (the manual look
 > check) and V7, which this arc supersedes for legal prose. This spec is also the decision record for the arc. Its
@@ -79,7 +79,8 @@ spec and accepted by the maintainer on 2026-11-28.
   numbers, navigation, `<head>` and DOM. Two pieces of evidence are required per PR. One is the markup comparison
   below; the PR lists and explains every remaining difference. The other is before/after screenshots under _How
   to check_, delivered as open question 6 decides.
-- **Markup comparison** (PR evidence, not a lasting test; the script lands in A1a and A1b, A2 and A4 reuse it):
+- **Markup comparison** (PR evidence, not a lasting test; the script, `just markup-compare`, lands in A1a; A1b, A2
+  and A4 reuse it):
   - Build `origin/main` and the branch, each with `CAL_API_KEY=`.
   - Take `<head>` and `<body>` from each page's prerendered `.next/server/app/<route>.html`.
   - Remove `<script>` elements and HTML comments, and replace hashed `/_next/static/…` URLs with a placeholder.
@@ -133,7 +134,8 @@ packages/documents/                 @skillsite/documents
   src/labels.ts                     shared labels (E-14)
   src/schema/                       frontmatter + node schemas = the registry (E-04)
   src/parse/                        remark pipeline, directive guard, placeholder/ref/partial/date resolution
-  src/build.ts                      content -> dist/<slug>.json + dist/meta.json; from A4 also dist/<slug>.pdf
+  src/build.ts                      content -> dist/documents.json (every tree, by slug) + dist/meta.json;
+                                    from A4 also dist/<slug>.pdf
   src/pdf.ts                        `pnpm documents:pdf [--out <dir>] [--png]` (A3b)
   src/index.ts                      export ".": getDocument(slug), node types; starts with import "server-only"
   src/meta.ts                       export ./meta: versions and dates from dist/meta.json (E-15)
@@ -205,7 +207,8 @@ the same classes.
 - **`link`**: has a `kind` set by the parser.
   - `route`: `[Preisübersicht](/preise)`. The PDF makes it absolute from the site domain.
   - `anchor`: `:ref[id]` becomes the link "Abschnitt N" to `#id`. The PDF links to the section's label.
-  - `mailto`: `:mailto[provider.email]`.
+  - `mailto`: `:mailto[provider.email]` for E-12 data. Any other address is written out, as
+    `[a@b](mailto:a@b)` or a bare `a@b` that GFM links; the text equals the address.
   - `tel`: `:tel[provider.phone]`.
   - `external`: a Markdown `https:` link.
 
@@ -270,10 +273,12 @@ This table is the public record of the brand's document design. A3a builds it; t
     - Vitest `src/**/*.test.ts`
     - `packages/documents/turbo.json`
     - `^build` before `test` and `dev` in the root `turbo.json`
+    - the app's workspace dependency on the package, and the package in `transpilePackages`: `content/site.ts` and
+      `content/legal-contact.ts` read `./provider` from here on
   - **Parser and build.** The schemas, then the remark pipeline with the directive guard (E-18) and
     placeholder, `:ref`, partial and date resolution, then `build.ts`.
-  - **Shared data.** Add `provider.ts` with the re-exports in `legal-contact.ts` and `site.ts` (E-12), and
-    `labels.ts`.
+  - **Shared data.** Add `provider.ts` with the re-exports in `legal-contact.ts`, `site.ts` and `privacy.ts`
+    (E-12), and `labels.ts`.
   - **CI.** The filter area (E-17), with `Area`, the pinned output expressions and the new mapping cases in
     `tests/ci-workflow.test.mts`.
   - **Docs.** `AGENTS.md` gets the new package under _Where to look_ and the Vitest glob. `docs/testing.md` gets
@@ -281,22 +286,22 @@ This table is the public record of the brand's document design. A3a builds it; t
   - `/agb` is unchanged; all parser tests use synthetic Markdown.
 - _Check:_ none visible. `/agb` still renders from JSX.
 - _Acceptance criteria:_
-  - [ ] The fixture test is green on the first commit.
-  - [ ] Every build error under _Rules_ has a test with a synthetic document.
-  - [ ] `16:00 Uhr`, `1:2:3` and `Hinweis:Text` stay text, while `::contact-adress`, `:::panle` and `:mailtoo[x]`
+  - [x] The fixture test is green on the first commit.
+  - [x] Every build error under _Rules_ has a test with a synthetic document.
+  - [x] `16:00 Uhr`, `1:2:3` and `Hinweis:Text` stay text, while `::contact-adress`, `:::panle` and `:mailtoo[x]`
         fail with file and line.
-  - [ ] A two-line paragraph gives one `text` node joined by a single space. `a\` + newline + `b` gives text,
+  - [x] A two-line paragraph gives one `text` node joined by a single space. `a\` + newline + `b` gives text,
         break, text.
-  - [ ] `effectiveDateLabel` of a synthetic `2026-07-14` is "Juli 2026".
-  - [ ] Every directive form in _Node types_ parses in a synthetic document.
-  - [ ] `just build` passes, with the navbar importing `brand` from `./provider`. A client import of the root
+  - [x] `effectiveDateLabel` of a synthetic `2026-07-14` is "Juli 2026".
+  - [x] Every directive form in _Node types_ parses in a synthetic document.
+  - [x] `just build` passes, with the navbar importing `brand` from `./provider`. A client import of the root
         entry fails the build through `server-only`.
+  - [x] The markup comparison (`just markup-compare`) of every prerendered page shows no difference.
 
 **A1b - The AGB from Markdown.** _(after A1a)_
 
 - _Technique:_
-  - Add the React renderer `components/docs/document.tsx` for the node types the AGB needs, and add
-    `@skillsite/documents` to `transpilePackages`.
+  - Add the React renderer `components/docs/document.tsx` for the node types the AGB needs.
   - Write `agb.md` and `partials/widerruf.md`, and add the `.prettierignore` entry (E-16).
   - `app/agb/page.tsx` reads `getDocument("agb")`.
   - `modules/booking/model/mapping.ts` reads `version` from `./meta` (E-15). `mapping.test.ts` asserts the literal

@@ -11,3 +11,4 @@ docs/wording/
 **/.turbo/
 **/storybook-static/
 **/next-env.d.ts
+packages/documents/dist/

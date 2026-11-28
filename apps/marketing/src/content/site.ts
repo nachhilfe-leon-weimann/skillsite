@@ -1,10 +1,16 @@
+import {
+  brand as documentBrand,
+  provider,
+} from "@skillsite/documents/provider";
+
 import { routes } from "@/lib/routes";
 
+/** Name and tagline are shared with the legal documents (E-12 of docs/specs/documents.md). */
 export const brand = {
-  name: "Nachhilfe Leon Weimann",
-  tagline: "Verstehen statt auswendig lernen.",
+  name: documentBrand.name,
+  tagline: documentBrand.tagline,
   logo: "/logo-icon.png",
-  owner: "Leon Weimann",
+  owner: provider.ownerName,
 };
 
 export type NavLink = { label: string; href: string };
