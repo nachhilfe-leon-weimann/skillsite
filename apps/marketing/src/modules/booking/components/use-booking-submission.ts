@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { bookerText } from "@/content/booking";
 import { trackEvent } from "@/lib/analytics";
-import { withFillDuration } from "../model/anti-spam";
+import { withFillDuration } from "@/lib/anti-spam";
 import type {
   BookingDraft,
   BookingEventKey,

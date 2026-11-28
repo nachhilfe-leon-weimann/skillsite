@@ -1,21 +1,7 @@
 import assert from "node:assert/strict";
 import { test, vi } from "vitest";
 
-import {
-  describeAttempt,
-  logBooking,
-  maskEmail,
-  redactCalError,
-} from "./log.ts";
-
-test("e-mail addresses are masked down to a recognisable hint", () => {
-  assert.equal(maskEmail("test.kunde@example.com"), "te***@example.com");
-  assert.equal(maskEmail("  a@example.com "), "a***@example.com");
-  assert.equal(maskEmail("not-an-email"), undefined);
-  assert.equal(maskEmail(""), undefined);
-  assert.equal(maskEmail(["a@example.com"]), undefined);
-  assert.equal(maskEmail(undefined), undefined);
-});
+import { describeAttempt, logBooking, redactCalError } from "./log.ts";
 
 test("an attempt is described without names, phone numbers or notes", () => {
   const context = describeAttempt({

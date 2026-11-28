@@ -6,9 +6,16 @@
 export async function register() {
   // The env module is Node-only; this branch is dropped from the Edge build.
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    const { EnvError, parseServerEnv } = await import("@/lib/env");
+    const { EnvError, missingWithdrawalVariables, parseServerEnv } =
+      await import("@/lib/env");
     try {
-      parseServerEnv();
+      const missing = missingWithdrawalVariables(parseServerEnv());
+      // Not fatal: `WITHDRAWAL_MAILBOX= just dev` switches the function off on purpose.
+      if (missing.length > 0) {
+        console.warn(
+          `[env] the withdrawal function runs unconfigured: ${missing.join(", ")} not set.`,
+        );
+      }
     } catch (error) {
       if (!(error instanceof EnvError)) throw error;
       console.error(`[env] ${error.message}`);

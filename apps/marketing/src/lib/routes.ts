@@ -33,6 +33,10 @@ export const routes = {
   impressum: "/impressum",
   datenschutz: "/datenschutz",
   agb: "/agb",
+  /** The withdrawal notice inside the AGB. */
+  withdrawalNotice: "/agb#widerruf",
+  /** The electronic withdrawal function (§ 356a BGB). */
+  withdrawalFunction: "/widerrufsrecht",
 } as const;
 
 export type RouteKey = keyof typeof routes;

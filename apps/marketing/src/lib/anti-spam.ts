@@ -1,11 +1,13 @@
 /**
- * Anti-spam heuristics for the public booking action. Pure and clock-free so the
- * rules are unit-testable and never depend on two machines agreeing on the time.
+ * Anti-spam heuristics for the public form actions (booking, withdrawal). Pure
+ * and clock-free so the rules are unit-testable and never depend on two
+ * machines agreeing on the time.
  *
  * A signal is a suspicion, never proof: autofill and password managers write
  * into hidden fields, and people do submit quickly. Callers must therefore
  * answer a signal with an honest, visible failure and log it - never with a
- * feigned success, which tells a real customer "booked" when nothing was.
+ * feigned success, which tells a real person "booked" or "sent" when nothing
+ * was.
  */
 
 export type SpamSignal =

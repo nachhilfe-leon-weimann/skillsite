@@ -1,9 +1,10 @@
 "use server";
 
-import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 
 import { bookerText } from "@/content/booking";
+import { detectSpamSignal } from "@/lib/anti-spam";
+import { clientIp } from "@/lib/client-ip";
 
 import {
   ANTI_SPAM,
@@ -11,7 +12,6 @@ import {
   type BookingSubmission,
   type SubmitResult,
 } from "../model/config";
-import { detectSpamSignal } from "../model/anti-spam";
 import { checkRateLimit } from "./rate-limit";
 import { clientIdFromHeaders } from "./client-id";
 import { checkBookingSubmission, type BookingIssue } from "../model/schema";

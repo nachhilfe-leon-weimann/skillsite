@@ -1,6 +1,12 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalPassThroughEnv": ["CAL_API_KEY"],
+  "globalPassThroughEnv": [
+    "CAL_API_KEY",
+    "GRAPH_TENANT_ID",
+    "GRAPH_CLIENT_ID",
+    "GRAPH_CLIENT_SECRET",
+    "WITHDRAWAL_MAILBOX"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
