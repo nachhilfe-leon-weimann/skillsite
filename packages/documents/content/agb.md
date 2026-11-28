@@ -1,5 +1,5 @@
 ---
-title: "Allgemeine Geschäfts­bedingungen"
+title: "Allgemeine Geschäfts\u00ADbedingungen"
 shortTitle: AGB
 badge: Nachhilfebedingungen
 lead: Bedingungen für die Nachhilfeleistungen von Nachhilfe Leon Weimann.

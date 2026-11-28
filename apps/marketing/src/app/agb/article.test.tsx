@@ -49,3 +49,10 @@ test("the withdrawal form's first line, the provider's address, is plain text wi
   expect(lines).toHaveLength(1);
   expect(lines[0]?.querySelector("a")).toBeNull();
 });
+
+test("the hero title keeps its soft hyphen, so a phone breaks it as Geschäfts-/bedingungen", () => {
+  const h1 = new DOMParser()
+    .parseFromString(renderToStaticMarkup(<AgbPage />), "text/html")
+    .querySelector("h1");
+  expect(h1?.textContent).toBe("Allgemeine Geschäfts\u00ADbedingungen");
+});
