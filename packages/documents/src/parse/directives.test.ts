@@ -81,6 +81,21 @@ describe("the directive guard (E-18)", () => {
     );
   });
 
+  test("a quoted attribute value may have spaces around its =", () => {
+    const quoted = (attributes: string) =>
+      blocksOf(parse(inSection(`::provider-link[Anbieter]{${attributes}}`)));
+    const tight = quoted('href="https://example.org"');
+    expect(quoted('href= "https://example.org"')).toEqual(tight);
+    expect(quoted('href = "https://example.org"')).toEqual(tight);
+    expect(
+      parseError(
+        inSection("::provider-link[Anbieter]{href= https://example.org}"),
+      ),
+    ).toBe(
+      `${FILE}:${SECTION_BODY}: quote the attribute values of ::provider-link: key="value"`,
+    );
+  });
+
   test("an attribute a directive does not take fails", () => {
     expect(parseError(inSection('::contact-address{tone="leise"}'))).toBe(
       `${FILE}:${SECTION_BODY}: ::contact-address takes no attribute tone`,

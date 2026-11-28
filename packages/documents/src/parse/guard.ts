@@ -103,7 +103,7 @@ export function guardDirectives(tree: Root, file: SourceFile): void {
         node.type === "containerDirective" ? source.split("\n")[0]! : source;
       const attributes = /\{([^{}]*)\}[ \t]*$/.exec(opening)?.[1] ?? "";
       const unquoted = attributes.replace(/"[^"]*"|'[^']*'/g, '""');
-      if (/=[ \t]*(?!["'])/.test(unquoted)) {
+      if (/=(?![ \t]*["'])/.test(unquoted)) {
         fail(
           lineOf(node),
           `quote the attribute values of ${showDirective(node)}: key="value"`,
