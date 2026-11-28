@@ -160,12 +160,30 @@ describe("a missing or malformed frontmatter field stops the build at its line",
     ).toBe(`${FILE}:13: unknown frontmatter field "efectiveDate"`);
   });
 
-  test("a field written twice", () => {
+  test("an unknown field inside a group, at its own line and with its path", () => {
     expect(
       parseError(inSection("Text"), {
-        fields: { version: "2026-07-14\nversion: 2026-07-15" },
+        fields: { sections: "\n  numbered: true\n  nav: true\n  extra: 1" },
       }),
-    ).toMatch(new RegExp(`^${FILE}:8: frontmatter: `));
+    ).toBe(`${FILE}:13: unknown frontmatter field "sections.extra"`);
+  });
+
+  test("a field written twice", () => {
+    const message = parseError(inSection("Text"), {
+      fields: { version: "2026-07-14\nversion: 2026-07-15" },
+    });
+    expect(message).toMatch(new RegExp(`^${FILE}:8: frontmatter: `));
+    // Only the prefix names a place: yaml counts lines from the YAML text, not the file.
+    expect(message).not.toContain("at line");
+  });
+
+  test.each([
+    ["an unresolved alias", { title: "*a" }, 2],
+    ["a resolved alias", { title: "&x Titel", shortTitle: "*x" }, 2],
+  ])("%s", (_, fields, line) => {
+    expect(parseError(inSection("Text"), { fields })).toBe(
+      `${FILE}:${line}: frontmatter: anchors and aliases (\`&name\`, \`*name\`) are not allowed`,
+    );
   });
 });
 

@@ -1,9 +1,12 @@
 import type { Root } from "mdast";
 import {
+  isAlias,
   isMap,
+  isNode,
   isScalar,
   LineCounter,
   parseDocument,
+  visit,
   type Node as YamlNode,
 } from "yaml";
 
@@ -53,25 +56,52 @@ export function readFrontmatter(tree: Root, file: SourceFile): Frontmatter {
       lineCounter.linePos(yamlError.pos[0]).line;
     throw new DocumentError(
       { file: file.file, line },
-      `frontmatter: ${yamlError.message.split("\n")[0]}`,
+      // The prefix names the place; yaml's own "at line …, column …" would count from the YAML text.
+      `frontmatter: ${yamlError.message.split("\n")[0]!.replace(/ at line \d+, column \d+:?$/, "")}`,
     );
   }
   if (!isMap(yaml.contents)) {
     return fail(undefined, "the frontmatter is a list of `field: value` lines");
   }
 
-  const result = frontmatterSchema.safeParse(yaml.toJS());
+  // Frontmatter has no use for anchors and aliases, and an unresolved alias would throw in `toJS()`.
+  let reused: YamlNode | undefined;
+  visit(yaml, (_, node) => {
+    if (isAlias(node) || (isNode(node) && node.anchor)) {
+      reused = node;
+      return visit.BREAK;
+    }
+    return undefined;
+  });
+  if (reused) {
+    return fail(
+      reused,
+      "frontmatter: anchors and aliases (`&name`, `*name`) are not allowed",
+    );
+  }
+
+  let data: unknown;
+  try {
+    data = yaml.toJS();
+  } catch (error) {
+    return fail(undefined, `frontmatter: ${(error as Error).message}`);
+  }
+  const result = frontmatterSchema.safeParse(data);
   if (result.success) return result.data;
 
   const [issue] = result.error.issues;
   if (!issue) return fail(undefined, "the frontmatter is invalid");
   if (issue.code === "unrecognized_keys") {
-    const pair = yaml.contents.items.find(
-      (item) => isScalar(item.key) && item.key.value === issue.keys[0],
-    );
+    // The key sits in the map at the issue's path: the top level, or one such as `sections`.
+    const [key] = issue.keys;
+    const path = issue.path.map(String);
+    const map = path.length ? yaml.getIn(path, true) : yaml.contents;
+    const pair = isMap(map)
+      ? map.items.find((item) => isScalar(item.key) && item.key.value === key)
+      : undefined;
     return fail(
-      pair?.key as YamlNode | undefined,
-      `unknown frontmatter field "${issue.keys[0]}"`,
+      (pair?.key as YamlNode | undefined) ?? (map as YamlNode | undefined),
+      `unknown frontmatter field "${[...path, key].join(".")}"`,
     );
   }
 
