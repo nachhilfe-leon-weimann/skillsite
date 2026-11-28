@@ -14,6 +14,8 @@ export const bookerText = {
   aside: {
     eyebrow: "Buchung",
     summaryEyebrow: "Dein Termin",
+    /** Paid lesson: under the chosen slot's price. */
+    payment: "Zahlung per Rechnung (PayPal oder Überweisung)",
     /** Shown for the paid lesson only. */
     cancellationNote:
       "Bis 24 Stunden vorher kostenfrei verschieben oder absagen.",
@@ -39,21 +41,25 @@ export const bookerText = {
      */
     honeypotLabel: "Dieses Feld bitte leer lassen",
     /**
-     * Paid lesson starting within the withdrawal period: the consent to begin
-     * early. Legal-adjacent - its wording changes only on explicit request.
+     * Every paid lesson: the express request to start before the withdrawal
+     * period ends, and the acknowledgement of losing the right. Legal-adjacent
+     * - its wording changes only on explicit request, and Cal.com's
+     * `policies-accepted` field carries the same text.
      */
     earlyPerformanceConsent:
-      "Der Unterricht darf vor Ablauf der 14-tägigen Widerrufsfrist beginnen. Mir ist bekannt, dass mein Widerrufsrecht nach vollständiger Durchführung der gebuchten Stunde erlischt.",
+      "Ich verlange ausdrücklich, dass der Unterricht vor Ablauf der Widerrufsfrist beginnt. Mir ist bekannt, dass mein Widerrufsrecht erlischt, sobald die gebuchte Stunde vollständig durchgeführt ist.",
     /**
-     * Paid lesson: the line on the terms and the privacy policy. `acceptTerms`
-     * and `privacyText` are each followed by a space and their link, `end`
-     * follows the last link. Legal-adjacent - its wording changes only on
-     * explicit request.
+     * Paid lesson: the line on the terms, the withdrawal information and the
+     * privacy policy. `acceptTerms`, `withdrawalText` and `privacyText` are
+     * each followed by a space and their link, `end` follows the last link.
+     * Legal-adjacent - its wording changes only on explicit request.
      */
     legalNote: {
       acceptTerms:
         "Mit Klick auf „Zahlungspflichtig buchen“ akzeptierst du die",
       termsLink: "AGB",
+      withdrawalText: ". Bitte beachte die",
+      withdrawalLink: "Widerrufsbelehrung",
       privacyText: ". Informationen zur Datenverarbeitung findest du in der",
       privacyLink: "Datenschutzerklärung",
       end: ".",

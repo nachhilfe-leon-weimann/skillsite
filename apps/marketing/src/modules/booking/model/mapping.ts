@@ -69,7 +69,10 @@ export function buildCalBookingBody(
     submission.event === "nachhilfe"
       ? readAgreements(submission.agreements)
       : null;
-  if (paidAgreements?.termsAccepted) {
+  // Cal.com's `policies-accepted` field is labelled with the express request to
+  // start early, and its confirmation e-mail repeats that sentence: send it only
+  // when the customer checked exactly that box.
+  if (paidAgreements?.earlyPerformanceRequested) {
     bookingFieldsResponses["policies-accepted"] = true;
   }
 

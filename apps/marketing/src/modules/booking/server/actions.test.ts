@@ -68,8 +68,8 @@ test("missing fields are named and never reach Cal.com", async () => {
   assert.equal(createCalBooking.mock.calls.length, 0);
 });
 
-test("a paid lesson without accepted terms is never booked", async () => {
-  const lesson = {
+const paidLesson = (agreements: BookingSubmission["agreements"]) =>
+  ({
     event: "nachhilfe",
     slot: "2099-03-02T09:00:00.000Z",
     duration: 60,
@@ -80,15 +80,44 @@ test("a paid lesson without accepted terms is never booked", async () => {
       location: "discord-video",
       subject: "Mathematik",
     },
-    agreements: { termsAccepted: false, earlyPerformanceRequested: false },
+    agreements,
     fillDurationMs: 5_000,
-  } as BookingSubmission;
-  assert.deepEqual(await requestBooking(lesson), {
-    ok: false,
-    reason: "validation",
-    error: "Bitte bestätige die AGB.",
-  });
+  }) as BookingSubmission;
+
+test("a paid lesson without accepted terms is never booked", async () => {
+  assert.deepEqual(
+    await requestBooking(
+      paidLesson({ termsAccepted: false, earlyPerformanceRequested: false }),
+    ),
+    {
+      ok: false,
+      reason: "validation",
+      error: "Bitte bestätige die AGB.",
+    },
+  );
   assert.equal(createCalBooking.mock.calls.length, 0);
+});
+
+test("a paid lesson far ahead without the express request to start early is never booked", async () => {
+  assert.deepEqual(
+    await requestBooking(
+      paidLesson({ termsAccepted: true, earlyPerformanceRequested: false }),
+    ),
+    {
+      ok: false,
+      reason: "validation",
+      error: "Bitte bestätige den Hinweis zum Widerrufsrecht.",
+    },
+  );
+  assert.equal(createCalBooking.mock.calls.length, 0);
+
+  assert.deepEqual(
+    await requestBooking(
+      paidLesson({ termsAccepted: true, earlyPerformanceRequested: true }),
+    ),
+    { ok: true },
+  );
+  assert.equal(createCalBooking.mock.calls.length, 1);
 });
 
 test("only an offered event key reaches Cal.com", async () => {

@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 
 import { Card } from "@skillsite/ui/primitives/card";
 import { AnimatedHeight } from "@skillsite/ui/motion/animated-height";
@@ -48,6 +54,16 @@ export function Booker({
     start: string;
   } | null>(null);
   const [step, setStep] = useState<Step>("select");
+  const [choices, setChoices] = useState<string[]>([]);
+  // Keeps the same array while the labels stay the same, so typing a name
+  // does not re-render the booker.
+  const updateChoices = useCallback(
+    (next: string[]) =>
+      setChoices((current) =>
+        current.join("\n") === next.join("\n") ? current : next,
+      ),
+    [],
+  );
   const cardRef = useRef<HTMLDivElement>(null);
   const formTitleRef = useRef<HTMLDivElement>(null);
   const resultTitleRef = useRef<HTMLHeadingElement>(null);
@@ -189,6 +205,7 @@ export function Booker({
           onDurationChange={changeDuration}
           durationLocked={selectedSlot !== null}
           summary={step !== "result" ? summary : null}
+          choices={step === "form" ? choices : []}
         />
 
         <AnimatedHeight className="flex min-h-96 flex-col p-panel-booker-main">
@@ -223,6 +240,7 @@ export function Booker({
                 initialSubject={initialSubject}
                 titleRef={formTitleRef}
                 onBack={backToSelect}
+                onChoicesChange={updateChoices}
                 onSubmit={submitBooking}
               />
             </div>
