@@ -138,6 +138,11 @@ describe("an e-mail address that is no E-12 data is written out", () => {
         inSection(`E-Mail: [${provider.email}](mailto:${provider.email})`),
       ),
     ).toBe(`${FILE}:${SECTION_BODY}: ${reason}`);
+    // An escaped `\@` gets its link from GFM's transform, without a position: the paragraph's line counts.
+    const escaped = provider.email.replace("@", "\\@");
+    expect(parseError(inSection(`Absatz.\n\nSchreib an ${escaped}.`))).toBe(
+      `${FILE}:${SECTION_BODY + 2}: ${reason}`,
+    );
     expect(parseError(inSection(`E-Mail: ${provider.email}`))).toBe(
       `${FILE}:${SECTION_BODY}: ${reason}`,
     );

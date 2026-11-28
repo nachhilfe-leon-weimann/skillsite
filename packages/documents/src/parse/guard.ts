@@ -3,7 +3,7 @@
  * that catch directive syntax remark reads differently than the author meant.
  * It runs on each file's syntax tree before anything is resolved.
  */
-import type { Root } from "mdast";
+import type { Node, Root } from "mdast";
 import type {
   ContainerDirective,
   LeafDirective,
@@ -12,7 +12,12 @@ import type {
 import { SKIP, visit } from "unist-util-visit";
 
 import { directiveNames, formColons, type DirectiveForm } from "./markdown.ts";
-import { DocumentError, type SourceFile } from "./sources.ts";
+import {
+  DocumentError,
+  firstLine,
+  type Parents,
+  type SourceFile,
+} from "./sources.ts";
 
 export type Directive = ContainerDirective | LeafDirective | TextDirective;
 
@@ -46,8 +51,9 @@ export function guardDirectives(tree: Root, file: SourceFile): void {
   const fail = (line: number, reason: string): never => {
     throw new DocumentError({ file: file.file, line }, reason);
   };
-  const lineOf = (node: { position?: { start: { line: number } } }) =>
-    node.position?.start.line ?? 1;
+  // `visit` reaches a parent before its children, so every ancestor of a node is known when it is.
+  const parents: Parents = new WeakMap();
+  const lineOf = (node: Node) => firstLine(node, parents);
   const textOf = (node: Directive) => {
     const { start, end } = node.position ?? {};
     return start?.offset === undefined || end?.offset === undefined
@@ -56,6 +62,7 @@ export function guardDirectives(tree: Root, file: SourceFile): void {
   };
 
   visit(tree, (node, index, parent) => {
+    if (parent) parents.set(node, parent);
     if (node.type === "text") {
       const at = node.value.indexOf("::");
       if (at !== -1) {

@@ -28,6 +28,20 @@ export class DocumentError extends Error {
   }
 }
 
+/** The nearest ancestor of every node, recorded while a tree is walked. */
+export type Parents = WeakMap<Node, Node>;
+
+/**
+ * The first line of a node, or of its nearest ancestor with a place: nodes
+ * that a transform creates, such as the links of GFM's autolink literals,
+ * have no position of their own.
+ */
+export function firstLine(node: Node, parents: Parents): number {
+  let current: Node | undefined = node;
+  while (current && !current.position) current = parents.get(current);
+  return current?.position?.start.line ?? 1;
+}
+
 /**
  * The source file of every Markdown node of one document. A partial's nodes
  * keep their own file after they are spliced into the document, so an error
@@ -35,16 +49,18 @@ export class DocumentError extends Error {
  */
 export class Sources {
   private readonly files = new WeakMap<Node, SourceFile>();
+  private readonly parents: Parents = new WeakMap();
   private readonly root: SourceFile;
 
   constructor(root: SourceFile) {
     this.root = root;
   }
 
-  /** Records `file` as the source of `tree` and every node in it. */
+  /** Records `file` as the source of `tree` and every node in it, and each node's parent. */
   register(tree: Node, file: SourceFile): void {
-    visit(tree, (node) => {
+    visit(tree, (node, _index, parent) => {
       this.files.set(node, file);
+      if (parent) this.parents.set(node, parent);
     });
   }
 
@@ -53,11 +69,11 @@ export class Sources {
     return this.files.get(node) ?? this.root;
   }
 
-  /** The node's place: its file and its first line. */
+  /** The node's place: its file and its first line (or its nearest placed ancestor's). */
   locate(node: Node): Location {
     return {
       file: this.fileOf(node).file,
-      line: node.position?.start.line ?? 1,
+      line: firstLine(node, this.parents),
     };
   }
 
