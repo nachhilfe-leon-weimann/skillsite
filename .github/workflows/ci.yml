@@ -161,6 +161,12 @@ jobs:
         if: env.FULL != 'true' && env.UI == 'true'
         run: pnpm turbo run lint typecheck test --filter=@skillsite/ui
 
+      # The root tests compare the website's files with copies elsewhere (the print kit's colours and logo, the
+      # single React): a change on the website's side runs them too.
+      - name: Run the root tests
+        if: env.FULL != 'true' && (env.WEBSITE == 'true' || env.UI == 'true')
+        run: pnpm vitest run
+
       # The website consumes the UI package, so a change to either builds and smoke-tests it.
       - name: Ratchet, build and smoke-test the website
         if: env.FULL != 'true' && (env.WEBSITE == 'true' || env.UI == 'true')
