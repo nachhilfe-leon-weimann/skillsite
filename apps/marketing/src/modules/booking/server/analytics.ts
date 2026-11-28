@@ -75,17 +75,38 @@ export async function handleBookingEventRequest(
   request: Request,
 ): Promise<Response> {
   const noContent = new Response(null, { status: 204 });
-  if (Number(request.headers.get("content-length")) > MAX_EVENT_BODY_LENGTH)
-    return noContent;
+  if (!isAcceptedBeacon(request.headers)) return noContent;
   await reportSafely(async () => {
     const body = await request.text();
     if (body.length > MAX_EVENT_BODY_LENGTH) return;
-    const parsed = clientBookingEventSchema.safeParse(JSON.parse(body));
+    const parsed = clientBookingEventSchema.safeParse(parseQuietly(body));
     if (!parsed.success) return;
     const { name, ...data } = parsed.data;
     reportAfterResponse(request.headers, data.type, name, data);
   });
   return noContent;
+}
+
+/**
+ * A beacon this site's own page sent: a declared, small body (`sendBeacon`
+ * always declares its length, and the server holds a body to it, so no
+ * oversized body is ever read), and no cross-site origin.
+ */
+function isAcceptedBeacon(headers: Headers): boolean {
+  const length = Number(headers.get("content-length") ?? Number.NaN);
+  if (!Number.isInteger(length) || length <= 0) return false;
+  if (length > MAX_EVENT_BODY_LENGTH) return false;
+  const site = headers.get("sec-fetch-site");
+  return site === null || site === "same-origin";
+}
+
+/** The JSON value of a body, or `undefined` for anything that is no JSON. */
+function parseQuietly(body: string): unknown {
+  try {
+    return JSON.parse(body);
+  } catch {
+    return undefined;
+  }
 }
 
 /**

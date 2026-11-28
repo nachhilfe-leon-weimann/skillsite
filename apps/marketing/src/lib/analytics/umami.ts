@@ -23,8 +23,11 @@ export const REPORTED_HOST = "nachhilfe.leonweimann.de";
 /** Longest User-Agent passed on: it comes from a request header. */
 const MAX_USER_AGENT_LENGTH = 512;
 
-/** Longest page path passed on. */
+/** Longest page path or referrer passed on. */
 const MAX_URL_LENGTH = 256;
+
+/** Longest language tag passed on (BCP 47 tags in practice stay far below). */
+const MAX_LANGUAGE_LENGTH = 35;
 
 /**
  * What one report to Umami carries. `name` set makes it a custom event, absent
@@ -56,7 +59,9 @@ function requestHost(headers: Headers): string | undefined {
 /** The first language tag of `Accept-Language` (`de-DE,de;q=0.9` -> `de-DE`). */
 export function primaryLanguage(header: string | null): string | undefined {
   const tag = header?.split(",", 1)[0]?.split(";", 1)[0]?.trim();
-  return tag && /^[A-Za-z]{1,8}(?:-[A-Za-z0-9]{1,8})*$/.test(tag)
+  return tag &&
+    tag.length <= MAX_LANGUAGE_LENGTH &&
+    /^[A-Za-z]{1,8}(?:-[A-Za-z0-9]{1,8})*$/.test(tag)
     ? tag
     : undefined;
 }
@@ -74,7 +79,7 @@ export function externalReferrer(
   if (referrer.protocol !== "https:" && referrer.protocol !== "http:")
     return undefined;
   if (referrer.hostname.toLowerCase() === ownHost) return undefined;
-  return `${referrer.origin}${referrer.pathname}`;
+  return `${referrer.origin}${referrer.pathname}`.slice(0, MAX_URL_LENGTH);
 }
 
 /** A path of this site from a same-site `Referer`, without query and hash. */

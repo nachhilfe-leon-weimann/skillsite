@@ -26,6 +26,8 @@ export const config = {
       // prefetch can only be told apart here. A browser prefetch too.
       missing: [
         { type: "header", key: "next-router-prefetch" },
+        // A server action (the booking) is no page view; spares it the proxy.
+        { type: "header", key: "next-action" },
         { type: "header", key: "next-router-segment-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },
         { type: "header", key: "sec-purpose", value: "prefetch.*" },

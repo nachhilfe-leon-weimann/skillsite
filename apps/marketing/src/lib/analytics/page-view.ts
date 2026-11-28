@@ -3,8 +3,9 @@
  * lets through; this check decides on its own as well, so a looser matcher
  * never counts an asset or a prefetch.
  *
- * Counted: a document load and a client-side navigation (the RSC request of
- * the page). Never counted: prefetches (Next.js's router, the browser's
+ * Counted: a document load and a client-side navigation that reaches the
+ * server (the RSC request of the page). A navigation to a static page the
+ * router prefetched makes no request, so the server never sees it. Never counted: prefetches (Next.js's router, the browser's
  * speculative loads), non-GET requests (server actions are POSTs), Next.js
  * internals, the API, the health check, metadata routes and any file.
  *

@@ -155,13 +155,24 @@ test("an unreachable Umami never changes the booking's answer", async () => {
   umami.mockImplementation(async () => new Response("{}", { status: 200 }));
 });
 
-/** A beacon from the booker, as the browser sends it. */
-async function beacon(body: unknown) {
+/** A beacon from the booker, as the browser sends it (`sendBeacon` declares its length). */
+async function beacon(
+  body: unknown,
+  extra: Record<string, string | null> = {},
+) {
+  const text = typeof body === "string" ? body : JSON.stringify(body);
+  const headers = visitorHeaders();
+  headers.set("content-length", String(new TextEncoder().encode(text).length));
+  headers.set("sec-fetch-site", "same-origin");
+  for (const [name, value] of Object.entries(extra)) {
+    if (value === null) headers.delete(name);
+    else headers.set(name, value);
+  }
   const response = await handleBookingEventRequest(
     new Request("https://nachhilfe.leonweimann.de/api/booking/event", {
       method: "POST",
-      headers: visitorHeaders(),
-      body: typeof body === "string" ? body : JSON.stringify(body),
+      headers,
+      body: text,
     }),
   );
   // The browser never reads the answer; it is the same whatever was sent.
@@ -202,12 +213,20 @@ test("anything else the browser sends is dropped, and extra fields are stripped"
   await beacon("booking-started");
   await beacon("not json");
   await beacon(null);
+  const started = { name: "booking-started", type: "nachhilfe" };
+  // A body of undeclared or oversized length is never read.
+  await beacon(started, { "content-length": null });
+  await beacon(started, { "content-length": "100000" });
+  // Another site cannot make its visitors report steps.
+  await beacon(started, { "sec-fetch-site": "cross-site" });
   await beacon({
     name: "booking-started",
     type: "nachhilfe",
     padding: "x".repeat(1_000),
   });
   expect(await sentEvents()).toEqual([]);
+  // Garbage is dropped quietly: nothing of it reaches the log.
+  expect(console.error).not.toHaveBeenCalled();
 
   await beacon({
     name: "booking-started",
