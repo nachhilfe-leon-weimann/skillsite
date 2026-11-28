@@ -206,7 +206,8 @@ the same classes.
 - **`link`**: has a `kind` set by the parser.
   - `route`: `[Preisübersicht](/preise)`. The PDF makes it absolute from the site domain.
   - `anchor`: `:ref[id]` becomes the link "Abschnitt N" to `#id`. The PDF links to the section's label.
-  - `mailto`: `:mailto[provider.email]`.
+  - `mailto`: `:mailto[provider.email]` for E-12 data. Any other address is written out, as
+    `[a@b](mailto:a@b)` or a bare `a@b` that GFM links; the text equals the address.
   - `tel`: `:tel[provider.phone]`.
   - `external`: a Markdown `https:` link.
 

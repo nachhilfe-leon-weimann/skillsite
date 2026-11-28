@@ -106,6 +106,52 @@ describe("the directive guard (E-18)", () => {
   });
 });
 
+describe("an e-mail address that is no E-12 data is written out", () => {
+  const mailto = {
+    type: "link",
+    kind: "mailto",
+    href: "mailto:stelle@example.org",
+    text: "stelle@example.org",
+  };
+
+  test.each([
+    [
+      "as a Markdown link",
+      "E-Mail: [stelle@example.org](mailto:stelle@example.org)",
+    ],
+    ["as a bare address, which GFM links", "E-Mail: stelle@example.org"],
+  ])("%s", (_, content) => {
+    expect(blocksOf(parse(inSection(content)))).toEqual([
+      {
+        type: "paragraph",
+        weight: "regular",
+        children: [{ type: "text", value: "E-Mail: " }, mailto],
+      },
+    ]);
+  });
+
+  test("an address of E-12 data fails and names its placeholder", () => {
+    const reason =
+      "an e-mail link to E-12 data is :mailto[key], here :mailto[provider.email]";
+    expect(
+      parseError(
+        inSection(`E-Mail: [${provider.email}](mailto:${provider.email})`),
+      ),
+    ).toBe(`${FILE}:${SECTION_BODY}: ${reason}`);
+    expect(parseError(inSection(`E-Mail: ${provider.email}`))).toBe(
+      `${FILE}:${SECTION_BODY}: ${reason}`,
+    );
+  });
+
+  test("an e-mail link whose text is not its address fails", () => {
+    expect(
+      parseError(inSection("[Schreiben Sie uns](mailto:stelle@example.org)")),
+    ).toBe(
+      `${FILE}:${SECTION_BODY}: an e-mail link shows its address: [a@b](mailto:a@b) or a bare a@b; for E-12 data it is :mailto[key], such as :mailto[provider.email]`,
+    );
+  });
+});
+
 describe("container fences", () => {
   test("an inner fence with as many colons as its container fails at the inner one", () => {
     // remark closes the outer container at the inner `:::`, and the rest leaks out as text.

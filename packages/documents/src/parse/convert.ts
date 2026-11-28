@@ -64,6 +64,9 @@ interface SectionHead {
   at: Location;
 }
 
+/** An e-mail address, as `:mailto` and a written-out `mailto:` link accept it. */
+const EMAIL_ADDRESS = /^[^\s@]+@[^\s@]+$/;
+
 /** A soft line ending with the spaces around it: one space in the text. */
 const SOFT_LINE_ENDING = /[ \t]*\r?\n[ \t]*/g;
 
@@ -461,7 +464,7 @@ class Converter {
     }
   }
 
-  /** A Markdown link: a route or an https: address. */
+  /** A Markdown link: a route, an https: address or a written-out e-mail address. */
   private link(node: MarkdownLink): Link {
     if (node.title) this.fail(node, "a link takes no title");
     const text = this.plain(node.children, node, "a link's text");
@@ -469,11 +472,7 @@ class Converter {
     let kind: LinkKind;
     if (url.startsWith("/")) kind = "route";
     else if (url.startsWith("https://")) kind = "external";
-    else if (url.startsWith("mailto:"))
-      return this.fail(
-        node,
-        "an e-mail link is :mailto[key], such as :mailto[provider.email]",
-      );
+    else if (url.startsWith("mailto:")) return this.mailtoLink(node, text);
     else if (url.startsWith("tel:"))
       return this.fail(
         node,
@@ -487,6 +486,35 @@ class Converter {
         "a link goes to a route (/preise) or an https: address",
       );
     return this.at(node, { type: "link", kind, href: url, text });
+  }
+
+  /**
+   * A written-out address that is no E-12 data, such as the supervisory
+   * authority's: `[a@b](mailto:a@b)`, or a bare `a@b`, which GFM links with
+   * the address as its text. An address of E-12 data stays `:mailto[key]`,
+   * so E-12 remains its one source.
+   */
+  private mailtoLink(node: MarkdownLink, text: string): Link {
+    const address = node.url.slice("mailto:".length);
+    const key = [...this.values].find(([, value]) => value === address)?.[0];
+    if (key !== undefined) {
+      return this.fail(
+        node,
+        `an e-mail link to E-12 data is :mailto[key], here :mailto[${key}]`,
+      );
+    }
+    if (text !== address || !EMAIL_ADDRESS.test(address)) {
+      return this.fail(
+        node,
+        "an e-mail link shows its address: [a@b](mailto:a@b) or a bare a@b; for E-12 data it is :mailto[key], such as :mailto[provider.email]",
+      );
+    }
+    return this.at(node, {
+      type: "link",
+      kind: "mailto",
+      href: node.url,
+      text,
+    });
   }
 
   private linkItem(item: ListItem): Link {
@@ -549,7 +577,7 @@ class Converter {
     }
     switch (node.name) {
       case "mailto":
-        if (!/^[^\s@]+@[^\s@]+$/.test(value))
+        if (!EMAIL_ADDRESS.test(value))
           this.fail(
             node,
             `:mailto needs an e-mail address, and "${key}" holds none`,

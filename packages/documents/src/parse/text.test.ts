@@ -153,11 +153,7 @@ describe("links get their kind from the source", () => {
   test.each([
     [
       "[E-Mail](mailto:a@example.org)",
-      "an e-mail link is :mailto[key], such as :mailto[provider.email]",
-    ],
-    [
-      "a@example.org",
-      "an e-mail link is :mailto[key], such as :mailto[provider.email]",
+      "an e-mail link shows its address: [a@b](mailto:a@b) or a bare a@b; for E-12 data it is :mailto[key], such as :mailto[provider.email]",
     ],
     [
       "[Telefon](tel:+491234)",
