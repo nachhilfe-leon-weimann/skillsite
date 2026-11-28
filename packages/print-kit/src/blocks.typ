@@ -6,9 +6,10 @@
 // The accent: a gradient from `coral` to `coral-2`. Besides the page-1 line, only the title's accent stroke uses it.
 #let accent = gradient.linear(tokens.coral, tokens.coral-2)
 
-// A small label in spaced capitals: the title block's eyebrow, and the title of a group of blocks.
+// A small label in spaced capitals: the title block's eyebrow, and the title of a group of blocks. As a group
+// title it stays with the next block, like a heading, so it never ends a page alone.
 #let caps-label(body) = text(size: 8pt, weight: 700, tracking: 0.12em, fill: tokens.ink-soft, upper(body))
-#let eyebrow(body) = block(caps-label(body))
+#let eyebrow(body) = block(sticky: true, caps-label(body))
 
 // The document's title block, 10 mm below the page-1 head. `title` becomes the level-1 heading; `eyebrow`, `lead`
 // and `as-of` (such as "Stand: Juli 2026") are optional.
@@ -91,23 +92,48 @@
   for _ in range(lines) { writing-line(field-pitch) }
 })
 
-// A checkbox before its label; `checked: true` draws a check mark.
-#let checkbox(label, checked: false) = {
-  let size = 3.4mm
-  box(baseline: 0.4mm, rect(
-    width: size,
-    height: size,
-    radius: 0.6mm,
-    stroke: 0.75pt + tokens.ink-soft,
-    inset: 0pt,
-    if checked {
-      curve(
-        stroke: (paint: tokens.ink, thickness: 1pt, cap: "round", join: "round"),
-        curve.move((0.75mm, 1.8mm)),
-        curve.line((1.45mm, 2.5mm)),
-        curve.line((2.7mm, 0.9mm)),
-      )
-    },
+// A checkbox before its label; `checked: true` draws a check mark. The box is an image whose alternative text
+// names its state, so the tagged PDF and a screen reader tell a ticked box from an empty one: `states` is
+// `(checked: "...", unchecked: "...")`, the words for both states.
+#let checkbox(label, checked: false, states: none) = {
+  if states == none { panic("print-kit: checkbox needs `states`") }
+  assert(
+    type(states) == dictionary and "checked" in states and "unchecked" in states,
+    message: "print-kit: checkbox `states` needs `checked` and `unchecked`",
+  )
+  // A 3.4 mm box with a 0.6 mm radius and a 0.75 pt `ink-soft` stroke; the check mark in 1 pt `ink`, as `rect`
+  // and `curve` drew them before. All lengths are in mm. The stroke sits on the box's edge, so the drawing reaches
+  // `pad` beyond it on each side; the radius is the stroke's outer edge, as in a Typst `rect`.
+  let size = 3.4
+  let stroke = 0.75 / 72 * 25.4
+  let pad = stroke / 2
+  let view = str(size + stroke)
+  // The drawing is shifted by `pad` instead of starting the view box at -pad: `str` writes a negative number with
+  // a Unicode minus, which SVG does not read.
+  let svg = (
+    "<svg xmlns='http://www.w3.org/2000/svg' width='" + view + "mm' height='" + view + "mm' viewBox='0 0 " + view
+      + " " + view + "'><g transform='translate(" + str(pad) + " " + str(pad) + ")' fill='none'>"
+      + "<rect width='" + str(size) + "' height='" + str(size) + "' rx='" + str(0.6 - pad) + "' stroke='"
+      + tokens.ink-soft.to-hex() + "' stroke-width='" + str(stroke) + "'/>"
+      + if checked {
+        (
+          "<path d='M0.75 1.8 L1.45 2.5 L2.7 0.9' stroke='" + tokens.ink.to-hex() + "' stroke-width='"
+            + str(1 / 72 * 25.4) + "' stroke-linecap='round' stroke-linejoin='round'/>"
+        )
+      } else { "" }
+      + "</g></svg>"
+  )
+  box(baseline: 0.4mm, width: size * 1mm, height: size * 1mm, place(
+    top + left,
+    dx: -pad * 1mm,
+    dy: -pad * 1mm,
+    image(
+      bytes(svg),
+      format: "svg",
+      width: (size + stroke) * 1mm,
+      height: (size + stroke) * 1mm,
+      alt: if checked { states.checked } else { states.unchecked },
+    ),
   ))
   h(2mm)
   label

@@ -80,7 +80,8 @@ Ein Formular hält seine Teile zusammen auf einer Seite.
   #field[Name (\*)]
   #field(lines: 2)[Anschrift]
 
-  #checkbox[Option eins] #h(8mm) #checkbox(checked: true)[Option zwei]
+  #let states = (checked: "angekreuzt", unchecked: "nicht angekreuzt")
+  #checkbox(states: states)[Option eins] #h(8mm) #checkbox(checked: true, states: states)[Option zwei]
 
   #grid(
     columns: (70mm, 70mm),

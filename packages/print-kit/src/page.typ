@@ -10,13 +10,14 @@
 #let large-lockup = (tile: 12mm, gap: 3.2mm, name: 12.5pt, tagline: 8pt)
 #let small-lockup = (tile: 10mm, gap: 3.2mm * 10 / 12, name: 9.5pt, tagline: 7pt)
 
-// The logo tile, then the brand name over the tagline.
+// The logo tile, then the brand name over the tagline. The tile is the logo with its alternative text; the name and
+// tagline are an artifact, so a document's tagged text is its own text only.
 #let lockup(brand, tagline, alt, size) = grid(
   columns: 2,
   column-gutter: size.gap,
   align: horizon,
   box(clip: true, radius: size.tile / 4, image("../assets/logo-icon.png", width: size.tile, alt: alt)),
-  stack(
+  pdf.artifact(stack(
     text(
       font: heading-font,
       weight: 700,
@@ -33,16 +34,22 @@
       ..line-height(1.08),
       tagline,
     ),
-  ),
+  )),
 )
 
-// Page 1: a full-bleed bar in `logo-ink`, a coral gradient line below it, and the large lockup 20 mm from the
-// left and 17.5 mm from the top.
-#let first-head(brand, tagline, alt) = {
+// Page 1: a full-bleed bar in `logo-ink` and a coral gradient line below it. The large lockup is not part of the
+// background: `page-setup` places it in the flow, so the logo reaches the tagged PDF with its alternative text.
+#let first-head = {
   place(top + left, rect(width: 100%, height: 7mm, fill: tokens.logo-ink))
   place(top + left, dy: 7mm, rect(width: 100%, height: 0.9mm, fill: gradient.linear(tokens.coral, tokens.coral-2)))
-  place(top + left, dx: 20mm, dy: 17.5mm, lockup(brand, tagline, alt, large-lockup))
 }
+
+// The large lockup on page 1, 20 mm from the left and 17.5 mm from the top, placed at the start of the flow.
+#let first-lockup(brand, tagline, alt) = place(
+  top + left,
+  dy: 17.5mm - margin.top,
+  lockup(brand, tagline, alt, large-lockup),
+)
 
 // Following pages: no bar; the small lockup, the document title on the right and a hairline 3.5 mm below.
 #let following-head-top = 12mm
@@ -62,9 +69,10 @@
   )),
 )
 
-// The head of the current page, drawn as the page background: full bleed, and an artifact in the tagged PDF.
+// The head of the current page, drawn as the page background: full bleed, and an artifact in the tagged PDF. On
+// following pages the small lockup repeats the logo, so it stays an artifact there.
 #let page-head(brand, tagline, alt, title) = context {
-  if here().page() == 1 { first-head(brand, tagline, alt) } else { following-head(brand, tagline, alt, title) }
+  if here().page() == 1 { first-head } else { following-head(brand, tagline, alt, title) }
 }
 
 // The footer on every page: "<brand> · <domain>" on the left, "<page label> x / y" on the right.
@@ -86,5 +94,6 @@
     footer: page-foot(brand, domain, page-label),
     footer-descent: 30%,
   )
+  first-lockup(brand, tagline, logo-alt)
   body
 }

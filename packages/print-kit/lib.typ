@@ -48,6 +48,9 @@
   assert(date-label == none or "date" in labels, message: "print-kit: `date-label` needs `labels.date`")
 
   set document(title: required(title, "title"), author: author, date: date)
+  // The text rules come first: the page's footer and the page-1 lockup, which the page setup puts in the flow,
+  // take their styles from them.
+  show: text-rules.with(lang: lang, region: region)
   show: page-setup.with(
     brand: brand,
     tagline: required(tagline, "tagline"),
@@ -56,7 +59,6 @@
     title: title,
     page-label: labels.page,
   )
-  show: text-rules.with(lang: lang, region: region)
 
   title-block(
     title,
