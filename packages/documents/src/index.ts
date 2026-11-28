@@ -22,7 +22,8 @@ export function getDocument(slug: DocumentSlug): DocumentTree {
 }
 
 export type { DocumentSlug, DocumentVersion } from "./meta.ts";
-export { nodeTypes } from "./schema/index.ts";
+export { nodeTypes, webMeta } from "./schema/index.ts";
+export { documentTextLines } from "./text.ts";
 export type {
   BodyBlock,
   Break,
@@ -57,4 +58,5 @@ export type {
   Subsection,
   Target,
   Text,
+  WebMeta,
 } from "./schema/index.ts";

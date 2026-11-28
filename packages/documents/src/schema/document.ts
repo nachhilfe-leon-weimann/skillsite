@@ -81,6 +81,24 @@ export const documentMetaSchema = z
 
 export type DocumentMeta = z.infer<typeof documentMetaSchema>;
 
+/** The meta of a document with a `web` target: every field its page needs is there. */
+export type WebMeta = DocumentMeta &
+  Readonly<Record<(typeof webFields)[number], string>>;
+
+/**
+ * A document's meta with the fields of its page, which the schema requires
+ * for a `web` target. Throws for a document without one.
+ */
+export function webMeta(meta: DocumentMeta): WebMeta {
+  const missing = webFields.filter((field) => meta[field] === undefined);
+  if (!meta.targets.includes("web") || missing.length > 0) {
+    throw new Error(
+      `"${meta.title}" is no web document: targets ${meta.targets.join(", ")}${missing.length > 0 ? `; missing ${missing.join(", ")}` : ""}`,
+    );
+  }
+  return meta as WebMeta;
+}
+
 /** The labels a renderer prints around the text (E-14); the ones inside it are in the nodes. */
 export const documentLabelsSchema = z.strictObject({
   effectiveDate: lineText,
