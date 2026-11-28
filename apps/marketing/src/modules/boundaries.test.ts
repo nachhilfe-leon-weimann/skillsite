@@ -49,9 +49,9 @@ describe("module boundaries", { timeout: 60_000 }, () => {
       appRoot,
       "src/app/zahlung/page.tsx",
       [
-        'import { parsePaymentRequest } from "@/modules/payment";',
+        'import { parseInvoiceNumber } from "@/modules/payment";',
         'import { logPayment } from "@/modules/payment/server";',
-        "export const used = [parsePaymentRequest, logPayment];",
+        "export const used = [parseInvoiceNumber, logPayment];",
         "",
       ].join("\n"),
     );

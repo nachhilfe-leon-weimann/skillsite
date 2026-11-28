@@ -100,3 +100,20 @@ test("StatusPage: eyebrow, h1, lead, actions, then the extra lines", () => {
     "mt-8 flex flex-wrap justify-center gap-3.5",
   );
 });
+
+test("StatusPage: without a lead, the title is followed by the actions", () => {
+  render(
+    <StatusPage
+      eyebrow="Zahlung"
+      title="Schon erledigt."
+      actions={<a href="/">Zur Startseite</a>}
+    />,
+  );
+  const page = screen.getByRole("heading", { level: 1 }).parentElement!;
+  expect([...page.children].map((child) => child.tagName)).toEqual([
+    "SPAN",
+    "H1",
+    "DIV",
+  ]);
+  expect(page.querySelector(".text-lead")).toBeNull();
+});

@@ -1,6 +1,11 @@
 import { expect, type Locator, type Page, type Route } from "@playwright/test";
 
-/** Answer every non-local request locally: the smoke test must not depend on the network (e.g. Umami). */
+/**
+ * Answer every non-local request locally: the smoke test must not depend on the network (e.g. Umami). Except one the
+ * browser makes by following a redirect: Chromium sends it on without calling any route, so a test that can redirect
+ * off the site has to route the redirecting request itself. The config's host-resolver rule makes such a request
+ * fail instead of leaving the machine.
+ */
 export async function isolate(page: Page) {
   await page.context().route(
     // Anchored at the host end (`(?::\d+)?\/`) so `localhost.example.com` isn't

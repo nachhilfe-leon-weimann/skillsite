@@ -56,28 +56,104 @@ for (const path of ["/termin", "/kontakt"]) {
   });
 }
 
-test("a valid payment link redirects to the PayPal checkout", async ({
+// The payment page runs against the SkillForge stub (`e2e/stubs/skillforge.mjs`), which the Playwright config starts
+// with the app: synthetic invoices only, one per answer the lookup can get.
+
+test("an old link pays sevDesk's amount, not the link's", async ({
   request,
 }) => {
-  const response = await request.get("/zahlung?re=RE-1840&betrag=90,00%20EUR", {
+  const response = await request.get("/zahlung?re=RE-1001&betrag=90,00%20EUR", {
     maxRedirects: 0,
   });
   expect(response.status()).toBe(307);
-  expect(response.headers()["location"]).toMatch(
-    /^https:\/\/www\.paypal\.com\/cgi-bin\/webscr\?/,
-  );
+  const location = response.headers()["location"] ?? "";
+  expect(location).toMatch(/^https:\/\/www\.paypal\.com\//);
+  expect(location).toContain("amount=22.50&invoice=RE-1001");
 });
+
+test("the form leads to the lookup", async ({ page }) => {
+  await isolate(page);
+  // The form's own request is routed and answered locally: the page's redirect is read, never followed. A request
+  // the browser makes by following a redirect bypasses every route, so PayPal would load for real.
+  let formQuery: URLSearchParams | undefined;
+  let location: string | undefined;
+  await page.route(/\/zahlung\?re=/, async (route) => {
+    formQuery = new URL(route.request().url()).searchParams;
+    const response = await route.fetch({ maxRedirects: 0 });
+    location = response.headers()["location"];
+    // An empty page commits the navigation the click waits for; a 204 would leave it pending.
+    await route.fulfill({ status: 200, contentType: "text/html", body: "" });
+  });
+  await page.goto("/zahlung");
+  await page.getByLabel("Rechnungsnummer").fill("re-1001");
+  await page.getByRole("button", { name: "Weiter zu PayPal" }).click();
+  await expect.poll(() => location, "the page's redirect").toBeDefined();
+  expect(formQuery?.get("re")).toBe("re-1001");
+  expect(location).toMatch(/^https:\/\/www\.paypal\.com\//);
+  expect(new URL(location!).searchParams.get("invoice")).toBe("RE-1001");
+});
+
+const paymentStates = [
+  {
+    invoice: "RE-1002",
+    state: "blocked",
+    title: "Bitte per Überweisung zahlen.",
+    lead: "RE-1002",
+  },
+  {
+    invoice: "RE-1003",
+    state: "paid",
+    title: "Diese Rechnung ist schon bezahlt. Danke!",
+  },
+  {
+    invoice: "RE-1004",
+    state: "not payable",
+    title: "Diese Rechnung finde ich nicht.",
+    field: true,
+  },
+  {
+    invoice: "RE-1005",
+    state: "unavailable",
+    title: "Die Zahlung ist gerade nicht erreichbar.",
+  },
+];
+
+for (const { invoice, state, title, lead, field } of paymentStates) {
+  test(`${invoice} (${state}) renders its page without a redirect`, async ({
+    page,
+  }) => {
+    await isolate(page);
+    const errors = collectErrors(page);
+    const path = `/zahlung?re=${invoice}`;
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(200);
+    expect(response?.request().redirectedFrom(), "redirect").toBeNull();
+    expect(new URL(page.url()).pathname).toBe("/zahlung");
+    await page.waitForLoadState("networkidle");
+    const heading = page.getByRole("heading", { level: 1, name: title });
+    await expect(heading).toBeVisible();
+    if (lead) await expect(page.getByText(lead)).toBeVisible();
+    if (field) await expect(page.getByLabel("Rechnungsnummer")).toBeVisible();
+    expect(errors, "console errors").toEqual([]);
+  });
+}
 
 test("an invalid payment link renders a page instead of redirecting", async ({
   page,
 }) => {
   await isolate(page);
   const errors = collectErrors(page);
-  const path = "/zahlung?re=x&betrag=abc";
+  const path = "/zahlung?re=RE%2F1840&betrag=abc";
   const response = await page.goto(path);
   expect(response?.status()).toBe(200);
   await page.waitForLoadState("networkidle");
   await expect(page.locator("main#main")).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Dieser Zahlungslink führt nicht weiter.",
+    }),
+  ).toBeVisible();
   expect(errors, "console errors").toEqual([]);
   await expectRootCanonicalOnlyOnHome(page, path);
 });

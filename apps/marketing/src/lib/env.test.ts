@@ -37,6 +37,13 @@ test("a malformed key stops the server with a message that never shows the key",
 test("the environment is parsed once", async () => {
   vi.resetModules();
   vi.stubEnv("CAL_API_KEY", "cal_live_test123");
+  // Absent, whatever the shell running the tests holds: a partial set would stop the parse.
+  for (const name of [
+    "SKILLFORGE_API_URL",
+    "SKILLFORGE_CLIENT_ID",
+    "SKILLFORGE_CLIENT_SECRET",
+  ])
+    vi.stubEnv(name, undefined);
   const { serverEnv } = await import("@/lib/env");
   const first = serverEnv();
   vi.stubEnv("CAL_API_KEY", "");
@@ -46,7 +53,7 @@ test("the environment is parsed once", async () => {
 
 // Synthetic SkillForge client; never a real one.
 const skillforge = {
-  SKILLFORGE_API_URL: "http://skillforge.test",
+  SKILLFORGE_API_URL: "https://skillforge.test",
   SKILLFORGE_CLIENT_ID: "marketing-e2e",
   SKILLFORGE_CLIENT_SECRET: "sf_synthetic_secret",
 };
@@ -99,8 +106,8 @@ test("part of the SkillForge variables stops the server, naming the missing ones
 
 test("a SkillForge URL with a path stops the server", () => {
   for (const url of [
-    "http://skillforge.test/api/v1",
-    "http://skillforge.test/?x=1",
+    "https://skillforge.test/api/v1",
+    "https://skillforge.test/?x=1",
     "skillforge.test",
     "ftp://skillforge.test",
   ]) {
@@ -112,6 +119,44 @@ test("a SkillForge URL with a path stops the server", () => {
           error.message,
           /^SKILLFORGE_API_URL is set but malformed: .*without a path/,
         );
+        return true;
+      },
+    );
+  }
+});
+
+test("SkillForge is reached over https, plain http only on this machine", () => {
+  // The credentials travel as Basic auth: in clear over http to any other host.
+  for (const url of [
+    "https://skillforge.test",
+    "http://127.0.0.1:3199",
+    "http://localhost",
+    "http://localhost:8000/",
+  ]) {
+    assert.deepEqual(
+      parseServerEnv({ ...skillforge, SKILLFORGE_API_URL: url }),
+      { ...skillforge, SKILLFORGE_API_URL: url },
+    );
+  }
+});
+
+test("plain http to another host stops the server without showing the URL", () => {
+  for (const url of [
+    "http://example.invalid",
+    "http://skillforge.test:8000/",
+    "http://localhost.example.invalid",
+    "http://127.0.0.1.example.invalid",
+  ]) {
+    assert.throws(
+      () => parseServerEnv({ ...skillforge, SKILLFORGE_API_URL: url }),
+      (error: unknown) => {
+        assert.ok(error instanceof EnvError);
+        assert.match(
+          error.message,
+          /^SKILLFORGE_API_URL is set but malformed: .*https/,
+        );
+        assert.ok(!error.message.includes(url));
+        assert.ok(!error.message.includes("invalid"));
         return true;
       },
     );

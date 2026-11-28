@@ -54,3 +54,22 @@ export const WithNote: Story = {
     </StatusPage>
   ),
 };
+
+/** Without a lead: the actions follow the title. */
+export const WithoutLead: Story = {
+  args: {
+    eyebrow: "Zahlung",
+    title: "Diese Rechnung ist schon bezahlt. Danke!",
+    lead: undefined,
+  },
+  render: (args) => (
+    <StatusPage
+      {...args}
+      actions={
+        <Button asChild variant="outline">
+          <Link href="/kontakt">Kontakt</Link>
+        </Button>
+      }
+    />
+  ),
+};
