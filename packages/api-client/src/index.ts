@@ -19,3 +19,10 @@ export function createSkillforgeClient(
 ): SkillforgeClient {
   return createClient<paths>(options);
 }
+
+export {
+  createServiceTokenSource,
+  SERVICE_TOKEN_MARGIN_MS,
+  type ClientCredentials,
+  type ServiceTokenSource,
+} from "./service-token";

@@ -13,7 +13,9 @@ Needs Node 26, `pnpm` and `just`. `just check`'s smoke test needs a one-time bro
 
 The environment is optional. `apps/marketing/.env` (see `.env.example` next to it) holds `CAL_API_KEY`: without
 it, the booker shows its "unconfigured" state; with it, the key must start with `cal_live_` and contain no
-whitespace, or the server stops at start with an `[env]` line naming the rule. `.env.local.example` documents what
+whitespace, or the server stops at start with an `[env]` line naming the rule. `SKILLFORGE_API_URL`,
+`SKILLFORGE_CLIENT_ID` and `SKILLFORGE_CLIENT_SECRET` connect the payment page to SkillForge: all three or none, and
+without them every invoice lookup answers "not reachable". `.env.local.example` documents what
 only local development needs.
 
 | Command                                 |                                                                                           |

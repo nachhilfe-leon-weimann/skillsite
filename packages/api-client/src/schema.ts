@@ -466,6 +466,363 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/billing/calendar/aliases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Calendar Aliases
+         * @description List the calendar aliases by their normalised name.
+         */
+        get: operations["billing_list_calendar_aliases"];
+        put?: never;
+        /**
+         * Create Calendar Alias
+         * @description Map a name as written in the lesson calendar to a student. It wins over matching by the students' names.
+         *
+         *     The name is stored normalised; a name that normalises like a stored one is `calendar_alias_already_exists`.
+         */
+        post: operations["billing_create_calendar_alias"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/calendar/aliases/{alias_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Calendar Alias
+         * @description Remove a calendar alias; the name is then matched by the students' names again.
+         */
+        delete: operations["billing_delete_calendar_alias"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/calendar/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Calendar Events
+         * @description List the occurrences that wait for an assignment or are flagged `changed`, by start.
+         */
+        get: operations["billing_list_calendar_events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/calendar/events/{event_id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign Calendar Event
+         * @description Create the lesson of an occurrence without one - `cancelled` for a cancelled occurrence - and optionally store
+         *     its name as the student's alias. The lesson starts at the occurrence's start: one off the whole minute cannot be
+         *     assigned. The `Location` header points to the lesson.
+         */
+        post: operations["billing_assign_calendar_event"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/calendar/events/{event_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dismiss Calendar Event
+         * @description Take an occurrence off the list. Without a lesson it waits for no assignment and is not proposed again. With
+         *     one, the occurrence as last seen is acknowledged: a "no lesson" answer of the rules and a change already seen stay
+         *     quiet until it changes again. A title naming another student or subject is never acknowledged - the next import
+         *     flags it again. Idempotent.
+         */
+        post: operations["billing_dismiss_calendar_event"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/calendar/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Calendar
+         * @description Import the lesson calendar for a range of Berlin days: the calendar proposes, a person confirms.
+         *
+         *     A new occurrence becomes a `planned` lesson, a `cancelled` one for a late cancellation, or none: a phone call, an
+         *     all-day entry or a first meeting is kept with its reason and not listed; any other occurrence without a lesson
+         *     waits for an assignment. An untouched lesson - `planned`, no note, no own rate, at the start and length of its
+         *     occurrence as last seen - goes when its occurrence vanishes, and follows a moved, resized or cancelled appointment
+         *     only while the title rules still give this student and this subject. Otherwise the lesson never changes and its
+         *     occurrence is flagged `changed`. Importing an unchanged
+         *     range again changes nothing. Answers with counts only; a calendar that cannot be read is `calendar_unavailable`,
+         *     and nothing is imported.
+         */
+        post: operations["billing_import_calendar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/lessons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Lessons
+         * @description List lessons by start. `from` and `to` are days in `Europe/Berlin`, both included.
+         */
+        get: operations["billing_list_lessons"];
+        put?: never;
+        /**
+         * Create Lesson
+         * @description Add a lesson by hand. It starts `planned`; tick it with `PATCH`. The `Location` header points to it.
+         */
+        post: operations["billing_create_lesson"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/lessons/{lesson_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Lesson
+         * @description Read a lesson.
+         */
+        get: operations["billing_get_lesson"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Lesson
+         * @description Change a lesson: tick it (`status: held`), switch `billable`, or correct its data.
+         *
+         *     Only the fields that are sent change; an empty body changes nothing.
+         */
+        patch: operations["billing_update_lesson"];
+        trace?: never;
+    };
+    "/api/v1/billing/lessons/{lesson_id}/resolve-payer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve Lesson Payer
+         * @description Resolve the payer of a billable lesson afresh and store it, replacing the payer it got when it became billable.
+         *
+         *     A lesson that is not billable has no payer and stays as it is.
+         */
+        post: operations["billing_resolve_lesson_payer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/parties/{party_id}/manual-billing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Manual Billing
+         * @description Mark the party as a payer billed by hand: their lessons never reach a draft. Idempotent.
+         */
+        put: operations["billing_put_manual_billing"];
+        post?: never;
+        /**
+         * Delete Manual Billing
+         * @description Unmark the party; its lessons are billed by invoice again. Idempotent: an unmarked party answers 204 too.
+         */
+        delete: operations["billing_delete_manual_billing"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/parties/{party_id}/sevdesk-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Sevdesk Contact
+         * @description Link the party to its sevDesk contact, the recipient of its invoices. Idempotent.
+         *
+         *     A party has one contact and a contact one party: another link is removed first.
+         */
+        put: operations["billing_put_sevdesk_contact"];
+        post?: never;
+        /**
+         * Delete Sevdesk Contact
+         * @description Remove the party's sevDesk contact link. Idempotent: a party without one answers 204 too.
+         */
+        delete: operations["billing_delete_sevdesk_contact"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/payment-requests/{invoice_number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Payment Request
+         * @description Read the payment state of one invoice from sevDesk: `open` with the amount left to pay, or `paid`, and whether
+         *     PayPal is allowed. Writes nothing.
+         *
+         *     A number without a payable invoice - none, a draft, a cancellation, a cancelled original, another document such as
+         *     a dunning letter - is `invoice_not_payable`, which never says which; a draft under the number of an issued
+         *     invoice is set aside. A sevDesk that cannot be read, or answers anything else - several invoices under one number
+         *     that are no draft, an unknown status - is `sevdesk_unavailable`; a configuration that is refused is
+         *     `sevdesk_refused`.
+         */
+        get: operations["billing_get_payment_request"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/students/{party_id}/payer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Student Payer
+         * @description Read who pays for a student now, whether that payer has a sevDesk contact, and whether it is billed by hand.
+         *
+         *     A lesson that becomes billable stores this payer; lessons that are billable already keep theirs.
+         */
+        get: operations["billing_get_student_payer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/students/{party_id}/rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Rates
+         * @description List a student's own rates, newest day first. Each holds from its day until the next one's.
+         */
+        get: operations["billing_list_rates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/students/{party_id}/rates/{valid_from}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Rate
+         * @description Set the student's rate from that day on. Idempotent; a rate already set for the day is replaced.
+         *
+         *     A charge keeps the rate it was priced with: a new rate changes no invoice position.
+         */
+        put: operations["billing_put_rate"];
+        post?: never;
+        /**
+         * Delete Rate
+         * @description Remove the rate of that day; the rate before it then holds on. A charge keeps the rate it was priced with.
+         */
+        delete: operations["billing_delete_rate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/crm/companies": {
         parameters: {
             query?: never;
@@ -548,8 +905,9 @@ export interface paths {
          * Delete Party
          * @description Delete a party together with its roles, contact infos and relations.
          *
-         *     Refused while an active Discord link or an external system (sevDesk, Clockodo, Microsoft) holds the party:
-         *     remove those links first, in the system that owns them. A deactivated Discord link goes with the party.
+         *     Refused while an active Discord link, an external system (sevDesk, Clockodo, Microsoft) or a billing lesson or
+         *     rate holds the party. Remove external links first, in the system that owns them; a party with a lesson stays,
+         *     since a lesson is never removed. A deactivated Discord link goes with the party.
          */
         delete: operations["crm_delete_party"];
         options?: never;
@@ -1137,6 +1495,216 @@ export interface components {
             username?: string | null;
         };
         /**
+         * CalendarAliasCreateRequest
+         * @description Body of `POST /calendar/aliases`: a name as written in the lesson calendar, and the student it means.
+         */
+        CalendarAliasCreateRequest: {
+            /**
+             * Name
+             * @description The name after ` mit ` in a calendar title. It is stored normalised - case, umlauts, hyphens and spaces do not
+             *     count - and matches every spelling that normalises alike.
+             * @example Erika Mustermann
+             */
+            name: string;
+            /**
+             * Student Id
+             * Format: uuid
+             * @description ID of a party holding the student role.
+             */
+            student_id: string;
+        };
+        /**
+         * CalendarAliasResponse
+         * @description A calendar name mapped to a student: the import assigns an occurrence with this name to the student.
+         */
+        CalendarAliasResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the alias was stored.
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description ID of the alias.
+             */
+            id: string;
+            /**
+             * Name Normalized
+             * @description The name as the import compares it: case-folded, `ä ö ü ß` as `ae oe ue ss`, hyphens and underscores as
+             *     spaces, single spaces.
+             */
+            name_normalized: string;
+            /**
+             * Student Id
+             * Format: uuid
+             * @description ID of the student's party.
+             */
+            student_id: string;
+        };
+        /**
+         * CalendarEventAssignRequest
+         * @description Body of `POST /calendar/events/{event_id}/assign`: the lesson an occurrence without one stands for.
+         */
+        CalendarEventAssignRequest: {
+            /**
+             * Alias
+             * @description A calendar name to store as the student's alias, so the import matches it from now on; usually `title_name`.
+             */
+            alias?: string | null;
+            /**
+             * Minutes
+             * @description The duration to bill, a multiple of 15: the appointment's, or a correction of it.
+             * @example 60
+             */
+            minutes: number;
+            /**
+             * Student Id
+             * Format: uuid
+             * @description ID of a party holding the student role.
+             */
+            student_id: string;
+            /**
+             * Subject
+             * @description The subject as a label (`Mathe`). Surrounding whitespace is stripped.
+             * @example Mathe
+             */
+            subject: string;
+        };
+        /**
+         * CalendarEventResponse
+         * @description An occurrence of the lesson calendar that waits for an assignment, or differs from its lesson.
+         */
+        CalendarEventResponse: {
+            /**
+             * Cancelled
+             * @description Cancelled in the calendar or by the late-cancellation category.
+             */
+            cancelled: boolean;
+            /**
+             * Changed
+             * @description The maintainer has to look: the title names another student or subject than the lesson's (flagged at every
+             *     import until the lesson, the title or an alias settles it; a dismiss then clears it); the rules give no lesson;
+             *     the appointment of a lesson the import does not change moved, was resized, cancelled or vanished; a lesson could
+             *     not follow; or the occurrence could not get its lesson. Dismissing acknowledges all but another student or
+             *     subject, until the occurrence changes again.
+             */
+            changed: boolean;
+            /**
+             * Ends At
+             * Format: date-time
+             * @description When the appointment ends, in UTC, as last seen.
+             */
+            ends_at: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description ID of the occurrence.
+             */
+            id: string;
+            /**
+             * Last Seen At
+             * Format: date-time
+             * @description When an import last read the occurrence: before the last import of its day, it vanished from the calendar.
+             */
+            last_seen_at: string;
+            /**
+             * Lesson Id
+             * @description ID of the occurrence's lesson, if it has one.
+             */
+            lesson_id: string | null;
+            /**
+             * @description Why the rules give no lesson, as last seen - for an occurrence with a lesson too (an assigned one keeps the
+             *     reason it waited for); `null` while the rules give a lesson, or when its student has a lesson at that start
+             *     already.
+             */
+            reason: components["schemas"]["NoLessonReason"] | null;
+            /**
+             * Starts At
+             * Format: date-time
+             * @description When the appointment starts, in UTC, as last seen.
+             */
+            starts_at: string;
+            /**
+             * Title Name
+             * @description The name after ` mit `, as written, while the occurrence waits for an assignment; `null` otherwise.
+             */
+            title_name: string | null;
+            /**
+             * Title Subject
+             * @description The text before ` mit ` in the title, if it has one.
+             */
+            title_subject: string | null;
+            /**
+             * Vanished
+             * @description Gone from the calendar while its lesson stays.
+             */
+            vanished: boolean;
+        };
+        /**
+         * CalendarImportRequest
+         * @description Body of `POST /calendar/import`: a range of days in `Europe/Berlin`, both included, at most 92 days.
+         */
+        CalendarImportRequest: {
+            /**
+             * First Day
+             * Format: date
+             * @description The first day whose occurrences are imported.
+             * @example 2026-11-02
+             */
+            first_day: string;
+            /**
+             * Last Day
+             * Format: date
+             * @description The last day whose occurrences are imported; not before `first_day`.
+             * @example 2026-11-02
+             */
+            last_day: string;
+        };
+        /**
+         * CalendarImportResponse
+         * @description What an import did, in counts only.
+         */
+        CalendarImportResponse: {
+            /**
+             * Changed
+             * @description Occurrences of the range flagged `changed` (see `GET /calendar/events`): listed until dismissed - except one
+             *     whose title names another student or subject, which is flagged again at every import until it is settled.
+             */
+            changed: number;
+            /**
+             * Deleted
+             * @description Occurrences deleted: gone from the calendar without a lesson, or 90 days past their start without one.
+             */
+            deleted: number;
+            /**
+             * Lessons Created
+             * @description Lessons the import proposed: `planned`, or `cancelled` for a late cancellation.
+             */
+            lessons_created: number;
+            /**
+             * Lessons Removed
+             * @description `planned` lessons whose appointment vanished from the range.
+             */
+            lessons_removed: number;
+            /**
+             * Lessons Updated
+             * @description `planned` lessons that followed their appointment: moved, resized or cancelled.
+             */
+            lessons_updated: number;
+            /**
+             * Occurrences
+             * @description Occurrences read from the calendar and stored as seen.
+             */
+            occurrences: number;
+            /**
+             * Unassigned
+             * @description Occurrences of the range that wait for an assignment.
+             */
+            unassigned: number;
+        };
+        /**
          * CompanyCreateRequest
          * @description Body of `POST /companies`.
          */
@@ -1437,6 +2005,245 @@ export interface components {
          */
         HealthStatus: "ok" | "unhealthy" | "error";
         /**
+         * LessonCreateRequest
+         * @description Body of `POST /lessons`: a lesson added by hand. It starts `planned` and not billable.
+         */
+        LessonCreateRequest: {
+            /**
+             * Minutes
+             * @description The duration, a multiple of 15.
+             * @example 60
+             */
+            minutes: number;
+            /**
+             * Note
+             * @description Free-text note.
+             */
+            note?: string | null;
+            /**
+             * Rate Cents Per Hour
+             * @description The lesson's own rate in cents per hour: 0 or more, divisible by 4. Omit it for the student's rate or the
+             *     default.
+             */
+            rate_cents_per_hour?: number | null;
+            /**
+             * Starts At
+             * Format: date-time
+             * @description When the lesson starts, with its UTC offset (`Z` or `+01:00`), on a whole minute.
+             * @example 2026-11-02T16:00:00+01:00
+             */
+            starts_at: string;
+            /**
+             * Student Id
+             * Format: uuid
+             * @description ID of a party holding the student role.
+             */
+            student_id: string;
+            /**
+             * Subject
+             * @description The subject as a label (`Mathe`). Surrounding whitespace is stripped.
+             * @example Mathe
+             */
+            subject: string;
+        };
+        /**
+         * LessonPayerResponse
+         * @description The payer stored on a lesson.
+         */
+        LessonPayerResponse: {
+            /**
+             * Billable
+             * @description Whether the lesson is billable; only a billable lesson stores a payer.
+             */
+            billable: boolean;
+            /**
+             * Lesson Id
+             * Format: uuid
+             * @description ID of the lesson.
+             */
+            lesson_id: string;
+            /**
+             * Payer Id
+             * @description The payer stored on the lesson. `null` when the lesson is not billable, or when several parties pay for the
+             *     student: such a lesson is not billed until it has a payer.
+             */
+            payer_id: string | null;
+            /**
+             * Student Id
+             * Format: uuid
+             * @description ID of the student's party.
+             */
+            student_id: string;
+        };
+        /**
+         * LessonResponse
+         * @description One appointment of one student.
+         */
+        LessonResponse: {
+            /**
+             * Billable
+             * @description Whether the lesson is billed: set by the tick, switched off on a `held` lesson as goodwill or on for a
+             *     `cancelled` one; never on a `planned` or `not_held` lesson.
+             */
+            billable: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the lesson was recorded.
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description ID of the lesson.
+             */
+            id: string;
+            /**
+             * Minutes
+             * @description The billed duration, a multiple of 15.
+             */
+            minutes: number;
+            /**
+             * Note
+             * @description Free-text note.
+             */
+            note: string | null;
+            /**
+             * Rate Cents Per Hour
+             * @description The lesson's own rate in cents per hour, or `null` for the student's rate or the default.
+             */
+            rate_cents_per_hour: number | null;
+            /**
+             * Starts At
+             * Format: date-time
+             * @description When the lesson starts, in UTC. Lessons are billed by its day in `Europe/Berlin`.
+             */
+            starts_at: string;
+            /**
+             * @description `planned` until the maintainer confirms it: `held` (the tick), `cancelled` (late or not attended) or
+             *     `not_held` (costs nothing).
+             */
+            status: components["schemas"]["LessonStatus"];
+            /**
+             * Student Id
+             * Format: uuid
+             * @description ID of the student's party.
+             */
+            student_id: string;
+            /**
+             * Subject
+             * @description The subject as a label (`Mathe`), as the calendar title names it.
+             */
+            subject: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description When the lesson last changed.
+             */
+            updated_at: string;
+        };
+        /**
+         * LessonStatus
+         * @enum {string}
+         */
+        LessonStatus: "planned" | "held" | "cancelled" | "not_held";
+        /**
+         * LessonUpdateRequest
+         * @description Body of `PATCH /lessons/{lesson_id}`: only the fields that are sent change; an empty body changes nothing.
+         *
+         *     Changing `status` sets the default `billable` of the new status: `held` (the tick) makes the lesson billable,
+         *     every other status does not. Sending the status the lesson already has changes nothing. A `billable` sent along
+         *     wins; `true` is `lesson_not_billable` for a `planned` or `not_held` lesson.
+         */
+        LessonUpdateRequest: {
+            /**
+             * Billable
+             * @description Whether the lesson is billed: `false` on a `held` lesson is goodwill, `true` on a `cancelled` one bills it.
+             */
+            billable?: boolean;
+            /**
+             * Minutes
+             * @description The duration, a multiple of 15 - corrected when a lesson ran differently.
+             * @example 60
+             */
+            minutes?: number;
+            /**
+             * Note
+             * @description Free-text note; `null` clears it.
+             */
+            note?: string | null;
+            /**
+             * Rate Cents Per Hour
+             * @description The lesson's own rate in cents per hour, divisible by 4; `null` falls back to the student's rate or the
+             *     default.
+             */
+            rate_cents_per_hour?: number | null;
+            /**
+             * Starts At
+             * Format: date-time
+             * @description When the lesson starts, with its UTC offset, on a whole minute.
+             * @example 2026-11-02T16:00:00+01:00
+             */
+            starts_at?: string;
+            /**
+             * Status
+             * @description The new status; `held` is the tick.
+             */
+            status?: components["schemas"]["LessonStatus"];
+            /**
+             * Student Id
+             * Format: uuid
+             * @description ID of another party holding the student role.
+             */
+            student_id?: string;
+            /**
+             * Subject
+             * @description The subject as a label. Surrounding whitespace is stripped.
+             * @example Mathe
+             */
+            subject?: string;
+        };
+        /**
+         * ManualBillingPutRequest
+         * @description Body of `PUT /parties/{party_id}/manual-billing`: the whole mark. The same note again changes nothing.
+         */
+        ManualBillingPutRequest: {
+            /**
+             * Note
+             * @description Free-text note, such as why the payer is billed by hand; leaving it out clears it.
+             */
+            note?: string | null;
+        };
+        /**
+         * ManualBillingResponse
+         * @description A payer billed by hand: their lessons show as "bill manually" and never reach a draft.
+         */
+        ManualBillingResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the party was marked.
+             */
+            created_at: string;
+            /**
+             * Note
+             * @description Free-text note.
+             */
+            note: string | null;
+            /**
+             * Party Id
+             * Format: uuid
+             * @description ID of the party.
+             */
+            party_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description When the note last changed.
+             */
+            updated_at: string;
+        };
+        /**
          * MeResponse
          * @description What the calling token says about its bearer.
          */
@@ -1472,6 +2279,12 @@ export interface components {
              */
             user_id: string | null;
         };
+        /**
+         * NoLessonReason
+         * @description Why an occurrence is no lesson: ``calendar_event.reason``.
+         * @enum {string}
+         */
+        NoLessonReason: "all_day" | "phone" | "first_meeting" | "no_title_pattern" | "duration" | "unmatched" | "ambiguous";
         /** Page[ApplicationClientResponse] */
         Page_ApplicationClientResponse_: {
             /**
@@ -1479,6 +2292,52 @@ export interface components {
              * @description The items of this page, in the order of the list.
              */
             items: components["schemas"]["ApplicationClientResponse"][];
+            /**
+             * Limit
+             * @description The page size that was applied.
+             */
+            limit: number;
+            /**
+             * Offset
+             * @description Number of items skipped before this page.
+             */
+            offset: number;
+            /**
+             * Total
+             * @description Number of items matching the request across all pages.
+             */
+            total: number;
+        };
+        /** Page[CalendarAliasResponse] */
+        Page_CalendarAliasResponse_: {
+            /**
+             * Items
+             * @description The items of this page, in the order of the list.
+             */
+            items: components["schemas"]["CalendarAliasResponse"][];
+            /**
+             * Limit
+             * @description The page size that was applied.
+             */
+            limit: number;
+            /**
+             * Offset
+             * @description Number of items skipped before this page.
+             */
+            offset: number;
+            /**
+             * Total
+             * @description Number of items matching the request across all pages.
+             */
+            total: number;
+        };
+        /** Page[CalendarEventResponse] */
+        Page_CalendarEventResponse_: {
+            /**
+             * Items
+             * @description The items of this page, in the order of the list.
+             */
+            items: components["schemas"]["CalendarEventResponse"][];
             /**
              * Limit
              * @description The page size that was applied.
@@ -1518,6 +2377,29 @@ export interface components {
              */
             total: number;
         };
+        /** Page[LessonResponse] */
+        Page_LessonResponse_: {
+            /**
+             * Items
+             * @description The items of this page, in the order of the list.
+             */
+            items: components["schemas"]["LessonResponse"][];
+            /**
+             * Limit
+             * @description The page size that was applied.
+             */
+            limit: number;
+            /**
+             * Offset
+             * @description Number of items skipped before this page.
+             */
+            offset: number;
+            /**
+             * Total
+             * @description Number of items matching the request across all pages.
+             */
+            total: number;
+        };
         /** Page[PartyListItem] */
         Page_PartyListItem_: {
             /**
@@ -1525,6 +2407,29 @@ export interface components {
              * @description The items of this page, in the order of the list.
              */
             items: components["schemas"]["PartyListItem"][];
+            /**
+             * Limit
+             * @description The page size that was applied.
+             */
+            limit: number;
+            /**
+             * Offset
+             * @description Number of items skipped before this page.
+             */
+            offset: number;
+            /**
+             * Total
+             * @description Number of items matching the request across all pages.
+             */
+            total: number;
+        };
+        /** Page[RateResponse] */
+        Page_RateResponse_: {
+            /**
+             * Items
+             * @description The items of this page, in the order of the list.
+             */
+            items: components["schemas"]["RateResponse"][];
             /**
              * Limit
              * @description The page size that was applied.
@@ -1677,6 +2582,36 @@ export interface components {
             token: string;
         };
         /**
+         * PayPalPermission
+         * @enum {string}
+         */
+        PayPalPermission: "allowed" | "blocked";
+        /**
+         * PaymentRequest
+         * @description The payment state of one invoice - nothing about the person it is for: no name, contact or customer number.
+         */
+        PaymentRequest: {
+            /**
+             * Invoice Number
+             * @description The invoice's number, as asked.
+             */
+            invoice_number: string;
+            /**
+             * Open Amount Cents
+             * @description What is left to pay, in cents: the gross sum minus what is paid; `0` once `paid`.
+             */
+            open_amount_cents: number;
+            /** @description Whether the invoice may be paid by PayPal: `blocked` for the customers who may only pay by transfer. */
+            paypal: components["schemas"]["PayPalPermission"];
+            /** @description `open` - sent or partly paid - or `paid`. */
+            state: components["schemas"]["PaymentState"];
+        };
+        /**
+         * PaymentState
+         * @enum {string}
+         */
+        PaymentState: "open" | "paid";
+        /**
          * PersonCreateRequest
          * @description Body of `POST /persons`.
          */
@@ -1797,6 +2732,65 @@ export interface components {
          */
         PreferredMeetingTool: "discord" | "in_person" | "microsoft_teams" | "phone";
         /**
+         * RatePutRequest
+         * @description Body of `PUT /students/{party_id}/rates/{valid_from}`: the whole rate of that day.
+         *
+         *     It replaces amount and note of a rate already set for the day; the same values again change nothing.
+         */
+        RatePutRequest: {
+            /**
+             * Cents Per Hour
+             * @description The rate in cents per hour: 0 or more, divisible by 4.
+             * @example 3000
+             */
+            cents_per_hour: number;
+            /**
+             * Note
+             * @description Free-text note; leaving it out clears it.
+             */
+            note?: string | null;
+        };
+        /**
+         * RateResponse
+         * @description A student's own rate from a day on; it holds until the day of the next one.
+         */
+        RateResponse: {
+            /**
+             * Cents Per Hour
+             * @description The rate in cents per hour, divisible by 4. 45 and 90 minutes are priced linearly.
+             */
+            cents_per_hour: number;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the rate was first set.
+             */
+            created_at: string;
+            /**
+             * Note
+             * @description Free-text note.
+             */
+            note: string | null;
+            /**
+             * Student Id
+             * Format: uuid
+             * @description ID of the student's party.
+             */
+            student_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description When amount or note last changed.
+             */
+            updated_at: string;
+            /**
+             * Valid From
+             * Format: date
+             * @description The day the rate takes effect.
+             */
+            valid_from: string;
+        };
+        /**
          * RefreshTokenRevokeRequest
          * @description Body of `POST /revoke`: the refresh token of the session to end.
          */
@@ -1841,6 +2835,76 @@ export interface components {
          * @enum {string}
          */
         Role: "student" | "tutor" | "guardian" | "admin";
+        /**
+         * SevdeskContactPutRequest
+         * @description Body of `PUT /parties/{party_id}/sevdesk-contact`: the contact the party's invoices go to.
+         */
+        SevdeskContactPutRequest: {
+            /**
+             * Sevdesk Contact Id
+             * @description ID of the contact in sevDesk: a positive integer without leading zeros. It is stored as given; nothing is
+             *     looked up in sevDesk.
+             * @example 1234567
+             */
+            sevdesk_contact_id: string;
+        };
+        /**
+         * SevdeskContactResponse
+         * @description The link between a party and its sevDesk contact.
+         */
+        SevdeskContactResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the link was made.
+             */
+            created_at: string;
+            /**
+             * Party Id
+             * Format: uuid
+             * @description ID of the party.
+             */
+            party_id: string;
+            /**
+             * Sevdesk Contact Id
+             * @description ID of the contact in sevDesk.
+             */
+            sevdesk_contact_id: string;
+        };
+        /**
+         * StudentPayerResponse
+         * @description Who pays for a student's lessons: what a lesson that becomes billable now stores (PD1).
+         */
+        StudentPayerResponse: {
+            /**
+             * Ambiguous
+             * @description Whether several parties pay for the student: a lesson that becomes billable then stores no payer, and the
+             *     CRM's `pays_for` relations are corrected first.
+             */
+            ambiguous: boolean;
+            /**
+             * Manual Billing
+             * @description Whether the payer is billed by hand: their lessons never reach a draft. `false` while ambiguous.
+             */
+            manual_billing: boolean;
+            /**
+             * Payer Id
+             * @description The party that pays: the one party with a `pays_for` relation to the student - a person or a company - or the
+             *     student itself when none has. `null` when several have.
+             */
+            payer_id: string | null;
+            /**
+             * Sevdesk Contact Linked
+             * @description Whether the payer has a sevDesk contact; without one there is no invoice draft. `false` while ambiguous.
+             */
+            sevdesk_contact_linked: boolean;
+            /**
+             * Student Id
+             * Format: uuid
+             * @description ID of the student's party.
+             */
+            student_id: string;
+        };
         /**
          * StudentRole
          * @description The student role of a person.
@@ -4075,6 +5139,1546 @@ export interface operations {
             };
         };
     };
+    billing_list_calendar_aliases: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of items to return. */
+                limit?: number;
+                /** @description Number of items to skip before the first returned item. */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_CalendarAliasResponse_"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:read */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_create_calendar_alias: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarAliasCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarAliasResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description An alias for this calendar name already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unknown student */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_delete_calendar_alias: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the calendar alias. */
+                alias_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Calendar alias not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_list_calendar_events: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of items to return. */
+                limit?: number;
+                /** @description Number of items to skip before the first returned item. */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_CalendarEventResponse_"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:read */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_assign_calendar_event: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the calendar occurrence. */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarEventAssignRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Calendar event not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The calendar event already has a lesson / The student already has a lesson at this start / An alias for this calendar name already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unknown student / The calendar event cannot become a lesson: its start is not on a whole minute */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_dismiss_calendar_event: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the calendar occurrence. */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Calendar event not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_import_calendar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarImportResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lesson calendar could not be read */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_list_lessons: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of items to return. */
+                limit?: number;
+                /** @description Number of items to skip before the first returned item. */
+                offset?: number;
+                /** @description Only lessons starting on this day or later, as a day in `Europe/Berlin` (included). */
+                from?: string | null;
+                /** @description Only lessons starting on this day or earlier, as a day in `Europe/Berlin` (included). */
+                to?: string | null;
+                /** @description Only lessons of this student party. */
+                student_id?: string | null;
+                /** @description Only lessons in this status. */
+                status?: components["schemas"]["LessonStatus"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_LessonResponse_"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:read */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_create_lesson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LessonCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The student already has a lesson at this start */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unknown student / A rate must be at least 0 cents per hour and divisible by 4 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_get_lesson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the lesson. */
+                lesson_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:read */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Lesson not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_update_lesson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the lesson. */
+                lesson_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LessonUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Lesson not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The student already has a lesson at this start */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unknown student / A rate must be at least 0 cents per hour and divisible by 4 / Only a held or cancelled lesson can be billable */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_resolve_lesson_payer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the lesson. */
+                lesson_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonPayerResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Lesson not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_put_manual_billing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the party: a person or a company. */
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualBillingPutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualBillingResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Party not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_delete_manual_billing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the party: a person or a company. */
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Party not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_put_sevdesk_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the party: a person or a company. */
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SevdeskContactPutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SevdeskContactResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Party not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The party or the sevDesk contact is already linked */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_delete_sevdesk_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the party: a person or a company. */
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Party not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_get_payment_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The invoice's number as sevDesk prints it: capitals, digits, `.`, `_` and `-`, at most 32 characters, starting with a capital or a digit. */
+                invoice_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentRequest"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:payment:read */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No payable invoice has this number */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description sevDesk could not be read / sevDesk was not called: its configuration was refused */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_get_student_payer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the student's party. */
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentPayerResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:read */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Party not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_list_rates: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of items to return. */
+                limit?: number;
+                /** @description Number of items to skip before the first returned item. */
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                /** @description ID of the student's party. */
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_RateResponse_"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:read */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Party not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_put_rate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the student's party. */
+                party_id: string;
+                /** @description The day the rate takes effect; it holds until the next rate's day. */
+                valid_from: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RatePutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateResponse"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Party not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unknown student / A rate must be at least 0 cents per hour and divisible by 4 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    billing_delete_rate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the student's party. */
+                party_id: string;
+                /** @description The day the rate takes effect; it holds until the next rate's day. */
+                valid_from: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing required scope: billing:write */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Party not found / Rate not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "validation_error",
+                     *       "detail": "Request validation failed",
+                     *       "errors": [
+                     *         {
+                     *           "loc": [
+                     *             "query",
+                     *             "limit"
+                     *           ],
+                     *           "message": "Input should be less than or equal to 100",
+                     *           "type": "less_than_equal"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     crm_create_company: {
         parameters: {
             query?: never;
@@ -4420,7 +7024,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Party is linked to external systems */
+            /** @description Party is still in use */
             409: {
                 headers: {
                     [name: string]: unknown;

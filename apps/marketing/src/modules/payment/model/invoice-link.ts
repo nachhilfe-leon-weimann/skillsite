@@ -22,6 +22,12 @@ const PAYMENT_ITEM_NAME = "Online-Nachhilfe";
 /** Invoice numbers are short identifiers, never free text or a URL. */
 const INVOICE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._\-/]{0,31}$/;
 
+/**
+ * An invoice number to look up. Upper-case and without `/`: it becomes a path
+ * segment of SkillForge's payment route, and sevDesk numbers read `RE-%NUMBER`.
+ */
+const LOOKUP_INVOICE_PATTERN = /^[A-Z0-9][A-Z0-9._-]{0,31}$/;
+
 /** `90,00 EUR`, `90,00 €`, `90,00` - the currency suffix is optional. */
 const CURRENCY_SUFFIX = /\s*(?:EUR|€)$/i;
 
@@ -40,7 +46,7 @@ const AMOUNT_PATTERNS = [
 ];
 
 /** Plausible bounds for a tutoring invoice, in cents. */
-const AMOUNT_LIMITS = { min: 1, max: 500_000 } as const;
+export const AMOUNT_LIMITS = { min: 1, max: 500_000 } as const;
 
 export type PaymentRequest = {
   /** Invoice number, used as PayPal's payment reference. */
@@ -57,6 +63,23 @@ export type ParsedPaymentRequest =
 
 /** A query parameter as Next hands it over: absent, once, or repeated. */
 type QueryValue = string | string[] | undefined;
+
+export type InvoiceNumberResult =
+  { ok: true; invoice: string } | { ok: false; reason: "missing" | "invoice" };
+
+/**
+ * PayPal's notation for a sum of whole cents: `2250` -> `22.50`. Integer
+ * arithmetic only, so no float error can move the amount by a cent; anything
+ * but a non-negative whole number of cents is a programming error.
+ */
+export function formatPaypalAmount(cents: number): string {
+  if (!Number.isSafeInteger(cents) || cents < 0) {
+    throw new RangeError(`not a whole, non-negative number of cents: ${cents}`);
+  }
+  const euros = Math.trunc(cents / 100);
+  const rest = cents % 100;
+  return `${euros}.${String(rest).padStart(2, "0")}`;
+}
 
 /**
  * Normalise an amount written for humans into PayPal's `90.00`, or `null` if it
@@ -81,7 +104,24 @@ function normalizeAmount(rawAmount: string): string | null {
   // compared or printed, so the amount can't drift by a cent.
   const cents = Math.round(Number(decimal) * 100);
   if (cents < AMOUNT_LIMITS.min || cents > AMOUNT_LIMITS.max) return null;
-  return (cents / 100).toFixed(2);
+  return formatPaypalAmount(cents);
+}
+
+/**
+ * Validate the `re` parameter of `/zahlung`: trimmed and upper-cased, as a
+ * visitor may type `re-1001`. A repeated parameter is malformed - guessing
+ * which number is meant could show another invoice's state.
+ */
+export function parseInvoiceNumber(re: QueryValue): InvoiceNumberResult {
+  if (re === undefined) return { ok: false, reason: "missing" };
+  if (typeof re !== "string") return { ok: false, reason: "invoice" };
+
+  const invoice = re.trim().toUpperCase();
+  if (invoice === "") return { ok: false, reason: "missing" };
+  if (!LOOKUP_INVOICE_PATTERN.test(invoice)) {
+    return { ok: false, reason: "invoice" };
+  }
+  return { ok: true, invoice };
 }
 
 /**
