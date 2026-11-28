@@ -12,3 +12,5 @@ docs/wording/
 **/storybook-static/
 **/next-env.d.ts
 packages/documents/dist/
+# The documents parser owns the format of its sources (docs/specs/documents.md, E-16).
+packages/documents/content/**/*.md
