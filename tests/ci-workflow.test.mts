@@ -159,6 +159,21 @@ test.each([
     ["packages/documents/src/parse/errors.test.ts"],
     ["shared", "documents"],
   ],
+  // The print kit typesets the documents' PDFs: its layout, fonts and Typst pin run the full suite and the Docker
+  // build, which builds the PDFs from A4 of docs/specs/documents.md on.
+  [
+    "the print kit",
+    [
+      "packages/print-kit/src/page.typ",
+      "packages/print-kit/fonts/hanken-grotesk/HankenGrotesk-Regular.ttf",
+      "packages/print-kit/toolchain.json",
+    ],
+    ["shared", "docker"],
+  ],
+  ["a print kit test", ["packages/print-kit/test/runner.test.mjs"], ["shared"]],
+  // The website's side of the print kit's drift test: the scoped run of `website` or `ui` runs the root tests.
+  ["the design tokens", ["packages/ui/styles/tokens.css"], ["ui", "docker"]],
+  ["the logo", ["apps/marketing/public/logo-icon.png"], ["website", "docker"]],
 ])("%s maps to its areas", (_, files, expected) => {
   assert.deepEqual(areas(files), expected);
 });
@@ -196,11 +211,28 @@ test("a full run is the local suite, repeated on the release PR", () => {
   // Every other check step belongs to the scoped run.
   const scoped = suite.steps.filter(
     (step) =>
-      step.run?.startsWith("just") || step.run?.startsWith("pnpm turbo"),
+      step.run?.startsWith("just") ||
+      step.run?.startsWith("pnpm turbo") ||
+      step.run?.startsWith("pnpm vitest"),
   );
   for (const step of scoped.filter((s) => !s.if?.startsWith("env.FULL =="))) {
     assert.ok(step.if?.startsWith("env.FULL != 'true'"), step.name);
   }
+});
+
+test("a scoped run of the website or the UI package runs the root tests", () => {
+  // tests/print-kit.test.mts compares the website's tokens and logo with the print kit's copies; a change to the
+  // website's side alone is not a full run, so the scoped run has to reach it.
+  const step = suite.steps.find((s) => s.run === "pnpm vitest run");
+  assert.ok(step, "no step runs the root tests");
+  assert.equal(
+    step.if,
+    "env.FULL != 'true' && (env.WEBSITE == 'true' || env.UI == 'true')",
+  );
+  assert.deepEqual(
+    load(read("vitest.config.mts").match(/include: (\[.*\])/)![1]),
+    ["tests/**/*.test.mts", "scripts/**/*.test.mjs"],
+  );
 });
 
 test("`just check-repeat` is `just check` with every browser test three times", () => {

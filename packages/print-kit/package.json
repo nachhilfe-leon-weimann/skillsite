@@ -1,0 +1,12 @@
+{
+  "name": "@skillsite/print-kit",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test",
+    "typst": "node bin/typst.mjs"
+  }
+}

@@ -343,6 +343,8 @@ importers:
         specifier: ^2.9.1
         version: 2.9.1
 
+  packages/print-kit: {}
+
   packages/ui:
     dependencies:
       '@radix-ui/react-dialog':

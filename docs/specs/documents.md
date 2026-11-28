@@ -1,6 +1,6 @@
 # Spec: Documents (legal texts from one Markdown source, for the website and as PDF)
 
-> Status: Accepted, 2026-11-28 - A0 to A2 in review. The maintainer accepted every decision and answered the open
+> Status: Accepted, 2026-11-28 - A0 to A3a in review. The maintainer accepted every decision and answered the open
 > questions on 2026-11-28.
 > Builds on [`foundation-refactor.md`](foundation-refactor.md): its module rules, foundation E-12 (the manual look
 > check) and V7, which this arc supersedes for legal prose. This spec is also the decision record for the arc. Its
@@ -117,6 +117,7 @@ spec and accepted by the maintainer on 2026-11-28.
 packages/print-kit/                 @skillsite/print-kit - no workspace dependencies, no skillsite strings
   lib.typ                           entry point; README.md documents the API
   src/tokens.typ                    colours (from packages/ui tokens.css, light) + print-only `logo-ink`
+  src/type.typ                      font families, CSS-like line height, text rules (body, headings, lists)
   src/page.typ                      page, letterhead head (first / following), footer
   src/blocks.typ                    title block, panel, note box, table, field line, checkbox, place-and-date,
                                     signature line
@@ -373,7 +374,7 @@ This table is the public record of the brand's document design. A3a builds it; t
   - `lib.typ` takes the brand name, tagline, logo alt text, domain, document title, date label and labels as
     arguments, so the kit holds no brand or business strings.
   - The runner (E-06).
-  - The kit's `test` script is a dependency-free `node --test` file: it compiles `specimen.typ` through the
+  - The kit's `test` script runs dependency-free `node --test` files: they compile `specimen.typ` through the
     runner.
   - Drift tests in `tests/`: every `tokens.typ` colour except `logo-ink` equals its light value in `tokens.css`,
     and the logo bytes equal `public/logo-icon.png`.
@@ -384,10 +385,10 @@ This table is the public record of the brand's document design. A3a builds it; t
   - the margins
   - the panel, note box, table and form primitives
 - _Acceptance criteria:_
-  - [ ] `specimen.typ` compiles with `--root packages/print-kit --font-path packages/print-kit/fonts --ignore-system-fonts`.
-  - [ ] `package.json` has no `@skillsite/*` and no `workspace:` entry in any dependency field (a test).
-  - [ ] The runner rejects a wrong SHA-256 (mutation probe) and ignores a Typst on the `PATH`.
-  - [ ] The drift tests pass.
+  - [x] `specimen.typ` compiles with `--root packages/print-kit --font-path packages/print-kit/fonts --ignore-system-fonts`.
+  - [x] `package.json` has no `@skillsite/*` and no `workspace:` entry in any dependency field (a test).
+  - [x] The runner rejects a wrong SHA-256 (mutation probe) and ignores a Typst on the `PATH`.
+  - [x] The drift tests pass.
 
 **A3b - Document PDFs.** _(after A3a)_
 
