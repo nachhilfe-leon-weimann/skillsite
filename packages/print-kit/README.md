@@ -28,7 +28,8 @@ The design values (sizes, weights, spacing, colours) are the _Print design_ tabl
 `node bin/typst.mjs <typst arguments>` runs the Typst CLI pinned in `toolchain.json` (0.15.1). On first use it
 downloads the release tarball for the platform from GitHub into `.cache/` (gitignored), checks its SHA-256 against
 the pin before extracting it and keeps it for later runs. A Typst on the `PATH` is never used, and a cached tarball
-that does not match the pin stops the runner. It needs Node 22.18 or later and `tar` with xz support (on Debian
+that does not match the pin stops the runner, and so does a download that does not match it. Runners started at the
+same time on an empty cache are safe: none removes an install another one put in place. It needs Node 22.18 or later and `tar` with xz support (on Debian
 `xz-utils`); it runs on macOS (arm64, x64) and Linux (arm64, x64).
 
 Compile with the kit's fonts only, so that every machine typesets the same:
@@ -90,7 +91,7 @@ The arguments without a default fail the build when they are missing.
 | `domain`     | -       | the footer's "<brand> · <domain>"                                                    |
 | `title`      | -       | the PDF title, the title block's heading and the head of every following page        |
 | `labels`     | -       | `(page: "Seite", date: "Stand")`: the words of "Seite 2 / 5" and "Stand: Juli 2026"  |
-| `logo-alt`   | `auto`  | the logo's alternative text; `auto` is `brand`                                       |
+| `logo-alt`   | `auto`  | the page-1 logo's alternative text in the tagged PDF; `auto` is `brand`              |
 | `eyebrow`    | `none`  | the small line above the title                                                       |
 | `lead`       | `none`  | the line below the title                                                             |
 | `date-label` | `none`  | printed as "<labels.date>: <date-label>"; needs `labels.date`                        |
@@ -103,19 +104,19 @@ Headings: `==` is a section (h2), `===` a subsection (h3); the title is the only
 
 ### Primitives
 
-| Primitive                                     | Draws                                                                                      |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `title-block(title, eyebrow:, lead:, as-of:)` | the title block; `letterhead` places it                                                    |
-| `eyebrow(body)`                               | a small label in spaced capitals, such as the title of a group of blocks                   |
-| `panel(body)`                                 | a bordered panel; never breaks across pages                                                |
-| `note(label: none, body)`                     | a filled note box in 10 pt with a bold label; never breaks across pages                    |
-| `data-table(columns: auto, header, ..rows)`   | a table: `data-table(("A", "B"), ("a1", "b1"))`, with a header bar and a bold first column |
-| `form(note: none, body)`                      | the parts of a form, kept on one page, with a note in small print                          |
-| `field(label, lines: 1)`                      | a label and `lines` writing lines, 9 mm apart                                              |
-| `checkbox(label, checked: false)`             | a box before its label                                                                     |
-| `place-date(label, value: none)`              | a 70 mm line with its label below; `value` prints a known place and date on it             |
-| `signature(label)`                            | a 70 mm line with its label below and room to sign above                                   |
-| `tokens`                                      | the colours, as `tokens.ink`, `tokens.coral` and so on                                     |
+| Primitive                                     | Draws                                                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `title-block(title, eyebrow:, lead:, as-of:)` | the title block; `letterhead` places it                                                     |
+| `eyebrow(body)`                               | a small label in spaced capitals, the title of a group of blocks; stays with the next block |
+| `panel(body)`                                 | a bordered panel; never breaks across pages                                                 |
+| `note(label: none, body)`                     | a filled note box in 10 pt with a bold label; never breaks across pages                     |
+| `data-table(columns: auto, header, ..rows)`   | a table: `data-table(("A", "B"), ("a1", "b1"))`, with a header bar and a bold first column  |
+| `form(note: none, body)`                      | the parts of a form, kept on one page, with a note in small print                           |
+| `field(label, lines: 1)`                      | a label and `lines` writing lines, 9 mm apart                                               |
+| `checkbox(label, checked:, states:)`          | a box before its label; `states: (checked: .., unchecked: ..)` is the box's alt text        |
+| `place-date(label, value: none)`              | a 70 mm line with its label below; `value` prints a known place and date on it              |
+| `signature(label)`                            | a 70 mm line with its label below and room to sign above                                    |
+| `tokens`                                      | the colours, as `tokens.ink`, `tokens.coral` and so on                                      |
 
 `place-date` and `signature` have the same height, so they line up in a `grid(columns: (70mm, 70mm), column-gutter: 1fr, ..)`.
 
@@ -136,6 +137,8 @@ Open Font License 1.1.
 ## Tests
 
 `node --test` (in the repository: `pnpm --filter @skillsite/print-kit test`) compiles the specimen as PDF/A-2a and
-PDF/UA-1, checks that it embeds only the kit's fonts and that two builds give the same bytes, and checks the
-runner: a wrong SHA-256 is refused before extraction, and a Typst on the `PATH` is ignored. The repository's
-`tests/print-kit.test.mts` keeps the colours and the logo equal to the website's.
+PDF/UA-1, checks that it embeds only the kit's fonts and that two builds give the same bytes, and checks the tagged
+PDF: the logo and each checkbox state carry their alternative text, and headings and group titles stay with the next
+block. It checks the runner: a wrong SHA-256 is refused before extraction, for a cached tarball and a download alike,
+concurrent first runs all run the binary, and a Typst on the `PATH` is ignored. The repository's
+`tests/print-kit.test.mts` keeps the colours and the logo equal to the website's; CI runs it when either side changes.
