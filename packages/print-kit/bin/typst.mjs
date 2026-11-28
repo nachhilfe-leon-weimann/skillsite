@@ -8,7 +8,7 @@
  * cached tarball stops the runner. Dependency-free: Node and `tar` (with xz support) only.
  *
  * As a module it exports `ensureTypst()`, which returns the verified binary's path, so tests can point it at
- * another pin or cache.
+ * another pin, cache or `fetch`.
  */
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -17,6 +17,7 @@ import {
   createWriteStream,
   existsSync,
   readFileSync,
+  realpathSync,
 } from "node:fs";
 import {
   chmod,
@@ -29,7 +30,7 @@ import {
 import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const kitDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -108,6 +109,7 @@ export async function ensureTypst({
   cacheDir = defaults.cacheDir,
   platform = process.platform,
   arch = process.arch,
+  fetch: fetchImpl = globalThis.fetch,
 } = {}) {
   const pin = readToolchain(toolchain);
   const target = targetTriple(platform, arch);
@@ -139,7 +141,7 @@ export async function ensureTypst({
     const url = pin.url
       .replaceAll("{version}", pin.version)
       .replaceAll("{target}", target);
-    await download(url, tarball, expected);
+    await download(url, tarball, expected, fetchImpl);
   }
   await extract(tarball, target, installDir, expected);
   return binary;
@@ -174,10 +176,10 @@ function mismatch(file, expected, actual, advice) {
 }
 
 /** Downloads `url` to a temporary file and moves it to `file` only when its SHA-256 equals `expected`. */
-async function download(url, file, expected) {
+async function download(url, file, expected, fetchImpl) {
   let response;
   try {
-    response = await fetch(url);
+    response = await fetchImpl(url);
   } catch (error) {
     throw new RunnerError(
       `print-kit: cannot download Typst from ${url}: ${error.cause?.message ?? error.message}`,
@@ -251,19 +253,34 @@ async function extract(tarball, target, installDir, expected) {
     await chmod(path.join(extracted, "typst"), 0o755);
     await writeFile(path.join(extracted, STAMP), `${expected}\n`);
 
-    await rm(installDir, { recursive: true, force: true });
+    // Rename first and never remove a matching install: another runner may have moved its copy into place
+    // since this one checked, and may be running that binary. Renaming onto a non-empty directory fails.
     try {
       await rename(extracted, installDir);
     } catch (error) {
       // Another runner moved its copy into place first; it came from the same verified tarball.
-      if ((await readStamp(installDir)) !== expected) throw error;
+      if ((await readStamp(installDir)) === expected) return;
+      // A stale install from an older pin, or a half-written one: replace it.
+      await rm(installDir, { recursive: true, force: true });
+      try {
+        await rename(extracted, installDir);
+      } catch (retryError) {
+        if ((await readStamp(installDir)) !== expected) throw retryError;
+      }
     }
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
 }
 
-if (import.meta.main) {
+// `import.meta.main` is undefined before Node 22.18; there the script compares its own path with the one Node ran,
+// so the command line never exits 0 without running Typst.
+const isMain =
+  import.meta.main ??
+  (process.argv[1] !== undefined &&
+    pathToFileURL(realpathSync(process.argv[1])).href === import.meta.url);
+
+if (isMain) {
   try {
     const binary = await ensureTypst();
     const result = spawnSync(binary, process.argv.slice(2), {
