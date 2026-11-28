@@ -18,7 +18,7 @@ import {
   type BookingSlot,
 } from "../model/config";
 import { formatDateLabel } from "../model/dates";
-import { trackEvent } from "@/lib/analytics";
+import { reportBookingEvent } from "./report-booking-event";
 
 type BookerProps = {
   event: BookingEventKey;
@@ -61,7 +61,7 @@ export function Booker({
   // Funnel entry: the booking widget was opened. `event` distinguishes the
   // nachhilfe vs. kennenlernen flows and is stable, so this fires once.
   useEffect(() => {
-    trackEvent("booking-started", { type: event });
+    reportBookingEvent({ name: "booking-started", type: event });
   }, [event]);
 
   const {
@@ -81,7 +81,7 @@ export function Booker({
     submit,
     retryBooking,
     reset: resetBooking,
-  } = useBookingSubmission(event, duration);
+  } = useBookingSubmission(event);
 
   useEffect(() => {
     const target = focusNext.current?.current;
@@ -129,7 +129,7 @@ export function Booker({
     setStep("form");
     focusNext.current = formTitleRef;
     // Funnel step: a time slot was chosen and the form opened.
-    trackEvent("slot-selected", { type: event });
+    reportBookingEvent({ name: "slot-selected", type: event });
   };
 
   const backToSelect = () => {

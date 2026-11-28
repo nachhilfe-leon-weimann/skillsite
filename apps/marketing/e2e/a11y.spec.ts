@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import {
+  passesThrough,
   afterTwoFrames,
   freezeTime,
   interceptSubmissions,
@@ -546,7 +547,7 @@ test.describe("the booking choices", () => {
   async function holdSubmissions(page: Page) {
     const bodies: string[] = [];
     await page.route("**/*", (route) => {
-      if (route.request().method() === "GET") return route.fallback();
+      if (passesThrough(route.request())) return route.fallback();
       bodies.push(route.request().postData() ?? "");
       return route.abort();
     });

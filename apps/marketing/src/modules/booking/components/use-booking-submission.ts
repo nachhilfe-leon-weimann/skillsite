@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { bookerText } from "@/content/booking";
-import { trackEvent } from "@/lib/analytics";
 import { withFillDuration } from "../model/anti-spam";
 import type {
   BookingDraft,
@@ -11,6 +10,7 @@ import type {
   SubmitFailureReason,
 } from "../model/config";
 import { requestBooking } from "../server/actions";
+import { reportBookingEvent } from "./report-booking-event";
 
 export type BookingPhase = "pending" | "confirmed" | "failed";
 
@@ -22,9 +22,10 @@ export type BookingError = {
 /**
  * Sends a booking and holds its outcome: `pending` until Cal.com answers,
  * `confirmed` only once it confirmed the booking, `failed` with the reason
- * otherwise. Reports each outcome to analytics.
+ * otherwise. The server reports each outcome it answered to analytics; only a
+ * request that never got an answer is reported from here.
  */
-export function useBookingSubmission(event: BookingEventKey, duration: number) {
+export function useBookingSubmission(event: BookingEventKey) {
   const [phase, setPhase] = useState<BookingPhase>("pending");
   const [error, setError] = useState<BookingError | null>(null);
   const [draft, setDraft] = useState<BookingDraft | null>(null);
@@ -42,15 +43,12 @@ export function useBookingSubmission(event: BookingEventKey, duration: number) {
       );
       if (result.ok) {
         setPhase("confirmed");
-        // Conversion: a booking was actually confirmed by Cal.com.
-        trackEvent("booking-confirmed", { type: event, duration });
       } else {
         setError({
           message: result.error,
           reason: result.reason,
         });
         setPhase("failed");
-        trackEvent("booking-failed", { type: event, reason: result.reason });
       }
     } catch {
       setError({
@@ -60,7 +58,11 @@ export function useBookingSubmission(event: BookingEventKey, duration: number) {
       setPhase("failed");
       // The request never produced a result (offline, stale deployment), so the
       // server log has no outcome line - this event is the only trace.
-      trackEvent("booking-failed", { type: event, reason: "request_error" });
+      reportBookingEvent({
+        name: "booking-failed",
+        type: event,
+        reason: "request_error",
+      });
     }
   };
 

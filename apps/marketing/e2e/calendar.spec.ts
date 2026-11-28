@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import {
+  passesThrough,
   collectErrors,
   freezeTime,
   isolate,
@@ -500,7 +501,7 @@ for (const timezoneId of [
       // Abort every submission in the browser: nothing reaches the server.
       const bodies: string[] = [];
       await page.route("**/*", (route) => {
-        if (route.request().method() === "GET") return route.fallback();
+        if (passesThrough(route.request())) return route.fallback();
         bodies.push(route.request().postData() ?? "");
         return route.abort();
       });

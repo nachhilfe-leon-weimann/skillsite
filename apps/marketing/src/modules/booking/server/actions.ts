@@ -18,6 +18,7 @@ import { checkBookingSubmission, type BookingIssue } from "../model/schema";
 import { buildCalBookingBody } from "../model/mapping";
 import { createCalBooking } from "./cal-client";
 import { describeAttempt, logBooking } from "./log";
+import { reportBookingOutcome } from "./analytics";
 
 const GENERIC_FAILURE: SubmitResult = {
   ok: false,
@@ -46,20 +47,25 @@ function issueMessage(issue: BookingIssue): string {
  * it re-runs the full schema validation and only forwards whitelisted values.
  *
  * Two guarantees hold on every path: success is only ever reported for a
- * booking Cal.com confirmed, and each attempt leaves one outcome line in the log.
+ * booking Cal.com confirmed, and each attempt leaves one outcome line in the log
+ * (and one analytics event, see `reportBookingOutcome`).
  */
 export async function requestBooking(
   submission: BookingSubmission,
 ): Promise<SubmitResult> {
   const attempt = describeAttempt(submission);
+  let result: SubmitResult;
   try {
-    return await processBooking(submission, attempt);
+    result = await processBooking(submission, attempt);
   } catch (error) {
     // A bug or an unexpected input shape - still one outcome line, not a bare 500.
     logBooking("failed", { ...attempt, error: String(error) });
     console.error("[booking] unexpected error while booking", error);
-    return GENERIC_FAILURE;
+    result = GENERIC_FAILURE;
   }
+  // One analytics event per attempt, sent after the response; never throws.
+  await reportBookingOutcome(submission, result);
+  return result;
 }
 
 /** Thin orchestration: rate-limit -> anti-spam -> check -> map -> Cal client. */

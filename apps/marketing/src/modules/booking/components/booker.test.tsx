@@ -11,11 +11,13 @@ import { afterEach, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import type { AvailabilityResponse, SubmitResult } from "../model/config";
 import { requestBooking } from "../server/actions";
 import { Booker } from "./booker";
+import { reportBookingEvent } from "./report-booking-event";
 
 vi.mock("../server/actions", () => ({ requestBooking: vi.fn() }));
+vi.mock("./report-booking-event", () => ({ reportBookingEvent: vi.fn() }));
 
 const sendBooking = vi.mocked(requestBooking);
-const track = vi.fn();
+const report = vi.mocked(reportBookingEvent);
 
 /** One free day, 25 November 2026 (outside the 14-day withdrawal period), at 10:00. */
 const freeDay: AvailabilityResponse = {
@@ -51,16 +53,14 @@ beforeAll(() => {
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-05T09:00:00Z"));
-  window.umami = { track };
 });
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.unstubAllGlobals();
-  delete window.umami;
   sendBooking.mockReset();
-  track.mockReset();
+  report.mockClear();
 });
 
 function renderBooker(
@@ -139,10 +139,10 @@ test("a lesson is booked from a free time to the confirmation", async () => {
   expect(
     await screen.findByRole("heading", { name: "Termin gebucht!" }),
   ).toBeDefined();
-  expect(track.mock.calls.map(([name]) => name)).toEqual([
-    "booking-started",
-    "slot-selected",
-    "booking-confirmed",
+  // The funnel steps only the browser sees; the server reports the confirmation.
+  expect(report.mock.calls.map(([step]) => step)).toEqual([
+    { name: "booking-started", type: "nachhilfe" },
+    { name: "slot-selected", type: "nachhilfe" },
   ]);
 });
 
@@ -165,6 +165,13 @@ test("a booking whose request fails can be sent again", async () => {
       "Die Buchung hat nicht geklappt. Bitte versuch es erneut oder schreib mir direkt.",
     ),
   ).toBeDefined();
+
+  // No server answered, so the browser reports the failure itself.
+  expect(report).toHaveBeenLastCalledWith({
+    name: "booking-failed",
+    type: "nachhilfe",
+    reason: "request_error",
+  });
 
   fireEvent.click(screen.getByRole("button", { name: "Erneut senden" }));
   expect(
@@ -193,6 +200,10 @@ test("a slot taken in the meantime leads back to freshly loaded times", async ()
     await screen.findByRole("button", { name: "10:00 Uhr" }),
   ).toBeDefined();
   expect(fetch).toHaveBeenCalledTimes(2);
+  // The server answered, so it reports the failure; the browser does not count it twice.
+  expect(
+    report.mock.calls.filter(([step]) => step.name === "booking-failed"),
+  ).toEqual([]);
 });
 
 test("a subject passed in from the contact link is already chosen in the form", async () => {

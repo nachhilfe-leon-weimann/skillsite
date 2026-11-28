@@ -9,7 +9,6 @@ import { ThemeProvider } from "@skillsite/ui/shell/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { IosToolbarTint } from "@/components/layout/ios-toolbar-tint";
-import { UmamiAnalytics } from "@/components/analytics/umami";
 import { JsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = siteMetadata;
@@ -44,7 +43,6 @@ export default function RootLayout({
             around the floating bottom toolbar; only active at the footer
             (see globals.css + IosToolbarTint). */}
         <IosToolbarTint />
-        <UmamiAnalytics />
         <JsonLd />
       </body>
     </html>

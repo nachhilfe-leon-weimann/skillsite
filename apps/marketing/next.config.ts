@@ -20,8 +20,8 @@ if (!version) {
 
 // Baseline security headers applied to every response. Intentionally excludes a
 // Content-Security-Policy: a strict CSP needs per-request nonces for the theme
-// script and an allowlist for the Umami tracker, so it's deferred to its own
-// change rather than risking silent breakage here.
+// script, so it's deferred to its own change rather than risking silent
+// breakage here.
 const securityHeaders = [
   // Force HTTPS for two years (HTTP→HTTPS redirect already happens at the edge).
   // No `preload` on purpose — that's a commitment for the whole apex domain.

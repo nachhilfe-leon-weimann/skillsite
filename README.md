@@ -43,8 +43,9 @@ customer stays recognisable.
 docker logs <container> 2>&1 | grep -F "[booking]" | grep -vE "created|slot_taken"
 ```
 
-Bookings that fail in the browser before they reach the server show up as the Umami event
-`booking-failed`.
+The server also reports each outcome to Umami as `booking-confirmed` or `booking-failed` (with its
+`reason`). Bookings that fail in the browser before they reach the server show up only there, as
+`booking-failed` with `reason: request_error`.
 
 ## Operating the payment link
 

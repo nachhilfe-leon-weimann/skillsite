@@ -1,6 +1,12 @@
-import { expect, type Locator, type Page, type Route } from "@playwright/test";
+import {
+  expect,
+  type Locator,
+  type Page,
+  type Request,
+  type Route,
+} from "@playwright/test";
 
-/** Answer every non-local request locally: the smoke test must not depend on the network (e.g. Umami). */
+/** Answer every non-local request locally: the smoke test must not depend on the network. */
 export async function isolate(page: Page) {
   await page.context().route(
     // Anchored at the host end (`(?::\d+)?\/`) so `localhost.example.com` isn't
@@ -152,8 +158,20 @@ export async function stubMonths(
 }
 
 /**
- * Hold every request that is not a GET (the booking server action is a POST)
- * in the browser: none reaches a server. `abort` fails the oldest held one,
+ * Whether a request may pass on to the local server: a GET, or the booker's
+ * funnel beacon, which reports nothing off the live host. Everything else -
+ * the booking server action above all - is a submission.
+ */
+export function passesThrough(request: Request): boolean {
+  return (
+    request.method() === "GET" ||
+    new URL(request.url()).pathname === "/api/booking/event"
+  );
+}
+
+/**
+ * Hold every submission (the booking server action is a POST) in the
+ * browser: none reaches a server. `abort` fails the oldest held one,
  * which the booker reports as a failed request; nothing is ever answered.
  */
 export async function interceptSubmissions(page: Page) {
@@ -162,7 +180,7 @@ export async function interceptSubmissions(page: Page) {
   const actions: boolean[] = [];
   await page.route("**/*", (route) => {
     const request = route.request();
-    if (request.method() === "GET") return route.fallback();
+    if (passesThrough(request)) return route.fallback();
     bodies.push(request.postData() ?? "");
     actions.push(Boolean(request.headers()["next-action"]));
     held.push(route);
