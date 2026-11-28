@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.7](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.6...v1.2.7) (2026-11-28)
+
+
+### Bug Fixes
+
+* **booking:** rate-limit IPv6 visitors by their /64 ([#293](https://github.com/nachhilfe-leon-weimann/skillsite/issues/293)) ([05863ee](https://github.com/nachhilfe-leon-weimann/skillsite/commit/05863eead0e324d9fdaba20b364e5a0b5349c39f))
+* **booking:** rate-limit visitors behind Cloudflare by their own address ([#292](https://github.com/nachhilfe-leon-weimann/skillsite/issues/292)) ([519cbf7](https://github.com/nachhilfe-leon-weimann/skillsite/commit/519cbf70011fd2f64ed116c9a0c76d3b30f9c707))
+
 ## [1.2.6](https://github.com/nachhilfe-leon-weimann/skillsite/compare/v1.2.5...v1.2.6) (2026-11-25)
 
 
