@@ -281,6 +281,9 @@ importers:
 
   apps/portal:
     dependencies:
+      '@skillsite/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@skillsite/ui':
         specifier: workspace:*
         version: link:../../packages/ui

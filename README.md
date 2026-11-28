@@ -30,6 +30,11 @@ OpenAPI contract. A new SkillForge release comes in as a PR of its own:
 `pnpm --filter @skillsite/api-client sync [checkout]` copies the contract from a SkillForge checkout (default
 `../skillforge`) and regenerates the types; `just check` then shows what the new contract breaks.
 
+The portal's login runs through SkillForge (a backend-for-frontend: the browser only holds a session cookie). It
+needs `SKILLFORGE_API_URL`, `SKILLFORGE_CLIENT_ID` and `SKILLFORGE_CLIENT_SECRET` ([`apps/portal/.env.example`](apps/portal/.env.example));
+without them `/login` says the portal is not configured. Each login, refresh and logout leaves one
+`[auth] <outcome>` line naming the user by SkillForge's `user_id` only.
+
 ## Operating the booking
 
 Every booking attempt that reaches the server leaves exactly one line in the container log

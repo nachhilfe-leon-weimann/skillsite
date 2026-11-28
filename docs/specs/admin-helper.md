@@ -1,6 +1,6 @@
 # Spec: Admin helper (the portal's admin area: login, lessons, billing, credit)
 
-> Status: Accepted, 2026-11-10 - SS0 to SS2 done.
+> Status: Accepted, 2026-11-10 - SS0 to SS3 done.
 > Builds on [`foundation-refactor.md`](foundation-refactor.md) (decision V15 brings this arc ahead of phase E) and on
 > SkillForge's [`user-authentication.md`](https://github.com/nachhilfe-leon-weimann/skillforge/blob/main/docs/specs/user-authentication.md)
 > (its _BFF contract_). This spec is the decision record of the arc; it takes the phase-F decisions the admin helper
@@ -178,16 +178,16 @@ APP=portal` works; Playwright smoke in `apps/portal/e2e/`. `AGENTS.md`, `README.
   the start page after login and the logout; light, phone and desktop - against a local SkillForge with a synthetic
   admin.
 - _Acceptance criteria:_
-  - [ ] A synthetic admin logs in against a local SkillForge and reaches the start page; logout returns to `/login`,
+  - [x] A synthetic admin logs in against a local SkillForge and reaches the start page; logout returns to `/login`,
         and a refresh with the revoked token answers `invalid_grant`.
-  - [ ] No token reaches the browser: the only cookie is the session ID, and neither the HTML, the RSC payload nor
+  - [x] No token reaches the browser: the only cookie is the session ID, and neither the HTML, the RSC payload nor
         `.next/static` contains a token.
-  - [ ] Two concurrent requests with an expiring access token cause exactly one refresh (test).
-  - [ ] `invalid_grant` on refresh ends the portal session; the next request lands on `/login` (test).
-  - [ ] A login without `admin` creates no portal session and revokes its SkillForge session (test).
-  - [ ] The 11th failed login from one IP within 15 minutes never reaches SkillForge (test).
-  - [ ] Each of these tests turns red when the guarded behaviour is broken (mutation probes in the PR).
-  - [ ] An independent security review's conclusion is in the PR.
+  - [x] Two concurrent requests with an expiring access token cause exactly one refresh (test).
+  - [x] `invalid_grant` on refresh ends the portal session; the next request lands on `/login` (test).
+  - [x] A login without `admin` creates no portal session and revokes its SkillForge session (test).
+  - [x] The 11th failed login from one IP within 15 minutes never reaches SkillForge (test).
+  - [x] Each of these tests turns red when the guarded behaviour is broken (mutation probes in the PR).
+  - [x] An independent security review's conclusion is in the PR.
 
 ### Phase B - UI kit _(outline; detailed before it starts)_
 
@@ -214,7 +214,10 @@ per lesson by default, combined by selection), create the draft, status and reco
       retry.
 
 **SS8 - Deploy.** _(milestone 2, optional; after SS3)_ The portal image in the release, a second compose service,
-the domain, the trusted proxy header for the throttle.
+the domain, the trusted proxy header for the throttle. Until then every login shares one throttle bucket, so anyone
+can lock the login for 15 minutes (accepted with SS3's security review). With SS8 the throttle keys per client IP from
+the trusted proxy only, an IPv6 address by its /64, and evicting the oldest key at the bound never resets the count
+of a key still within its window.
 
 - [ ] The portal answers on its domain with its own image; the marketing deploy is unaffected.
 
@@ -237,6 +240,9 @@ and SS9 wait for their SkillForge slices to be released, then start with a contr
 
 - Status colours and typography density for the admin screens: the maintainer, with SS4.
 - Persistent session store and family login: with the student portal.
+- SkillForge sessions outlive portal sessions that end silently - an idle session nobody revisits, one evicted at
+  the store's bound, every session at a restart - for up to 30 days (the refresh token's life). The persistent store
+  revokes them when it prunes or sweeps.
 - The release number when the portal ships (2.0.0): the maintainer.
 
 ## Rules for implementing agents

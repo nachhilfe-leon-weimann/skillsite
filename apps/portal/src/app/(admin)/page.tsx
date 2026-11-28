@@ -2,16 +2,20 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@skillsite/ui/layout/page-header";
 import { adminHome } from "@/content/admin";
+import { LogoutButton, requireAdminSession } from "@/modules/auth/server";
 
 export const metadata: Metadata = adminHome.metadata;
 
-/** The admin area's start page: a placeholder until the modules arrive (admin helper spec, SS6). */
-export default function AdminHome() {
+/** The admin area's start page: who is logged in, and the logout. The modules join it later (admin helper spec). */
+export default async function AdminHome() {
+  await requireAdminSession();
   return (
     <PageHeader
       eyebrow={adminHome.eyebrow}
       title={adminHome.title}
       lead={adminHome.lead}
-    />
+    >
+      <LogoutButton />
+    </PageHeader>
   );
 }
