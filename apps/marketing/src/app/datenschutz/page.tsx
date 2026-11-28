@@ -1,47 +1,44 @@
-import { DocHero, DocShell } from "@/components/docs/doc-components";
-import { TextLink } from "@skillsite/ui/primitives/link";
-import {
-  privacyContact,
-  privacyPolicyEffectiveDate,
-  privacySections,
-} from "@/content/privacy";
-import { PrivacyProse, privacyPage } from "@/content/legal/datenschutz";
-import { pageMetadata } from "@/lib/metadata";
 import { CalendarDays, Mail, ShieldCheck } from "lucide-react";
 
+import { getDocument, webMeta } from "@skillsite/documents";
+import { TextLink } from "@skillsite/ui/primitives/link";
+import { DocHero, DocShell } from "@/components/docs/doc-components";
+import { DocumentBody } from "@/components/docs/document";
+import { legalContact } from "@/content/legal-contact";
+import { pageMetadata } from "@/lib/metadata";
+
+/** The privacy policy from `packages/documents/content/datenschutz.md`. */
+const privacy = getDocument("datenschutz");
+const meta = webMeta(privacy.meta);
+
 export const metadata = pageMetadata({
-  ...privacyPage.metadata,
+  title: meta.shortTitle,
+  description: meta.description,
   canonical: "/datenschutz",
 });
 
 export default function DatenschutzPage() {
-  const { hero } = privacyPage;
-  const effectiveDate = privacyPolicyEffectiveDate.toLocaleDateString("de-DE", {
-    month: "long",
-    year: "numeric",
-  });
-
   return (
     <DocShell
-      sections={privacySections.sections}
+      sections={privacy.nav}
       hero={
         <DocHero
-          badge={hero.badge}
+          badge={meta.badge}
           icon={ShieldCheck}
-          title={hero.title}
-          lead={hero.lead}
+          title={meta.title}
+          lead={meta.lead}
           facts={[
             {
               icon: CalendarDays,
-              label: hero.facts.effectiveDate,
-              children: <>{effectiveDate}</>,
+              label: privacy.labels.effectiveDate,
+              children: meta.effectiveDateLabel,
             },
             {
               icon: Mail,
-              label: hero.facts.contact,
+              label: privacy.labels.contact,
               children: (
-                <TextLink variant="doc" href={`mailto:${privacyContact.email}`}>
-                  {privacyContact.email}
+                <TextLink variant="doc" href={`mailto:${legalContact.email}`}>
+                  {legalContact.email}
                 </TextLink>
               ),
             },
@@ -49,7 +46,7 @@ export default function DatenschutzPage() {
         />
       }
     >
-      <PrivacyProse effectiveDate={effectiveDate} />
+      <DocumentBody body={privacy.body} />
     </DocShell>
   );
 }

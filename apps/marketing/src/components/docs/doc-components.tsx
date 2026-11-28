@@ -281,15 +281,15 @@ export function DocProviderLink({
 }
 
 /**
- * A legal-basis box. `label` is the document tree's (`labels.legalBasis` of
- * `@skillsite/documents`); the privacy policy's JSX relies on the default
- * until it moves to Markdown (spec `docs/specs/documents.md`, A2).
+ * A legal-basis box. `label` comes from the document tree only
+ * (`labels.legalBasis` of `@skillsite/documents`, E-14 of
+ * `docs/specs/documents.md`).
  */
 export function DocLegalBasis({
-  label = "Rechtsgrundlage:",
+  label,
   children,
 }: {
-  label?: string;
+  label: string;
   children: React.ReactNode;
 }) {
   return (
