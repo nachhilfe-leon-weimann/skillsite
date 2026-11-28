@@ -133,7 +133,8 @@ packages/documents/                 @skillsite/documents
   src/labels.ts                     shared labels (E-14)
   src/schema/                       frontmatter + node schemas = the registry (E-04)
   src/parse/                        remark pipeline, directive guard, placeholder/ref/partial/date resolution
-  src/build.ts                      content -> dist/<slug>.json + dist/meta.json; from A4 also dist/<slug>.pdf
+  src/build.ts                      content -> dist/documents.json (every tree, by slug) + dist/meta.json;
+                                    from A4 also dist/<slug>.pdf
   src/pdf.ts                        `pnpm documents:pdf [--out <dir>] [--png]` (A3b)
   src/index.ts                      export ".": getDocument(slug), node types; starts with import "server-only"
   src/meta.ts                       export ./meta: versions and dates from dist/meta.json (E-15)
@@ -270,10 +271,12 @@ This table is the public record of the brand's document design. A3a builds it; t
     - Vitest `src/**/*.test.ts`
     - `packages/documents/turbo.json`
     - `^build` before `test` and `dev` in the root `turbo.json`
+    - the app's workspace dependency on the package, and the package in `transpilePackages`: `content/site.ts` and
+      `content/legal-contact.ts` read `./provider` from here on
   - **Parser and build.** The schemas, then the remark pipeline with the directive guard (E-18) and
     placeholder, `:ref`, partial and date resolution, then `build.ts`.
-  - **Shared data.** Add `provider.ts` with the re-exports in `legal-contact.ts` and `site.ts` (E-12), and
-    `labels.ts`.
+  - **Shared data.** Add `provider.ts` with the re-exports in `legal-contact.ts`, `site.ts` and `privacy.ts`
+    (E-12), and `labels.ts`.
   - **CI.** The filter area (E-17), with `Area`, the pinned output expressions and the new mapping cases in
     `tests/ci-workflow.test.mts`.
   - **Docs.** `AGENTS.md` gets the new package under _Where to look_ and the Vitest glob. `docs/testing.md` gets
@@ -295,8 +298,7 @@ This table is the public record of the brand's document design. A3a builds it; t
 **A1b - The AGB from Markdown.** _(after A1a)_
 
 - _Technique:_
-  - Add the React renderer `components/docs/document.tsx` for the node types the AGB needs, and add
-    `@skillsite/documents` to `transpilePackages`.
+  - Add the React renderer `components/docs/document.tsx` for the node types the AGB needs.
   - Write `agb.md` and `partials/widerruf.md`, and add the `.prettierignore` entry (E-16).
   - `app/agb/page.tsx` reads `getDocument("agb")`.
   - `modules/booking/model/mapping.ts` reads `version` from `./meta` (E-15). `mapping.test.ts` asserts the literal

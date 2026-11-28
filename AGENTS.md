@@ -11,6 +11,7 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 | implement a slice or write a spec           | its spec in `docs/specs/`, its task plan in `docs/plans/`; the pattern is in [`docs/specs/README.md`](docs/specs/README.md)                                                                                              |
 | change a route, a section or the booking    | `apps/marketing/src/`: `app/` (routes, `<route>/_components/`), `components/` (`layout/`, `sections/`), `lib/` (env, log, routes, metadata, health), `modules/` (`booking/`, `payment/`)                                 |
 | change visible text                         | `apps/marketing/src/content/` - all of it, in German; legal prose as JSX in `legal/*.tsx`                                                                                                                                |
+| change the legal-text pipeline              | `packages/documents/` (`@skillsite/documents`): `src/schema/` (node registry), `src/parse/`, `src/build.ts` (`content/*.md` -> `dist/`); provider data and legal labels in `src/`                                        |
 | build a component, a token or shared config | `packages/ui/` (`@skillsite/ui`, Storybook): `src/<group>/<name>` is `@skillsite/ui/<group>/<name>`, `styles/theme.css` imports tokens, base, components, motion; `packages/config/`: tsconfig, ESLint, Prettier presets |
 | decide which layer a test belongs to        | [`docs/testing.md`](docs/testing.md)                                                                                                                                                                                     |
 | write a test outside a package              | `apps/marketing/e2e/` (Playwright: smoke, motion, layout, a11y, calendar), `tests/` (release config, workflows, Dockerfile, turbo), `scripts/` (the design ratchet)                                                      |
@@ -29,8 +30,8 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
 ## Conventions
 
 - English in code, comments, identifiers, specs and commits; German only in visible content, which lives in
-  `apps/marketing/src/content/*.ts`, legal prose as JSX in `content/legal/*.tsx`, not in components. Developer
-  artifacts name no person: write "the maintainer".
+  `apps/marketing/src/content/*.ts`, legal prose as JSX in `content/legal/*.tsx`, provider data and legal labels in
+  `packages/documents/src/`, not in components. Developer artifacts name no person: write "the maintainer".
 - Clean, modular, schema-driven structures, no quick fixes. Pages use `@skillsite/ui` and the type scale
   (`text-display` ... `text-caption`): no arbitrary values (`text-[...]`, inline `color-mix(...)`, hand-tuned
   `clamp()`), no hand-built copies of existing components.
@@ -55,8 +56,8 @@ plan live in [`docs/specs/`](docs/specs/), starting with [`foundation-refactor.m
   `isProduction()`); ESLint rejects `process.env` elsewhere in `src/`. A new variable gets its rule in that schema,
   which `instrumentation.ts` checks at server start: a present but malformed value stops the server.
 - Vitest runs only these globs: `packages/ui` `src/**/*.test.ts` (node) and `src/**/*.test.tsx` (jsdom, Testing
-  Library); `apps/marketing` `src/**/*.test.{ts,mts}` (node) and `src/**/*.test.tsx` (jsdom, Testing Library);
-  `tests/**/*.test.mts`, `scripts/**/*.test.mjs`; `@/` works.
+  Library); `packages/documents` `src/**/*.test.ts` (node); `apps/marketing` `src/**/*.test.{ts,mts}` (node) and
+  `src/**/*.test.tsx` (jsdom, Testing Library); `tests/**/*.test.mts`, `scripts/**/*.test.mjs`; `@/` works.
 
 ## Data protection and secrets
 
