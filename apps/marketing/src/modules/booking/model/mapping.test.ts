@@ -35,7 +35,8 @@ test("a paid lesson records the confirmed agreements in Cal.com's metadata", () 
   const recorded = metadata(lesson());
   assert.equal(recorded.termsAccepted, "true");
   assert.equal(recorded.earlyPerformanceRequested, "true");
-  assert.match(recorded.agbVersion ?? "", /^\d{4}-\d{2}-\d{2}$/);
+  // The AGB in force (packages/documents/content/agb.md); a new AGB version updates this literal on purpose (E-15).
+  assert.equal(recorded.agbVersion, "2026-07-14");
 });
 
 test("the metadata records the checked booleans, never a raw value that was sent", () => {
