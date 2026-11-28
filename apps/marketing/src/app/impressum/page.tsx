@@ -1,27 +1,38 @@
-import { DocHero, DocShell } from "@/components/docs/doc-components";
-import { ImpressumProse, impressumPage } from "@/content/legal/impressum";
-import { pageMetadata } from "@/lib/metadata";
 import { FileText } from "lucide-react";
 
+import { getDocument, webMeta } from "@skillsite/documents";
+import { DocHero, DocShell } from "@/components/docs/doc-components";
+import { DocumentBody } from "@/components/docs/document";
+import { pageMetadata } from "@/lib/metadata";
+
+/**
+ * The Impressum from `packages/documents/content/impressum.md`. Whether its
+ * sections are numbered or listed is its frontmatter's call; its hero shows no
+ * facts: no date.
+ */
+const impressum = getDocument("impressum");
+const meta = webMeta(impressum.meta);
+
 export const metadata = pageMetadata({
-  ...impressumPage.metadata,
+  title: meta.shortTitle,
+  description: meta.description,
   canonical: "/impressum",
 });
 
 export default function ImpressumPage() {
-  const { hero } = impressumPage;
   return (
     <DocShell
+      sections={impressum.nav}
       hero={
         <DocHero
-          badge={hero.badge}
+          badge={meta.badge}
           icon={FileText}
-          title={hero.title}
-          lead={hero.lead}
+          title={meta.title}
+          lead={meta.lead}
         />
       }
     >
-      <ImpressumProse />
+      <DocumentBody body={impressum.body} />
     </DocShell>
   );
 }

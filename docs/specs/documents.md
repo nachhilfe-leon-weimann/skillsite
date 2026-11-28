@@ -1,6 +1,6 @@
 # Spec: Documents (legal texts from one Markdown source, for the website and as PDF)
 
-> Status: Accepted, 2026-11-28 - A0, A1a and A1b in review. The maintainer accepted every decision and answered the open
+> Status: Accepted, 2026-11-28 - A0 to A2 in review. The maintainer accepted every decision and answered the open
 > questions on 2026-11-28.
 > Builds on [`foundation-refactor.md`](foundation-refactor.md): its module rules, foundation E-12 (the manual look
 > check) and V7, which this arc supersedes for legal prose. This spec is also the decision record for the arc. Its
@@ -176,7 +176,8 @@ only (open question 4).
 
 Today's values: AGB and privacy policy both have `version` and `effectiveDate` `2026-07-14` (`agb.ts:4`,
 `privacy.ts:4`). The withdrawal notice has the AGB's values, enforced by the partial rule. Its title is
-"Widerrufsbelehrung und Muster-Widerrufsformular".
+"Widerrufsbelehrung und Muster-Widerrufsformular". The Impressum prints no date; the schema still needs both
+fields, so it carries `2026-07-14`, the day of its last wording change; no page shows it, and it has no PDF.
 
 ### Node types and their source
 
@@ -355,13 +356,14 @@ This table is the public record of the brand's document design. A3a builds it; t
   - the authority's address
   - the section references ("siehe Abschnitt 8") and their jumps
 - _Acceptance criteria:_
-  - [ ] Fixture tests and the lasting tree-equals-article tests pass for both pages.
-  - [ ] Renderer test: a `paragraph` after a `contactAddress` gets `mt-6`, any other paragraph does not.
-  - [ ] Mutation probes, each failing and then restored:
+  - [x] Fixture tests and the lasting tree-equals-article tests pass for both pages.
+  - [x] Renderer test: a `paragraph` after a `contactAddress` gets `mt-6`, any other paragraph does not.
+  - [x] Mutation probes, each failing and then restored:
     - one character changed in `datenschutz.md`
     - a `legalBasis` renderer that drops its children
-  - [ ] The markup comparison shows no difference, or the PR explains each one. Before/after screenshots.
-  - [ ] `apps/marketing/src/content/legal/` no longer exists, and `grep` finds none of the moved sentences in
+  - [x] The markup comparison shows no difference, or the PR explains each one.
+  - [x] Before/after screenshots per open question 6.
+  - [x] `apps/marketing/src/content/legal/` no longer exists, and `grep` finds none of the moved sentences in
         `apps/marketing/src`, except in the wording fixtures (open question 1).
 
 **A3a - Print kit.** _(after A2)_

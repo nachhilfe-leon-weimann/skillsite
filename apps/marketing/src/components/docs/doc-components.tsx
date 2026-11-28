@@ -16,6 +16,7 @@ import { DocSectionNav, type DocNavSection } from "./doc-section-nav";
 type DocShellProps = {
   /** Rendered full-width above the grid so the title always leads the page. */
   hero: React.ReactNode;
+  /** The section navigation; an empty list or none shows no aside. */
   sections?: DocNavSection[];
   children: React.ReactNode;
 };
@@ -28,11 +29,11 @@ export function DocShell({ hero, sections, children }: DocShellProps) {
         <div
           className={cn(
             "mt-10 grid gap-10",
-            sections && "lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-14",
+            sections?.length && "lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-14",
           )}
         >
           <article className="min-w-0">{children}</article>
-          {sections ? (
+          {sections?.length ? (
             <aside className="order-first lg:order-last lg:sticky lg:top-24 lg:self-start">
               <DocSectionNav sections={sections} />
             </aside>
@@ -281,15 +282,15 @@ export function DocProviderLink({
 }
 
 /**
- * A legal-basis box. `label` is the document tree's (`labels.legalBasis` of
- * `@skillsite/documents`); the privacy policy's JSX relies on the default
- * until it moves to Markdown (spec `docs/specs/documents.md`, A2).
+ * A legal-basis box. `label` comes from the document tree only
+ * (`labels.legalBasis` of `@skillsite/documents`, E-14 of
+ * `docs/specs/documents.md`).
  */
 export function DocLegalBasis({
-  label = "Rechtsgrundlage:",
+  label,
   children,
 }: {
-  label?: string;
+  label: string;
   children: React.ReactNode;
 }) {
   return (
