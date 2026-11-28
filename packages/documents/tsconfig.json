@@ -1,0 +1,11 @@
+{
+  "extends": "@skillsite/config/typescript/base.json",
+  "compilerOptions": {
+    "lib": ["esnext"],
+    "types": ["node"],
+    // `node src/build.ts` strips the types: only erasable syntax, explicit type imports.
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src", "vitest.config.mts"]
+}

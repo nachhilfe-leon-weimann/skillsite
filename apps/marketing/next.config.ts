@@ -54,7 +54,7 @@ const nextConfig: NextConfig = {
   // Inlined into the bundle at build time; `/health` reports it as `version`.
   env: { APP_VERSION: version },
   // Internal packages ship TypeScript sources; Next compiles them in place.
-  transpilePackages: ["@skillsite/ui"],
+  transpilePackages: ["@skillsite/ui", "@skillsite/documents"],
   allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS
     ? process.env.ALLOWED_DEV_ORIGINS.split(",")
     : [],

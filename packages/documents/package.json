@@ -1,0 +1,37 @@
+{
+  "name": "@skillsite/documents",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./provider": "./src/provider.ts",
+    "./meta": "./src/meta.ts"
+  },
+  "scripts": {
+    "build": "node src/build.ts",
+    "dev": "node --watch-path=content --watch-path=src src/build.ts",
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "server-only": "0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@skillsite/config": "workspace:*",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.13.0",
+    "mdast-util-directive": "3.2.1",
+    "remark-directive": "^4.0.0",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "typescript": "^7.0.2",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.2.0",
+    "vitest": "^5.1.0",
+    "yaml": "^2.9.1"
+  }
+}

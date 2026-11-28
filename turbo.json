@@ -7,7 +7,9 @@
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "lint": {},
-    "test": {},
+    "test": {
+      "dependsOn": ["^build"]
+    },
     "typecheck": {},
     "e2e": {
       "dependsOn": ["build"],
@@ -15,6 +17,7 @@
       "passThroughEnv": ["CI"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
