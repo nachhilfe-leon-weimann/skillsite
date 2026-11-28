@@ -16,6 +16,7 @@ import { DocSectionNav, type DocNavSection } from "./doc-section-nav";
 type DocShellProps = {
   /** Rendered full-width above the grid so the title always leads the page. */
   hero: React.ReactNode;
+  /** The section navigation; an empty list or none shows no aside. */
   sections?: DocNavSection[];
   children: React.ReactNode;
 };
@@ -28,11 +29,11 @@ export function DocShell({ hero, sections, children }: DocShellProps) {
         <div
           className={cn(
             "mt-10 grid gap-10",
-            sections && "lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-14",
+            sections?.length && "lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-14",
           )}
         >
           <article className="min-w-0">{children}</article>
-          {sections ? (
+          {sections?.length ? (
             <aside className="order-first lg:order-last lg:sticky lg:top-24 lg:self-start">
               <DocSectionNav sections={sections} />
             </aside>

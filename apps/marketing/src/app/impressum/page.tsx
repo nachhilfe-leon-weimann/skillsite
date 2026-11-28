@@ -6,8 +6,9 @@ import { DocumentBody } from "@/components/docs/document";
 import { pageMetadata } from "@/lib/metadata";
 
 /**
- * The Impressum from `packages/documents/content/impressum.md`. Its sections
- * are neither numbered nor listed, and its hero shows no facts: no date.
+ * The Impressum from `packages/documents/content/impressum.md`. Whether its
+ * sections are numbered or listed is its frontmatter's call; its hero shows no
+ * facts: no date.
  */
 const impressum = getDocument("impressum");
 const meta = webMeta(impressum.meta);
@@ -21,6 +22,7 @@ export const metadata = pageMetadata({
 export default function ImpressumPage() {
   return (
     <DocShell
+      sections={impressum.nav}
       hero={
         <DocHero
           badge={meta.badge}
