@@ -13,6 +13,7 @@ export const metadata = pageMetadata({
 export default function AgbPage() {
   const { hero } = agbPage;
   const effectiveDate = agbEffectiveDate.toLocaleDateString("de-DE", {
+    day: "numeric",
     month: "long",
     year: "numeric",
   });
