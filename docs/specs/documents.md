@@ -329,7 +329,7 @@ This table is the public record of the brand's document design. A3a builds it; t
     - a renderer that drops one link's text fails tree-equals-article
     - another `version` in `agb.md` fails `mapping.test.ts`
   - [x] The markup comparison of `/agb` shows no difference, or the PR explains each one.
-  - [ ] Before/after screenshots per open question 6.
+  - [x] Before/after screenshots per open question 6.
   - [x] No legal sentence of the AGB is left in `apps/marketing/src`, except in the wording fixture (open question
         1).
 
