@@ -159,6 +159,18 @@ test.each([
     ["packages/documents/src/parse/errors.test.ts"],
     ["shared", "documents"],
   ],
+  // The print kit typesets the documents' PDFs: its layout, fonts and Typst pin run the full suite and the Docker
+  // build, which builds the PDFs from A4 of docs/specs/documents.md on.
+  [
+    "the print kit",
+    [
+      "packages/print-kit/src/page.typ",
+      "packages/print-kit/fonts/hanken-grotesk/HankenGrotesk-Regular.ttf",
+      "packages/print-kit/toolchain.json",
+    ],
+    ["shared", "docker"],
+  ],
+  ["a print kit test", ["packages/print-kit/test/runner.test.mjs"], ["shared"]],
 ])("%s maps to its areas", (_, files, expected) => {
   assert.deepEqual(areas(files), expected);
 });
