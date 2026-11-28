@@ -1,0 +1,8 @@
+# Lets Typst load the kit as a package as well: `#import "@local/print-kit:0.1.0": *` (see README.md).
+[package]
+name = "print-kit"
+version = "0.1.0"
+entrypoint = "lib.typ"
+compiler = "0.15.1"
+description = "A letterhead, typography and print primitives for branded documents."
+exclude = ["bin", "examples", "test", "toolchain.json", "package.json", ".cache"]
