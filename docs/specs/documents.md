@@ -362,7 +362,7 @@ This table is the public record of the brand's document design. A3a builds it; t
     - one character changed in `datenschutz.md`
     - a `legalBasis` renderer that drops its children
   - [x] The markup comparison shows no difference, or the PR explains each one.
-  - [ ] Before/after screenshots per open question 6.
+  - [x] Before/after screenshots per open question 6.
   - [x] `apps/marketing/src/content/legal/` no longer exists, and `grep` finds none of the moved sentences in
         `apps/marketing/src`, except in the wording fixtures (open question 1).
 
