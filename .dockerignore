@@ -5,6 +5,9 @@
 **/out
 **/.turbo
 
+# The print kit's Typst download (packages/print-kit/bin/typst.mjs): a binary for this machine, not the image.
+packages/print-kit/.cache
+
 # Local env & secrets — provided at runtime via Dokploy, never baked in
 **/.env*
 

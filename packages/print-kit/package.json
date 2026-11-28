@@ -1,0 +1,9 @@
+{
+  "name": "@skillsite/print-kit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "typst": "node bin/typst.mjs"
+  }
+}
