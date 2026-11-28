@@ -60,3 +60,6 @@ out takes no hit at exactly 120 ms" is a timing probe and belongs nowhere.
    are removed when it merges; they do not stay in the suites. One exception: the wording fixtures of the legal pages
    (`apps/marketing/src/app/<route>/page.wording.txt`) stay until the follow-up text PR of
    [`specs/documents.md`](specs/documents.md) (its open question 1).
+5. The markup comparison of [`specs/documents.md`](specs/documents.md) is such PR evidence:
+   `just markup-compare [--base <ref>]` builds the base (default `origin/main`) and the checkout with `CAL_API_KEY=`,
+   then diffs every prerendered page's `<head>` and DOM; `just check` does not run it.

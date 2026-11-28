@@ -79,7 +79,8 @@ spec and accepted by the maintainer on 2026-11-28.
   numbers, navigation, `<head>` and DOM. Two pieces of evidence are required per PR. One is the markup comparison
   below; the PR lists and explains every remaining difference. The other is before/after screenshots under _How
   to check_, delivered as open question 6 decides.
-- **Markup comparison** (PR evidence, not a lasting test; the script lands in A1a and A1b, A2 and A4 reuse it):
+- **Markup comparison** (PR evidence, not a lasting test; the script, `just markup-compare`, lands in A1a; A1b, A2
+  and A4 reuse it):
   - Build `origin/main` and the branch, each with `CAL_API_KEY=`.
   - Take `<head>` and `<body>` from each page's prerendered `.next/server/app/<route>.html`.
   - Remove `<script>` elements and HTML comments, and replace hashed `/_next/static/…` URLs with a placeholder.
@@ -295,6 +296,7 @@ This table is the public record of the brand's document design. A3a builds it; t
   - [ ] Every directive form in _Node types_ parses in a synthetic document.
   - [ ] `just build` passes, with the navbar importing `brand` from `./provider`. A client import of the root
         entry fails the build through `server-only`.
+  - [ ] The markup comparison (`just markup-compare`) of every prerendered page shows no difference.
 
 **A1b - The AGB from Markdown.** _(after A1a)_
 
