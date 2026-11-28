@@ -25,6 +25,11 @@ Each behaviour is guarded on the cheapest layer that can see it, and on one laye
 | Widget    | Playwright against the built Storybook: [`packages/ui/e2e/`](../packages/ui/e2e/) (`just widgets`)                                 | each widget's keyboard and screen-reader contract after its [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/) pattern: role and name, keys, focus in, out and back, dismissal. The only place for widget behaviour. Smoke: every story renders without console or page errors | how a page wires the widget                    |
 | Page      | Playwright against the production build: [`apps/marketing/e2e/`](../apps/marketing/e2e/) (`just smoke`)                            | what only a page shows (below)                                                                                                                                                                                                                                               | widget details the widget layer already guards |
 
+The print kit (`packages/print-kit`) stays dependency-free, so its own tests use `node --test` instead of Vitest
+(`just test` runs them): the specimen compiles through the pinned Typst as PDF/A-2a and PDF/UA-1 with the kit's
+fonts only, and the runner refuses a wrong SHA-256 and ignores a Typst on the `PATH`. Drift tests in
+[`tests/`](../tests/) keep its colours and logo equal to the website's. The look of its pages stays a manual check.
+
 ## Page layer
 
 - **Smoke:** every route renders without console errors; the 404 too.
