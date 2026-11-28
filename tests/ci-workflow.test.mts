@@ -38,7 +38,7 @@ const workflow = load(read(".github/workflows/ci.yml")) as Workflow;
 const { changes, suite, check } = workflow.jobs;
 const filterStep = changes.steps.find((step) => step.id === "filter")!;
 
-type Area = "website" | "ui" | "shared" | "docker";
+type Area = "website" | "ui" | "shared" | "docker" | "documents";
 const filters = load(filterStep.with!.filters) as Record<Area, string[]>;
 
 /**
@@ -142,11 +142,28 @@ test.each([
     ["apps/marketing/src/content/home.ts", "docs/specs/a.md"],
     ["website", "docker"],
   ],
+  // A legal text is Markdown, but source: `documents` runs the full suite and the Docker build.
+  ["a legal text", ["packages/documents/content/agb.md"], ["documents"]],
+  [
+    "a partial",
+    ["packages/documents/content/partials/widerruf.md"],
+    ["documents"],
+  ],
+  [
+    "the documents build",
+    ["packages/documents/src/build.ts"],
+    ["shared", "docker", "documents"],
+  ],
+  [
+    "a documents test",
+    ["packages/documents/src/parse/errors.test.ts"],
+    ["shared", "documents"],
+  ],
 ])("%s maps to its areas", (_, files, expected) => {
   assert.deepEqual(areas(files), expected);
 });
 
-test("a full run covers the release PR, manual runs, shared changes and a failed filter", () => {
+test("a full run covers the release PR, manual runs, shared changes, the documents and a failed filter", () => {
   // The filter runs only on an ordinary pull request; skipped or failed, its outcome is not `success`.
   assert.equal(
     filterStep.if,
@@ -155,11 +172,11 @@ test("a full run covers the release PR, manual runs, shared changes and a failed
   assert.equal(filterStep["continue-on-error"], true);
   assert.equal(
     changes.outputs!.full,
-    "${{ steps.filter.outcome != 'success' || steps.filter.outputs.shared == 'true' }}",
+    "${{ steps.filter.outcome != 'success' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.documents == 'true' }}",
   );
   assert.equal(
     changes.outputs!.docker,
-    "${{ steps.filter.outcome != 'success' || steps.filter.outputs.docker == 'true' }}",
+    "${{ steps.filter.outcome != 'success' || steps.filter.outputs.docker == 'true' || steps.filter.outputs.documents == 'true' }}",
   );
   assert.equal(
     changes.outputs!.repeat,

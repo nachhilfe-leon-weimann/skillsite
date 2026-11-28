@@ -27,11 +27,11 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      full: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.shared == 'true' }}
+      full: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.documents == 'true' }}
       repeat: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'release-please--') }}
       website: ${{ steps.filter.outputs.website == 'true' }}
       ui: ${{ steps.filter.outputs.ui == 'true' }}
-      docker: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.docker == 'true' }}
+      docker: ${{ steps.filter.outcome != 'success' || steps.filter.outputs.docker == 'true' || steps.filter.outputs.documents == 'true' }}
     steps:
       # Runs only on an ordinary pull request; skipped or failed, it leaves `full` set (fail safe).
       # On a pull request the action lists the changed files through the API: no checkout needed.
@@ -42,7 +42,8 @@ jobs:
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           # A file belongs to an area when it matches one of its patterns and none of its `!` patterns.
-          # A change only to Markdown or docs/ matches no area: it gets the format check alone.
+          # A change only to Markdown or docs/ matches no area: it gets the format check alone. The documents' Markdown
+          # is source, so `documents` keeps it.
           predicate-quantifier: some-with-excludes
           filters: |
             website:
@@ -75,6 +76,10 @@ jobs:
               - '!**/e2e/**'
               - '!**/*.stories.*'
               - '!packages/ui/.storybook/**'
+            # The legal texts are Markdown the build parses: a change anywhere in the package, a text included, runs the
+            # full suite and the Docker build (E-17 in docs/specs/documents.md).
+            documents:
+              - 'packages/documents/**'
 
   suite:
     name: Checks
